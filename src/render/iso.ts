@@ -26,7 +26,7 @@ export function worldToScreen(x: number, y: number, z: number, c: IsoConfig) {
 /** 画家算法排序键：值小者先画（被后画者覆盖） */
 export const depth = (x: number, y: number, z: number): number => x + y + z
 
-export const DEFAULT_ISO_CONFIG: IsoConfig = { tileW: 48, tileH: 24, blockH: 20 }
+export const DEFAULT_ISO_CONFIG: IsoConfig = { tileW: 48, tileH: 24, blockH: 24 }
 
 type Pt = [number, number]
 

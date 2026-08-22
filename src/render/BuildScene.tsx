@@ -17,68 +17,78 @@ interface Props {
   onAnimated?: () => void
 }
 
-/** 新块下落：慢落 + 压扁回弹，共 ~1.3s */
-const DROP_MS = 1300
-/** 级联铺设时每块的快速下落时长 */
-const CASCADE_MS = 220
-/** 级联太频繁会烦：15s 内重复进入建造页不再重播 */
-const CASCADE_COOLDOWN = 15000
+/** 新块下落总时长：慢落 + 果冻回弹 */
+const DROP_MS = 1350
+const DROP_FALL_FRAC = 0.42
+
+/** 级联时每块的总时长（快落 + 果冻） */
+const BLOCK_T = 640
+const CASCADE_FALL_FRAC = 0.53
+/** 层内微错峰 */
+const LAYER_STAGGER = 14
+/** 下一层在前一层落地、回弹进行到该比例后开始下落 */
+const LAYER_OVERLAP = 0.55
+const CASCADE_COOLDOWN = 10000
 
 const easeInCubic = (t: number) => t * t * t
-const easeOutQuad = (t: number) => 1 - (1 - t) * (1 - t)
-const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
 
 /**
- * 新块动画时间线 p∈[0,1]：
- * 0.00–0.50 重力加速下落（z: 7→0）
- * 0.50–0.62 着地压扁（scaleY 0.78→1, scaleX 1.16→1）
- * 0.62–0.92 回弹一小段再落下
- * 0.92–1.00 静置微颤收敛
+ * 果冻回弹（挤压拉伸守体积：压 Y 时胀 X）：
+ * t=0 最扁 → 回弹拉高 → 衰减振荡，伴随一次小跳
  */
+function jelly(t: number): { z: number; sx: number; sy: number } {
+  const w = -0.34 * Math.cos(t * Math.PI * 3) * (1 - t)
+  const hop = 0.55 * Math.max(0, Math.sin(Math.PI * t * 2)) * (1 - t)
+  return { z: hop, sx: 1 - w * 0.85, sy: 1 + w }
+}
+
+/** 新块动画时间线：加速下落 → 果冻 */
 function animState(p: number): { z: number; sx: number; sy: number } {
-  if (p < 0.5) {
-    const t = easeInCubic(p / 0.5)
+  if (p < DROP_FALL_FRAC) {
+    const t = easeInCubic(p / DROP_FALL_FRAC)
     return { z: 7 * (1 - t), sx: 1, sy: 1 }
   }
-  if (p < 0.62) {
-    const t = easeOutQuad((p - 0.5) / 0.12)
-    return { z: 0, sx: 1.16 - 0.16 * t, sy: 0.78 + 0.22 * t }
+  return jelly((p - DROP_FALL_FRAC) / (1 - DROP_FALL_FRAC))
+}
+
+/** 级联单块时间线（更快更硬朗的果冻） */
+function cascadeState(elapsed: number): { z: number; sx: number; sy: number; done: boolean } {
+  const e = elapsed / BLOCK_T
+  if (e >= 1) return { z: 0, sx: 1, sy: 1, done: true }
+  if (e < CASCADE_FALL_FRAC) {
+    const t = easeInCubic(e / CASCADE_FALL_FRAC)
+    return { z: 4.5 * (1 - t), sx: 1, sy: 1, done: false }
   }
-  if (p < 0.92) {
-    const t = (p - 0.62) / 0.3
-    return { z: 1.05 * Math.sin(Math.PI * t) * (1 - 0.4 * t), sx: 1, sy: 1 }
-  }
-  const t = (p - 0.92) / 0.08
-  const wob = Math.sin(Math.PI * t * 2) * (1 - t) * 0.045
-  return { z: 0, sx: 1 + wob, sy: 1 - wob }
+  const j = jelly((e - CASCADE_FALL_FRAC) / (1 - CASCADE_FALL_FRAC))
+  return { ...j, done: false }
 }
 
 interface CascadePlan {
   start: number
-  cadence: number
-  /** 每块的启动时刻（ms，相对 start） */
   starts: number[]
+  total: number
 }
 
-/** 逐层级联计划：上层的第一块必须等下层全部落地（层内可并行错峰） */
+/** 逐层级联：底层先落，回弹过半后上一层再落（层内微错峰，落在已就位的下层上） */
 function planCascade(blocks: Array<{ z: number }>, count: number): CascadePlan {
-  const cadence = Math.min(90, Math.max(28, Math.round(4200 / Math.max(1, count))))
+  const fall = BLOCK_T * CASCADE_FALL_FRAC
+  const jellyDur = BLOCK_T * (1 - CASCADE_FALL_FRAC)
   const starts: number[] = []
   let layerStart = 0
-  let layerMaxZ = blocks[0]?.z ?? 0
-  let layerEnd = 0
+  let layerZ = blocks[0]?.z ?? 0
+  let idxInLayer = 0
   for (let i = 0; i < count; i++) {
     const z = blocks[i].z
-    if (z !== layerMaxZ) {
-      // 新的一层：从上一层全部落地之后开始
-      layerStart = layerEnd
-      layerMaxZ = z
+    if (z !== layerZ) {
+      layerStart += fall + jellyDur * LAYER_OVERLAP
+      layerZ = z
+      idxInLayer = 0
     }
-    const s = layerStart + (i > 0 && blocks[i - 1].z === z ? cadence : 0)
-    starts.push(s)
-    layerEnd = Math.max(layerEnd, s + CASCADE_MS)
+    starts.push(layerStart + idxInLayer * LAYER_STAGGER)
+    idxInLayer++
   }
-  return { start: performance.now(), cadence, starts }
+  const total = (starts[count - 1] ?? 0) + BLOCK_T
+  return { start: performance.now(), starts, total }
 }
 
 let lastCascadeAt = 0
@@ -130,31 +140,43 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     let cascadeRunning = false
     for (const { b, i } of cubes) {
       if (i >= pc) continue
+      const isNew = anim && ai != null && i === ai && ai === pc - 1
 
-      // 级联铺设：块尚未「启动」则不画，启动后快速落下
-      if (cascade && !(anim && ai === i)) {
-        const s = cascade.starts[i]
-        const el = now - cascade.start - s
+      // 级联铺设：逐层落下 + 果冻回弹
+      if (cascade && !isNew) {
+        const el = now - cascade.start - cascade.starts[i]
         if (el < 0) continue
-        if (el < CASCADE_MS && cascade.starts[i] > 0) {
-          const cz = 5 * (1 - easeOutCubic(el / CASCADE_MS))
-          const { sx, sy } = worldToScreen(b.x, b.y, cz, cfg)
-          drawCube(ctx, sx, sy, cfg, palette, {
-            type: b.type,
-            noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
-          })
+        const st = cascadeState(el)
+        if (!st.done) {
           cascadeRunning = true
+          const { sx: cx } = worldToScreen(b.x, b.y, 0, cfg)
+          const syBase = worldToScreen(b.x, b.y, 0, cfg).sy
+          if (st.sx !== 1 || st.sy !== 1) {
+            ctx.save()
+            ctx.translate(cx, syBase + cfg.tileH / 2 + cfg.blockH - st.z * cfg.blockH)
+            ctx.scale(st.sx, st.sy)
+            drawCube(ctx, 0, -(cfg.tileH / 2 + cfg.blockH), cfg, palette, {
+              type: b.type,
+              noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
+            })
+            ctx.restore()
+          } else {
+            const { sx: px, sy: py } = worldToScreen(b.x, b.y, st.z, cfg)
+            drawCube(ctx, px, py, cfg, palette, {
+              type: b.type,
+              noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
+            })
+          }
           continue
         }
       }
 
-      const isNew = anim && ai != null && i === ai && ai === pc - 1
       const z = isNew ? a.z : 0
-      const { sx, sy } = worldToScreen(b.x, b.y, z, cfg)
+      const { sx: px, sy: py } = worldToScreen(b.x, b.y, z, cfg)
 
       if (isNew && (a.sx !== 1 || a.sy !== 1)) {
         ctx.save()
-        ctx.translate(sx, sy + cfg.tileH / 2 + cfg.blockH - z * cfg.blockH)
+        ctx.translate(px, py + cfg.tileH / 2 + cfg.blockH - z * cfg.blockH)
         ctx.scale(a.sx, a.sy)
         drawCube(ctx, 0, -(cfg.tileH / 2 + cfg.blockH), cfg, palette, {
           type: b.type,
@@ -162,7 +184,7 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
         })
         ctx.restore()
       } else {
-        drawCube(ctx, sx, sy, cfg, palette, {
+        drawCube(ctx, px, py, cfg, palette, {
           type: b.type,
           noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
           highlight: Boolean(isNew && !animating),
@@ -171,8 +193,7 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     }
 
     if (cascade) {
-      cascadeRunning =
-        cascadeRunning || now - cascade.start < cascade.starts[Math.min(pc, cascade.starts.length) - 1] + CASCADE_MS
+      cascadeRunning = cascadeRunning || now - cascade.start < cascade.total
     }
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
@@ -192,7 +213,7 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     }
   }, [onAnimated])
 
-  // 尺寸初始化 + 自适应居中
+  // 尺寸初始化 + 自适应居中（把地面虚线范围框完整纳入视野，避免越界）
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -205,24 +226,52 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     }
     const fitView = () => {
       const bp = stateRef.current.blueprint
+      const cfg = DEFAULT_ISO_CONFIG
+      let minX = Infinity
+      let maxX = -Infinity
+      let minY = Infinity
+      let maxY = -Infinity
+      for (const b of bp.blocks) {
+        minX = Math.min(minX, b.x)
+        maxX = Math.max(maxX, b.x)
+        minY = Math.min(minY, b.y)
+        maxY = Math.max(maxY, b.y)
+      }
+      // 地基范围框四角（含 0.6 格余量）必须完整可见
+      const corners: Array<[number, number]> = [
+        [minX - 0.6, minY - 0.6],
+        [maxX + 0.6, minY - 0.6],
+        [maxX + 0.6, maxY + 0.6],
+        [minX - 0.6, maxY + 0.6],
+      ]
       const xs: number[] = []
       const ys: number[] = []
       for (const b of bp.blocks) {
-        const { sx, sy } = worldToScreen(b.x, b.y, b.z, DEFAULT_ISO_CONFIG)
-        xs.push(sx + DEFAULT_ISO_CONFIG.tileW / 2, sx - DEFAULT_ISO_CONFIG.tileW / 2)
-        ys.push(sy + DEFAULT_ISO_CONFIG.tileH / 2 + DEFAULT_ISO_CONFIG.blockH, sy - DEFAULT_ISO_CONFIG.tileH / 2)
+        const { sx, sy } = worldToScreen(b.x, b.y, b.z, cfg)
+        xs.push(sx + cfg.tileW / 2, sx - cfg.tileW / 2)
+        ys.push(sy + cfg.tileH / 2 + cfg.blockH, sy - cfg.tileH / 2)
       }
-      const minX = Math.min(...xs)
-      const maxX = Math.max(...xs)
-      const minY = Math.min(...ys)
-      const maxY = Math.max(...ys)
+      for (const [x, y] of corners) {
+        const { sx, sy } = worldToScreen(x, y, 0, cfg)
+        xs.push(sx + cfg.tileW / 2, sx - cfg.tileW / 2)
+        ys.push(sy)
+      }
+      const boundsMinX = Math.min(...xs)
+      const boundsMaxX = Math.max(...xs)
+      const boundsMinY = Math.min(...ys)
+      const boundsMaxY = Math.max(...ys)
       const w = canvas.clientWidth
       const h = canvas.clientHeight
-      const scale = Math.min((w - 80) / (maxX - minX), (h - 80) / (maxY - minY), 2)
+      const PAD = 48
+      const scale = Math.min(
+        (w - PAD * 2) / (boundsMaxX - boundsMinX),
+        (h - PAD * 2) / (boundsMaxY - boundsMinY),
+        2,
+      )
       viewRef.current = {
         scale,
-        panX: w / 2 - ((minX + maxX) / 2) * scale,
-        panY: h / 2 - ((minY + maxY) / 2) * scale,
+        panX: w / 2 - ((boundsMinX + boundsMaxX) / 2) * scale,
+        panY: h / 2 - ((boundsMinY + boundsMaxY) / 2) * scale,
         fitted: true,
       }
     }
@@ -232,7 +281,7 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     return () => ro.disconnect()
   }, [draw])
 
-  // 状态变化重绘：新块 → 慢落动画；否则进场 → 逐层级联（带冷却）
+  // 状态变化重绘：新块 → 慢落果冻；否则进场 → 逐层级联（带冷却）
   useEffect(() => {
     if (animateIndex != null && animateIndex === placedCount - 1 && placedCount > 0) {
       cascadeRef.current = null
@@ -247,7 +296,7 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     draw()
   }, [placedCount, animateIndex, draw])
 
-  // 交互：拖拽平移 / 滚轮缩放（点击可跳过级联）
+  // 交互：拖拽平移 / 滚轮缩放
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return

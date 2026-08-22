@@ -18,15 +18,22 @@ export default function Build() {
   const initialCount = useRef<number | null>(null)
 
   useEffect(() => {
-    // 首次挂载交给级联动画；只有会话内新增的块才播慢落回弹
+    // 挂载时：最后一块若是刚刚放的（10 秒内），直接播放它的落体果冻动画
     if (initialCount.current === null) {
       initialCount.current = placedCount
+      if (placedCount > 0) {
+        const last = builds.filter((b) => b.blueprintId === activeBlueprintId)[placedCount - 1]
+        if (last && Date.now() - new Date(last.placedAt).getTime() < 10_000) {
+          setAnimateIndex(placedCount - 1)
+        }
+      }
       return
     }
     if (placedCount > initialCount.current) {
       initialCount.current = placedCount
       setAnimateIndex(placedCount - 1)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [placedCount])
 
   const available = useMemo(
