@@ -196,6 +196,23 @@ export async function initPersistence(adapter: StorageAdapter): Promise<void> {
   if (persistenceStarted) return
   persistenceStarted = true
 
+  // 演示模式：?demo-castle 直接在内存里放一座建成的城堡（不读写本地存档）
+  if (typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo-castle')) {
+    const N = 161
+    useAppStore.setState({
+      builds: Array.from({ length: N }, (_, i) => ({
+        id: `demo-${i}`,
+        blueprintId: 'castle',
+        index: i,
+        placedAt: new Date(Date.now() - (N - i) * 86_400_000).toISOString(),
+        fromHabitId: '__day__',
+        bonus: false,
+      })),
+      completedBlueprintIds: ['castle'],
+    })
+    return
+  }
+
   const saved = await adapter.load()
   if (saved) {
     useAppStore.setState({ ...saved, hydrated: true })
