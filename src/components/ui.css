@@ -8,24 +8,49 @@
   color: var(--ink);
 }
 
-.topbar {
+/* 自定义标题栏（无边框窗口）：整体为拖拽区 */
+.titlebar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 22px;
+  padding: 10px 12px 10px 20px;
   flex: none;
+  user-select: none;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 17px;
+  font-family: var(--font-display);
+  font-size: 16px;
   letter-spacing: 0.04em;
+  pointer-events: none;
 }
 
 .brand svg {
   display: block;
+  pointer-events: none;
+}
+
+/* 窗口控制按钮：圆润、贴合应用风格 */
+.win-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border-radius: 9px;
+  color: var(--ink-2);
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.win-btn:hover {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  color: var(--ink);
+}
+.win-btn.close:hover {
+  background: var(--progress-green);
+  color: var(--accent-ink);
 }
 
 .content {

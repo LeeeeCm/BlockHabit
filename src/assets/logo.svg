@@ -1,16 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- BlockHabit 应用图标：一块积木 + 一个对勾（墨黑/纸白/琥珀） -->
-  <rect width="512" height="512" fill="#0A0A0A"/>
+  <!-- BlockHabit 应用图标：俯视角乐高积木拼成的对勾（圆角底） -->
+  <rect width="512" height="512" rx="120" fill="#0A0A0A"/>
 
-  <!-- 微微倾斜的积木主体 -->
-  <g transform="rotate(-6 256 280)">
-    <!-- 琥珀凸点（乐高 stud） -->
-    <rect x="201" y="140" width="110" height="48" rx="24" fill="#F5B301"/>
-    <!-- 纸白砖体 -->
-    <rect x="116" y="172" width="280" height="216" rx="56" fill="#FAFAFA"/>
-    <!-- 负形对勾：打卡完成 -->
-    <path d="M186 288 L238 342 L330 232"
-          fill="none" stroke="#0A0A0A" stroke-width="38"
-          stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 对勾积木（俯视角，微微倾斜）：短线臂 2 块 + 长线臂 3 块，末端为绿色「完成」块 -->
+  <g transform="rotate(-3 256 256)" fill="#FAFAFA">
+    <!-- 短线臂 -->
+    <g>
+      <rect x="150" y="261" width="64" height="64" rx="20"/>
+      <circle cx="182" cy="293" r="13.5" fill="none" stroke="#0A0A0A" stroke-width="5"/>
+    </g>
+    <!-- 顶点块 -->
+    <g>
+      <rect x="224" y="335" width="64" height="64" rx="20"/>
+      <circle cx="256" cy="367" r="13.5" fill="none" stroke="#0A0A0A" stroke-width="5"/>
+    </g>
+    <!-- 长线臂 -->
+    <g>
+      <rect x="298" y="261" width="64" height="64" rx="20"/>
+      <circle cx="330" cy="293" r="13.5" fill="none" stroke="#0A0A0A" stroke-width="5"/>
+    </g>
+    <g>
+      <rect x="372" y="187" width="64" height="64" rx="20"/>
+      <circle cx="404" cy="219" r="13.5" fill="none" stroke="#0A0A0A" stroke-width="5"/>
+    </g>
+    <!-- 末端：绿色完成块 -->
+    <g>
+      <rect x="446" y="113" width="64" height="64" rx="20" fill="#22C55E"/>
+      <circle cx="478" cy="145" r="13.5" fill="none" stroke="#0A0A0A" stroke-width="5"/>
+    </g>
   </g>
 </svg>

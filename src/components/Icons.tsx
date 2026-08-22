@@ -7,7 +7,12 @@ interface IconProps {
   style?: CSSProperties
 }
 
-function Svg({ size = 24, style, children }: IconProps & { children: React.ReactNode }) {
+function Svg({
+  size = 24,
+  style,
+  strokeWidth = 1.9,
+  children,
+}: IconProps & { children: React.ReactNode; strokeWidth?: number }) {
   return (
     <svg
       width={size}
@@ -15,7 +20,7 @@ function Svg({ size = 24, style, children }: IconProps & { children: React.React
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.9}
+      strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
       style={style}
@@ -165,6 +170,43 @@ export function IconDayCheck(props: IconProps) {
     <Svg {...props}>
       <rect x="5" y="8.5" width="14" height="10.5" rx="3.2" />
       <path d="M9 13.4l2 2 4.2-4.4" />
+    </Svg>
+  )
+}
+
+/** 窗口控制：最小化 */
+export function IconWinMin(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.7}>
+      <path d="M6 12h12" />
+    </Svg>
+  )
+}
+
+/** 窗口控制：最大化 */
+export function IconWinMax(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.7}>
+      <rect x="6.5" y="6.5" width="11" height="11" rx="2.5" />
+    </Svg>
+  )
+}
+
+/** 窗口控制：还原（双叠层） */
+export function IconWinRestore(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.7}>
+      <rect x="5.5" y="8.5" width="10" height="10" rx="2.5" />
+      <path d="M9 5.5h7a2.5 2.5 0 012.5 2.5v7" />
+    </Svg>
+  )
+}
+
+/** 窗口控制：关闭 */
+export function IconWinClose(props: IconProps) {
+  return (
+    <Svg {...props} strokeWidth={1.7}>
+      <path d="M7 7l10 10M17 7L7 17" />
     </Svg>
   )
 }
