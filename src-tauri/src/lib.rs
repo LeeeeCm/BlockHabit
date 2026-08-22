@@ -1,6 +1,5 @@
-use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, PhysicalPosition};
 use tauri_plugin_autostart::MacosLauncher;
 
 fn show_main(app: &AppHandle) {
@@ -9,6 +8,28 @@ fn show_main(app: &AppHandle) {
         let _ = win.unminimize();
         let _ = win.set_focus();
     }
+}
+
+fn hide_tray_menu(app: &AppHandle) {
+    if let Some(win) = app.get_webview_window("tray-menu") {
+        let _ = win.hide();
+    }
+}
+
+/// 在托盘点击位置弹出自定义菜单窗口（风格由前端渲染）
+fn show_tray_menu(app: &AppHandle, x: f64, y: f64) {
+    let Some(win) = app.get_webview_window("tray-menu") else {
+        return
+    };
+    let scale = win.scale_factor().unwrap_or(1.0);
+    let w = 216.0 * scale;
+    let h = 148.0 * scale;
+    let menu_x = (x - w / 2.0).max(8.0);
+    // 底部任务栏：菜单出现在点击点上方
+    let menu_y = (y - h - 10.0 * scale).max(8.0);
+    let _ = win.set_position(PhysicalPosition::new(menu_x as i32, menu_y as i32));
+    let _ = win.show();
+    let _ = win.set_focus();
 }
 
 /// JS 侧更新托盘：状态文案 + 今日是否已打卡（已打卡时图标整体变绿）
@@ -27,6 +48,17 @@ fn update_tray(app: AppHandle, status: String, done: bool) {
     }
 }
 
+/// 托盘菜单窗口的动作
+#[tauri::command]
+fn tray_menu(app: AppHandle, action: String) {
+    hide_tray_menu(&app);
+    match action.as_str() {
+        "open" => show_main(&app),
+        "quit" => app.exit(0),
+        _ => {}
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -36,11 +68,17 @@ pub fn run() {
             MacosLauncher::LaunchAgent,
             None,
         ))
-        .invoke_handler(tauri::generate_handler![update_tray])
+        .invoke_handler(tauri::generate_handler![update_tray, tray_menu])
         .setup(|app| {
-            let open = MenuItem::with_id(app, "open", "打开 BlockHabit", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open, &quit])?;
+            // 托盘菜单窗口：失焦即隐藏
+            if let Some(win) = app.get_webview_window("tray-menu") {
+                let w = win.clone();
+                win.on_window_event(move |e| {
+                    if let tauri::WindowEvent::Focused(false) = e {
+                        let _ = w.hide();
+                    }
+                });
+            }
 
             TrayIconBuilder::with_id("main")
                 .icon(
@@ -48,21 +86,22 @@ pub fn run() {
                         .expect("invalid tray icon"),
                 )
                 .tooltip("BlockHabit")
-                .menu(&menu)
-                .show_menu_on_left_click(false)
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "open" => show_main(app),
-                    "quit" => app.exit(0),
-                    _ => {}
-                })
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click {
-                        button: MouseButton::Left,
+                        button,
                         button_state: MouseButtonState::Up,
+                        position,
                         ..
                     } = event
                     {
-                        show_main(tray.app_handle());
+                        let app = tray.app_handle();
+                        match button {
+                            MouseButton::Left => show_main(app),
+                            MouseButton::Right => {
+                                show_tray_menu(app, position.x, position.y)
+                            }
+                            _ => {}
+                        }
                     }
                 })
                 .build(app)?;

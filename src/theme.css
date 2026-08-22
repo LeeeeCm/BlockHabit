@@ -6,6 +6,9 @@
   --line: #e8e8e8;
   --accent: #f5b301;
   --accent-ink: #0a0a0a;
+  /* 危险操作红（删除等） */
+  --danger: #e5484d;
+  --danger-ink: #ffffff;
   /* 进度三色：未完成灰 / 进行中蓝 / 已完成绿 */
   --progress-blue: #3b82f6;
   --progress-green: #22c55e;
@@ -38,12 +41,19 @@
   --ink-2: #9a9a9a;
   --line: #2b2b2b;
   --accent-ink: #0a0a0a;
+  --danger: #ff6369;
+  --danger-ink: #0a0a0a;
   --progress-blue: #4e9eff;
   --progress-green: #34d274;
   --block-top: #424242;
   --block-left: #282828;
   --block-right: #0f0f0f;
   --block-ghost: #1e1e1e;
+}
+
+html[data-win='tray-menu'] body {
+  background: transparent;
+  overflow: hidden;
 }
 
 html,

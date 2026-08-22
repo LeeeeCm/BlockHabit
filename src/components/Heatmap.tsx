@@ -1,12 +1,15 @@
 import { useMemo } from 'react'
 import type { CheckIn, Habit } from '../types'
 import { addDays, dateKey, startOfDay } from '../logic/dates'
-import { dayCompletionRatio } from '../logic/checkin'
+import { dayCompletionRatio, habitActiveOnDay, habitMetOnDay } from '../logic/checkin'
 
 interface Props {
   habits: Habit[]
   checkIns: CheckIn[]
   weeks?: number
+  /** 只看单个习惯（用于习惯统计卡）：绿=当天完成 */
+  habitId?: string
+  cell?: number
 }
 
 /** 热图单元格底色：无数据/未来透明，白(空) → 蓝(进行中) → 绿(全部完成) */
@@ -19,8 +22,20 @@ function cellColor(ratio: number, future: boolean): string {
   return `color-mix(in srgb, var(--progress-green) ${greenMix}%, var(--progress-blue))`
 }
 
-/** 日历热图：列=周，行=周一..周日；放大圆角单元格，琥珀点亮色阶 */
-export function Heatmap({ habits, checkIns, weeks = 13 }: Props) {
+/** 日历热图：列=周，行=周一..周日；圆角单元格，白→蓝→绿色阶 */
+export function Heatmap({ habits, checkIns, weeks = 13, habitId, cell }: Props) {
+  const CELL = cell ?? 19
+  const GAP = cell ? Math.max(3, Math.round(cell * 0.22)) : 5
+
+  const ratioOf = (key: string): number => {
+    if (habitId) {
+      const h = habits.find((x) => x.id === habitId)
+      if (!h || !habitActiveOnDay(h, key)) return -1
+      return habitMetOnDay(h, checkIns, key) ? 1 : 0
+    }
+    return dayCompletionRatio(habits, checkIns, key)
+  }
+
   const columns = useMemo(() => {
     const today = startOfDay(new Date())
     const thisMonday = new Date(today)
@@ -37,22 +52,19 @@ export function Heatmap({ habits, checkIns, weeks = 13 }: Props) {
         const key = dateKey(date)
         return {
           key,
-          ratio: dayCompletionRatio(habits, checkIns, key),
+          ratio: ratioOf(key),
           future: date > today,
         }
       })
       cols.push({ key: dateKey(monday), month: monthLabel, days })
     }
     return cols
-  }, [habits, checkIns, weeks])
-
-  const CELL = 22
-  const GAP = 6
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [habits, checkIns, weeks, habitId])
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <div>
-        <div style={{ display: 'flex', gap: GAP, justifyContent: 'center' }}>
+    <div>
+      <div style={{ display: 'flex', gap: GAP, justifyContent: 'center' }}>
         {columns.map((col) => (
           <div key={col.key} style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
             <div style={{ height: 16, fontSize: 10.5, color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
@@ -61,11 +73,11 @@ export function Heatmap({ habits, checkIns, weeks = 13 }: Props) {
             {col.days.map((d) => (
               <div
                 key={d.key}
-                title={`${d.key}${d.ratio >= 0 ? ` · ${Math.round(d.ratio * 100)}%` : ''}`}
+                title={`${d.key}${d.ratio >= 0 ? (habitId ? (d.ratio >= 1 ? ' · 已完成' : ' · 未完成') : ` · ${Math.round(d.ratio * 100)}%`) : ''}`}
                 style={{
                   width: CELL,
                   height: CELL,
-                  borderRadius: 6,
+                  borderRadius: Math.max(4, Math.round(CELL * 0.28)),
                   background: cellColor(d.ratio, d.future),
                   border: d.future ? 'none' : '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
                 }}
@@ -73,33 +85,6 @@ export function Heatmap({ habits, checkIns, weeks = 13 }: Props) {
             ))}
           </div>
         ))}
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-          marginTop: 14,
-          fontSize: 12,
-          color: 'var(--ink-2)',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <span>少</span>
-        {[0, 0.3, 0.55, 0.8, 1].map((r) => (
-          <span
-            key={r}
-            style={{
-              width: 18,
-              height: 18,
-              borderRadius: 6,
-              background: cellColor(r, false),
-              border: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
-            }}
-          />
-        ))}
-        <span>多</span>
-      </div>
       </div>
     </div>
   )

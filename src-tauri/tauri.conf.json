@@ -12,12 +12,27 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "BlockHabit",
         "width": 1100,
         "height": 760,
         "minWidth": 900,
         "minHeight": 600,
         "decorations": false
+      },
+      {
+        "label": "tray-menu",
+        "title": "",
+        "width": 216,
+        "height": 148,
+        "resizable": false,
+        "decorations": false,
+        "visible": false,
+        "skipTaskbar": true,
+        "alwaysOnTop": true,
+        "transparent": true,
+        "shadow": false,
+        "focus": false
       }
     ],
     "security": {

@@ -21,7 +21,8 @@ export function weekCountFor(checkIns: CheckIn[], habitId: string, day: string):
   }).length
 }
 
-function habitMetOnDay(habit: Habit, checkIns: CheckIn[], day: string): boolean {
+/** 某习惯在指定日期是否达标（日频=当天有打卡；周频=本周配额已满） */
+export function habitMetOnDay(habit: Habit, checkIns: CheckIn[], day: string): boolean {
   if (habit.frequency.type === 'daily') {
     return dayCheckInsFor(checkIns, habit.id, day).length > 0
   }

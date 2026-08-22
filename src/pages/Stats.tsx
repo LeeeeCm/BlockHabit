@@ -22,8 +22,9 @@ export default function Stats() {
   )
 
   return (
-    <div style={{ padding: '28px 24px', maxWidth: 640, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 20, margin: '0 0 18px' }}>统计</h1>
+    <div style={{ padding: '28px 24px', maxWidth: 680, margin: '0 auto' }}>
+      <h1 style={{ fontSize: 20, margin: '0 0 6px' }}>统计</h1>
+      <div style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 18 }}>近 13 周 · 每个习惯的完成记录</div>
 
       {rows.length === 0 ? (
         <div style={{ color: 'var(--ink-2)', fontSize: 14 }}>还没有习惯，先去「今日」创建。</div>
@@ -34,27 +35,26 @@ export default function Stats() {
             className="card"
             style={{
               padding: '16px 18px',
-              marginBottom: 12,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 16,
+              marginBottom: 14,
             }}
           >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15 }}>{habit.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
-                {habit.frequency.type === 'daily' ? '每天' : `每周 ${habit.frequency.times} 次`}
-              </div>
+            <div style={{ marginBottom: 14 }}>
+              <Heatmap habits={habits} checkIns={checkIns} habitId={habit.id} cell={13} weeks={13} />
             </div>
-            <Stat label="当前连击" value={current} accent={current > 0 && current % 7 === 0} />
-            <Stat label="最长连击" value={best} />
-            <Stat label="总打卡" value={total} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15 }}>{habit.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+                  {habit.frequency.type === 'daily' ? '每天' : `每周 ${habit.frequency.times} 次`}
+                </div>
+              </div>
+              <Stat label="当前连击" value={current} accent={current > 0 && current % 7 === 0} />
+              <Stat label="最长连击" value={best} />
+              <Stat label="总打卡" value={total} />
+            </div>
           </div>
         ))
       )}
-
-      <h2 style={{ fontSize: 15, margin: '26px 0 12px', color: 'var(--ink-2)', textAlign: 'center' }}>近 13 周</h2>
-      <Heatmap habits={habits} checkIns={checkIns} />
     </div>
   )
 }
@@ -66,7 +66,7 @@ function Stat({ label, value, accent = false }: { label: string; value: number; 
         style={{
           fontSize: 18,
           fontWeight: 700,
-          color: accent ? 'var(--accent)' : 'var(--ink)',
+          color: accent ? 'var(--progress-green)' : 'var(--ink)',
         }}
       >
         {value}

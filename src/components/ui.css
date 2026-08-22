@@ -339,8 +339,65 @@
   background: color-mix(in srgb, var(--ink) 8%, transparent);
 }
 .habit-card .card-action.danger:hover {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+/* 状态图标按钮（卡片左上） */
+.habit-card .status-btn {
+  border-radius: 12px;
+  transition: background 0.15s ease;
+}
+.habit-card .status-btn:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+/* 托盘右键菜单弹窗 */
+.tray-menu-root {
+  width: 100vw;
+  height: 100vh;
+  padding: 10px;
+  background: transparent;
+}
+
+.tray-menu-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 6px;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.22);
+}
+
+.tray-menu-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 6px;
+}
+
+.tray-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  border-radius: 10px;
   color: var(--ink);
-  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.tray-menu-item:hover {
+  background: var(--ink);
+  color: var(--bg);
+}
+.tray-menu-item.quit:hover {
+  background: var(--danger);
+  color: var(--danger-ink);
 }
 
 /* 中央每日打卡按钮 */

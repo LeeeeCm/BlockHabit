@@ -92,6 +92,8 @@ function planCascade(blocks: Array<{ z: number }>, count: number): CascadePlan {
 
 export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }: Props) {  const canvasRef = useRef<HTMLCanvasElement>(null)
   const viewRef = useRef({ scale: 1, panX: 0, panY: 0, fitted: false })
+  /** 用户手动拖拽/缩放后就不再自动取景 */
+  const interactedRef = useRef(false)
   const animRef = useRef<{ index: number; start: number } | null>(null)
   const cascadeRef = useRef<CascadePlan | null>(null)
   const stateRef = useRef({ blueprint, placedCount, animateIndex })
@@ -208,7 +210,7 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     }
   }, [onAnimated])
 
-  // 尺寸初始化 + 自适应居中（把地面虚线范围框完整纳入视野，避免越界）
+  // 尺寸初始化 + 自适应居中（最大化/放大窗口时重新取景，场景保持在中心偏下）
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -216,7 +218,7 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
       const dpr = window.devicePixelRatio || 1
       canvas.width = canvas.clientWidth * dpr
       canvas.height = canvas.clientHeight * dpr
-      if (!viewRef.current.fitted) fitView()
+      if (!interactedRef.current) fitView()
       draw()
     }
     const fitView = () => {
@@ -266,7 +268,8 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
       viewRef.current = {
         scale,
         panX: w / 2 - ((boundsMinX + boundsMaxX) / 2) * scale,
-        panY: h / 2 - ((boundsMinY + boundsMaxY) / 2) * scale,
+        // 中心偏下：整体下移约 6% 视口高度
+        panY: h * 0.56 - ((boundsMinY + boundsMaxY) / 2) * scale,
         fitted: true,
       }
     }
@@ -303,6 +306,7 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     }
     const onMove = (e: PointerEvent) => {
       if (!dragging) return
+      interactedRef.current = true
       const view = viewRef.current
       view.panX += e.clientX - lastX
       view.panY += e.clientY - lastY
@@ -313,6 +317,7 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     const onUp = () => (dragging = false)
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
+      interactedRef.current = true
       const view = viewRef.current
       const rect = canvas.getBoundingClientRect()
       const mx = e.clientX - rect.left

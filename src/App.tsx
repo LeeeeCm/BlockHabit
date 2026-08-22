@@ -122,8 +122,9 @@ function TitleBar({ onSettings }: { onSettings: () => void }) {
     if (!inTauri) return
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     const win = getCurrentWindow()
-    // 最小化与关闭都收进托盘，退出只走托盘菜单
-    if (action === 'min' || action === 'close') await win.hide()
+    // 最小化 → 收到任务栏；关闭 → 收进托盘（退出只走托盘菜单）
+    if (action === 'close') await win.hide()
+    else if (action === 'min') await win.minimize()
     else await win.toggleMaximize()
   }
 

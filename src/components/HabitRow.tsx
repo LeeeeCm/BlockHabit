@@ -4,7 +4,15 @@ import { useAppStore } from '../store/appStore'
 import { useTimerStore } from '../store/timerStore'
 import { canCheckIn, weekCountFor } from '../logic/checkin'
 import { ConfirmDialog } from './ConfirmDialog'
-import { IconDone, IconEdit, IconInProgress, IconMissed, IconTodo, IconTrash } from './Icons'
+import {
+  IconCancel,
+  IconDone,
+  IconEdit,
+  IconInProgress,
+  IconMissed,
+  IconTodo,
+  IconTrash,
+} from './Icons'
 
 interface Props {
   habit: Habit
@@ -126,6 +134,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <button
+          className="status-btn"
           onClick={(e) => {
             e.stopPropagation()
             handleClick()
@@ -210,8 +219,9 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
               e.stopPropagation()
               cancelTimer(habit.id)
             }}
-            style={{ fontSize: 12, width: 'auto', padding: '4px 10px', gap: 4 }}
+            style={{ fontSize: 12, width: 'auto', padding: '5px 12px', gap: 5 }}
           >
+            <IconCancel size={15} />
             放弃
           </button>
         </div>
@@ -221,41 +231,33 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
           计时完成 · 点击打卡
         </div>
       )}
-      {!session && !done && (
-        <div style={{ marginTop: 'auto', paddingTop: 10 }}>
-          {streak > 0 ? (
-            <span
-              style={{
-                fontSize: 12,
-                color: streak % 7 === 0 ? 'var(--accent-ink)' : 'var(--ink-2)',
-                background: streak % 7 === 0 ? 'var(--accent)' : 'var(--bg)',
-                border: streak % 7 === 0 ? 'none' : '1px solid var(--line)',
-                borderRadius: 999,
-                padding: '3px 11px',
-                fontWeight: streak % 7 === 0 ? 600 : 400,
-              }}
-            >
-              连续 {streak} 天
-            </span>
-          ) : (
-            <span style={{ fontSize: 11.5, color: 'var(--ink-2)', opacity: 0.6 }}>点击卡片开始专注</span>
-          )}
-        </div>
-      )}
-      {done && (
-        <div style={{ marginTop: 'auto', paddingTop: 10 }}>
+      {!session && !running && !ended && (
+        <div
+          style={{
+            marginTop: 'auto',
+            paddingTop: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+          }}
+        >
           <span
             style={{
               fontSize: 12,
-              color: 'var(--accent-ink)',
-              background: 'var(--progress-green)',
               borderRadius: 999,
               padding: '3px 11px',
               fontWeight: 600,
+              color: done ? 'var(--accent-ink)' : 'var(--ink-2)',
+              background: done ? 'var(--progress-green)' : 'var(--bg)',
+              border: done ? 'none' : '1px solid var(--line)',
             }}
           >
-            今日已完成
+            {done ? '今日已完成' : '今日未完成'}
           </span>
+          {streak > 0 && (
+            <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>已连续打卡 {streak} 天</span>
+          )}
         </div>
       )}
 

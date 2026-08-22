@@ -174,6 +174,16 @@ export function IconDayCheck(props: IconProps) {
   )
 }
 
+/** 放弃：圆头圆圈叉 */
+export function IconCancel(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M9.5 9.5l5 5M14.5 9.5l-5 5" />
+    </Svg>
+  )
+}
+
 /** 窗口控制：最小化 */
 export function IconWinMin(props: IconProps) {
   return (
