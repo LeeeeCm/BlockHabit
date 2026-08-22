@@ -59,7 +59,6 @@ export function bestStreak(habit: Habit, checkIns: CheckIn[]): number {
     let run = 1
     for (let i = 1; i < sorted.length; i++) {
       const prev = parseKey(sorted[i - 1])
-      const cur = parseKey(sorted[i])
       run = dateKey(addDays(prev, 1)) === sorted[i] ? run + 1 : 1
       if (run > best) best = run
     }

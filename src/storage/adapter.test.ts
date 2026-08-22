@@ -45,8 +45,7 @@ describe('localStorage adapter', () => {
   })
 
   it('returns null on wrong schemaVersion', async () => {
-    const s = emptyState() as AppState & { schemaVersion: number }
-    s.schemaVersion = 99
+    const s = { ...emptyState(), schemaVersion: 99 } as unknown as AppState
     localStorage.setItem(STATE_KEY, JSON.stringify(s))
     const a = createLocalStorageAdapter()
     expect(await a.load()).toBeNull()

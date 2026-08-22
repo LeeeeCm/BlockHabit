@@ -8,7 +8,7 @@ export interface StorageAdapter {
   save(state: AppState): Promise<void>
 }
 
-function isValidState(v: unknown): v is AppState {
+export function isValidState(v: unknown): v is AppState {
   if (typeof v !== 'object' || v === null) return false
   const s = v as Record<string, unknown>
   return (
