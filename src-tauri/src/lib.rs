@@ -32,19 +32,11 @@ fn show_tray_menu(app: &AppHandle, x: f64, y: f64) {
     let _ = win.set_focus();
 }
 
-/// JS 侧更新托盘：状态文案 + 今日是否已打卡（已打卡时图标整体变绿）
+/// JS 侧更新托盘状态文案（图标恒定不变，杜绝托盘图标缓存/状态粘滞问题）
 #[tauri::command]
-fn update_tray(app: AppHandle, status: String, done: bool) {
+fn update_tray(app: AppHandle, status: String) {
     if let Some(tray) = app.tray_by_id("main") {
         let _ = tray.set_tooltip(Some(format!("BlockHabit · {status}")));
-        let bytes: &[u8] = if done {
-            include_bytes!("../icons/tray-done.png")
-        } else {
-            include_bytes!("../icons/tray.png")
-        };
-        if let Ok(icon) = tauri::image::Image::from_bytes(bytes) {
-            let _ = tray.set_icon(Some(icon));
-        }
     }
 }
 

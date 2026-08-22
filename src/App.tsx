@@ -82,7 +82,7 @@ function TraySync() {
       : `今日 ${done}/${active.length} · ${bp.name} ${placed}/${bp.blocks.length}`
     void (async () => {
       const { invoke } = await import('@tauri-apps/api/core')
-      await invoke('update_tray', { status, done: claimed })
+      await invoke('update_tray', { status })
     })()
   }, [habits, checkIns, dayClaims, builds, activeBlueprintId])
 
