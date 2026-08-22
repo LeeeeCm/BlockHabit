@@ -51,6 +51,7 @@
   --block-ghost: #1e1e1e;
 }
 
+html[data-win='tray-menu'],
 html[data-win='tray-menu'] body {
   background: transparent;
   overflow: hidden;
