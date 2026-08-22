@@ -1,26 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- BlockHabit：五块积木边贴边拼成对勾（ip-as-logo 方法论：5 形状 / 3 色 / 下角构图） -->
+  <!-- BlockHabit：五块 45° 斜放积木沿对勾两臂边贴边拼成（5 形状 / 3 色 / 左下角构图） -->
   <rect width="512" height="512" rx="120" fill="#0A0A0A"/>
 
-  <!-- 网格步进 88，砖 88×88，边贴边；描边即砖缝 -->
-  <g stroke="#0A0A0A" stroke-width="6">
-    <!-- 短臂 -->
-    <rect x="36" y="256" width="88" height="88" rx="22" fill="#FAFAFA"/>
-    <!-- 顶点（左下角探出） -->
-    <rect x="124" y="344" width="88" height="88" rx="22" fill="#FAFAFA"/>
-    <!-- 长臂 -->
-    <rect x="212" y="256" width="88" height="88" rx="22" fill="#FAFAFA"/>
-    <rect x="300" y="144" width="88" height="88" rx="22" fill="#FAFAFA"/>
+  <!-- 全部砖旋转 -45°，中心间距 92（=边长），边贴边；整体居中微调 -->
+  <g transform="translate(-9 23)" stroke="#0A0A0A" stroke-width="6">
+    <!-- 短臂（向左上） -->
+    <rect x="89" y="219" width="92" height="92" rx="22" fill="#FAFAFA" transform="rotate(-45 135 265)"/>
+    <!-- 顶点（左下探出） -->
+    <rect x="154" y="284" width="92" height="92" rx="22" fill="#FAFAFA" transform="rotate(-45 200 330)"/>
+    <!-- 长臂（向右上） -->
+    <rect x="219" y="219" width="92" height="92" rx="22" fill="#FAFAFA" transform="rotate(-45 265 265)"/>
+    <rect x="284" y="154" width="92" height="92" rx="22" fill="#FAFAFA" transform="rotate(-45 330 200)"/>
     <!-- 末端：绿色完成块 -->
-    <rect x="388" y="80" width="88" height="88" rx="22" fill="#22C55E"/>
+    <rect x="349" y="89" width="92" height="92" rx="22" fill="#22C55E" transform="rotate(-45 395 135)"/>
   </g>
 
-  <!-- 俯视凸点 -->
-  <g fill="none" stroke="#0A0A0A" stroke-width="6">
-    <circle cx="80" cy="300" r="16"/>
-    <circle cx="168" cy="388" r="16"/>
-    <circle cx="256" cy="300" r="16"/>
-    <circle cx="344" cy="188" r="16"/>
-    <circle cx="432" cy="124" r="16"/>
+  <!-- 俯视凸点（与各砖同旋转、同中心） -->
+  <g transform="translate(-9 23)" fill="none" stroke="#0A0A0A" stroke-width="6">
+    <circle cx="135" cy="265" r="17" transform="rotate(-45 135 265)"/>
+    <circle cx="200" cy="330" r="17" transform="rotate(-45 200 330)"/>
+    <circle cx="265" cy="265" r="17" transform="rotate(-45 265 265)"/>
+    <circle cx="330" cy="200" r="17" transform="rotate(-45 330 200)"/>
+    <circle cx="395" cy="135" r="17" transform="rotate(-45 395 135)"/>
   </g>
 </svg>
