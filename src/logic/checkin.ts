@@ -1,5 +1,5 @@
 import type { CheckIn, Habit } from '../types'
-import { parseKey, todayKey, weekStart, dateKey } from './dates'
+import { addDays, parseKey, todayKey, weekStart, dateKey } from './dates'
 
 export type CanCheckInResult =
   | { ok: true }
@@ -71,12 +71,21 @@ export function canClaimDay(
   return { ok: true }
 }
 
-/** 某日各习惯完成比例 0~1（热图灰阶用），无习惯返回 -1 */
+/** 某习惯在指定日期是否应计入统计：当天已创建，且当天尚未归档 */
+export function habitActiveOnDay(h: Habit, day: string): boolean {
+  const d = parseKey(day)
+  const next = addDays(d, 1)
+  if (new Date(h.createdAt) >= next) return false
+  if (h.archivedAt && new Date(h.archivedAt) < d) return false
+  return true
+}
+
+/** 某日各习惯完成比例 0~1（热图用）；当天没有任何在册习惯返回 -1（无数据） */
 export function dayCompletionRatio(habits: Habit[], checkIns: CheckIn[], day: string): number {
-  const active = habits.filter((h) => !h.archivedAt)
-  if (active.length === 0) return -1
-  const met = active.filter((h) => habitMetOnDay(h, checkIns, day)).length
-  return met / active.length
+  const onThatDay = habits.filter((h) => habitActiveOnDay(h, day))
+  if (onThatDay.length === 0) return -1
+  const met = onThatDay.filter((h) => habitMetOnDay(h, checkIns, day)).length
+  return met / onThatDay.length
 }
 
 export { todayKey, dateKey }

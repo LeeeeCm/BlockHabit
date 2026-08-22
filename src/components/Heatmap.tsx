@@ -9,9 +9,9 @@ interface Props {
   weeks?: number
 }
 
-/** 热图单元格底色：白(空) → 蓝(进行中) → 绿(全部完成) */
+/** 热图单元格底色：无数据/未来透明，白(空) → 蓝(进行中) → 绿(全部完成) */
 function cellColor(ratio: number, future: boolean): string {
-  if (future) return 'transparent'
+  if (future || ratio < 0) return 'transparent'
   if (ratio >= 1) return 'var(--progress-green)'
   if (ratio <= 0) return 'var(--line)'
   // 低比例偏蓝，高比例向绿过渡
