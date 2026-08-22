@@ -49,6 +49,20 @@ export function currentStreak(habit: Habit, checkIns: CheckIn[], today: Date): n
   return streak
 }
 
+/** 连续领块天数（每日打卡领块的连击）：今日未领从昨日起算，断日清零 */
+export function dayClaimStreak(dayClaims: string[], today: Date): number {
+  const days = new Set(dayClaims)
+  if (days.size === 0) return 0
+  let streak = 0
+  let d = new Date(today)
+  if (!days.has(dateKey(d))) d = addDays(d, -1)
+  while (days.has(dateKey(d))) {
+    streak++
+    d = addDays(d, -1)
+  }
+  return streak
+}
+
 export function bestStreak(habit: Habit, checkIns: CheckIn[]): number {
   const days = ownCheckIns(habit, checkIns)
   if (days.size === 0) return 0

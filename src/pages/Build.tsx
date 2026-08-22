@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { getBlueprint, blueprints } from '../logic/blueprints'
 import { BuildScene } from '../render/BuildScene'
@@ -15,9 +15,18 @@ export default function Build() {
 
   const [animateIndex, setAnimateIndex] = useState<number | null>(null)
   const [ceremonyShown, setCeremonyShown] = useState(false)
+  const initialCount = useRef<number | null>(null)
 
   useEffect(() => {
-    if (placedCount > 0) setAnimateIndex(placedCount - 1)
+    // 首次挂载交给级联动画；只有会话内新增的块才播慢落回弹
+    if (initialCount.current === null) {
+      initialCount.current = placedCount
+      return
+    }
+    if (placedCount > initialCount.current) {
+      initialCount.current = placedCount
+      setAnimateIndex(placedCount - 1)
+    }
   }, [placedCount])
 
   const available = useMemo(

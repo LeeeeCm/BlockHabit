@@ -17,17 +17,22 @@ interface Props {
   onAnimated?: () => void
 }
 
-/** 下落总时长：慢落 + 着地压扁回弹 + 小回跳，共 ~1.3s */
+/** 新块下落：慢落 + 压扁回弹，共 ~1.3s */
 const DROP_MS = 1300
+/** 级联铺设时每块的快速下落时长 */
+const CASCADE_MS = 220
+/** 级联太频繁会烦：15s 内重复进入建造页不再重播 */
+const CASCADE_COOLDOWN = 15000
 
 const easeInCubic = (t: number) => t * t * t
 const easeOutQuad = (t: number) => 1 - (1 - t) * (1 - t)
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
 
 /**
- * 动画时间线 p∈[0,1]：
+ * 新块动画时间线 p∈[0,1]：
  * 0.00–0.50 重力加速下落（z: 7→0）
  * 0.50–0.62 着地压扁（scaleY 0.78→1, scaleX 1.16→1）
- * 0.62–0.92 回弹一小段再落下（z: sin 弧线衰减）
+ * 0.62–0.92 回弹一小段再落下
  * 0.92–1.00 静置微颤收敛
  */
 function animState(p: number): { z: number; sx: number; sy: number } {
@@ -48,10 +53,41 @@ function animState(p: number): { z: number; sx: number; sy: number } {
   return { z: 0, sx: 1 + wob, sy: 1 - wob }
 }
 
+interface CascadePlan {
+  start: number
+  cadence: number
+  /** 每块的启动时刻（ms，相对 start） */
+  starts: number[]
+}
+
+/** 逐层级联计划：上层的第一块必须等下层全部落地（层内可并行错峰） */
+function planCascade(blocks: Array<{ z: number }>, count: number): CascadePlan {
+  const cadence = Math.min(90, Math.max(28, Math.round(4200 / Math.max(1, count))))
+  const starts: number[] = []
+  let layerStart = 0
+  let layerMaxZ = blocks[0]?.z ?? 0
+  let layerEnd = 0
+  for (let i = 0; i < count; i++) {
+    const z = blocks[i].z
+    if (z !== layerMaxZ) {
+      // 新的一层：从上一层全部落地之后开始
+      layerStart = layerEnd
+      layerMaxZ = z
+    }
+    const s = layerStart + (i > 0 && blocks[i - 1].z === z ? cadence : 0)
+    starts.push(s)
+    layerEnd = Math.max(layerEnd, s + CASCADE_MS)
+  }
+  return { start: performance.now(), cadence, starts }
+}
+
+let lastCascadeAt = 0
+
 export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const viewRef = useRef({ scale: 1, panX: 0, panY: 0, fitted: false })
   const animRef = useRef<{ index: number; start: number } | null>(null)
+  const cascadeRef = useRef<CascadePlan | null>(null)
   const stateRef = useRef({ blueprint, placedCount, animateIndex })
   stateRef.current = { blueprint, placedCount, animateIndex }
 
@@ -73,34 +109,50 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     ctx.scale(view.scale, view.scale)
 
     const cfg = DEFAULT_ISO_CONFIG
-
-    // 地基范围：虚线圆角菱形（不画虚影积木）
     drawGroundBounds(ctx, bp.blocks, cfg, palette)
 
+    const now = performance.now()
     const anim = animRef.current
+    const cascade = cascadeRef.current
     let animating = false
     let a = { z: 0, sx: 1, sy: 1 }
     if (anim) {
-      const p = Math.min(1, (performance.now() - anim.start) / DROP_MS)
+      const p = Math.min(1, (now - anim.start) / DROP_MS)
       a = animState(p)
       animating = p < 1
     }
 
-    // 顶上有方块的格子不画凸点（ studs 被盖住也无妨，但省一点绘制）
     const occupied = new Set(bp.blocks.map((b) => `${b.x},${b.y},${b.z + 1}`))
-
     const cubes = bp.blocks
       .map((b, i) => ({ b, i }))
       .sort((m, n) => depth(m.b.x, m.b.y, m.b.z) - depth(n.b.x, n.b.y, n.b.z))
 
+    let cascadeRunning = false
     for (const { b, i } of cubes) {
       if (i >= pc) continue
+
+      // 级联铺设：块尚未「启动」则不画，启动后快速落下
+      if (cascade && !(anim && ai === i)) {
+        const s = cascade.starts[i]
+        const el = now - cascade.start - s
+        if (el < 0) continue
+        if (el < CASCADE_MS && cascade.starts[i] > 0) {
+          const cz = 5 * (1 - easeOutCubic(el / CASCADE_MS))
+          const { sx, sy } = worldToScreen(b.x, b.y, cz, cfg)
+          drawCube(ctx, sx, sy, cfg, palette, {
+            type: b.type,
+            noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
+          })
+          cascadeRunning = true
+          continue
+        }
+      }
+
       const isNew = anim && ai != null && i === ai && ai === pc - 1
       const z = isNew ? a.z : 0
       const { sx, sy } = worldToScreen(b.x, b.y, z, cfg)
 
       if (isNew && (a.sx !== 1 || a.sy !== 1)) {
-        // 以立方体底顶点为轴做压扁/回弹
         ctx.save()
         ctx.translate(sx, sy + cfg.tileH / 2 + cfg.blockH - z * cfg.blockH)
         ctx.scale(a.sx, a.sy)
@@ -118,14 +170,25 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
       }
     }
 
+    if (cascade) {
+      cascadeRunning =
+        cascadeRunning || now - cascade.start < cascade.starts[Math.min(pc, cascade.starts.length) - 1] + CASCADE_MS
+    }
+
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
     if (anim && animating) {
       requestAnimationFrame(draw)
     } else if (anim) {
       animRef.current = null
-      draw() // 最后一帧带高亮
+      draw()
       onAnimated?.()
+    } else if (cascadeRunning) {
+      requestAnimationFrame(draw)
+    } else if (cascade) {
+      cascadeRef.current = null
+      lastCascadeAt = Date.now()
+      draw()
     }
   }, [onAnimated])
 
@@ -169,15 +232,22 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     return () => ro.disconnect()
   }, [draw])
 
-  // 状态变化重绘；新块触发掉落动画
+  // 状态变化重绘：新块 → 慢落动画；否则进场 → 逐层级联（带冷却）
   useEffect(() => {
     if (animateIndex != null && animateIndex === placedCount - 1 && placedCount > 0) {
+      cascadeRef.current = null
       animRef.current = { index: animateIndex, start: performance.now() }
+    } else if (
+      placedCount > 0 &&
+      !animRef.current &&
+      Date.now() - lastCascadeAt > CASCADE_COOLDOWN
+    ) {
+      cascadeRef.current = planCascade(stateRef.current.blueprint.blocks, placedCount)
     }
     draw()
   }, [placedCount, animateIndex, draw])
 
-  // 交互：拖拽平移 / 滚轮缩放
+  // 交互：拖拽平移 / 滚轮缩放（点击可跳过级联）
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return

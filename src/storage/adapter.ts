@@ -22,6 +22,11 @@ export function isValidState(v: unknown): v is AppState {
   )
 }
 
+/** 旧存档缺 dayClaims 字段时补默认值 */
+export function normalizeState(s: AppState): AppState {
+  return { ...s, dayClaims: Array.isArray(s.dayClaims) ? s.dayClaims : [] }
+}
+
 export function createLocalStorageAdapter(): StorageAdapter {
   return {
     async load(): Promise<AppState | null> {
@@ -29,7 +34,7 @@ export function createLocalStorageAdapter(): StorageAdapter {
         const raw = localStorage.getItem(STATE_KEY)
         if (!raw) return null
         const parsed: unknown = JSON.parse(raw)
-        return isValidState(parsed) ? parsed : null
+        return isValidState(parsed) ? normalizeState(parsed) : null
       } catch {
         return null
       }

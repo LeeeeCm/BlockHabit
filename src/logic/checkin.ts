@@ -53,6 +53,24 @@ export function isDayComplete(habits: Habit[], checkIns: CheckIn[], day: string)
   return active.every((h) => habitMetOnDay(h, checkIns, day))
 }
 
+export type CanClaimDayResult =
+  | { ok: true }
+  | { ok: false; reason: 'no-habits' | 'incomplete' | 'already' }
+
+/** 每日打卡领块：全部任务完成且今日未领过才能领 */
+export function canClaimDay(
+  habits: Habit[],
+  checkIns: CheckIn[],
+  dayClaims: string[],
+  day: string,
+): CanClaimDayResult {
+  const active = habits.filter((h) => !h.archivedAt)
+  if (active.length === 0) return { ok: false, reason: 'no-habits' }
+  if (dayClaims.includes(day)) return { ok: false, reason: 'already' }
+  if (!active.every((h) => habitMetOnDay(h, checkIns, day))) return { ok: false, reason: 'incomplete' }
+  return { ok: true }
+}
+
 /** 某日各习惯完成比例 0~1（热图灰阶用），无习惯返回 -1 */
 export function dayCompletionRatio(habits: Habit[], checkIns: CheckIn[], day: string): number {
   const active = habits.filter((h) => !h.archivedAt)

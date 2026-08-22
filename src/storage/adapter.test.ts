@@ -11,6 +11,7 @@ function emptyState(): AppState {
     activeBlueprintId: 'castle',
     completedBlueprintIds: [],
     settings: { theme: 'light' },
+    dayClaims: [],
   }
 }
 

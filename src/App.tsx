@@ -36,7 +36,7 @@ export default function App() {
         </button>
       </header>
       <main className="content">
-        {tab === 'today' && <Today />}
+        {tab === 'today' && <Today onCelebrate={() => setTab('build')} />}
         {tab === 'build' && <Build />}
         {tab === 'stats' && <Stats />}
       </main>

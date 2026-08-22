@@ -99,6 +99,56 @@ export function IconSettings(props: IconProps) {
   )
 }
 
+/** 对勾 */
+export function IconCheck(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5.5 12.5l4.2 4.2L18.5 7.5" />
+    </Svg>
+  )
+}
+
+/** 编辑：圆头铅笔 */
+export function IconEdit(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M15.5 5.5l3 3L8 19l-4 1 1-4L15.5 5.5z" />
+      <path d="M13.8 7.2l3 3" />
+    </Svg>
+  )
+}
+
+/** 删除：圆头垃圾桶 */
+export function IconTrash(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 7h14" />
+      <path d="M9.5 7V5.5a1.5 1.5 0 011.5-1.5h2a1.5 1.5 0 011.5 1.5V7" />
+      <path d="M7 7l1 12a1.5 1.5 0 001.5 1.5h5A1.5 1.5 0 0016 19l1-12" />
+      <path d="M10.5 11v5M13.5 11v5" />
+    </Svg>
+  )
+}
+
+/** 加号 */
+export function IconPlus(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 5.5v13M5.5 12h13" />
+    </Svg>
+  )
+}
+
+/** 每日打卡：积木 + 对勾 */
+export function IconDayCheck(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="5" y="8.5" width="14" height="10.5" rx="3.2" />
+      <path d="M9 13.4l2 2 4.2-4.4" />
+    </Svg>
+  )
+}
+
 /** 必填标记：填充小圆角块 */
 export function IconRequired() {
   return (

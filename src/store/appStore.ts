@@ -1,7 +1,15 @@
 import { create } from 'zustand'
-import type { AppState, CheckIn, CheckInResult, Habit, HabitExtra, Theme } from '../types'
-import { canCheckIn } from '../logic/checkin'
-import { currentStreak } from '../logic/streak'
+import type {
+  AppState,
+  CheckIn,
+  CheckInResult,
+  ClaimDayResult,
+  Habit,
+  HabitExtra,
+  Theme,
+} from '../types'
+import { canCheckIn, canClaimDay } from '../logic/checkin'
+import { dayClaimStreak } from '../logic/streak'
 import { awardBlock, isComplete, nextSlot } from '../logic/blueprint'
 import { getBlueprint } from '../logic/blueprints'
 import { todayKey } from '../logic/dates'
@@ -22,6 +30,7 @@ function defaultState(): AppState {
     activeBlueprintId: 'castle',
     completedBlueprintIds: [],
     settings: { theme: 'light' },
+    dayClaims: [],
   }
 }
 
@@ -32,7 +41,12 @@ interface AppActions {
     patch: Partial<Pick<Habit, 'name' | 'frequency' | 'period' | 'targetMinutes' | 'note'>>,
   ): void
   archiveHabit(id: string): void
+  /** 永久删除习惯及其打卡记录 */
+  deleteHabit(id: string): void
+  /** 单个任务打卡：只记录完成，不掉积木 */
   checkIn(habitId: string): CheckInResult
+  /** 每日打卡：全部任务完成后领取一块积木 */
+  checkInDay(): ClaimDayResult
   chooseBlueprint(id: string): void
   setTheme(t: Theme): void
   exportData(): string
@@ -69,16 +83,31 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     }))
   },
 
+  deleteHabit(id) {
+    set((s) => ({
+      habits: s.habits.filter((h) => h.id !== id),
+      checkIns: s.checkIns.filter((c) => c.habitId !== id),
+    }))
+  },
+
   checkIn(habitId): CheckInResult {
-    const { habits, checkIns, builds, activeBlueprintId, completedBlueprintIds } = get()
+    const { habits, checkIns } = get()
     const day = todayKey()
     const verdict = canCheckIn(habits, checkIns, habitId, day)
     if (!verdict.ok) return { bonus: false, complete: false, reason: verdict.reason }
-
-    const habit = habits.find((h) => h.id === habitId)!
     const entry: CheckIn = { id: uid(), habitId, date: day, at: new Date().toISOString() }
-    const nextCheckIns = [...checkIns, entry]
-    const streakAfter = currentStreak(habit, nextCheckIns, new Date())
+    set({ checkIns: [...checkIns, entry] })
+    return { bonus: false, complete: false }
+  },
+
+  checkInDay(): ClaimDayResult {
+    const { habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, dayClaims } = get()
+    const day = todayKey()
+    const verdict = canClaimDay(habits, checkIns, dayClaims, day)
+    if (!verdict.ok) return { bonus: false, complete: false, reason: verdict.reason }
+
+    const nextClaims = [...dayClaims, day]
+    const streakAfter = dayClaimStreak(nextClaims, new Date())
     const bonus = awardBlock(streakAfter)
 
     const blueprint = getBlueprint(activeBlueprintId)
@@ -89,7 +118,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     let complete = false
     let nextCompleted = completedBlueprintIds
     if (slot) {
-      entry.rewardBlockIndex = placedCount
       nextBuilds = [
         ...builds,
         {
@@ -97,7 +125,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           blueprintId: activeBlueprintId,
           index: placedCount,
           placedAt: new Date().toISOString(),
-          fromHabitId: habitId,
+          fromHabitId: '__day__',
           bonus,
         },
       ]
@@ -106,12 +134,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         nextCompleted = [...completedBlueprintIds, activeBlueprintId]
       }
     } else {
-      // 当前蓝图已满（等待选择新蓝图）：打卡照常记录，不掉块
       complete = true
     }
 
     set({
-      checkIns: nextCheckIns,
+      dayClaims: nextClaims,
       builds: nextBuilds,
       completedBlueprintIds: nextCompleted,
     })
@@ -129,15 +156,23 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
   exportData() {
-    const { schemaVersion, habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, settings } = get()
-    return JSON.stringify({ schemaVersion, habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, settings }, null, 2)
+    const { schemaVersion, habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, settings, dayClaims } = get()
+    return JSON.stringify(
+      { schemaVersion, habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, settings, dayClaims },
+      null,
+      2,
+    )
   },
 
   importData(json) {
     try {
       const parsed: unknown = JSON.parse(json)
       if (!isValidState(parsed)) return false
-      set({ ...parsed, hydrated: true })
+      set({
+        ...parsed,
+        dayClaims: Array.isArray(parsed.dayClaims) ? parsed.dayClaims : [],
+        hydrated: true,
+      })
       document.documentElement.dataset.theme = parsed.settings.theme
       return true
     } catch {
@@ -165,8 +200,8 @@ export async function initPersistence(adapter: StorageAdapter): Promise<void> {
     if (!state.hydrated) return
     clearTimeout(timer)
     timer = setTimeout(() => {
-      const { schemaVersion, habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, settings } = state
-      void adapter.save({ schemaVersion, habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, settings })
+      const { schemaVersion, habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, settings, dayClaims } = state
+      void adapter.save({ schemaVersion, habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, settings, dayClaims })
     }, 300)
   })
 }

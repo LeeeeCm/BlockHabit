@@ -283,3 +283,79 @@
   border: 1px solid var(--line);
   border-radius: var(--r-md);
 }
+
+/* 今日页双列大卡片 */
+.habit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.habit-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 172px;
+  padding: 14px 14px 13px;
+  cursor: pointer;
+}
+
+.habit-card .card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  color: var(--ink-2);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.habit-card .card-action:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.habit-card .card-action.danger:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* 中央每日打卡按钮 */
+.day-check {
+  position: fixed;
+  left: 50%;
+  bottom: 88px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 34px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-size: 16px;
+  z-index: 40;
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+}
+
+.day-check.ready {
+  background: var(--ink);
+  color: var(--bg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+.day-check.ready:hover {
+  transform: translateX(-50%) translateY(-2px);
+}
+.day-check.ready:active {
+  transform: translateX(-50%) scale(0.96);
+}
+.day-check.done {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  cursor: default;
+}
+.day-check:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

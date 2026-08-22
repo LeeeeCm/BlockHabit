@@ -65,6 +65,8 @@ export interface AppState {
   activeBlueprintId: string
   completedBlueprintIds: string[]
   settings: { theme: Theme }
+  /** 每日全任务完成后领取积木的日期（YYYY-MM-DD） */
+  dayClaims: string[]
 }
 
 export interface CheckInResult {
@@ -72,4 +74,11 @@ export interface CheckInResult {
   bonus: boolean
   complete: boolean
   reason?: 'no-habit' | 'archived' | 'already' | 'weekly-full'
+}
+
+export interface ClaimDayResult {
+  placed?: BlockDef
+  bonus: boolean
+  complete: boolean
+  reason?: 'no-habits' | 'incomplete' | 'already'
 }

@@ -1,6 +1,5 @@
 import type { AppState } from '../types'
-import { SCHEMA_VERSION, type StorageAdapter } from './adapter'
-import { isValidState } from './adapter'
+import { SCHEMA_VERSION, isValidState, normalizeState, type StorageAdapter } from './adapter'
 
 const FILE_NAME = 'blockhabit.json'
 
@@ -20,7 +19,7 @@ export function createTauriStorageAdapter(): StorageAdapter {
         if (!(await exists(path))) return null
         const raw = await readTextFile(path)
         const parsed: unknown = JSON.parse(raw)
-        if (isValidState(parsed)) return parsed
+        if (isValidState(parsed)) return normalizeState(parsed)
         await backupCorrupt(path, raw)
         return null
       } catch {
