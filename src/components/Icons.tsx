@@ -1,0 +1,118 @@
+import type { CSSProperties } from 'react'
+
+/** 统一积木风图标：24 网格、圆头描边、圆润造型 */
+
+interface IconProps {
+  size?: number
+  style?: CSSProperties
+}
+
+function Svg({ size = 24, style, children }: IconProps & { children: React.ReactNode }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.9}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={style}
+      aria-hidden
+    >
+      {children}
+    </svg>
+  )
+}
+
+/** 今日：单块带凸点的积木 */
+export function IconToday(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="4.5" y="10" width="15" height="9.5" rx="3" />
+      <rect x="9.5" y="6" width="5" height="4" rx="1.6" />
+    </Svg>
+  )
+}
+
+/** 建造：叠起来的积木（塔） */
+export function IconBuild(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3.5" y="15" width="17" height="5" rx="2" />
+      <rect x="6.5" y="9" width="11" height="5" rx="2" />
+      <rect x="10" y="4.5" width="4" height="3.5" rx="1.4" />
+    </Svg>
+  )
+}
+
+/** 统计：圆头柱状图 */
+export function IconStats(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="4.5" y="13" width="4" height="6.5" rx="1.6" />
+      <rect x="10" y="8.5" width="4" height="11" rx="1.6" />
+      <rect x="15.5" y="4.5" width="4" height="15" rx="1.6" />
+    </Svg>
+  )
+}
+
+/** 待办：实线圆角方框 */
+export function IconTodo(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="5" y="5" width="14" height="14" rx="4.5" />
+    </Svg>
+  )
+}
+
+/** 已完成：填充圆角方块 + 对勾（勾用背景色，叠在 accent 填充上） */
+export function IconDone(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="5" y="5" width="14" height="14" rx="4.5" fill="currentColor" stroke="none" />
+      <path d="M9.2 12.3l2.1 2.1 4-4.4" stroke="var(--bg)" strokeWidth={2.2} />
+    </Svg>
+  )
+}
+
+/** 未完成：虚线圆角方框 + 小叉 */
+export function IconMissed(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="5" y="5" width="14" height="14" rx="4.5" strokeDasharray="3.2 2.6" />
+      <path d="M10 10l4 4M14 10l-4 4" />
+    </Svg>
+  )
+}
+
+/** 设置：圆头滑杆 */
+export function IconSettings(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 7.5h14M5 12h14M5 16.5h14" />
+      <circle cx="9.5" cy="7.5" r="2.1" fill="var(--bg)" />
+      <circle cx="15" cy="12" r="2.1" fill="var(--bg)" />
+      <circle cx="8.5" cy="16.5" r="2.1" fill="var(--bg)" />
+    </Svg>
+  )
+}
+
+/** 必填标记：填充小圆角块 */
+export function IconRequired() {
+  return (
+    <svg width="9" height="9" viewBox="0 0 9 9" aria-hidden>
+      <rect width="9" height="9" rx="2.6" fill="var(--accent)" />
+    </svg>
+  )
+}
+
+/** 选填标记：空心小圆角块 */
+export function IconOptional() {
+  return (
+    <svg width="9" height="9" viewBox="0 0 9 9" aria-hidden>
+      <rect x="1" y="1" width="7" height="7" rx="2" fill="none" stroke="var(--ink-2)" strokeWidth="1.4" />
+    </svg>
+  )
+}

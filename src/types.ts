@@ -1,9 +1,23 @@
+export type HabitPeriod = 'any' | 'morning' | 'afternoon' | 'evening'
+
 export interface Habit {
   id: string
   name: string
   frequency: { type: 'daily' } | { type: 'weekly'; times: number }
   createdAt: string
   archivedAt?: string
+  /** 选填：归属时段 */
+  period?: HabitPeriod
+  /** 选填：目标时长（分钟） */
+  targetMinutes?: number
+  /** 选填：备注 */
+  note?: string
+}
+
+export interface HabitExtra {
+  period?: HabitPeriod
+  targetMinutes?: number
+  note?: string
 }
 
 export interface CheckIn {

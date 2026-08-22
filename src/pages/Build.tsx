@@ -43,13 +43,14 @@ export default function Build() {
         <span style={{ color: 'var(--ink-2)', fontSize: 13 }}>
           {placedCount} / {total} 块
         </span>
-        <div style={{ flex: 1, height: 3, background: 'var(--line)', maxWidth: 260 }}>
+        <div style={{ flex: 1, height: 6, background: 'var(--line)', maxWidth: 260, borderRadius: 999 }}>
           <div
             style={{
               width: `${(placedCount / total) * 100}%`,
               height: '100%',
               background: complete ? 'var(--accent)' : 'var(--ink)',
-              transition: 'width 0.4s ease-out',
+              borderRadius: 999,
+              transition: 'width 0.5s cubic-bezier(0.34, 1.2, 0.64, 1)',
             }}
           />
         </div>
@@ -74,9 +75,9 @@ export default function Build() {
               lineHeight: 1.7,
             }}
           >
-            虚线是「{blueprint.name}」的蓝图。
+            虚线框是「{blueprint.name}」的地基范围。
             <br />
-            回到「今日」完成打卡，积木会一块块落下。
+            回到「今日」完成打卡，积木会一块块落进来。
           </div>
         )}
 

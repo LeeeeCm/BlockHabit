@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AppState, CheckIn, CheckInResult, Habit, Theme } from '../types'
+import type { AppState, CheckIn, CheckInResult, Habit, HabitExtra, Theme } from '../types'
 import { canCheckIn } from '../logic/checkin'
 import { currentStreak } from '../logic/streak'
 import { awardBlock, isComplete, nextSlot } from '../logic/blueprint'
@@ -26,8 +26,11 @@ function defaultState(): AppState {
 }
 
 interface AppActions {
-  addHabit(name: string, frequency: Habit['frequency']): Habit
-  updateHabit(id: string, patch: Partial<Pick<Habit, 'name' | 'frequency'>>): void
+  addHabit(name: string, frequency: Habit['frequency'], extra?: HabitExtra): Habit
+  updateHabit(
+    id: string,
+    patch: Partial<Pick<Habit, 'name' | 'frequency' | 'period' | 'targetMinutes' | 'note'>>,
+  ): void
   archiveHabit(id: string): void
   checkIn(habitId: string): CheckInResult
   chooseBlueprint(id: string): void
@@ -42,8 +45,14 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   ...defaultState(),
   hydrated: false,
 
-  addHabit(name, frequency) {
-    const habit: Habit = { id: uid(), name: name.trim(), frequency, createdAt: new Date().toISOString() }
+  addHabit(name, frequency, extra) {
+    const habit: Habit = {
+      id: uid(),
+      name: name.trim(),
+      frequency,
+      createdAt: new Date().toISOString(),
+      ...extra,
+    }
     set((s) => ({ habits: [...s.habits, habit] }))
     return habit
   },

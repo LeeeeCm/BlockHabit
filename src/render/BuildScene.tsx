@@ -1,6 +1,13 @@
 import { useEffect, useRef, useCallback } from 'react'
 import type { Blueprint } from '../types'
-import { DEFAULT_ISO_CONFIG, depth, drawCube, paletteFromDocument, worldToScreen } from './iso'
+import {
+  DEFAULT_ISO_CONFIG,
+  depth,
+  drawCube,
+  drawGroundBounds,
+  paletteFromDocument,
+  worldToScreen,
+} from './iso'
 
 interface Props {
   blueprint: Blueprint
@@ -10,16 +17,35 @@ interface Props {
   onAnimated?: () => void
 }
 
-const DROP_MS = 340
+/** 下落总时长：慢落 + 着地压扁回弹 + 小回跳，共 ~1.3s */
+const DROP_MS = 1300
 
-/** ease-out-bounce */
-function bounce(t: number): number {
-  const n1 = 7.5625
-  const d1 = 2.75
-  if (t < 1 / d1) return n1 * t * t
-  if (t < 2 / d1) return n1 * (t -= 1.5 / d1) * t + 0.75
-  if (t < 2.5 / d1) return n1 * (t -= 2.25 / d1) * t + 0.9375
-  return n1 * (t -= 2.625 / d1) * t + 0.984375
+const easeInCubic = (t: number) => t * t * t
+const easeOutQuad = (t: number) => 1 - (1 - t) * (1 - t)
+
+/**
+ * 动画时间线 p∈[0,1]：
+ * 0.00–0.50 重力加速下落（z: 7→0）
+ * 0.50–0.62 着地压扁（scaleY 0.78→1, scaleX 1.16→1）
+ * 0.62–0.92 回弹一小段再落下（z: sin 弧线衰减）
+ * 0.92–1.00 静置微颤收敛
+ */
+function animState(p: number): { z: number; sx: number; sy: number } {
+  if (p < 0.5) {
+    const t = easeInCubic(p / 0.5)
+    return { z: 7 * (1 - t), sx: 1, sy: 1 }
+  }
+  if (p < 0.62) {
+    const t = easeOutQuad((p - 0.5) / 0.12)
+    return { z: 0, sx: 1.16 - 0.16 * t, sy: 0.78 + 0.22 * t }
+  }
+  if (p < 0.92) {
+    const t = (p - 0.62) / 0.3
+    return { z: 1.05 * Math.sin(Math.PI * t) * (1 - 0.4 * t), sx: 1, sy: 1 }
+  }
+  const t = (p - 0.92) / 0.08
+  const wob = Math.sin(Math.PI * t * 2) * (1 - t) * 0.045
+  return { z: 0, sx: 1 + wob, sy: 1 - wob }
 }
 
 export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }: Props) {
@@ -46,40 +72,50 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     ctx.translate(view.panX, view.panY)
     ctx.scale(view.scale, view.scale)
 
+    const cfg = DEFAULT_ISO_CONFIG
+
+    // 地基范围：虚线圆角菱形（不画虚影积木）
+    drawGroundBounds(ctx, bp.blocks, cfg, palette)
+
     const anim = animRef.current
-    let animZ = 0
     let animating = false
+    let a = { z: 0, sx: 1, sy: 1 }
     if (anim) {
-      const t = Math.min(1, (performance.now() - anim.start) / DROP_MS)
-      animZ = (1 - bounce(t)) * 6
-      animating = t < 1
+      const p = Math.min(1, (performance.now() - anim.start) / DROP_MS)
+      a = animState(p)
+      animating = p < 1
     }
 
-    const cubes = bp.blocks.map((b, i) => ({ b, i })).sort((a, c) => depth(a.b.x, a.b.y, a.b.z) - depth(c.b.x, c.b.y, c.b.z))
+    // 顶上有方块的格子不画凸点（ studs 被盖住也无妨，但省一点绘制）
+    const occupied = new Set(bp.blocks.map((b) => `${b.x},${b.y},${b.z + 1}`))
+
+    const cubes = bp.blocks
+      .map((b, i) => ({ b, i }))
+      .sort((m, n) => depth(m.b.x, m.b.y, m.b.z) - depth(n.b.x, n.b.y, n.b.z))
 
     for (const { b, i } of cubes) {
-      const placed = i < pc
-      if (!placed) continue
+      if (i >= pc) continue
       const isNew = anim && ai != null && i === ai && ai === pc - 1
-      const z = isNew ? b.z + animZ : b.z
-      const { sx, sy } = worldToScreen(b.x, b.y, z, DEFAULT_ISO_CONFIG)
-      drawCube(ctx, sx, sy, DEFAULT_ISO_CONFIG, palette, {
-        type: b.type,
-        ghost: false,
-        highlight: Boolean(isNew && animating === false),
-      })
-    }
+      const z = isNew ? a.z : 0
+      const { sx, sy } = worldToScreen(b.x, b.y, z, cfg)
 
-    // 未放置的虚影（只画已放置块附近的后续块，避免满屏虚线）
-    const ghostFrom = pc
-    const ghostTo = Math.min(bp.blocks.length, pc + 60)
-    const ghosts = bp.blocks
-      .slice(ghostFrom, ghostTo)
-      .map((b, k) => ({ b, i: ghostFrom + k }))
-      .sort((a, c) => depth(a.b.x, a.b.y, a.b.z) - depth(c.b.x, c.b.y, c.b.z))
-    for (const { b } of ghosts) {
-      const { sx, sy } = worldToScreen(b.x, b.y, b.z, DEFAULT_ISO_CONFIG)
-      drawCube(ctx, sx, sy, DEFAULT_ISO_CONFIG, palette, { type: 'basic', ghost: true })
+      if (isNew && (a.sx !== 1 || a.sy !== 1)) {
+        // 以立方体底顶点为轴做压扁/回弹
+        ctx.save()
+        ctx.translate(sx, sy + cfg.tileH / 2 + cfg.blockH - z * cfg.blockH)
+        ctx.scale(a.sx, a.sy)
+        drawCube(ctx, 0, -(cfg.tileH / 2 + cfg.blockH), cfg, palette, {
+          type: b.type,
+          noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
+        })
+        ctx.restore()
+      } else {
+        drawCube(ctx, sx, sy, cfg, palette, {
+          type: b.type,
+          noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
+          highlight: Boolean(isNew && !animating),
+        })
+      }
     }
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
@@ -88,6 +124,7 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
       requestAnimationFrame(draw)
     } else if (anim) {
       animRef.current = null
+      draw() // 最后一帧带高亮
       onAnimated?.()
     }
   }, [onAnimated])

@@ -31,9 +31,9 @@ export default function Stats() {
         rows.map(({ habit, current, best, total }) => (
           <div
             key={habit.id}
+            className="card"
             style={{
-              border: '1px solid var(--line)',
-              padding: '14px 16px',
+              padding: '16px 18px',
               marginBottom: 12,
               display: 'flex',
               alignItems: 'center',
