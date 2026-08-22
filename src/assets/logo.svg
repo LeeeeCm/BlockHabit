@@ -1,32 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- BlockHabit 应用图标：俯视角乐高积木拼成的对勾（圆角底） -->
+  <!-- BlockHabit：1×1 白积木 + 2×1 绿积木在顶点咬合成对勾（Block × Habit） -->
   <rect width="512" height="512" rx="120" fill="#0A0A0A"/>
 
-  <!-- 对勾积木（俯视角，微微倾斜）：短线臂 2 块 + 长线臂 3 块，末端为绿色「完成」块 -->
-  <g transform="rotate(-3 256 256)" fill="#FAFAFA">
-    <!-- 短线臂 -->
-    <g>
-      <rect x="150" y="261" width="64" height="64" rx="20"/>
-      <circle cx="182" cy="293" r="13.5" fill="none" stroke="#0A0A0A" stroke-width="5"/>
-    </g>
-    <!-- 顶点块 -->
-    <g>
-      <rect x="224" y="335" width="64" height="64" rx="20"/>
-      <circle cx="256" cy="367" r="13.5" fill="none" stroke="#0A0A0A" stroke-width="5"/>
-    </g>
-    <!-- 长线臂 -->
-    <g>
-      <rect x="298" y="261" width="64" height="64" rx="20"/>
-      <circle cx="330" cy="293" r="13.5" fill="none" stroke="#0A0A0A" stroke-width="5"/>
-    </g>
-    <g>
-      <rect x="372" y="187" width="64" height="64" rx="20"/>
-      <circle cx="404" cy="219" r="13.5" fill="none" stroke="#0A0A0A" stroke-width="5"/>
-    </g>
-    <!-- 末端：绿色完成块 -->
-    <g>
-      <rect x="446" y="113" width="64" height="64" rx="20" fill="#22C55E"/>
-      <circle cx="478" cy="145" r="13.5" fill="none" stroke="#0A0A0A" stroke-width="5"/>
-    </g>
+  <!-- 对勾顶点 V=(196,316)；长臂沿 (+1,-1) 方向，短臂沿 (-1,-1) 方向 -->
+
+  <!-- 长臂：2×1 绿积木（双凸点），中心过 V+78·(1,-1)，与短臂在 V 处重叠咬合 -->
+  <g transform="rotate(-45 296 220)">
+    <rect x="188" y="172" width="216" height="96" rx="34" fill="#22C55E"/>
+    <circle cx="248" cy="220" r="19" fill="none" stroke="#0A0A0A" stroke-width="7"/>
+    <circle cx="344" cy="220" r="19" fill="none" stroke="#0A0A0A" stroke-width="7"/>
+  </g>
+
+  <!-- 短臂：1×1 白积木（单凸点），中心 V-52·(1,-1)，旋转 45° 使对角线沿短臂方向 -->
+  <g transform="rotate(45 159 277)">
+    <rect x="105" y="223" width="108" height="108" rx="32" fill="#FAFAFA"/>
+    <circle cx="159" cy="277" r="19" fill="none" stroke="#0A0A0A" stroke-width="7"/>
   </g>
 </svg>
