@@ -6,6 +6,9 @@
   --line: #e8e8e8;
   --accent: #f5b301;
   --accent-ink: #0a0a0a;
+  /* 进度三色：未完成灰 / 进行中蓝 / 已完成绿 */
+  --progress-blue: #3b82f6;
+  --progress-green: #22c55e;
   /* 等距积木三面（亮色） */
   --block-top: #efefef;
   --block-left: #c4c4c4;
@@ -35,6 +38,8 @@
   --ink-2: #9a9a9a;
   --line: #2b2b2b;
   --accent-ink: #0a0a0a;
+  --progress-blue: #4e9eff;
+  --progress-green: #34d274;
   --block-top: #3d3d3d;
   --block-left: #262626;
   --block-right: #121212;

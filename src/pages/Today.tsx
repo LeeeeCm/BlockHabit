@@ -6,16 +6,17 @@ import { currentStreak } from '../logic/streak'
 import { getBlueprint } from '../logic/blueprints'
 import { HabitRow } from '../components/HabitRow'
 import { HabitDialog } from '../components/HabitDialog'
-import { IconCheck, IconDayCheck, IconPlus } from '../components/Icons'
+import { IconCheck, IconDayCheck, IconPlus, IconRestore, IconTrash } from '../components/Icons'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 
-const PERIOD_ORDER: HabitPeriod[] = ['morning', 'afternoon', 'evening', 'any']
+// 自上而下：任意 → 早晨 → 午后 → 夜晚
+const PERIOD_ORDER: HabitPeriod[] = ['any', 'morning', 'afternoon', 'evening']
 const PERIOD_TITLE: Record<HabitPeriod, string> = {
+  any: '任意时段',
   morning: '早晨',
   afternoon: '午后',
   evening: '夜晚',
-  any: '任意时段',
 }
 
 interface Props {
@@ -29,13 +30,17 @@ export default function Today({ onCelebrate }: Props) {
   const activeBlueprintId = useAppStore((s) => s.activeBlueprintId)
   const dayClaims = useAppStore((s) => s.dayClaims)
   const checkInDay = useAppStore((s) => s.checkInDay)
+  const restoreHabit = useAppStore((s) => s.restoreHabit)
+  const deleteHabit = useAppStore((s) => s.deleteHabit)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Habit | null>(null)
   const [toast, setToast] = useState<{ text: string; accent?: boolean } | null>(null)
+  const [showArchive, setShowArchive] = useState(false)
 
   const day = todayKey()
   const now = new Date()
   const active = habits.filter((h) => !h.archivedAt)
+  const archived = habits.filter((h) => h.archivedAt)
   const blueprint = getBlueprint(activeBlueprintId)
   const placedCount = builds.filter((b) => b.blueprintId === activeBlueprintId).length
 
@@ -159,6 +164,45 @@ export default function Today({ onCelebrate }: Props) {
         {claimed ? <IconCheck size={20} /> : <IconDayCheck size={22} />}
         {claimed ? '已打卡' : allDone ? '打卡' : `还差 ${active.length - doneCount} 个任务`}
       </button>
+
+      {archived.length > 0 && (
+        <section style={{ maxWidth: 720, margin: '28px auto 0', padding: '0 24px' }}>
+          <button
+            className="archive-toggle"
+            onClick={() => setShowArchive((v) => !v)}
+            title={showArchive ? '收起' : '展开'}
+          >
+            <span>已归档 · {archived.length}</span>
+            <span style={{ fontSize: 11 }}>{showArchive ? '收起 ▴' : '展开 ▾'}</span>
+          </button>
+          {showArchive && (
+            <div className="archive-list">
+              {archived.map((h) => (
+                <div key={h.id} className="archive-row">
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, color: 'var(--ink-2)' }}>{h.name}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-2)', opacity: 0.7 }}>
+                      {h.frequency.type === 'daily' ? '每天' : `每周 ${h.frequency.times} 次`}
+                      {h.targetMinutes ? ` · ${h.targetMinutes} 分钟` : ''}
+                    </div>
+                  </div>
+                  <button className="archive-act" title="恢复到今日列表" onClick={() => restoreHabit(h.id)}>
+                    <IconRestore size={16} />
+                    恢复
+                  </button>
+                  <button
+                    className="archive-act"
+                    title="彻底删除"
+                    onClick={() => deleteHabit(h.id)}
+                  >
+                    <IconTrash size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {dialogOpen && (
         <HabitDialog

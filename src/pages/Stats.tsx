@@ -53,7 +53,7 @@ export default function Stats() {
         ))
       )}
 
-      <h2 style={{ fontSize: 15, margin: '26px 0 12px', color: 'var(--ink-2)' }}>近 13 周</h2>
+      <h2 style={{ fontSize: 15, margin: '26px 0 12px', color: 'var(--ink-2)', textAlign: 'center' }}>近 13 周</h2>
       <Heatmap habits={habits} checkIns={checkIns} />
     </div>
   )

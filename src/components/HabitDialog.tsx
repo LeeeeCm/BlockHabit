@@ -51,16 +51,19 @@ export function HabitDialog({ habit, onClose }: Props) {
   const [note, setNote] = useState(habit?.note ?? '')
 
   const editing = Boolean(habit)
+  const minutesValid = (() => {
+    const m = parseInt(minutes, 10)
+    return Number.isFinite(m) && m >= 1 && m <= 480
+  })()
 
   function save() {
     const trimmed = name.trim()
-    if (!trimmed) return
+    if (!trimmed || !minutesValid) return
     const frequency =
       freqType === 'daily' ? ({ type: 'daily' } as const) : ({ type: 'weekly', times } as const)
-    const m = parseInt(minutes, 10)
     const extra = {
       period,
-      targetMinutes: Number.isFinite(m) && m > 0 ? m : undefined,
+      targetMinutes: parseInt(minutes, 10),
       note: note.trim() || undefined,
     }
     if (editing && habit) {
@@ -125,7 +128,7 @@ export function HabitDialog({ habit, onClose }: Props) {
         </div>
 
         <div className="field">
-          <FieldLabel>目标时长</FieldLabel>
+          <FieldLabel required>目标时长</FieldLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <input
               type="number"
@@ -134,7 +137,7 @@ export function HabitDialog({ habit, onClose }: Props) {
               value={minutes}
               placeholder="25"
               onChange={(e) => setMinutes(e.target.value)}
-              style={{ width: 100 }}
+              style={{ width: 110 }}
             />
             <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>分钟</span>
           </div>
@@ -164,7 +167,7 @@ export function HabitDialog({ habit, onClose }: Props) {
           <button className="btn ghost" onClick={onClose}>
             取消
           </button>
-          <button className="btn primary" disabled={!name.trim()} onClick={save}>
+          <button className="btn primary" disabled={!name.trim() || !minutesValid} onClick={save}>
             保存
           </button>
         </div>

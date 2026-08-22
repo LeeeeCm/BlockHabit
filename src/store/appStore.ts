@@ -43,6 +43,8 @@ interface AppActions {
   archiveHabit(id: string): void
   /** 永久删除习惯及其打卡记录 */
   deleteHabit(id: string): void
+  /** 恢复归档的习惯 */
+  restoreHabit(id: string): void
   /** 单个任务打卡：只记录完成，不掉积木 */
   checkIn(habitId: string): CheckInResult
   /** 每日打卡：全部任务完成后领取一块积木 */
@@ -80,6 +82,12 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       habits: s.habits.map((h) =>
         h.id === id && !h.archivedAt ? { ...h, archivedAt: new Date().toISOString() } : h,
       ),
+    }))
+  },
+
+  restoreHabit(id) {
+    set((s) => ({
+      habits: s.habits.map((h) => (h.id === id ? { ...h, archivedAt: undefined } : h)),
     }))
   },
 

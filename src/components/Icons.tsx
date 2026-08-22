@@ -108,6 +108,26 @@ export function IconCheck(props: IconProps) {
   )
 }
 
+/** 进行中：圆角方框 + 内部半填充小方块 */
+export function IconInProgress(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="5" y="5" width="14" height="14" rx="4.5" />
+      <rect x="9.5" y="9.5" width="5" height="5" rx="1.8" fill="currentColor" stroke="none" />
+    </Svg>
+  )
+}
+
+/** 恢复：圆头回转箭头 */
+export function IconRestore(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5.5 9.5a7 7 0 117 7" />
+      <path d="M5.5 5v4.5H10" />
+    </Svg>
+  )
+}
+
 /** 编辑：圆头铅笔 */
 export function IconEdit(props: IconProps) {
   return (

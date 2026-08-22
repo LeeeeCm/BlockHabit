@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { CheckInResult, Habit } from '../types'
 import { useAppStore } from '../store/appStore'
 import { weekCountFor } from '../logic/checkin'
-import { IconDone, IconEdit, IconMissed, IconTodo, IconTrash } from './Icons'
+import { IconDone, IconEdit, IconInProgress, IconMissed, IconTodo, IconTrash } from './Icons'
 
 interface Props {
   habit: Habit
@@ -39,6 +39,9 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
   const [confirming, setConfirming] = useState(false)
 
   const missed = !done && weekMissed(habit, checkIns, day)
+  const weekDone =
+    habit.frequency.type === 'weekly' && weekCountFor(checkIns, habit.id, day) > 0
+  const inProgress = !done && !missed && weekDone
 
   const freqLabel =
     habit.frequency.type === 'daily' ? '每天' : `每周 ${habit.frequency.times} 次`
@@ -69,9 +72,9 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
     <div
       className="card habit-card"
       style={{
-        opacity: done ? 0.92 : 1,
-        borderColor: done ? 'color-mix(in srgb, var(--accent) 55%, var(--line))' : undefined,
-        background: done ? 'color-mix(in srgb, var(--accent) 7%, var(--surface))' : undefined,
+        opacity: done ? 0.95 : 1,
+        borderColor: done ? 'color-mix(in srgb, var(--progress-green) 55%, var(--line))' : undefined,
+        background: done ? 'color-mix(in srgb, var(--progress-green) 7%, var(--surface))' : undefined,
         transition: 'transform 0.16s ease, background 0.2s ease, border-color 0.2s ease',
       }}
       onClick={(e) => {
@@ -87,11 +90,15 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
             e.stopPropagation()
             handleClick()
           }}
-          title={done ? '已完成' : missed ? '本周已无法达标' : '标记完成'}
+          title={done ? '已完成' : missed ? '本周已无法达标' : inProgress ? '进行中' : '未完成'}
           style={{
-            width: 34,
-            height: 34,
-            color: done ? 'var(--accent)' : 'var(--ink-2)',
+            width: 40,
+            height: 40,
+            color: done
+              ? 'var(--progress-green)'
+              : inProgress
+                ? 'var(--progress-blue)'
+                : 'var(--ink-2)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -99,7 +106,15 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
             transform: pulse ? 'scale(1.25) rotate(90deg)' : 'scale(1) rotate(0deg)',
           }}
         >
-          {done ? <IconDone size={30} /> : missed ? <IconMissed size={30} /> : <IconTodo size={30} />}
+          {done ? (
+            <IconDone size={36} />
+          ) : missed ? (
+            <IconMissed size={36} />
+          ) : inProgress ? (
+            <IconInProgress size={36} />
+          ) : (
+            <IconTodo size={36} />
+          )}
         </button>
 
         <div style={{ display: 'flex', gap: 2 }}>
@@ -111,7 +126,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
               onEdit?.()
             }}
           >
-            <IconEdit size={17} />
+            <IconEdit size={20} />
           </button>
           <button
             className="card-action danger"
@@ -119,7 +134,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
             onClick={handleDelete}
             style={confirming ? { color: 'var(--accent-ink)', background: 'var(--accent)' } : undefined}
           >
-            {confirming ? <span style={{ fontSize: 12, fontWeight: 600 }}>确认?</span> : <IconTrash size={17} />}
+            {confirming ? <span style={{ fontSize: 12.5, fontWeight: 600 }}>确认?</span> : <IconTrash size={20} />}
           </button>
         </div>
       </div>

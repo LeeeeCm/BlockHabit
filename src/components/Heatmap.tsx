@@ -9,13 +9,14 @@ interface Props {
   weeks?: number
 }
 
-/** 热图单元格底色：0=线条灰，>0 按比例点亮琥珀，1=满亮 */
+/** 热图单元格底色：白(空) → 蓝(进行中) → 绿(全部完成) */
 function cellColor(ratio: number, future: boolean): string {
   if (future) return 'transparent'
-  if (ratio >= 1) return 'var(--accent)'
+  if (ratio >= 1) return 'var(--progress-green)'
   if (ratio <= 0) return 'var(--line)'
-  const pct = Math.round(30 + ratio * 55)
-  return `color-mix(in srgb, var(--accent) ${pct}%, var(--bg))`
+  // 低比例偏蓝，高比例向绿过渡
+  const greenMix = Math.round(ratio * 85)
+  return `color-mix(in srgb, var(--progress-green) ${greenMix}%, var(--progress-blue))`
 }
 
 /** 日历热图：列=周，行=周一..周日；放大圆角单元格，琥珀点亮色阶 */
@@ -45,12 +46,13 @@ export function Heatmap({ habits, checkIns, weeks = 13 }: Props) {
     return cols
   }, [habits, checkIns, weeks])
 
-  const CELL = 19
-  const GAP = 5
+  const CELL = 22
+  const GAP = 6
 
   return (
-    <div>
-      <div style={{ display: 'flex', gap: GAP }}>
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div>
+        <div style={{ display: 'flex', gap: GAP, justifyContent: 'center' }}>
         {columns.map((col) => (
           <div key={col.key} style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
             <div style={{ height: 16, fontSize: 10.5, color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
@@ -80,22 +82,24 @@ export function Heatmap({ habits, checkIns, weeks = 13 }: Props) {
           fontSize: 12,
           color: 'var(--ink-2)',
           alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <span>少</span>
-        {[0, 0.33, 0.66, 1].map((r) => (
+        {[0, 0.3, 0.55, 0.8, 1].map((r) => (
           <span
             key={r}
             style={{
-              width: 16,
-              height: 16,
-              borderRadius: 5,
+              width: 18,
+              height: 18,
+              borderRadius: 6,
               background: cellColor(r, false),
               border: '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
             }}
           />
         ))}
         <span>多</span>
+      </div>
       </div>
     </div>
   )
