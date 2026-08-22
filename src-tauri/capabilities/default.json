@@ -11,6 +11,9 @@
     "core:window:allow-is-maximized",
     "core:window:allow-close",
     "core:window:allow-start-dragging",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled",
     "fs:allow-appdata-read-recursive",
     "fs:allow-appdata-write-recursive",
     {

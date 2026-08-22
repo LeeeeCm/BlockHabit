@@ -1,5 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
+
+const inTauri =
+  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 interface Props {
   onClose: () => void
@@ -12,6 +15,24 @@ export function SettingsDialog({ onClose }: Props) {
   const importData = useAppStore((s) => s.importData)
   const fileRef = useRef<HTMLInputElement>(null)
   const [msg, setMsg] = useState<string | null>(null)
+  const [autostart, setAutostart] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    if (!inTauri) return
+    void (async () => {
+      const { isEnabled } = await import('@tauri-apps/plugin-autostart')
+      setAutostart(await isEnabled())
+    })()
+  }, [])
+
+  async function toggleAutostart() {
+    if (!inTauri) return
+    const { enable, disable } = await import('@tauri-apps/plugin-autostart')
+    const next = !(autostart ?? false)
+    if (next) await enable()
+    else await disable()
+    setAutostart(next)
+  }
 
   function doExport() {
     const blob = new Blob([exportData()], { type: 'application/json' })
@@ -46,6 +67,20 @@ export function SettingsDialog({ onClose }: Props) {
             </button>
           </div>
         </div>
+
+        {inTauri && (
+          <div className="field">
+            <label>开机自启（常驻托盘）</label>
+            <div className="seg">
+              <button className={autostart === false ? 'active' : ''} disabled={autostart === null} onClick={() => void toggleAutostart()}>
+                关闭
+              </button>
+              <button className={autostart === true ? 'active' : ''} disabled={autostart === null} onClick={() => void toggleAutostart()}>
+                开启
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="field">
           <label>数据（本地保存）</label>
