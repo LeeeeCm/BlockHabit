@@ -1,26 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- BlockHabit 应用图标：圆角积木小城堡 + 琥珀旗（墨黑/纸白/琥珀） -->
+  <!-- BlockHabit 应用图标：一块积木 + 一个对勾（墨黑/纸白/琥珀） -->
   <rect width="512" height="512" fill="#0A0A0A"/>
 
-  <!-- 底排两块积木 -->
-  <rect x="96" y="298" width="150" height="100" rx="30" fill="#FAFAFA"/>
-  <rect x="266" y="298" width="150" height="100" rx="30" fill="#FAFAFA"/>
-  <!-- 顶排居中塔块 -->
-  <rect x="181" y="194" width="150" height="100" rx="30" fill="#FAFAFA"/>
-
-  <!-- 凸点 -->
-  <rect x="146" y="282" width="50" height="24" rx="12" fill="#FAFAFA"/>
-  <rect x="316" y="282" width="50" height="24" rx="12" fill="#FAFAFA"/>
-  <rect x="196" y="178" width="34" height="20" rx="10" fill="#FAFAFA"/>
-  <rect x="282" y="178" width="34" height="20" rx="10" fill="#FAFAFA"/>
-
-  <!-- 旗杆 + 琥珀旗 -->
-  <rect x="249" y="92" width="14" height="96" rx="7" fill="#FAFAFA"/>
-  <path d="M263 100 h74 a14 14 0 0 1 0 44 h-74 z" fill="#F5B301"/>
-
-  <!-- 脸 -->
-  <circle cx="222" cy="238" r="11" fill="#0A0A0A"/>
-  <circle cx="290" cy="238" r="11" fill="#0A0A0A"/>
-  <circle cx="204" cy="262" r="9" fill="#F5B301"/>
-  <circle cx="308" cy="262" r="9" fill="#F5B301"/>
+  <!-- 微微倾斜的积木主体 -->
+  <g transform="rotate(-6 256 280)">
+    <!-- 琥珀凸点（乐高 stud） -->
+    <rect x="201" y="140" width="110" height="48" rx="24" fill="#F5B301"/>
+    <!-- 纸白砖体 -->
+    <rect x="116" y="172" width="280" height="216" rx="56" fill="#FAFAFA"/>
+    <!-- 负形对勾：打卡完成 -->
+    <path d="M186 288 L238 342 L330 232"
+          fill="none" stroke="#0A0A0A" stroke-width="38"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>
