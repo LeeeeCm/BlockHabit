@@ -6,6 +6,7 @@ import { currentStreak } from '../logic/streak'
 import { getBlueprint } from '../logic/blueprints'
 import { HabitRow } from '../components/HabitRow'
 import { HabitDialog } from '../components/HabitDialog'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { IconCheck, IconDayCheck, IconPlus, IconRestore, IconTrash } from '../components/Icons'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
@@ -36,6 +37,7 @@ export default function Today({ onCelebrate }: Props) {
   const [editing, setEditing] = useState<Habit | null>(null)
   const [toast, setToast] = useState<{ text: string; accent?: boolean } | null>(null)
   const [showArchive, setShowArchive] = useState(false)
+  const [archDelete, setArchDelete] = useState<Habit | null>(null)
 
   const day = todayKey()
   const now = new Date()
@@ -193,12 +195,31 @@ export default function Today({ onCelebrate }: Props) {
                   <button
                     className="archive-act"
                     title="彻底删除"
-                    onClick={() => deleteHabit(h.id)}
+                    onClick={() => setArchDelete(h)}
                   >
                     <IconTrash size={16} />
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+          {archDelete && (
+            <div style={{ marginTop: 8 }}>
+              <ConfirmDialog
+                title="删除习惯"
+                message={
+                  <>
+                    确定要删除「<b>{archDelete.name}</b>」吗？
+                    <br />
+                    它的打卡记录将一并删除，此操作不可恢复。
+                  </>
+                }
+                onCancel={() => setArchDelete(null)}
+                onConfirm={() => {
+                  deleteHabit(archDelete.id)
+                  setArchDelete(null)
+                }}
+              />
             </div>
           )}
         </section>

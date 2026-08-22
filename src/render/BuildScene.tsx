@@ -28,7 +28,6 @@ const CASCADE_FALL_FRAC = 0.53
 const LAYER_STAGGER = 14
 /** 下一层在前一层落地、回弹进行到该比例后开始下落 */
 const LAYER_OVERLAP = 0.55
-const CASCADE_COOLDOWN = 10000
 
 const easeInCubic = (t: number) => t * t * t
 
@@ -91,10 +90,7 @@ function planCascade(blocks: Array<{ z: number }>, count: number): CascadePlan {
   return { start: performance.now(), starts, total }
 }
 
-let lastCascadeAt = 0
-
-export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }: Props) {  const canvasRef = useRef<HTMLCanvasElement>(null)
   const viewRef = useRef({ scale: 1, panX: 0, panY: 0, fitted: false })
   const animRef = useRef<{ index: number; start: number } | null>(null)
   const cascadeRef = useRef<CascadePlan | null>(null)
@@ -208,7 +204,6 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
       requestAnimationFrame(draw)
     } else if (cascade) {
       cascadeRef.current = null
-      lastCascadeAt = Date.now()
       draw()
     }
   }, [onAnimated])
@@ -281,16 +276,12 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     return () => ro.disconnect()
   }, [draw])
 
-  // 状态变化重绘：新块 → 慢落果冻；否则进场 → 逐层级联（带冷却）
+  // 状态变化重绘：新块 → 慢落果冻；每次进入建造页 → 逐层级联
   useEffect(() => {
     if (animateIndex != null && animateIndex === placedCount - 1 && placedCount > 0) {
       cascadeRef.current = null
       animRef.current = { index: animateIndex, start: performance.now() }
-    } else if (
-      placedCount > 0 &&
-      !animRef.current &&
-      Date.now() - lastCascadeAt > CASCADE_COOLDOWN
-    ) {
+    } else if (placedCount > 0 && !animRef.current) {
       cascadeRef.current = planCascade(stateRef.current.blueprint.blocks, placedCount)
     }
     draw()

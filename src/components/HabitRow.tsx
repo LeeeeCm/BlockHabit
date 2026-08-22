@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { CheckInResult, Habit } from '../types'
 import { useAppStore } from '../store/appStore'
-import { weekCountFor } from '../logic/checkin'
+import { useTimerStore } from '../store/timerStore'
+import { canCheckIn, weekCountFor } from '../logic/checkin'
+import { ConfirmDialog } from './ConfirmDialog'
 import { IconDone, IconEdit, IconInProgress, IconMissed, IconTodo, IconTrash } from './Icons'
 
 interface Props {
@@ -30,18 +32,40 @@ function weekMissed(habit: Habit, checkIns: import('../types').CheckIn[], day: s
   return need > daysLeft
 }
 
-/** 双列大卡片：单击打卡，右上角编辑 / 删除（删除需二次确认） */
+function fmtRemaining(ms: number): string {
+  const s = Math.max(0, Math.ceil(ms / 1000))
+  const m = Math.floor(s / 60)
+  return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+}
+
+/**
+ * 双列大卡片：
+ * 点击未完成卡片 → 开始倒计时（蓝色/进行中）；倒计时到点 → 提醒后再次点击 → 真正打卡（绿色）。
+ */
 export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
   const checkIn = useAppStore((s) => s.checkIn)
   const deleteHabit = useAppStore((s) => s.deleteHabit)
+  const habits = useAppStore((s) => s.habits)
   const checkIns = useAppStore((s) => s.checkIns)
+  const session = useTimerStore((s) => s.sessions[habit.id])
+  const startTimer = useTimerStore((s) => s.start)
+  const cancelTimer = useTimerStore((s) => s.cancel)
+
   const [pulse, setPulse] = useState(false)
-  const [confirming, setConfirming] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [now, setNow] = useState(Date.now())
+
+  // 倒计时进行中每半秒刷新
+  useEffect(() => {
+    if (!session) return
+    const t = setInterval(() => setNow(Date.now()), 500)
+    return () => clearInterval(t)
+  }, [session])
 
   const missed = !done && weekMissed(habit, checkIns, day)
-  const weekDone =
-    habit.frequency.type === 'weekly' && weekCountFor(checkIns, habit.id, day) > 0
-  const inProgress = !done && !missed && weekDone
+  const targetMs = (habit.targetMinutes ?? 25) * 60_000
+  const running = !!session && !done && now - session.startedAt < targetMs
+  const ended = !!session && !done && now - session.startedAt >= targetMs
 
   const freqLabel =
     habit.frequency.type === 'daily' ? '每天' : `每周 ${habit.frequency.times} 次`
@@ -50,31 +74,47 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
     .join(' · ')
 
   function handleClick() {
-    const res = checkIn(habit.id)
-    if (res.reason === undefined) {
-      setPulse(true)
-      setTimeout(() => setPulse(false), 300)
-    }
-    onCheck?.(res)
-  }
-
-  function handleDelete(e: React.MouseEvent) {
-    e.stopPropagation()
-    if (!confirming) {
-      setConfirming(true)
-      setTimeout(() => setConfirming(false), 2600)
+    if (done || running) return
+    if (ended) {
+      // 倒计时已到：这次点击才真正打卡
+      const res = checkIn(habit.id)
+      cancelTimer(habit.id)
+      if (res.reason === undefined) {
+        setPulse(true)
+        setTimeout(() => setPulse(false), 300)
+      }
+      onCheck?.(res)
       return
     }
-    deleteHabit(habit.id)
+    // 未开始：启动倒计时（今天已打卡/周频已满则不启动）
+    const verdict = canCheckIn(habits, checkIns, habit.id, day)
+    if (!verdict.ok) return
+    startTimer(habit.id, targetMs)
+    setPulse(true)
+    setTimeout(() => setPulse(false), 300)
   }
+
+  const statusColor = done
+    ? 'var(--progress-green)'
+    : running || ended
+      ? 'var(--progress-blue)'
+      : 'var(--ink-2)'
 
   return (
     <div
       className="card habit-card"
       style={{
         opacity: done ? 0.95 : 1,
-        borderColor: done ? 'color-mix(in srgb, var(--progress-green) 55%, var(--line))' : undefined,
-        background: done ? 'color-mix(in srgb, var(--progress-green) 7%, var(--surface))' : undefined,
+        borderColor: done
+          ? 'color-mix(in srgb, var(--progress-green) 55%, var(--line))'
+          : running || ended
+            ? 'color-mix(in srgb, var(--progress-blue) 55%, var(--line))'
+            : undefined,
+        background: done
+          ? 'color-mix(in srgb, var(--progress-green) 7%, var(--surface))'
+          : running || ended
+            ? 'color-mix(in srgb, var(--progress-blue) 7%, var(--surface))'
+            : undefined,
         transition: 'transform 0.16s ease, background 0.2s ease, border-color 0.2s ease',
       }}
       onClick={(e) => {
@@ -90,15 +130,11 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
             e.stopPropagation()
             handleClick()
           }}
-          title={done ? '已完成' : missed ? '本周已无法达标' : inProgress ? '进行中' : '未完成'}
+          title={done ? '已完成' : missed ? '本周已无法达标' : running ? '进行中' : ended ? '计时完成，点击打卡' : '开始倒计时'}
           style={{
             width: 40,
             height: 40,
-            color: done
-              ? 'var(--progress-green)'
-              : inProgress
-                ? 'var(--progress-blue)'
-                : 'var(--ink-2)',
+            color: statusColor,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -108,10 +144,10 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
         >
           {done ? (
             <IconDone size={36} />
+          ) : running || ended ? (
+            <IconInProgress size={36} />
           ) : missed ? (
             <IconMissed size={36} />
-          ) : inProgress ? (
-            <IconInProgress size={36} />
           ) : (
             <IconTodo size={36} />
           )}
@@ -130,11 +166,13 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
           </button>
           <button
             className="card-action danger"
-            title={confirming ? '再点一次确认删除' : '删除'}
-            onClick={handleDelete}
-            style={confirming ? { color: 'var(--accent-ink)', background: 'var(--accent)' } : undefined}
+            title="删除"
+            onClick={(e) => {
+              e.stopPropagation()
+              setConfirmDelete(true)
+            }}
           >
-            {confirming ? <span style={{ fontSize: 12.5, fontWeight: 600 }}>确认?</span> : <IconTrash size={20} />}
+            <IconTrash size={20} />
           </button>
         </div>
       </div>
@@ -149,25 +187,96 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
         </div>
       ) : null}
 
-      <div style={{ marginTop: 'auto', paddingTop: 10 }}>
-        {streak > 0 ? (
+      {running && (
+        <div
+          style={{
+            marginTop: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+          }}
+        >
+          <span
+            className="big-num"
+            style={{ fontSize: 22, color: 'var(--progress-blue)', lineHeight: 1 }}
+          >
+            {fmtRemaining(session ? session.startedAt + targetMs - now : 0)}
+          </span>
+          <button
+            className="card-action danger"
+            title="放弃本次计时"
+            onClick={(e) => {
+              e.stopPropagation()
+              cancelTimer(habit.id)
+            }}
+            style={{ fontSize: 12, width: 'auto', padding: '4px 10px', gap: 4 }}
+          >
+            放弃
+          </button>
+        </div>
+      )}
+      {ended && (
+        <div style={{ marginTop: 10, fontSize: 13, color: 'var(--progress-blue)', fontWeight: 600 }}>
+          计时完成 · 点击打卡
+        </div>
+      )}
+      {!session && !done && (
+        <div style={{ marginTop: 'auto', paddingTop: 10 }}>
+          {streak > 0 ? (
+            <span
+              style={{
+                fontSize: 12,
+                color: streak % 7 === 0 ? 'var(--accent-ink)' : 'var(--ink-2)',
+                background: streak % 7 === 0 ? 'var(--accent)' : 'var(--bg)',
+                border: streak % 7 === 0 ? 'none' : '1px solid var(--line)',
+                borderRadius: 999,
+                padding: '3px 11px',
+                fontWeight: streak % 7 === 0 ? 600 : 400,
+              }}
+            >
+              连续 {streak} 天
+            </span>
+          ) : (
+            <span style={{ fontSize: 11.5, color: 'var(--ink-2)', opacity: 0.6 }}>点击卡片开始专注</span>
+          )}
+        </div>
+      )}
+      {done && (
+        <div style={{ marginTop: 'auto', paddingTop: 10 }}>
           <span
             style={{
               fontSize: 12,
-              color: streak % 7 === 0 ? 'var(--accent-ink)' : 'var(--ink-2)',
-              background: streak % 7 === 0 ? 'var(--accent)' : 'var(--bg)',
-              border: streak % 7 === 0 ? 'none' : '1px solid var(--line)',
+              color: 'var(--accent-ink)',
+              background: 'var(--progress-green)',
               borderRadius: 999,
               padding: '3px 11px',
-              fontWeight: streak % 7 === 0 ? 600 : 400,
+              fontWeight: 600,
             }}
           >
-            连续 {streak} 天
+            今日已完成
           </span>
-        ) : (
-          <span style={{ fontSize: 11.5, color: 'var(--ink-2)', opacity: 0.6 }}>今天开始第一块吧</span>
-        )}
-      </div>
+        </div>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="删除习惯"
+          message={
+            <>
+              确定要删除「<b>{habit.name}</b>」吗？
+              <br />
+              它的打卡记录将一并删除，此操作不可恢复。
+            </>
+          }
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            cancelTimer(habit.id)
+            deleteHabit(habit.id)
+            setConfirmDelete(false)
+          }}
+        />
+      )}
     </div>
   )
 }

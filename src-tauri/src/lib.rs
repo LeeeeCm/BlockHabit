@@ -16,13 +16,14 @@ fn show_main(app: &AppHandle) {
 fn update_tray(app: AppHandle, status: String, done: bool) {
     if let Some(tray) = app.tray_by_id("main") {
         let _ = tray.set_tooltip(Some(format!("BlockHabit · {status}")));
-        let icon = if done {
-            tauri::image::Image::from_bytes(include_bytes!("../icons/tray-done.png"))
-                .unwrap_or_else(|_| app.default_window_icon().unwrap().clone())
+        let bytes: &[u8] = if done {
+            include_bytes!("../icons/tray-done.png")
         } else {
-            app.default_window_icon().unwrap().clone()
+            include_bytes!("../icons/tray.png")
         };
-        let _ = tray.set_icon(Some(icon));
+        if let Ok(icon) = tauri::image::Image::from_bytes(bytes) {
+            let _ = tray.set_icon(Some(icon));
+        }
     }
 }
 
@@ -42,7 +43,10 @@ pub fn run() {
             let menu = Menu::with_items(app, &[&open, &quit])?;
 
             TrayIconBuilder::with_id("main")
-                .icon(app.default_window_icon().unwrap().clone())
+                .icon(
+                    tauri::image::Image::from_bytes(include_bytes!("../icons/tray.png"))
+                        .expect("invalid tray icon"),
+                )
                 .tooltip("BlockHabit")
                 .menu(&menu)
                 .show_menu_on_left_click(false)

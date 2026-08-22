@@ -1,8 +1,9 @@
-import { useEffect, useState, type ComponentType } from 'react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { initPersistence, useAppStore } from './store/appStore'
 import { pickAdapter } from './storage'
 import { getBlueprint } from './logic/blueprints'
 import { todayKey } from './logic/dates'
+import { useTimerStore } from './store/timerStore'
 import Today from './pages/Today'
 import Build from './pages/Build'
 import Stats from './pages/Stats'
@@ -23,6 +24,42 @@ type Tab = 'today' | 'build' | 'stats'
 
 const inTauri =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+
+/** 倒计时到点提醒：全局监听，toast + 系统通知 */
+function TimerWatcher() {
+  const sessions = useTimerStore((s) => s.sessions)
+  const [toast, setToast] = useState<string | null>(null)
+  const notified = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (Object.keys(sessions).length === 0) return
+    const t = setInterval(() => {
+      const nowMs = Date.now()
+      for (const [id, s] of Object.entries(sessions)) {
+        if (nowMs - s.startedAt >= s.targetMs && !notified.current.has(id)) {
+          notified.current.add(id)
+          const name = useAppStore.getState().habits.find((h) => h.id === id)?.name ?? '习惯'
+          setToast(`「${name}」计时完成，回到卡片点击打卡`)
+          try {
+            new Notification('BlockHabit', { body: `「${name}」计时完成，回来打卡吧` })
+          } catch {
+            /* WebView 未授权系统通知时静默降级为应用内提醒 */
+          }
+          setTimeout(() => setToast(null), 5200)
+        }
+      }
+    }, 1000)
+    return () => clearInterval(t)
+  }, [sessions])
+
+  if (!toast) return null
+  return (
+    <div className="toast" style={{ bottom: 150, maxWidth: '80vw', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <span className="accent" style={{ color: 'var(--progress-green)' }}>✓ </span>
+      {toast}
+    </div>
+  )
+}
 
 /** 托盘状态同步：tooltip 显示今日进度，当日打卡完成后托盘图标整体变绿 */
 function TraySync() {
@@ -140,6 +177,7 @@ export default function App() {
     <div className="app">
       <TitleBar onSettings={() => setSettingsOpen(true)} />
       {inTauri && <TraySync />}
+      <TimerWatcher />
       <main className="content">
         {tab === 'today' && <Today onCelebrate={() => setTab('build')} />}
         {tab === 'build' && <Build />}
