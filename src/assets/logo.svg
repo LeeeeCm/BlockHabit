@@ -14,13 +14,4 @@
     <!-- 末端：绿色完成块 -->
     <rect x="349" y="89" width="92" height="92" rx="22" fill="#22C55E" transform="rotate(-45 395 135)"/>
   </g>
-
-  <!-- 俯视凸点（与各砖同旋转、同中心） -->
-  <g transform="translate(-9 23)" fill="none" stroke="#0A0A0A" stroke-width="6">
-    <circle cx="135" cy="265" r="17" transform="rotate(-45 135 265)"/>
-    <circle cx="200" cy="330" r="17" transform="rotate(-45 200 330)"/>
-    <circle cx="265" cy="265" r="17" transform="rotate(-45 265 265)"/>
-    <circle cx="330" cy="200" r="17" transform="rotate(-45 330 200)"/>
-    <circle cx="395" cy="135" r="17" transform="rotate(-45 395 135)"/>
-  </g>
 </svg>
