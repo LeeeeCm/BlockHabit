@@ -137,12 +137,19 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 }))
 
-/** 启动时恢复状态并挂载防抖持久化 */
+/** 启动时恢复状态并挂载防抖持久化（StrictMode 下可能调用两次，需幂等） */
+let persistenceStarted = false
+
 export async function initPersistence(adapter: StorageAdapter): Promise<void> {
+  if (persistenceStarted) return
+  persistenceStarted = true
+
   const saved = await adapter.load()
   if (saved) {
     useAppStore.setState({ ...saved, hydrated: true })
     document.documentElement.dataset.theme = saved.settings.theme
+  } else {
+    useAppStore.setState({ hydrated: true })
   }
   let timer: ReturnType<typeof setTimeout> | undefined
   useAppStore.subscribe((state) => {
