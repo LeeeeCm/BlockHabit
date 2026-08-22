@@ -1,51 +1,48 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { useEffect, useState } from 'react'
+import { initPersistence } from './store/appStore'
+import { createLocalStorageAdapter } from './storage/adapter'
+import Today from './pages/Today'
+import Build from './pages/Build'
+import Stats from './pages/Stats'
+import { SettingsDialog } from './components/SettingsDialog'
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+type Tab = 'today' | 'build' | 'stats'
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+export default function App() {
+  const [tab, setTab] = useState<Tab>('today')
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  useEffect(() => {
+    void initPersistence(createLocalStorageAdapter())
+  }, [])
+
+  const tabs: Array<[Tab, string]> = [
+    ['today', '今日'],
+    ['build', '建造'],
+    ['stats', '统计'],
+  ]
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
-  );
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">BlockHabit</div>
+        <button className="icon-btn" title="设置" onClick={() => setSettingsOpen(true)}>
+          ⚙
+        </button>
+      </header>
+      <main className="content">
+        {tab === 'today' && <Today />}
+        {tab === 'build' && <Build />}
+        {tab === 'stats' && <Stats />}
+      </main>
+      <nav className="tabbar">
+        {tabs.map(([id, label]) => (
+          <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
+            {label}
+          </button>
+        ))}
+      </nav>
+      {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
+    </div>
+  )
 }
-
-export default App;
