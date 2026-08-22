@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- BlockHabit mascot：纸白方块小人 + 头顶琥珀积木（下-左角构图，3 色） -->
+  <rect width="512" height="512" fill="#0A0A0A"/>
+
+  <!-- 身体：大圆角方，从左下角探出，底部出血 -->
+  <rect x="66" y="150" width="310" height="390" rx="72" fill="#FAFAFA"/>
+
+  <!-- 头顶积木：琥珀色圆角方块，微微倾斜 -->
+  <g transform="rotate(-8 300 150)">
+    <rect x="252" y="86" width="108" height="108" rx="22" fill="#F5B301"/>
+  </g>
+
+  <!-- 眼睛：背景色负形，宽间距 -->
+  <circle cx="170" cy="316" r="15" fill="#0A0A0A"/>
+  <circle cx="272" cy="316" r="15" fill="#0A0A0A"/>
+
+  <!-- 腮红：IP 色 2 复用 -->
+  <circle cx="146" cy="356" r="11" fill="#F5B301"/>
+  <circle cx="296" cy="356" r="11" fill="#F5B301"/>
+</svg>

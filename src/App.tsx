@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { initPersistence } from './store/appStore'
-import { createLocalStorageAdapter } from './storage/adapter'
+import { pickAdapter } from './storage'
 import Today from './pages/Today'
 import Build from './pages/Build'
 import Stats from './pages/Stats'
@@ -13,7 +13,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
-    void initPersistence(createLocalStorageAdapter())
+    void initPersistence(pickAdapter())
   }, [])
 
   const tabs: Array<[Tab, string]> = [
