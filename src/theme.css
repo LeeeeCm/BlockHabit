@@ -1,0 +1,78 @@
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --ink: #0a0a0a;
+  --ink-2: #6b6b6b;
+  --line: #e5e5e5;
+  --accent: #f5b301;
+  --accent-ink: #0a0a0a;
+  /* 等距积木三面（亮色） */
+  --block-top: #e8e8e8;
+  --block-left: #bdbdbd;
+  --block-right: #4d4d4d;
+  --block-ghost: #c9c9c9;
+
+  font-family: 'Inter', 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0a0a0a;
+  --surface: #161616;
+  --ink: #fafafa;
+  --ink-2: #9a9a9a;
+  --line: #2a2a2a;
+  --accent-ink: #0a0a0a;
+  --block-top: #3a3a3a;
+  --block-left: #242424;
+  --block-right: #111111;
+  --block-ghost: #1e1e1e;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  user-select: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+input,
+select {
+  font: inherit;
+  color: var(--ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
