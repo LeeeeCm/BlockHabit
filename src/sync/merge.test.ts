@@ -81,6 +81,37 @@ describe('mergeAppState CRDT union merge', () => {
     expect(merged.checkIns.some((c) => c.id === 'c3')).toBe(true)
   })
 
+  it('preserves multiple daily check-ins for counter habits without merging them away', () => {
+    const waterHabit: Habit = {
+      id: 'h_water',
+      name: 'Drink water',
+      kind: 'counter',
+      targetValue: 2000,
+      step: 250,
+      unit: 'ml',
+      frequency: { type: 'daily' },
+      createdAt: '2026-03-01T00:00:00.000Z',
+    }
+    const local = createMockState({
+      habits: [waterHabit],
+      checkIns: [
+        { id: 'cw1', habitId: 'h_water', date: '2026-03-01', at: '2026-03-01T09:00:00.000Z', value: 250 },
+        { id: 'cw2', habitId: 'h_water', date: '2026-03-01', at: '2026-03-01T11:00:00.000Z', value: 250 },
+      ],
+    })
+    const remote = createMockState({
+      habits: [waterHabit],
+      checkIns: [
+        { id: 'cw3', habitId: 'h_water', date: '2026-03-01', at: '2026-03-01T14:00:00.000Z', value: 250 },
+        { id: 'cw4', habitId: 'h_water', date: '2026-03-01', at: '2026-03-01T17:00:00.000Z', value: 250 },
+      ],
+    })
+
+    const merged = mergeAppState(local, remote)
+    expect(merged.checkIns).toHaveLength(4)
+    expect(merged.checkIns.map((c) => c.id).sort()).toEqual(['cw1', 'cw2', 'cw3', 'cw4'])
+  })
+
   it('merges habits: preserving existing habits and adding new habits from remote', () => {
     const habit1: Habit = {
       id: 'h1',

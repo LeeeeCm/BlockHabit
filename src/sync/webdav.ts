@@ -1,12 +1,29 @@
 import type { WebDavConfig } from './types'
 
+export const DEFAULT_WEBDAV_TIMEOUT_MS = 15000
+
 export function getSyncUrl(endpoint: string): string {
-  const trimmed = endpoint.trim()
+  let trimmed = endpoint.trim()
   if (!trimmed) return ''
+  if (!/^https?:\/\//i.test(trimmed)) {
+    trimmed = `https://${trimmed}`
+  }
   if (trimmed.endsWith('.json')) {
     return trimmed
   }
   return trimmed.endsWith('/') ? `${trimmed}blockhabit-data.json` : `${trimmed}/blockhabit-data.json`
+}
+
+function utf8ToBase64(str: string): string {
+  if (typeof TextEncoder !== 'undefined' && typeof btoa === 'function') {
+    const bytes = new TextEncoder().encode(str)
+    let bin = ''
+    for (let i = 0; i < bytes.length; i++) {
+      bin += String.fromCharCode(bytes[i])
+    }
+    return btoa(bin)
+  }
+  return btoa(encodeURIComponent(str))
 }
 
 export function getAuthHeaders(config: WebDavConfig): Record<string, string> {
@@ -14,14 +31,8 @@ export function getAuthHeaders(config: WebDavConfig): Record<string, string> {
     return {}
   }
   const credentials = `${config.username}:${config.password}`
-  let encoded: string
-  try {
-    encoded = btoa(unescape(encodeURIComponent(credentials)))
-  } catch {
-    encoded = btoa(credentials)
-  }
   return {
-    Authorization: `Basic ${encoded}`,
+    Authorization: `Basic ${utf8ToBase64(credentials)}`,
   }
 }
 
@@ -41,6 +52,7 @@ export async function fetchRemoteState(config: WebDavConfig): Promise<string | n
       ...getAuthHeaders(config),
       'Cache-Control': 'no-cache',
     },
+    signal: AbortSignal.timeout(DEFAULT_WEBDAV_TIMEOUT_MS),
   })
 
   if (response.status === 404) {
@@ -74,6 +86,7 @@ export async function pushRemoteState(config: WebDavConfig, json: string): Promi
       'Content-Type': 'application/json; charset=utf-8',
     },
     body: json,
+    signal: AbortSignal.timeout(DEFAULT_WEBDAV_TIMEOUT_MS),
   })
 
   if (response.status === 401 || response.status === 403) {

@@ -37,7 +37,8 @@ export function useSync() {
 
   const configRef = useRef(config)
   configRef.current = config
-
+  const syncingRef = useRef(false)
+  const lastErrorRef = useRef<string | null>(config.lastSyncError ?? null)
   const updateConfig = useCallback((patch: Partial<WebDavConfig>) => {
     setConfigState((prev) => {
       const next = { ...prev, ...patch }
@@ -47,20 +48,26 @@ export function useSync() {
   }, [])
 
   const syncNow = useCallback(async (): Promise<boolean> => {
+    if (syncingRef.current) {
+      return false
+    }
+
     const currentConfig = configRef.current
     const endpoint = currentConfig.endpoint.trim()
 
     if (!endpoint) {
       const errMsg = '请先填写 WebDAV 服务器地址'
+      lastErrorRef.current = errMsg
       setError(errMsg)
       setStatus('error')
       return false
     }
 
+    syncingRef.current = true
     setIsSyncing(true)
     setStatus('syncing')
+    lastErrorRef.current = null
     setError(null)
-
     try {
       const remoteJson = await fetchRemoteState(currentConfig)
       const store = useAppStore.getState()
@@ -109,7 +116,7 @@ export function useSync() {
       saveWebDavConfig(updatedConfig)
       setLastSyncAt(now)
       setStatus('success')
-      setIsSyncing(false)
+      lastErrorRef.current = null
       return true
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err)
@@ -120,10 +127,13 @@ export function useSync() {
       }
       setConfigState(updatedConfig)
       saveWebDavConfig(updatedConfig)
+      lastErrorRef.current = errMsg
       setError(errMsg)
       setStatus('error')
-      setIsSyncing(false)
       return false
+    } finally {
+      syncingRef.current = false
+      setIsSyncing(false)
     }
   }, [])
 
@@ -137,17 +147,17 @@ export function useSync() {
     const timer = setInterval(() => {
       void syncNow()
     }, intervalMs)
-
     return () => clearInterval(timer)
   }, [config.enabled, config.endpoint, config.autoSyncIntervalMinutes, syncNow])
 
   return {
     config,
-    updateConfig,
     isSyncing,
     status,
     error,
     lastSyncAt,
+    updateConfig,
     syncNow,
+    getLastError: () => lastErrorRef.current,
   }
 }

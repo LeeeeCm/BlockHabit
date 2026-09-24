@@ -30,24 +30,30 @@ function mergeHabits(localHabits: Habit[], remoteHabits: Habit[]): Habit[] {
  * Merges check-ins from both devices by id or habitId+date, preserving all check-ins.
  * Enriches check-ins by merging metadata (notes, mood, starred).
  */
-function mergeCheckIns(localCheckIns: CheckIn[], remoteCheckIns: CheckIn[]): CheckIn[] {
+function mergeCheckIns(
+  localCheckIns: CheckIn[],
+  remoteCheckIns: CheckIn[],
+  habits: Habit[] = [],
+): CheckIn[] {
   const merged: CheckIn[] = []
   const idMap = new Map<string, number>()
   const dayMap = new Map<string, number>()
+  const habitMap = new Map<string, Habit>(habits.map((h) => [h.id, h]))
 
   function addOrMerge(c: CheckIn, isRemote: boolean) {
+    const habit = habitMap.get(c.habitId)
+    const isCounter = habit?.kind === 'counter'
     const dayKey = `${c.habitId}_${c.date}`
     let existingIndex: number | undefined
 
     if (c.id && idMap.has(c.id)) {
       existingIndex = idMap.get(c.id)
-    } else if (dayMap.has(dayKey)) {
+    } else if (!isCounter && dayMap.has(dayKey)) {
       existingIndex = dayMap.get(dayKey)
     }
 
     if (existingIndex !== undefined) {
       const existing = merged[existingIndex]
-      // Local check-in takes precedence for structure, but enrich with non-empty fields from both
       const base = isRemote ? existing : c
       const other = isRemote ? c : existing
 
@@ -59,17 +65,16 @@ function mergeCheckIns(localCheckIns: CheckIn[], remoteCheckIns: CheckIn[]): Che
         starred: Boolean(base.starred || other.starred),
         rewardBlockIndex: base.rewardBlockIndex ?? other.rewardBlockIndex,
         placedBlockId: base.placedBlockId || other.placedBlockId,
-        actualMinutes: Math.max(base.actualMinutes ?? 0, other.actualMinutes ?? 0) || base.actualMinutes || other.actualMinutes,
-        value: Math.max(base.value ?? 0, other.value ?? 0) || base.value || other.value,
+        actualMinutes: base.actualMinutes ?? other.actualMinutes,
+        value: base.value ?? other.value,
       }
       merged[existingIndex] = combined
       if (c.id) idMap.set(c.id, existingIndex)
-      dayMap.set(dayKey, existingIndex)
     } else {
       const newIdx = merged.length
       merged.push({ ...c })
       if (c.id) idMap.set(c.id, newIdx)
-      dayMap.set(dayKey, newIdx)
+      if (!isCounter) dayMap.set(dayKey, newIdx)
     }
   }
 
@@ -136,13 +141,12 @@ function mergeShowcasePlacements(
  */
 export function mergeAppState(local: AppState, remote: AppState): AppState {
   const habits = mergeHabits(local.habits, remote.habits)
-  const checkIns = mergeCheckIns(local.checkIns, remote.checkIns)
+  const checkIns = mergeCheckIns(local.checkIns, remote.checkIns, habits)
   const builds = mergeBuilds(local.builds, remote.builds)
 
   const completedBlueprintIds = Array.from(
     new Set([...(local.completedBlueprintIds || []), ...(remote.completedBlueprintIds || [])]),
   ).sort()
-
   const dayClaims = Array.from(
     new Set([...(local.dayClaims || []), ...(remote.dayClaims || [])]),
   ).sort()

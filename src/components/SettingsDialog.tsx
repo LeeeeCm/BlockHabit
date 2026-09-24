@@ -43,6 +43,7 @@ export function SettingsDialog({ onClose }: Props) {
     error: syncError,
     lastSyncAt,
     syncNow,
+    getLastError,
   } = useSync()
   const [endpoint, setEndpoint] = useState(syncConfig.endpoint)
   const [username, setUsername] = useState(syncConfig.username)
@@ -59,7 +60,8 @@ export function SettingsDialog({ onClose }: Props) {
     if (ok) {
       setMsg(lang === 'zh' ? '同步成功！数据已与云端合并' : 'Sync successful! Data merged with cloud.')
     } else {
-      setMsg(syncError || (lang === 'zh' ? '同步失败，请检查配置与网络' : 'Sync failed, please check configuration.'))
+      const err = getLastError()
+      setMsg(err || (lang === 'zh' ? '同步失败，请检查配置与网络' : 'Sync failed, please check configuration.'))
     }
     setTimeout(() => setMsg(null), 3000)
   }
