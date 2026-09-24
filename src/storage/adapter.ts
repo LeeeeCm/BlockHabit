@@ -24,7 +24,29 @@ export function isValidState(v: unknown): v is AppState {
 
 /** 旧存档缺 dayClaims 字段时补默认值 */
 export function normalizeState(s: AppState): AppState {
-  return { ...s, dayClaims: Array.isArray(s.dayClaims) ? s.dayClaims : [] }
+  const initialLang =
+    s.settings?.language === 'en' || s.settings?.language === 'zh'
+      ? s.settings.language
+      : typeof navigator !== 'undefined' && navigator.language?.startsWith('zh')
+        ? 'zh'
+        : 'en'
+  return {
+    ...s,
+    settings: {
+      theme:
+        s.settings?.theme === 'dark' || s.settings?.theme === 'oat' || s.settings?.theme === 'fog'
+          ? s.settings.theme
+          : 'light',
+      language: initialLang,
+    },
+    dayClaims: Array.isArray(s.dayClaims) ? s.dayClaims : [],
+    repairBricks: typeof s.repairBricks === 'number' ? s.repairBricks : 0,
+    showcasePlacements: Array.isArray(s.showcasePlacements) ? s.showcasePlacements : [],
+    foundationNotes:
+      typeof s.foundationNotes === 'object' && s.foundationNotes !== null
+        ? s.foundationNotes
+        : {},
+  }
 }
 
 export function createLocalStorageAdapter(): StorageAdapter {

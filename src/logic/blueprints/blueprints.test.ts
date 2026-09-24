@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { blueprints } from './index'
+import { blueprints, blueprintOrder } from './index'
 import type { BlockDef } from '../../types'
 
 function validateBlueprint(name: string, blocks: BlockDef[], cx: number, cy: number) {
   describe(`blueprint: ${name}`, () => {
-    it('block count between 100 and 250', () => {
-      expect(blocks.length).toBeGreaterThanOrEqual(100)
+    it('block count between 15 and 250', () => {
+      expect(blocks.length).toBeGreaterThanOrEqual(15)
       expect(blocks.length).toBeLessThanOrEqual(250)
     })
 
@@ -38,13 +38,52 @@ function validateBlueprint(name: string, blocks: BlockDef[], cx: number, cy: num
       }
     })
 
-    it('contains accent block types', () => {
-      const types = new Set(blocks.map((b) => b.type))
-      expect(types.has('flag') || types.has('chimney')).toBe(true)
-      expect(types.has('window') || types.has('gate')).toBe(true)
+    it('only uses valid block types (basic/window/gate), no flags', () => {
+      const types = new Set<string>(blocks.map((b) => b.type))
+      for (const t of types) {
+        expect(['basic', 'window', 'gate'].includes(t)).toBe(true)
+      }
+      expect(types.has('flag')).toBe(false)
     })
   })
 }
 
-validateBlueprint('castle', blueprints.castle.blocks, 4, 4)
-validateBlueprint('factory', blueprints.factory.blocks, 5, 3)
+const CENTERS: Record<string, [number, number]> = {
+  plant: [1, 1],
+  coffee: [1, 1],
+  camera: [1, 1],
+  windmill: [2, 2],
+  cabin: [2, 2],
+  rocket: [2, 2],
+  lighthouse: [2, 2],
+  factory: [5, 3],
+  monument: [3, 3],
+  pyramid: [4, 4],
+  robot: [3, 1],
+  castle: [4, 4],
+}
+
+describe('blueprint catalog', () => {
+  it('has 12 blueprints in unlock order with beginner starters', () => {
+    expect(blueprintOrder).toEqual([
+      'plant',
+      'coffee',
+      'camera',
+      'windmill',
+      'cabin',
+      'rocket',
+      'lighthouse',
+      'factory',
+      'monument',
+      'pyramid',
+      'robot',
+      'castle',
+    ])
+    expect(Object.keys(blueprints)).toHaveLength(12)
+  })
+})
+
+for (const id of blueprintOrder) {
+  const [cx, cy] = CENTERS[id]
+  validateBlueprint(id, blueprints[id].blocks, cx, cy)
+}

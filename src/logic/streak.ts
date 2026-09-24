@@ -1,5 +1,6 @@
 import type { CheckIn, Habit } from '../types'
 import { addDays, dateKey, parseKey, weekStart } from './dates'
+import { isHabitDueOnDay } from './checkin'
 
 function ownCheckIns(habit: Habit, checkIns: CheckIn[]): Set<string> {
   const days = new Set<string>()
@@ -32,6 +33,26 @@ export function currentStreak(habit: Habit, checkIns: CheckIn[], today: Date): n
     if (!days.has(dateKey(d))) d = addDays(d, -1) // 今天没打从昨天起算
     while (days.has(dateKey(d))) {
       streak++
+      d = addDays(d, -1)
+    }
+    return streak
+  }
+  if (habit.frequency.type === 'custom') {
+    let streak = 0
+    let d = new Date(today)
+    const todayKeyStr = dateKey(d)
+    // 若今天未打卡，从昨日起算
+    if (!days.has(todayKeyStr)) {
+      d = addDays(d, -1)
+    }
+    for (let step = 0; step < 365; step++) {
+      const k = dateKey(d)
+      const due = isHabitDueOnDay(habit, k)
+      if (days.has(k)) {
+        streak++
+      } else if (due) {
+        break // 应执行日未打卡中断
+      }
       d = addDays(d, -1)
     }
     return streak
@@ -77,6 +98,26 @@ export function bestStreak(habit: Habit, checkIns: CheckIn[]): number {
       if (run > best) best = run
     }
     return best
+  }
+  if (habit.frequency.type === 'custom') {
+    const sorted = [...days].sort()
+    if (sorted.length === 0) return 0
+    let best = 1
+    let run = 0
+    let cur = parseKey(sorted[0])
+    const last = parseKey(sorted[sorted.length - 1])
+    while (cur <= last) {
+      const k = dateKey(cur)
+      const due = isHabitDueOnDay(habit, k)
+      if (days.has(k)) {
+        run++
+        if (run > best) best = run
+      } else if (due) {
+        run = 0
+      }
+      cur = addDays(cur, 1)
+    }
+    return Math.max(best, run)
   }
 
   // 周频：统计每周次数，找最长连续达标周段

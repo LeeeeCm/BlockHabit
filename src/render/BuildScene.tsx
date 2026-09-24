@@ -1,19 +1,27 @@
-import { useEffect, useRef, useCallback } from 'react'
-import type { Blueprint } from '../types'
+import { useEffect, useRef, useCallback, useState } from 'react'
+import type { BlockDef, Blueprint, MicroMood } from '../types'
 import {
   DEFAULT_ISO_CONFIG,
-  depth,
+  STUD_H,
   drawCube,
   drawGroundBounds,
+  followResize,
+  isPointInsideCube,
   paletteFromDocument,
+  rotateCoord,
   worldToScreen,
 } from './iso'
-
+import { useAppStore } from '../store/appStore'
+import { useI18n } from '../i18n'
 interface Props {
   blueprint: Blueprint
   placedCount: number
   /** 需要播放掉落动画的块序号（新块） */
   animateIndex?: number | null
+  /** 视角旋转象限 0=0°, 1=90°, 2=180°, 3=270° */
+  rotation?: number
+  /** 是否开启悬停拾取与读砖气泡卡 */
+  interactiveInspect?: boolean
   onAnimated?: () => void
 }
 
@@ -24,8 +32,8 @@ const DROP_FALL_FRAC = 0.42
 /** 级联时每块的总时长（快落 + 果冻） */
 const BLOCK_T = 640
 const CASCADE_FALL_FRAC = 0.53
-/** 层内微错峰 */
-const LAYER_STAGGER = 14
+/** 同层积木完全同时下落（无层内错峰） */
+const LAYER_STAGGER = 0
 /** 下一层在前一层落地、回弹进行到该比例后开始下落 */
 const LAYER_OVERLAP = 0.55
 
@@ -90,21 +98,56 @@ function planCascade(blocks: Array<{ z: number }>, count: number): CascadePlan {
   return { start: performance.now(), starts, total }
 }
 
-export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }: Props) {  const canvasRef = useRef<HTMLCanvasElement>(null)
+export function BuildScene({
+  blueprint,
+  placedCount,
+  animateIndex,
+  rotation = 0,
+  interactiveInspect = false,
+  onAnimated,
+}: Props) {
+  const { t } = useI18n()
+  const builds = useAppStore((s) => s.builds)
+  const checkIns = useAppStore((s) => s.checkIns)
+  const habits = useAppStore((s) => s.habits)
+
+  const buildsRef = useRef(builds)
+  const checkInsRef = useRef(checkIns)
+  const habitsRef = useRef(habits)
+  buildsRef.current = builds
+  checkInsRef.current = checkIns
+  habitsRef.current = habits
+
+  const [hoveredBlock, setHoveredBlock] = useState<{
+    index: number
+    x: number
+    y: number
+    habitName: string
+    date: string
+    note?: string
+    mood?: MicroMood
+    starred?: boolean
+  } | null>(null)
+
+  const hoveredIndexRef = useRef<number | null>(null)
+  const cubesRef = useRef<Array<{ b: BlockDef; i: number; rx: number; ry: number }>>([])
+
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const viewRef = useRef({ scale: 1, panX: 0, panY: 0, fitted: false })
   /** 用户手动拖拽/缩放后就不再自动取景 */
   const interactedRef = useRef(false)
+  /** 上一次画布 CSS 尺寸：最大化/还原等窗口变化时据此计算跟随比例 */
+  const prevSizeRef = useRef<{ w: number; h: number } | null>(null)
   const animRef = useRef<{ index: number; start: number } | null>(null)
   const cascadeRef = useRef<CascadePlan | null>(null)
-  const stateRef = useRef({ blueprint, placedCount, animateIndex })
-  stateRef.current = { blueprint, placedCount, animateIndex }
-
+  const stateRef = useRef({ blueprint, placedCount, animateIndex, rotation })
+  stateRef.current = { blueprint, placedCount, animateIndex, rotation }
   const draw = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    const { blueprint: bp, placedCount: pc, animateIndex: ai } = stateRef.current
+    const { blueprint: bp, placedCount: pc, animateIndex: ai, rotation: rot } = stateRef.current
     const dpr = window.devicePixelRatio || 1
     const w = canvas.clientWidth
     const h = canvas.clientHeight
@@ -116,8 +159,18 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     ctx.translate(view.panX, view.panY)
     ctx.scale(view.scale, view.scale)
 
+    let minBx = Infinity, maxBx = -Infinity, minBy = Infinity, maxBy = -Infinity
+    for (const b of bp.blocks) {
+      minBx = Math.min(minBx, b.x)
+      maxBx = Math.max(maxBx, b.x)
+      minBy = Math.min(minBy, b.y)
+      maxBy = Math.max(maxBy, b.y)
+    }
+    const cx = Math.round((minBx + maxBx) / 2)
+    const cy = Math.round((minBy + maxBy) / 2)
+
     const cfg = DEFAULT_ISO_CONFIG
-    drawGroundBounds(ctx, bp.blocks, cfg, palette)
+    drawGroundBounds(ctx, bp.blocks, cfg, palette, rot, cx, cy)
 
     const now = performance.now()
     const anim = animRef.current
@@ -130,15 +183,49 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
       animating = p < 1
     }
 
-    const occupied = new Set(bp.blocks.map((b) => `${b.x},${b.y},${b.z + 1}`))
+    // 已放置块坐标 → 序号：用于定位某块正上方的块并判断其是否已落地
+    const indexAt = new Map<string, number>()
+    bp.blocks.slice(0, pc).forEach((b, i) => indexAt.set(`${b.x},${b.y},${b.z}`, i))
     const cubes = bp.blocks
-      .map((b, i) => ({ b, i }))
-      .sort((m, n) => depth(m.b.x, m.b.y, m.b.z) - depth(n.b.x, n.b.y, n.b.z))
-
+      .map((b, i) => {
+        const { rx, ry } = rotateCoord(b.x, b.y, cx, cy, rot)
+        return { b, i, rx, ry }
+      })
+      .sort((m, n) => {
+        const a = m.rx + m.ry
+        const c = n.rx + n.ry
+        if (a !== c) return a - c
+        return m.b.z - n.b.z
+      })
+    cubesRef.current = cubes
     let cascadeRunning = false
-    for (const { b, i } of cubes) {
+    for (const { b, i, rx, ry } of cubes) {
       if (i >= pc) continue
       const isNew = anim && ai != null && i === ai && ai === pc - 1
+      const aboveIdx = indexAt.get(`${b.x},${b.y},${b.z + 1}`)
+      let aboveLanded = true
+      if (aboveIdx !== undefined) {
+        if (cascade) {
+          aboveLanded = now - cascade.start - cascade.starts[aboveIdx] >= BLOCK_T
+        } else if (anim && animating && aboveIdx === ai) {
+          aboveLanded = false
+        }
+      }
+
+      const pb = buildsRef.current.find((x) => x.blueprintId === bp.id && x.index === i)
+      const ci = pb ? checkInsRef.current.find((c) => c.placedBlockId === pb.id) : undefined
+      const hasNote = Boolean(ci?.note?.trim())
+      const starred = Boolean(ci?.starred)
+      const isHovered = Boolean(interactiveInspect && hoveredIndexRef.current === i)
+
+      const faceOpts = {
+        type: b.type,
+        color: b.color,
+        noStuds: aboveIdx !== undefined && aboveLanded,
+        hasNote,
+        starred,
+        highlight: isHovered || Boolean(isNew && !animating),
+      }
 
       // 级联铺设：逐层落下 + 果冻回弹
       if (cascade && !isNew) {
@@ -147,44 +234,34 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
         const st = cascadeState(el)
         if (!st.done) {
           cascadeRunning = true
-          const { sx: cx } = worldToScreen(b.x, b.y, 0, cfg)
-          const syBase = worldToScreen(b.x, b.y, 0, cfg).sy
+          const { sx: cxS, sy: syBase } = worldToScreen(rx, ry, b.z, cfg)
           if (st.sx !== 1 || st.sy !== 1) {
             ctx.save()
-            ctx.translate(cx, syBase + cfg.tileH / 2 + cfg.blockH - st.z * cfg.blockH)
+            ctx.translate(cxS, syBase + cfg.tileH / 2 + cfg.blockH - st.z * cfg.blockH)
             ctx.scale(st.sx, st.sy)
-            drawCube(ctx, 0, -(cfg.tileH / 2 + cfg.blockH), cfg, palette, {
-              type: b.type,
-              noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
-            })
+            drawCube(ctx, 0, -(cfg.tileH / 2 + cfg.blockH), cfg, palette, faceOpts)
             ctx.restore()
           } else {
-            const { sx: px, sy: py } = worldToScreen(b.x, b.y, st.z, cfg)
-            drawCube(ctx, px, py, cfg, palette, {
-              type: b.type,
-              noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
-            })
+            const { sx: px, sy: py } = worldToScreen(rx, ry, b.z + st.z, cfg)
+            drawCube(ctx, px, py, cfg, palette, faceOpts)
           }
           continue
         }
       }
 
-      const z = isNew ? a.z : 0
-      const { sx: px, sy: py } = worldToScreen(b.x, b.y, z, cfg)
-
+      // 静态/新块路径：块自身高度 b.z + 动画偏移（zOff：下落抬升量）
+      const zOff = isNew ? a.z : 0
+      const { sx: px, sy: restSy } = worldToScreen(rx, ry, b.z, cfg)
       if (isNew && (a.sx !== 1 || a.sy !== 1)) {
+        // 以静止底边为锚点缩放，抬升量只计一次
         ctx.save()
-        ctx.translate(px, py + cfg.tileH / 2 + cfg.blockH - z * cfg.blockH)
+        ctx.translate(px, restSy + cfg.tileH / 2 + cfg.blockH - zOff * cfg.blockH)
         ctx.scale(a.sx, a.sy)
-        drawCube(ctx, 0, -(cfg.tileH / 2 + cfg.blockH), cfg, palette, {
-          type: b.type,
-          noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
-        })
+        drawCube(ctx, 0, -(cfg.tileH / 2 + cfg.blockH), cfg, palette, faceOpts)
         ctx.restore()
       } else {
-        drawCube(ctx, px, py, cfg, palette, {
-          type: b.type,
-          noStuds: occupied.has(`${b.x},${b.y},${b.z}`),
+        drawCube(ctx, px, restSy - zOff * cfg.blockH, cfg, palette, {
+          ...faceOpts,
           highlight: Boolean(isNew && !animating),
         })
       }
@@ -210,29 +287,35 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     }
   }, [onAnimated])
 
-  // 尺寸初始化 + 自适应居中（最大化/放大窗口时重新取景，场景保持在中心偏下）
+  // 尺寸初始化 + 自适应：未手动取景时最大化/放大窗口重新取景（场景保持在中心偏下）；
+  // 已手动取景（拖拽/滚轮缩放过）时模型随窗口等比缩放并保持窗口内相对位置
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const resize = () => {
-      const dpr = window.devicePixelRatio || 1
-      canvas.width = canvas.clientWidth * dpr
-      canvas.height = canvas.clientHeight * dpr
-      if (!interactedRef.current) fitView()
-      draw()
-    }
-    const fitView = () => {
-      const bp = stateRef.current.blueprint
+    /** 模型（含地基余量、凸点、块身）在等距平面坐标中的可见包围盒 */
+    const sceneBounds = () => {
+      const { blueprint: bp, rotation: rot } = stateRef.current
       const cfg = DEFAULT_ISO_CONFIG
+      let minBx = Infinity, maxBx = -Infinity, minBy = Infinity, maxBy = -Infinity
+      for (const b of bp.blocks) {
+        minBx = Math.min(minBx, b.x)
+        maxBx = Math.max(maxBx, b.x)
+        minBy = Math.min(minBy, b.y)
+        maxBy = Math.max(maxBy, b.y)
+      }
+      const cx = Math.round((minBx + maxBx) / 2)
+      const cy = Math.round((minBy + maxBy) / 2)
+
       let minX = Infinity
       let maxX = -Infinity
       let minY = Infinity
       let maxY = -Infinity
       for (const b of bp.blocks) {
-        minX = Math.min(minX, b.x)
-        maxX = Math.max(maxX, b.x)
-        minY = Math.min(minY, b.y)
-        maxY = Math.max(maxY, b.y)
+        const { rx, ry } = rotateCoord(b.x, b.y, cx, cy, rot)
+        minX = Math.min(minX, rx)
+        maxX = Math.max(maxX, rx)
+        minY = Math.min(minY, ry)
+        maxY = Math.max(maxY, ry)
       }
       // 地基范围框四角（含 0.6 格余量）必须完整可见
       const corners: Array<[number, number]> = [
@@ -244,34 +327,65 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
       const xs: number[] = []
       const ys: number[] = []
       for (const b of bp.blocks) {
-        const { sx, sy } = worldToScreen(b.x, b.y, b.z, cfg)
+        const { rx, ry } = rotateCoord(b.x, b.y, cx, cy, rot)
+        const { sx, sy } = worldToScreen(rx, ry, b.z, cfg)
         xs.push(sx + cfg.tileW / 2, sx - cfg.tileW / 2)
-        ys.push(sy + cfg.tileH / 2 + cfg.blockH, sy - cfg.tileH / 2)
+        ys.push(sy + cfg.tileH / 2 + cfg.blockH, sy - cfg.tileH / 2 - STUD_H)
       }
       for (const [x, y] of corners) {
         const { sx, sy } = worldToScreen(x, y, 0, cfg)
         xs.push(sx + cfg.tileW / 2, sx - cfg.tileW / 2)
         ys.push(sy)
       }
-      const boundsMinX = Math.min(...xs)
-      const boundsMaxX = Math.max(...xs)
-      const boundsMinY = Math.min(...ys)
-      const boundsMaxY = Math.max(...ys)
+      return {
+        minX: Math.min(...xs),
+        maxX: Math.max(...xs),
+        minY: Math.min(...ys),
+        maxY: Math.max(...ys),
+      }
+    }
+    const fitView = () => {
+      const { minX, maxX, minY, maxY } = sceneBounds()
       const w = canvas.clientWidth
       const h = canvas.clientHeight
       const PAD = 48
       const scale = Math.min(
-        (w - PAD * 2) / (boundsMaxX - boundsMinX),
-        (h - PAD * 2) / (boundsMaxY - boundsMinY),
+        (w - PAD * 2) / (maxX - minX),
+        (h - PAD * 2) / (maxY - minY),
         2,
       )
       viewRef.current = {
         scale,
-        panX: w / 2 - ((boundsMinX + boundsMaxX) / 2) * scale,
+        panX: w / 2 - ((minX + maxX) / 2) * scale,
         // 中心偏下：整体下移约 6% 视口高度
-        panY: h * 0.56 - ((boundsMinY + boundsMaxY) / 2) * scale,
+        panY: h * 0.56 - ((minY + maxY) / 2) * scale,
         fitted: true,
       }
+    }
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1
+      const w = canvas.clientWidth
+      const h = canvas.clientHeight
+      if (w === 0 || h === 0) return
+      canvas.width = w * dpr
+      canvas.height = h * dpr
+      const prev = prevSizeRef.current
+      if (!interactedRef.current) {
+        fitView()
+      } else if (prev && (prev.w !== w || prev.h !== h)) {
+        const { minX, maxX, minY, maxY } = sceneBounds()
+        viewRef.current = {
+          ...followResize(
+            viewRef.current,
+            { w: prev.w, h: prev.h },
+            { w, h },
+            { x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
+          ),
+          fitted: viewRef.current.fitted,
+        }
+      }
+      prevSizeRef.current = { w, h }
+      draw()
     }
     resize()
     const ro = new ResizeObserver(resize)
@@ -290,6 +404,11 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     draw()
   }, [placedCount, animateIndex, draw])
 
+  // 视角旋转仅触发重绘，不重播级联掉落动画
+  useEffect(() => {
+    draw()
+  }, [rotation, draw])
+
   // 交互：拖拽平移 / 滚轮缩放
   useEffect(() => {
     const canvas = canvasRef.current
@@ -303,18 +422,82 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
       lastX = e.clientX
       lastY = e.clientY
       canvas.setPointerCapture(e.pointerId)
+      if (hoveredIndexRef.current !== null) {
+        hoveredIndexRef.current = null
+        setHoveredBlock(null)
+        draw()
+      }
     }
     const onMove = (e: PointerEvent) => {
-      if (!dragging) return
-      interactedRef.current = true
       const view = viewRef.current
-      view.panX += e.clientX - lastX
-      view.panY += e.clientY - lastY
-      lastX = e.clientX
-      lastY = e.clientY
-      draw()
+      if (dragging) {
+        interactedRef.current = true
+        view.panX += e.clientX - lastX
+        view.panY += e.clientY - lastY
+        lastX = e.clientX
+        lastY = e.clientY
+        draw()
+        return
+      }
+
+      if (!interactiveInspect) return
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const rect = canvas.getBoundingClientRect()
+      const cfg = DEFAULT_ISO_CONFIG
+      const mx = (e.clientX - rect.left - view.panX) / view.scale
+      const my = (e.clientY - rect.top - view.panY) / view.scale
+
+      const pc = stateRef.current.placedCount
+      const bp = stateRef.current.blueprint
+      let hit: { b: BlockDef; i: number; rx: number; ry: number } | null = null
+      const cubes = cubesRef.current
+      for (let k = cubes.length - 1; k >= 0; k--) {
+        const item = cubes[k]
+        if (item.i >= pc) continue
+        const { sx, sy } = worldToScreen(item.rx, item.ry, item.b.z, cfg)
+        if (isPointInsideCube(mx, my, sx, sy, cfg)) {
+          hit = item
+          break
+        }
+      }
+
+      if (hit) {
+        if (hoveredIndexRef.current !== hit.i) {
+          hoveredIndexRef.current = hit.i
+          const pb = buildsRef.current.find((x) => x.blueprintId === bp.id && x.index === hit.i)
+          const ci = pb ? checkInsRef.current.find((c) => c.placedBlockId === pb.id) : undefined
+          const h = ci ? habitsRef.current.find((x) => x.id === ci.habitId) : undefined
+          setHoveredBlock({
+            index: hit.i,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+            habitName: h?.name || '—',
+            date: ci?.date || '',
+            note: ci?.note,
+            mood: ci?.mood,
+            starred: ci?.starred,
+          })
+          draw()
+        } else {
+          setHoveredBlock((prev) =>
+            prev ? { ...prev, x: e.clientX - rect.left, y: e.clientY - rect.top } : null,
+          )
+        }
+      } else if (hoveredIndexRef.current !== null) {
+        hoveredIndexRef.current = null
+        setHoveredBlock(null)
+        draw()
+      }
     }
     const onUp = () => (dragging = false)
+    const onLeave = () => {
+      if (hoveredIndexRef.current !== null) {
+        hoveredIndexRef.current = null
+        setHoveredBlock(null)
+        draw()
+      }
+    }
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
       interactedRef.current = true
@@ -333,14 +516,76 @@ export function BuildScene({ blueprint, placedCount, animateIndex, onAnimated }:
     canvas.addEventListener('pointerdown', onDown)
     canvas.addEventListener('pointermove', onMove)
     canvas.addEventListener('pointerup', onUp)
+    canvas.addEventListener('pointerleave', onLeave)
     canvas.addEventListener('wheel', onWheel, { passive: false })
     return () => {
       canvas.removeEventListener('pointerdown', onDown)
       canvas.removeEventListener('pointermove', onMove)
       canvas.removeEventListener('pointerup', onUp)
+      canvas.removeEventListener('pointerleave', onLeave)
       canvas.removeEventListener('wheel', onWheel)
     }
-  }, [draw])
+  }, [draw, interactiveInspect])
 
-  return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }} />
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <canvas
+        ref={canvasRef}
+        style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
+      />
+      {hoveredBlock && interactiveInspect && (
+        <div
+          className="brick-inspect-popover"
+          style={{
+            position: 'absolute',
+            left: Math.min(
+              (canvasRef.current?.clientWidth ?? 400) - 280,
+              Math.max(12, hoveredBlock.x + 14),
+            ),
+            top: Math.min(
+              (canvasRef.current?.clientHeight ?? 400) - 150,
+              Math.max(12, hoveredBlock.y - 36),
+            ),
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>
+              {t.reflections.brickInspectTitle(hoveredBlock.index)}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {hoveredBlock.starred && <span style={{ color: '#f59e0b', fontSize: 13 }}>★</span>}
+              {hoveredBlock.mood && (
+                <span
+                  style={{
+                    fontSize: 10,
+                    padding: '1px 6px',
+                    borderRadius: 999,
+                    background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
+                    color: 'var(--ink)',
+                    fontWeight: 600,
+                  }}
+                >
+                  {t.microMood[hoveredBlock.mood]}
+                </span>
+              )}
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 6 }}>
+            {t.reflections.brickInspectFrom(hoveredBlock.habitName, hoveredBlock.date || '—')}
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: 'var(--ink)',
+              lineHeight: 1.45,
+              fontStyle: hoveredBlock.note ? 'normal' : 'italic',
+              opacity: hoveredBlock.note ? 0.95 : 0.6,
+            }}
+          >
+            {hoveredBlock.note || t.reflections.brickInspectNoNote}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }

@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- BlockHabit：五块 45° 斜放积木沿对勾两臂边贴边拼成（5 形状 / 3 色 / 左下角构图） -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1024" height="1024">
+  <!-- BlockHabit 方向A「方块对勾」app-icon-dark：圆角容器版（rx=120，同 logo.svg） -->
   <rect width="512" height="512" rx="120" fill="#0A0A0A"/>
 
-  <!-- 全部砖旋转 -45°，中心间距 92（=边长），边贴边；整体居中微调 -->
+  <!-- 五块 45° 斜放积木沿对勾两臂边贴边拼成；组级 stroke 形成分缝 -->
   <g transform="translate(-9 23)" stroke="#0A0A0A" stroke-width="6">
     <!-- 短臂（向左上） -->
     <rect x="89" y="219" width="92" height="92" rx="22" fill="#FAFAFA" transform="rotate(-45 135 265)"/>

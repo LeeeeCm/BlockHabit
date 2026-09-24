@@ -10,7 +10,7 @@ function emptyState(): AppState {
     builds: [],
     activeBlueprintId: 'castle',
     completedBlueprintIds: [],
-    settings: { theme: 'light' },
+    settings: { theme: 'light', language: 'zh' },
     dayClaims: [],
   }
 }

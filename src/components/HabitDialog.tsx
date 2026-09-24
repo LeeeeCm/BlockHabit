@@ -1,22 +1,16 @@
-import { useState } from 'react'
-import type { Habit, HabitPeriod } from '../types'
+import { useEffect, useState } from 'react'
+import type { Habit, HabitFrequency, HabitKind, HabitPeriod } from '../types'
 import { useAppStore } from '../store/appStore'
+import { useI18n } from '../i18n'
 import { IconOptional, IconRequired } from './Icons'
-
 interface Props {
   habit?: Habit
   onClose: () => void
 }
 
-const PERIODS: Array<{ id: HabitPeriod; label: string }> = [
-  { id: 'any', label: '任意' },
-  { id: 'morning', label: '早晨' },
-  { id: 'afternoon', label: '午后' },
-  { id: 'evening', label: '夜晚' },
-]
 
-/** 字段标签：必填 = 琥珀实心小方块；选填 = 灰色空心小方块 + 「选填」 */
-function FieldLabel({ required, children }: { required?: boolean; children: string }) {
+/** 字段标签：必填 = 绿色实心小方块；选填 = 灰色空心小方块 + 「选填」 */
+function FieldLabel({ required, optionalText, children }: { required?: boolean; optionalText?: string; children: string }) {
   return (
     <label>
       {required ? <IconRequired /> : <IconOptional />}
@@ -31,7 +25,7 @@ function FieldLabel({ required, children }: { required?: boolean; children: stri
             color: 'var(--ink-2)',
           }}
         >
-          选填
+          {optionalText ?? '选填'}
         </span>
       )}
     </label>
@@ -39,31 +33,63 @@ function FieldLabel({ required, children }: { required?: boolean; children: stri
 }
 
 export function HabitDialog({ habit, onClose }: Props) {
+  const { t } = useI18n()
   const addHabit = useAppStore((s) => s.addHabit)
   const updateHabit = useAppStore((s) => s.updateHabit)
   const archiveHabit = useAppStore((s) => s.archiveHabit)
-
+  const [kind, setKind] = useState<HabitKind>(habit?.kind ?? (habit?.targetMinutes ? 'focus' : habit?.targetValue ? 'counter' : 'instant'))
   const [name, setName] = useState(habit?.name ?? '')
-  const [freqType, setFreqType] = useState<'daily' | 'weekly'>(habit?.frequency.type ?? 'daily')
+  const [targetValue, setTargetValue] = useState(habit?.targetValue ? String(habit.targetValue) : '2000')
+  const [unit, setUnit] = useState(habit?.unit ?? 'ml')
+  const [step, setStep] = useState(habit?.step ? String(habit.step) : '250')
+  const [category, setCategory] = useState(habit?.category ?? '')
+  const [freqMode, setFreqMode] = useState<'daily' | 'custom' | 'weekly'>(
+    habit?.frequency.type ?? 'daily',
+  )
+  const [customDays, setCustomDays] = useState<number[]>(
+    habit?.frequency.type === 'custom' ? habit.frequency.days : [1, 2, 3, 4, 5],
+  )
   const [times, setTimes] = useState(habit?.frequency.type === 'weekly' ? habit.frequency.times : 3)
   const [period, setPeriod] = useState<HabitPeriod>(habit?.period ?? 'any')
-  const [minutes, setMinutes] = useState(habit?.targetMinutes ? String(habit.targetMinutes) : '')
+  const [minutes, setMinutes] = useState(habit?.targetMinutes ? String(habit.targetMinutes) : '25')
   const [note, setNote] = useState(habit?.note ?? '')
 
   const editing = Boolean(habit)
-  const minutesValid = (() => {
-    const m = parseInt(minutes, 10)
-    return Number.isFinite(m) && m >= 1 && m <= 480
-  })()
-
+  const minutesNum = parseInt(minutes, 10)
+  const minutesValid = Number.isFinite(minutesNum) && minutesNum >= 1 && minutesNum <= 480
+  const targetValNum = parseInt(targetValue, 10)
+  const targetValValid = Number.isFinite(targetValNum) && targetValNum >= 1
+  const stepNum = parseInt(step, 10)
+  const stepValid = Number.isFinite(stepNum) && stepNum >= 1
+  const freqValid = freqMode !== 'custom' || customDays.length > 0
+  const canSave =
+    Boolean(name.trim()) &&
+    freqValid &&
+    (kind === 'instant' || (kind === 'focus' && minutesValid) || (kind === 'counter' && targetValValid && stepValid))
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
   function save() {
     const trimmed = name.trim()
-    if (!trimmed || !minutesValid) return
-    const frequency =
-      freqType === 'daily' ? ({ type: 'daily' } as const) : ({ type: 'weekly', times } as const)
+    if (!trimmed || !canSave) return
+    const frequency: HabitFrequency =
+      freqMode === 'daily'
+        ? { type: 'daily' }
+        : freqMode === 'custom'
+          ? { type: 'custom', days: [...customDays].sort((a, b) => a - b) }
+          : { type: 'weekly', times }
     const extra = {
+      kind,
       period,
-      targetMinutes: parseInt(minutes, 10),
+      targetMinutes: kind === 'focus' && minutesValid ? minutesNum : undefined,
+      targetValue: kind === 'counter' && targetValValid ? targetValNum : undefined,
+      unit: kind === 'counter' ? (unit.trim() || undefined) : undefined,
+      step: kind === 'counter' && stepValid ? stepNum : undefined,
+      category: category.trim() || undefined,
       note: note.trim() || undefined,
     }
     if (editing && habit) {
@@ -76,99 +102,257 @@ export function HabitDialog({ habit, onClose }: Props) {
 
   return (
     <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="dialog" onMouseDown={(e) => e.stopPropagation()}>
-        <h3>{editing ? '编辑习惯' : '新建习惯'}</h3>
+      <div className="dialog habit-dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 460, maxWidth: '92vw' }}>
+        <div className="dialog-header">
+          <h3>{editing ? t.habitDialog.editTitle : t.habitDialog.newTitle}</h3>
+          <button className="icon-btn" onClick={onClose} title={t.common.close}>
+            ✕
+          </button>
+        </div>
+
+        <div className="dialog-body">
+        <div className="field">
+          <FieldLabel required optionalText={t.common.optional}>{t.habitDialog.typeLabel}</FieldLabel>
+          <div className="seg">
+            <button className={kind === 'instant' ? 'active' : ''} onClick={() => setKind('instant')}>
+              {t.habitDialog.instant}
+            </button>
+            <button className={kind === 'focus' ? 'active' : ''} onClick={() => setKind('focus')}>
+              {t.habitDialog.focus}
+            </button>
+            <button className={kind === 'counter' ? 'active' : ''} onClick={() => setKind('counter')}>
+              {t.habitDialog.counter}
+            </button>
+          </div>
+        </div>
 
         <div className="field">
-          <FieldLabel required>名称</FieldLabel>
+          <FieldLabel required optionalText={t.common.optional}>{t.habitDialog.nameLabel}</FieldLabel>
           <input
             type="text"
             autoFocus
             value={name}
-            placeholder="例如：读书 30 分钟"
+            placeholder={
+              kind === 'instant'
+                ? t.habitDialog.placeholderInstant
+                : kind === 'focus'
+                  ? t.habitDialog.placeholderFocus
+                  : t.habitDialog.placeholderCounter
+            }
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && save()}
           />
         </div>
-
         <div className="field">
-          <FieldLabel required>频率</FieldLabel>
+          <FieldLabel required optionalText={t.common.optional}>{t.habitDialog.freqLabel}</FieldLabel>
           <div className="seg">
-            <button className={freqType === 'daily' ? 'active' : ''} onClick={() => setFreqType('daily')}>
-              每天
+            <button
+              type="button"
+              className={freqMode === 'daily' ? 'active' : ''}
+              onClick={() => setFreqMode('daily')}
+            >
+              {t.habitDialog.freqDaily}
             </button>
-            <button className={freqType === 'weekly' ? 'active' : ''} onClick={() => setFreqType('weekly')}>
-              每周
+            <button
+              type="button"
+              className={freqMode === 'custom' ? 'active' : ''}
+              onClick={() => setFreqMode('custom')}
+            >
+              {t.habitDialog.freqCustom}
+            </button>
+            <button
+              type="button"
+              className={freqMode === 'weekly' ? 'active' : ''}
+              onClick={() => setFreqMode('weekly')}
+            >
+              {t.habitDialog.freqWeekly}
             </button>
           </div>
-          {freqType === 'weekly' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+
+          {freqMode === 'custom' && (
+            <div style={{ marginTop: 8 }}>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  style={{ fontSize: 11.5, padding: '3px 8px', borderRadius: 999 }}
+                  onClick={() => setCustomDays([1, 2, 3, 4, 5])}
+                >
+                  {t.habitDialog.selectWorkdays}
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  style={{ fontSize: 11.5, padding: '3px 8px', borderRadius: 999 }}
+                  onClick={() => setCustomDays([6, 7])}
+                >
+                  {t.habitDialog.selectWeekends}
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  style={{ fontSize: 11.5, padding: '3px 8px', borderRadius: 999 }}
+                  onClick={() => setCustomDays([1, 2, 3, 4, 5, 6, 7])}
+                >
+                  {t.habitDialog.selectAll}
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between' }}>
+                {[1, 2, 3, 4, 5, 6, 7].map((d) => {
+                  const label = t.common.weekdaysSingle[d - 1]
+                  const active = customDays.includes(d)
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => {
+                        setCustomDays((prev) =>
+                          prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d],
+                        )
+                      }}
+                      style={{
+                        flex: 1,
+                        height: 34,
+                        borderRadius: 8,
+                        border: active ? '1.5px solid var(--ink)' : '1px solid var(--line)',
+                        background: active ? 'var(--ink)' : 'var(--bg)',
+                        color: active ? 'var(--bg)' : 'var(--ink-2)',
+                        fontSize: 13,
+                        fontWeight: active ? 700 : 400,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+              {customDays.length === 0 && (
+                <div style={{ fontSize: 11.5, color: 'var(--danger)', marginTop: 4 }}>
+                  {t.habitDialog.selectAtLeastOne}
+                </div>
+              )}
+            </div>
+          )}
+
+          {freqMode === 'weekly' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
               <input
                 type="range"
                 min={1}
                 max={7}
                 value={times}
                 onChange={(e) => setTimes(Number(e.target.value))}
-                style={{ accentColor: 'var(--accent)', flex: 1 }}
+                style={{ accentColor: 'var(--progress-green)', flex: 1 }}
               />
-              <span style={{ fontSize: 13, minWidth: 44, textAlign: 'right' }}>{times} 次 / 周</span>
+              <span style={{ fontSize: 13, minWidth: 60, textAlign: 'right' }}>{t.habitDialog.timesPerWeek(times)}</span>
             </div>
           )}
         </div>
 
         <div className="field">
-          <FieldLabel>时段</FieldLabel>
+          <FieldLabel optionalText={t.common.optional}>{t.habitDialog.periodLabel}</FieldLabel>
           <div className="seg">
-            {PERIODS.map((p) => (
-              <button key={p.id} className={period === p.id ? 'active' : ''} onClick={() => setPeriod(p.id)}>
-                {p.label}
+            {(['any', 'morning', 'afternoon', 'evening'] as const).map((p) => (
+              <button key={p} className={period === p ? 'active' : ''} onClick={() => setPeriod(p)}>
+                {t.today.periods[p]}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="field">
-          <FieldLabel required>目标时长</FieldLabel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <input
-              type="number"
-              min={1}
-              max={480}
-              value={minutes}
-              placeholder="25"
-              onChange={(e) => setMinutes(e.target.value)}
-              style={{ width: 110 }}
-            />
-            <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>分钟</span>
+        {kind === 'focus' && (
+          <div className="field">
+            <FieldLabel required optionalText={t.common.optional}>{t.habitDialog.durationLabel}</FieldLabel>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input
+                type="number"
+                min={1}
+                max={480}
+                value={minutes}
+                placeholder="25"
+                onChange={(e) => setMinutes(e.target.value)}
+                style={{ width: 110 }}
+              />
+              <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{t.habitDialog.durationUnit}</span>
+            </div>
           </div>
-        </div>
+        )}
+
+        {kind === 'counter' && (
+          <div className="field">
+            <FieldLabel required optionalText={t.common.optional}>{t.habitDialog.counterTarget}</FieldLabel>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input
+                type="number"
+                min={1}
+                value={targetValue}
+                placeholder="2000"
+                onChange={(e) => setTargetValue(e.target.value)}
+                style={{ width: 110 }}
+              />
+              <input
+                type="text"
+                value={unit}
+                placeholder={t.habitDialog.counterUnit}
+                onChange={(e) => setUnit(e.target.value)}
+                style={{ width: 70 }}
+              />
+              <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+                {t.habitDialog.counterStep}:
+              </span>
+              <input
+                type="number"
+                min={1}
+                value={step}
+                placeholder="250"
+                onChange={(e) => setStep(e.target.value)}
+                style={{ width: 80 }}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="field">
-          <FieldLabel>备注</FieldLabel>
+          <FieldLabel optionalText={t.common.optional}>{t.habitDialog.categoryLabel}</FieldLabel>
+          <input
+            type="text"
+            value={category}
+            placeholder={t.habitDialog.categoryPlaceholder}
+            onChange={(e) => setCategory(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <FieldLabel optionalText={t.common.optional}>{t.habitDialog.noteLabel}</FieldLabel>
           <textarea
             value={note}
-            placeholder="为什么想做这件事？"
+            placeholder={t.habitDialog.notePlaceholder}
             onChange={(e) => setNote(e.target.value)}
           />
         </div>
 
-        <div className="dialog-actions">
+        </div>
+
+        <div className="dialog-footer">
           {editing && (
             <button
               className="btn ghost"
+              style={{ marginRight: 'auto' }}
               onClick={() => {
                 archiveHabit(habit!.id)
                 onClose()
               }}
             >
-              归档
+              {t.habitDialog.archiveBtn}
             </button>
           )}
           <button className="btn ghost" onClick={onClose}>
-            取消
+            {t.common.cancel}
           </button>
-          <button className="btn primary" disabled={!name.trim() || !minutesValid} onClick={save}>
-            保存
+          <button className="btn primary" disabled={!canSave} onClick={save}>
+            {t.common.save}
           </button>
         </div>
       </div>

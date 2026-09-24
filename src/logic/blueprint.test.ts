@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { nextSlot, isComplete, awardBlock } from './blueprint'
+import { nextSlot, isComplete, awardBlock, canSelectBlueprint } from './blueprint'
+import { blueprintOrder } from './blueprints'
 import type { BlockDef } from '../types'
 
 const blocks: BlockDef[] = [
   { x: 0, y: 0, z: 0, type: 'basic' },
   { x: 1, y: 0, z: 0, type: 'gate' },
   { x: 0, y: 0, z: 1, type: 'basic' },
-  { x: 1, y: 0, z: 1, type: 'flag' },
+  { x: 1, y: 0, z: 1, type: 'window' },
 ]
 
 describe('nextSlot', () => {
@@ -41,5 +42,26 @@ describe('awardBlock', () => {
     expect(awardBlock(6)).toBe(false)
     expect(awardBlock(8)).toBe(false)
     expect(awardBlock(-7)).toBe(false)
+  })
+})
+
+describe('canSelectBlueprint（顺序解锁）', () => {
+  it('nothing completed → only the first is selectable', () => {
+    expect(canSelectBlueprint('plant', [])).toBe(true)
+    expect(canSelectBlueprint('coffee', [])).toBe(false)
+    expect(canSelectBlueprint('monument', [])).toBe(false)
+  })
+
+  it('plant completed → coffee unlocked, later ones still locked', () => {
+    expect(canSelectBlueprint('coffee', ['plant'])).toBe(true)
+    expect(canSelectBlueprint('camera', ['plant'])).toBe(false)
+  })
+
+  it('all completed → everything selectable (revisit)', () => {
+    const all = [...blueprintOrder]
+    for (const id of all) expect(canSelectBlueprint(id, all)).toBe(true)
+  })
+  it('unknown id → not selectable', () => {
+    expect(canSelectBlueprint('nope', [])).toBe(false)
   })
 })
