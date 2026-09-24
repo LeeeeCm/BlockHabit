@@ -158,12 +158,15 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
 
   function handleStepCounter(e?: React.MouseEvent, delta = stepVal) {
     e?.stopPropagation()
+    if (delta < 0 && counterVal <= 0) return
     const verdict = canCheckIn(habits, checkIns, habit.id, day)
     if (!verdict.ok && delta > 0) return
     triggerHaptic('light')
     const res = checkIn(habit.id, undefined, undefined, delta)
     playSnapSound()
-    playComboChime(streak)
+    if (delta > 0) {
+      playComboChime(streak)
+    }
     setFloatingPill(`${delta > 0 ? '+' : ''}${delta} ${habit.unit ?? ''}`)
     setPulse(true)
     setTimeout(() => {
@@ -244,16 +247,6 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
       onMouseEnter={!isMobile ? (e) => (e.currentTarget.style.transform = 'translateY(-2px)') : undefined}
       onMouseLeave={!isMobile ? (e) => (e.currentTarget.style.transform = 'translateY(0)') : undefined}
     >
-      <style>{`
-        .habit-card:active { transform: scale(0.98); }
-        .habit-card.mobile {
-          user-select: none;
-          -webkit-user-select: none;
-          touch-action: manipulation;
-        }
-        .habit-card.mobile:active { transform: scale(0.98); }
-        .habit-card.mobile button:active { transform: scale(0.95); }
-      `}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <button
           className="status-btn"
@@ -371,10 +364,15 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
             <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
               <button
                 className="pill-action"
+                disabled={counterVal <= 0}
                 onClick={(e) => handleStepCounter(e, -stepVal)}
                 title={`-${stepVal} ${habit.unit ?? ''}`}
                 aria-label={`-${stepVal} ${habit.unit ?? ''}`}
-                style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
+                style={{
+                  ...(isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : {}),
+                  opacity: counterVal <= 0 ? 0.4 : 1,
+                  cursor: counterVal <= 0 ? 'not-allowed' : 'pointer',
+                }}
               >
                 -{stepVal} {habit.unit ?? ''}
               </button>

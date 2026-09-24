@@ -963,3 +963,13 @@
   border-color: color-mix(in srgb, var(--ink) 25%, var(--line));
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
+
+/* 移动端习惯卡片触控与按压反馈 */
+.habit-card:active { transform: scale(0.98); }
+.habit-card.mobile {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.habit-card.mobile:active { transform: scale(0.98); }
+.habit-card.mobile button:active { transform: scale(0.95); }
