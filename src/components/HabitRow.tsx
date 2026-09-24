@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { usePlatform, triggerHaptic } from '../platform'
 import type { CheckIn, CheckInResult, Habit, MicroMood } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useTimerStore } from '../store/timerStore'
@@ -48,6 +49,7 @@ function fmtRemaining(ms: number): string {
  * 点击未完成卡片 → 开始倒计时（蓝色/进行中）；倒计时到点 → 提醒后再次点击 → 真正打卡（绿色）。
  */
 export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
+  const { isMobile } = usePlatform()
   const { lang, t } = useI18n()
   const checkIn = useAppStore((s) => s.checkIn)
   const uncheckIn = useAppStore((s) => s.uncheckIn)
@@ -139,6 +141,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
   function performCheckIn(actualMins?: number, noteText?: string) {
     const verdict = canCheckIn(habits, checkIns, habit.id, day)
     if (!verdict.ok) return
+    triggerHaptic('medium')
     const res = checkIn(habit.id, actualMins, noteText)
     cancelTimer(habit.id)
     setShowEarlyConfirm(false)
@@ -153,14 +156,15 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
     onCheck?.(res)
   }
 
-  function handleStepCounter(e?: React.MouseEvent) {
+  function handleStepCounter(e?: React.MouseEvent, delta = stepVal) {
     e?.stopPropagation()
     const verdict = canCheckIn(habits, checkIns, habit.id, day)
-    if (!verdict.ok) return
-    const res = checkIn(habit.id, undefined, undefined, stepVal)
+    if (!verdict.ok && delta > 0) return
+    triggerHaptic('light')
+    const res = checkIn(habit.id, undefined, undefined, delta)
     playSnapSound()
     playComboChime(streak)
-    setFloatingPill(`+${stepVal} ${habit.unit ?? ''}`)
+    setFloatingPill(`${delta > 0 ? '+' : ''}${delta} ${habit.unit ?? ''}`)
     setPulse(true)
     setTimeout(() => {
       setPulse(false)
@@ -217,7 +221,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
 
   return (
     <div
-      className={`card habit-card${habit.pinned ? ' pinned' : ''}`}
+      className={`card habit-card${habit.pinned ? ' pinned' : ''}${isMobile ? ' mobile' : ''}`}
       style={{
         position: 'relative',
         opacity: done ? 0.95 : isRestDay ? 0.88 : 1,
@@ -237,9 +241,19 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
         if ((e.target as HTMLElement).closest('button')) return
         handleCardClick()
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+      onMouseEnter={!isMobile ? (e) => (e.currentTarget.style.transform = 'translateY(-2px)') : undefined}
+      onMouseLeave={!isMobile ? (e) => (e.currentTarget.style.transform = 'translateY(0)') : undefined}
     >
+      <style>{`
+        .habit-card:active { transform: scale(0.98); }
+        .habit-card.mobile {
+          user-select: none;
+          -webkit-user-select: none;
+          touch-action: manipulation;
+        }
+        .habit-card.mobile:active { transform: scale(0.98); }
+        .habit-card.mobile button:active { transform: scale(0.95); }
+      `}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <button
           className="status-btn"
@@ -263,8 +277,10 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
                         : t.today.checkInTooltip
           }
           style={{
-            width: 40,
-            height: 40,
+            width: isMobile ? 44 : 40,
+            height: isMobile ? 44 : 40,
+            minWidth: isMobile ? 44 : undefined,
+            minHeight: isMobile ? 44 : undefined,
             color: statusColor,
             display: 'inline-flex',
             alignItems: 'center',
@@ -283,10 +299,13 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
             <IconTodo size={36} />
           )}
         </button>
-        <div style={{ display: 'flex', gap: 2 }}>
+        <div style={{ display: 'flex', gap: isMobile ? 6 : 2 }}>
           <button
             className={`card-action${habit.pinned ? ' active' : ''}`}
-            style={habit.pinned ? { color: 'var(--accent)' } : undefined}
+            style={{
+              ...(habit.pinned ? { color: 'var(--accent)' } : undefined),
+              ...(isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined),
+            }}
             title={habit.pinned ? (lang === 'zh' ? '取消置顶' : 'Unpin') : (lang === 'zh' ? '置顶习惯' : 'Pin to top')}
             onClick={(e) => {
               e.stopPropagation()
@@ -297,6 +316,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
           </button>
           <button
             className="card-action"
+            style={isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined}
             title={t.common.edit}
             onClick={(e) => {
               e.stopPropagation()
@@ -307,6 +327,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
           </button>
           <button
             className="card-action danger"
+            style={isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined}
             title={t.common.delete}
             onClick={(e) => {
               e.stopPropagation()
@@ -349,9 +370,20 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
           {!done && (
             <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
               <button
+                className="pill-action"
+                onClick={(e) => handleStepCounter(e, -stepVal)}
+                title={`-${stepVal} ${habit.unit ?? ''}`}
+                aria-label={`-${stepVal} ${habit.unit ?? ''}`}
+                style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
+              >
+                -{stepVal} {habit.unit ?? ''}
+              </button>
+              <button
                 className="pill-action success"
-                onClick={handleStepCounter}
+                onClick={(e) => handleStepCounter(e, stepVal)}
                 title={`+${stepVal} ${habit.unit ?? ''}`}
+                aria-label={`+${stepVal} ${habit.unit ?? ''}`}
+                style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
               >
                 +{stepVal} {habit.unit ?? ''}
               </button>
@@ -482,6 +514,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
               {progressRatio >= 0.8 ? (
                 <button
                   className="pill-action success"
+                  style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
                   onClick={(e) => {
                     e.stopPropagation()
                     performCheckIn(actualMinutes)
@@ -493,6 +526,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
               ) : progressRatio >= 0.2 ? (
                 <button
                   className="pill-action"
+                  style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
                   onClick={(e) => {
                     e.stopPropagation()
                     setShowEarlyConfirm((v) => !v)
@@ -505,6 +539,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
 
               <button
                 className="pill-action danger"
+                style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
                 title={t.today.cancelTimer}
                 onClick={(e) => {
                   e.stopPropagation()
@@ -535,14 +570,14 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
               <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                 <button
                   className="pill-action"
-                  style={{ fontSize: 11, padding: '3px 10px' }}
+                  style={{ fontSize: 11, padding: isMobile ? '10px 14px' : '3px 10px', ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined) }}
                   onClick={() => setShowEarlyConfirm(false)}
                 >
                   {t.common.cancel}
                 </button>
                 <button
                   className="pill-action success"
-                  style={{ fontSize: 11, padding: '3px 10px' }}
+                  style={{ fontSize: 11, padding: isMobile ? '10px 14px' : '3px 10px', ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined) }}
                   onClick={() => performCheckIn(actualMinutes)}
                 >
                   {t.today.earlyFinish}
@@ -571,7 +606,11 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
               e.stopPropagation()
               performCheckIn()
             }}
-            style={{ background: 'var(--progress-green)', color: '#ffffff' }}
+            style={{
+              background: 'var(--progress-green)',
+              color: '#ffffff',
+              ...(isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined),
+            }}
           >
             {t.common.complete}
           </button>
@@ -581,6 +620,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
         <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             className="pill-action"
+            style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
             onClick={(e) => {
               e.stopPropagation()
               handleStartFocus()
