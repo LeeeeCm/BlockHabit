@@ -1,5 +1,22 @@
 import React, { useEffect } from 'react'
 import { triggerHaptic } from '../platform'
+let sheetLockCount = 0
+let originalBodyOverflow = ''
+
+function lockBodyScroll() {
+  if (sheetLockCount === 0) {
+    originalBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+  }
+  sheetLockCount++
+}
+
+function unlockBodyScroll() {
+  sheetLockCount = Math.max(0, sheetLockCount - 1)
+  if (sheetLockCount === 0) {
+    document.body.style.overflow = originalBodyOverflow
+  }
+}
 
 export interface BottomSheetProps {
   open?: boolean
@@ -30,12 +47,10 @@ export function BottomSheet({
     if (!isSheetOpen) return
 
     triggerHaptic('light')
-
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    lockBodyScroll()
 
     return () => {
-      document.body.style.overflow = prevOverflow
+      unlockBodyScroll()
     }
   }, [isSheetOpen])
 
@@ -58,8 +73,8 @@ export function BottomSheet({
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby={title != null ? 'bottom-sheet-title' : undefined}
       style={{
-        position: 'fixed',
         inset: 0,
         zIndex: 1000,
         display: 'flex',
@@ -147,8 +162,8 @@ export function BottomSheet({
             }}
           >
             <h3
+              id="bottom-sheet-title"
               style={{
-                margin: 0,
                 fontSize: 17,
                 fontWeight: 700,
                 color: 'var(--ink)',
