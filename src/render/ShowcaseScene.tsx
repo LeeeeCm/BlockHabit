@@ -457,6 +457,10 @@ export function ShowcaseScene({
         state.lastY = t.clientY
         state.lastPinchDist = 0
         state.maxDisplacement = 999
+      } else if (e.touches.length >= 2) {
+        state.lastPinchDist = calculatePinchDistance(e.touches[0], e.touches[1])
+        state.lastPinchCenter = calculateTouchCenter(e.touches[0], e.touches[1])
+        state.maxDisplacement = 999
       }
     },
     [findModelAtScreenPoint, onSelectModel],

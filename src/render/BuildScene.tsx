@@ -400,7 +400,7 @@ export function BuildScene({
 
       if (e.touches.length === 0) {
         const duration = performance.now() - state.startTime
-        if (isQuickTap(duration, state.maxDisplacement)) {
+        if (interactiveInspect && isQuickTap(duration, state.maxDisplacement)) {
           const canvas = canvasRef.current
           if (canvas) {
             const rect = canvas.getBoundingClientRect()
@@ -453,6 +453,10 @@ export function BuildScene({
         state.lastX = t.clientX
         state.lastY = t.clientY
         state.lastPinchDist = 0
+        state.maxDisplacement = 999
+      } else if (e.touches.length >= 2) {
+        state.lastPinchDist = calculatePinchDistance(e.touches[0], e.touches[1])
+        state.lastPinchCenter = calculateTouchCenter(e.touches[0], e.touches[1])
         state.maxDisplacement = 999
       }
     },
@@ -672,7 +676,8 @@ export function BuildScene({
       if (e.pointerType === 'touch') return
       dragging = false
     }
-    const onLeave = () => {
+    const onLeave = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return
       if (hoveredIndexRef.current !== null) {
         hoveredIndexRef.current = null
         setHoveredBlock(null)
