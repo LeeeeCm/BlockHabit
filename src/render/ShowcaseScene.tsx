@@ -15,6 +15,14 @@ import {
   SHOWCASE_GRID_SIZE,
 } from '../logic/showcase'
 import { playSnapSound } from '../audio/sound'
+import {
+  calculatePinchDistance,
+  calculateTouchCenter,
+  clampZoom,
+  isQuickTap,
+  type TouchGestureState,
+} from './touchGesture'
+import { triggerHaptic } from '../platform'
 
 interface Props {
   placements: ShowcasePlacement[]
@@ -301,6 +309,162 @@ export function ShowcaseScene({
     ro.observe(canvas)
     return () => ro.disconnect()
   }, [draw, cfg, G])
+  const findModelAtScreenPoint = useCallback(
+    (clientX: number, clientY: number): string | null => {
+      const canvas = canvasRef.current
+      if (!canvas) return null
+      const rect = canvas.getBoundingClientRect()
+      const mx = clientX - rect.left
+      const my = clientY - rect.top
+      const view = viewRef.current
+      const worldPx = (mx - view.panX) / view.scale
+      const worldPy = (my - view.panY) / view.scale - cfg.tileH / 2
+
+      for (let i = placements.length - 1; i >= 0; i--) {
+        const p = placements[i]
+        const bp = blueprintsMap[p.blueprintId]
+        if (!bp) continue
+        const fp = getModelFootprint(bp.blocks)
+        const { gx, gy } = screenToGroundIso(worldPx, worldPy, cfg.tileW, cfg.tileH)
+        if (
+          gx >= p.gridX - 0.4 &&
+          gx <= p.gridX + fp.width + 0.4 &&
+          gy >= p.gridY - 0.4 &&
+          gy <= p.gridY + fp.depth + 0.4
+        ) {
+          return p.blueprintId
+        }
+      }
+      return null
+    },
+    [placements, blueprintsMap, cfg.tileH, cfg.tileW],
+  )
+
+  const touchStateRef = useRef<TouchGestureState | null>(null)
+
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length === 1) {
+      const t = e.touches[0]
+      touchStateRef.current = {
+        startTime: performance.now(),
+        startX: t.clientX,
+        startY: t.clientY,
+        lastX: t.clientX,
+        lastY: t.clientY,
+        maxDisplacement: 0,
+        isMultiTouch: false,
+        lastPinchDist: 0,
+        lastPinchCenter: { x: t.clientX, y: t.clientY },
+      }
+    } else if (e.touches.length >= 2) {
+      const p1 = e.touches[0]
+      const p2 = e.touches[1]
+      const dist = calculatePinchDistance(p1, p2)
+      const center = calculateTouchCenter(p1, p2)
+      if (touchStateRef.current) {
+        touchStateRef.current.isMultiTouch = true
+        touchStateRef.current.lastPinchDist = dist
+        touchStateRef.current.lastPinchCenter = center
+        touchStateRef.current.maxDisplacement = 999
+      } else {
+        touchStateRef.current = {
+          startTime: performance.now(),
+          startX: center.x,
+          startY: center.y,
+          lastX: center.x,
+          lastY: center.y,
+          maxDisplacement: 999,
+          isMultiTouch: true,
+          lastPinchDist: dist,
+          lastPinchCenter: center,
+        }
+      }
+    }
+  }, [])
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      const canvas = canvasRef.current
+      const state = touchStateRef.current
+      if (!canvas || !state) return
+
+      if (e.touches.length === 1 && !state.isMultiTouch) {
+        const t = e.touches[0]
+        const dx = t.clientX - state.lastX
+        const dy = t.clientY - state.lastY
+        state.lastX = t.clientX
+        state.lastY = t.clientY
+        const disp = Math.hypot(t.clientX - state.startX, t.clientY - state.startY)
+        if (disp > state.maxDisplacement) {
+          state.maxDisplacement = disp
+        }
+
+        const view = viewRef.current
+        view.panX += dx
+        view.panY += dy
+        draw()
+      } else if (e.touches.length >= 2) {
+        state.isMultiTouch = true
+        state.maxDisplacement = 999
+        const p1 = e.touches[0]
+        const p2 = e.touches[1]
+        const dist = calculatePinchDistance(p1, p2)
+        const center = calculateTouchCenter(p1, p2)
+
+        if (state.lastPinchDist > 0) {
+          const factor = dist / state.lastPinchDist
+          const view = viewRef.current
+          const nextScale = clampZoom(view.scale * factor, 0.4, 2.5)
+
+          const rect = canvas.getBoundingClientRect()
+          const mx = center.x - rect.left
+          const my = center.y - rect.top
+          const panDx = center.x - state.lastPinchCenter.x
+          const panDy = center.y - state.lastPinchCenter.y
+
+          view.panX = mx - ((mx - view.panX) / view.scale) * nextScale + panDx
+          view.panY = my - ((my - view.panY) / view.scale) * nextScale + panDy
+          view.scale = nextScale
+
+          draw()
+        }
+
+        state.lastPinchDist = dist
+        state.lastPinchCenter = center
+      }
+    },
+    [draw],
+  )
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      const state = touchStateRef.current
+      if (!state) return
+
+      if (e.touches.length === 0) {
+        const duration = performance.now() - state.startTime
+        if (isQuickTap(duration, state.maxDisplacement)) {
+          const hitId = findModelAtScreenPoint(state.startX, state.startY)
+          if (hitId) {
+            triggerHaptic('light')
+            onSelectModel?.(hitId)
+          }
+        }
+        touchStateRef.current = null
+      } else if (e.touches.length === 1) {
+        const t = e.touches[0]
+        state.lastX = t.clientX
+        state.lastY = t.clientY
+        state.lastPinchDist = 0
+        state.maxDisplacement = 999
+      }
+    },
+    [findModelAtScreenPoint, onSelectModel],
+  )
+
+  const handleTouchCancel = useCallback(() => {
+    touchStateRef.current = null
+  }, [])
 
   // 鼠标交互：拖拽移动、碰撞反馈与点击选中
   useEffect(() => {
@@ -342,6 +506,7 @@ export function ShowcaseScene({
     }
 
     const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return
       canvas.setPointerCapture(e.pointerId)
       const { mx, my, worldPx, worldPy } = getScreenPoint(e)
       const hitId = findModelUnderPointer(worldPx, worldPy)
@@ -370,6 +535,7 @@ export function ShowcaseScene({
     }
 
     const onPointerMove = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return
       const { mx, my, worldPx, worldPy } = getScreenPoint(e)
       const drag = dragRef.current
 
@@ -415,7 +581,8 @@ export function ShowcaseScene({
       draw()
     }
 
-    const onPointerUp = () => {
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return
       const drag = dragRef.current
       if (drag) {
         if (!drag.hasMoved) {
@@ -463,6 +630,10 @@ export function ShowcaseScene({
   return (
     <canvas
       ref={canvasRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
       style={{
         width: '100%',
         height: '100%',

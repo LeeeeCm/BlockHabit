@@ -13,6 +13,14 @@ import {
 } from './iso'
 import { useAppStore } from '../store/appStore'
 import { useI18n } from '../i18n'
+import {
+  calculatePinchDistance,
+  calculateTouchCenter,
+  clampZoom,
+  isQuickTap,
+  type TouchGestureState,
+} from './touchGesture'
+import { triggerHaptic } from '../platform'
 interface Props {
   blueprint: Blueprint
   placedCount: number
@@ -287,6 +295,174 @@ export function BuildScene({
     }
   }, [onAnimated])
 
+  const touchStateRef = useRef<TouchGestureState | null>(null)
+
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length === 1) {
+      const t = e.touches[0]
+      touchStateRef.current = {
+        startTime: performance.now(),
+        startX: t.clientX,
+        startY: t.clientY,
+        lastX: t.clientX,
+        lastY: t.clientY,
+        maxDisplacement: 0,
+        isMultiTouch: false,
+        lastPinchDist: 0,
+        lastPinchCenter: { x: t.clientX, y: t.clientY },
+      }
+    } else if (e.touches.length >= 2) {
+      const p1 = e.touches[0]
+      const p2 = e.touches[1]
+      const dist = calculatePinchDistance(p1, p2)
+      const center = calculateTouchCenter(p1, p2)
+      if (touchStateRef.current) {
+        touchStateRef.current.isMultiTouch = true
+        touchStateRef.current.lastPinchDist = dist
+        touchStateRef.current.lastPinchCenter = center
+        touchStateRef.current.maxDisplacement = 999
+      } else {
+        touchStateRef.current = {
+          startTime: performance.now(),
+          startX: center.x,
+          startY: center.y,
+          lastX: center.x,
+          lastY: center.y,
+          maxDisplacement: 999,
+          isMultiTouch: true,
+          lastPinchDist: dist,
+          lastPinchCenter: center,
+        }
+      }
+    }
+  }, [])
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      const canvas = canvasRef.current
+      const state = touchStateRef.current
+      if (!canvas || !state) return
+
+      if (e.touches.length === 1 && !state.isMultiTouch) {
+        const t = e.touches[0]
+        const dx = t.clientX - state.lastX
+        const dy = t.clientY - state.lastY
+        state.lastX = t.clientX
+        state.lastY = t.clientY
+        const disp = Math.hypot(t.clientX - state.startX, t.clientY - state.startY)
+        if (disp > state.maxDisplacement) {
+          state.maxDisplacement = disp
+        }
+
+        interactedRef.current = true
+        const view = viewRef.current
+        view.panX += dx
+        view.panY += dy
+        draw()
+      } else if (e.touches.length >= 2) {
+        state.isMultiTouch = true
+        state.maxDisplacement = 999
+        const p1 = e.touches[0]
+        const p2 = e.touches[1]
+        const dist = calculatePinchDistance(p1, p2)
+        const center = calculateTouchCenter(p1, p2)
+
+        if (state.lastPinchDist > 0) {
+          const factor = dist / state.lastPinchDist
+          const view = viewRef.current
+          const nextScale = clampZoom(view.scale * factor, 0.5, 3.0)
+
+          const rect = canvas.getBoundingClientRect()
+          const mx = center.x - rect.left
+          const my = center.y - rect.top
+          const panDx = center.x - state.lastPinchCenter.x
+          const panDy = center.y - state.lastPinchCenter.y
+
+          view.panX = mx - ((mx - view.panX) / view.scale) * nextScale + panDx
+          view.panY = my - ((my - view.panY) / view.scale) * nextScale + panDy
+          view.scale = nextScale
+
+          interactedRef.current = true
+          draw()
+        }
+
+        state.lastPinchDist = dist
+        state.lastPinchCenter = center
+      }
+    },
+    [draw],
+  )
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      const state = touchStateRef.current
+      if (!state) return
+
+      if (e.touches.length === 0) {
+        const duration = performance.now() - state.startTime
+        if (isQuickTap(duration, state.maxDisplacement)) {
+          const canvas = canvasRef.current
+          if (canvas) {
+            const rect = canvas.getBoundingClientRect()
+            const view = viewRef.current
+            const cfg = DEFAULT_ISO_CONFIG
+            const mx = (state.startX - rect.left - view.panX) / view.scale
+            const my = (state.startY - rect.top - view.panY) / view.scale
+
+            const pc = stateRef.current.placedCount
+            const bp = stateRef.current.blueprint
+            let hit: { b: BlockDef; i: number; rx: number; ry: number } | null = null
+            const cubes = cubesRef.current
+            for (let k = cubes.length - 1; k >= 0; k--) {
+              const item = cubes[k]
+              if (item.i >= pc) continue
+              const { sx, sy } = worldToScreen(item.rx, item.ry, item.b.z, cfg)
+              if (isPointInsideCube(mx, my, sx, sy, cfg)) {
+                hit = item
+                break
+              }
+            }
+
+            if (hit) {
+              triggerHaptic('light')
+              hoveredIndexRef.current = hit.i
+              const pb = buildsRef.current.find((x) => x.blueprintId === bp.id && x.index === hit.i)
+              const ci = pb ? checkInsRef.current.find((c) => c.placedBlockId === pb.id) : undefined
+              const h = ci ? habitsRef.current.find((x) => x.id === ci.habitId) : undefined
+              setHoveredBlock({
+                index: hit.i,
+                x: state.startX - rect.left,
+                y: state.startY - rect.top,
+                habitName: h?.name || '—',
+                date: ci?.date || '',
+                note: ci?.note,
+                mood: ci?.mood,
+                starred: ci?.starred,
+              })
+              draw()
+            } else if (hoveredIndexRef.current !== null) {
+              hoveredIndexRef.current = null
+              setHoveredBlock(null)
+              draw()
+            }
+          }
+        }
+        touchStateRef.current = null
+      } else if (e.touches.length === 1) {
+        const t = e.touches[0]
+        state.lastX = t.clientX
+        state.lastY = t.clientY
+        state.lastPinchDist = 0
+        state.maxDisplacement = 999
+      }
+    },
+    [draw],
+  )
+
+  const handleTouchCancel = useCallback(() => {
+    touchStateRef.current = null
+  }, [])
+
   // 尺寸初始化 + 自适应：未手动取景时最大化/放大窗口重新取景（场景保持在中心偏下）；
   // 已手动取景（拖拽/滚轮缩放过）时模型随窗口等比缩放并保持窗口内相对位置
   useEffect(() => {
@@ -418,6 +594,7 @@ export function BuildScene({
     let lastY = 0
 
     const onDown = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return
       dragging = true
       lastX = e.clientX
       lastY = e.clientY
@@ -429,6 +606,7 @@ export function BuildScene({
       }
     }
     const onMove = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return
       const view = viewRef.current
       if (dragging) {
         interactedRef.current = true
@@ -490,7 +668,10 @@ export function BuildScene({
         draw()
       }
     }
-    const onUp = () => (dragging = false)
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return
+      dragging = false
+    }
     const onLeave = () => {
       if (hoveredIndexRef.current !== null) {
         hoveredIndexRef.current = null
@@ -531,6 +712,10 @@ export function BuildScene({
     <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
       <canvas
         ref={canvasRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
         style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
       />
       {hoveredBlock && interactiveInspect && (
