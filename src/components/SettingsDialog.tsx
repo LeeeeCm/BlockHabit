@@ -5,6 +5,7 @@ import { useI18n } from '../i18n'
 import { IconKeyboard, IconRepair } from './Icons'
 import { usePlatform } from '../platform'
 import { BottomSheet } from './BottomSheet'
+import { useSync } from '../sync/useSync'
 const inTauri =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
@@ -34,6 +35,34 @@ export function SettingsDialog({ onClose }: Props) {
       setAutostart(await isEnabled())
     })()
   }, [])
+  const {
+    config: syncConfig,
+    updateConfig: updateSyncConfig,
+    isSyncing,
+    status: syncStatus,
+    error: syncError,
+    lastSyncAt,
+    syncNow,
+  } = useSync()
+  const [endpoint, setEndpoint] = useState(syncConfig.endpoint)
+  const [username, setUsername] = useState(syncConfig.username)
+  const [password, setPassword] = useState(syncConfig.password)
+
+  useEffect(() => {
+    setEndpoint(syncConfig.endpoint)
+    setUsername(syncConfig.username)
+    setPassword(syncConfig.password)
+  }, [syncConfig.endpoint, syncConfig.username, syncConfig.password])
+
+  async function handleSync() {
+    const ok = await syncNow()
+    if (ok) {
+      setMsg(lang === 'zh' ? '同步成功！数据已与云端合并' : 'Sync successful! Data merged with cloud.')
+    } else {
+      setMsg(syncError || (lang === 'zh' ? '同步失败，请检查配置与网络' : 'Sync failed, please check configuration.'))
+    }
+    setTimeout(() => setMsg(null), 3000)
+  }
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -179,6 +208,80 @@ export function SettingsDialog({ onClose }: Props) {
                   }}
                 />
               </div>
+            </div>
+          </div>
+
+          {/* 3.1 WebDAV 数据同步 */}
+          <div className="apple-group">
+            <div className="apple-group-title">{lang === 'zh' ? 'WebDAV 数据同步' : 'WEBDAV CLOUD SYNC'}</div>
+            <div className="field" style={{ marginBottom: 10 }}>
+              <label>{lang === 'zh' ? 'WebDAV 地址' : 'Server URL'}</label>
+              <input
+                type="text"
+                placeholder="https://dav.example.com/sync/"
+                value={endpoint}
+                onChange={(e) => {
+                  setEndpoint(e.target.value)
+                  updateSyncConfig({ endpoint: e.target.value })
+                }}
+                disabled={isSyncing}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+              <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                <label>{lang === 'zh' ? '用户名' : 'Username'}</label>
+                <input
+                  type="text"
+                  placeholder={lang === 'zh' ? '用户名' : 'Username'}
+                  value={username}
+                  onChange={(e) => {
+                    setUsername(e.target.value)
+                    updateSyncConfig({ username: e.target.value })
+                  }}
+                  disabled={isSyncing}
+                />
+              </div>
+              <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                <label>{lang === 'zh' ? '密码' : 'Password'}</label>
+                <input
+                  type="password"
+                  placeholder={lang === 'zh' ? '密码 / Token' : 'Password / Token'}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    updateSyncConfig({ password: e.target.value })
+                  }}
+                  disabled={isSyncing}
+                  style={{
+                    border: '1.5px solid var(--line)',
+                    background: 'var(--bg)',
+                    padding: '9px 12px',
+                    borderRadius: 'var(--r-sm)',
+                    outline: 'none',
+                    width: '100%',
+                    color: 'var(--ink)',
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: syncStatus === 'error' ? 'var(--accent, #e53e3e)' : 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {isSyncing
+                  ? (lang === 'zh' ? '正在连接同步中...' : 'Syncing data...')
+                  : syncError
+                    ? syncError
+                    : lastSyncAt
+                      ? `${lang === 'zh' ? '上次同步: ' : 'Last sync: '}${new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      : (lang === 'zh' ? '未同步' : 'Not synced yet')}
+              </div>
+              <button
+                className="btn primary"
+                onClick={() => void handleSync()}
+                disabled={isSyncing || !endpoint.trim()}
+                style={{ padding: '6px 16px', fontSize: 12.5, flexShrink: 0 }}
+              >
+                {isSyncing ? (lang === 'zh' ? '同步中...' : 'Syncing...') : (lang === 'zh' ? '立即同步' : 'Sync Now')}
+              </button>
             </div>
           </div>
 
