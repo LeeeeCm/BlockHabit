@@ -22,8 +22,8 @@ fn show_tray_menu(app: &AppHandle, x: f64, y: f64) {
         return
     };
     let scale = win.scale_factor().unwrap_or(1.0);
-    let w = 216.0 * scale;
-    let h = 148.0 * scale;
+    let w = 240.0 * scale;
+    let h = 172.0 * scale;
     let menu_x = (x - w / 2.0).max(8.0);
     // 底部任务栏：菜单出现在点击点上方
     let menu_y = (y - h - 10.0 * scale).max(8.0);

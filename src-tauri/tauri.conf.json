@@ -23,8 +23,8 @@
       {
         "label": "tray-menu",
         "title": "",
-        "width": 216,
-        "height": 148,
+        "width": 240,
+        "height": 172,
         "resizable": false,
         "decorations": false,
         "visible": false,
