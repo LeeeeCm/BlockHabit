@@ -1,7 +1,7 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest'
-import { BottomSheet } from './BottomSheet'
+import { BottomSheet, _resetSheetLockCountForTest } from './BottomSheet'
 import * as platform from '../platform'
 import * as detectModule from '../platform/detect'
 import { HabitDialog } from './HabitDialog'
@@ -56,17 +56,22 @@ describe('BottomSheet component', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+    _resetSheetLockCountForTest()
     document.body.style.overflow = ''
   })
 
-  it('renders title and children when open', () => {
-    const { getByText, unmount } = render(
+  it('renders title and children with fixed position overlay when open', () => {
+    const { container, getByText, unmount } = render(
       <BottomSheet open={true} onClose={vi.fn()} title="测试抽屉">
         <div>抽屉内容</div>
       </BottomSheet>
     )
     expect(getByText('测试抽屉')).toBeDefined()
     expect(getByText('抽屉内容')).toBeDefined()
+    const dialog = container.querySelector('[role="dialog"]') as HTMLElement
+    expect(dialog).toBeDefined()
+    expect(dialog.style.position).toBe('fixed')
+    expect(dialog.style.zIndex).toBe('1000')
     unmount()
   })
 

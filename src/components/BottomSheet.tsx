@@ -18,6 +18,10 @@ function unlockBodyScroll() {
   }
 }
 
+export function _resetSheetLockCountForTest() {
+  sheetLockCount = 0
+  originalBodyOverflow = ''
+}
 export interface BottomSheetProps {
   open?: boolean
   isOpen?: boolean
@@ -75,6 +79,7 @@ export function BottomSheet({
       aria-modal="true"
       aria-labelledby={title != null ? 'bottom-sheet-title' : undefined}
       style={{
+        position: 'fixed',
         inset: 0,
         zIndex: 1000,
         display: 'flex',
