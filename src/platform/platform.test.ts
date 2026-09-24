@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { detectPlatform, triggerHaptic } from './index'
@@ -17,6 +17,12 @@ describe('Platform detection', () => {
       configurable: true,
       value: 0,
     })
+  })
+
+  afterEach(() => {
+    if ('__TAURI_INTERNALS__' in window) {
+      Reflect.deleteProperty(window, '__TAURI_INTERNALS__')
+    }
   })
 
   it('detects desktop environment by default when window width is large', () => {
@@ -42,7 +48,46 @@ describe('Platform detection', () => {
       value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)',
     })
     expect(detectPlatform()).toBe('mobile')
-    Reflect.deleteProperty(window, '__TAURI_INTERNALS__')
+  })
+
+  it('detects mobile when in Tauri mobile environment on iPadOS', () => {
+    Object.defineProperty(window, '__TAURI_INTERNALS__', {
+      writable: true,
+      configurable: true,
+      value: {},
+    })
+    Object.defineProperty(navigator, 'userAgent', {
+      writable: true,
+      configurable: true,
+      value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)',
+    })
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      writable: true,
+      configurable: true,
+      value: 5,
+    })
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1024,
+    })
+    expect(detectPlatform()).toBe('mobile')
+  })
+
+  it('returns desktop when navigator is undefined', () => {
+    const originalNavigator = window.navigator
+    try {
+      Object.defineProperty(window, 'navigator', {
+        value: undefined,
+        configurable: true,
+      })
+      expect(detectPlatform()).toBe('desktop')
+    } finally {
+      Object.defineProperty(window, 'navigator', {
+        value: originalNavigator,
+        configurable: true,
+      })
+    }
   })
 })
 
@@ -78,7 +123,7 @@ describe('Haptics trigger', () => {
 })
 
 describe('usePlatform hook', () => {
-  it('returns platform state and haptic helper', () => {
+  it('returns platform state and stable haptic helper', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 })
     Object.defineProperty(navigator, 'maxTouchPoints', { writable: true, configurable: true, value: 0 })
 
@@ -100,7 +145,7 @@ describe('usePlatform hook', () => {
     expect(result?.platform).toBe('desktop')
     expect(result?.isDesktop).toBe(true)
     expect(result?.isMobile).toBe(false)
-    expect(typeof result?.haptic).toBe('function')
+    expect(result?.haptic).toBe(triggerHaptic)
 
     act(() => {
       root.unmount()

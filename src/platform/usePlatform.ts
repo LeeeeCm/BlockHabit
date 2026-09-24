@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { triggerHaptic, type HapticType } from './haptics'
-import { detectPlatform, type PlatformType } from './index'
+import { detectPlatform, type PlatformType } from './detect'
 
 export interface UsePlatformResult {
   platform: PlatformType
@@ -24,6 +24,6 @@ export function usePlatform(): UsePlatformResult {
     platform,
     isMobile: platform === 'mobile',
     isDesktop: platform === 'desktop',
-    haptic: (type: HapticType = 'light') => triggerHaptic(type),
+    haptic: triggerHaptic,
   }
 }
