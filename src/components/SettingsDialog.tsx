@@ -3,6 +3,8 @@ import { useAppStore } from '../store/appStore'
 import { soundMuted, setSoundMuted } from '../audio/sound'
 import { useI18n } from '../i18n'
 import { IconKeyboard, IconRepair } from './Icons'
+import { usePlatform } from '../platform'
+import { BottomSheet } from './BottomSheet'
 const inTauri =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
@@ -12,6 +14,7 @@ interface Props {
 
 export function SettingsDialog({ onClose }: Props) {
   const { lang, t } = useI18n()
+  const { isMobile } = usePlatform()
   const theme = useAppStore((s) => s.settings.theme)
   const setTheme = useAppStore((s) => s.setTheme)
   const setLanguage = useAppStore((s) => s.setLanguage)
@@ -65,17 +68,16 @@ export function SettingsDialog({ onClose }: Props) {
     setTimeout(() => setMsg(null), 2400)
   }
 
-  return (
-    <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 480, maxWidth: '92vw' }}>
-        <div className="dialog-header">
-          <h3>{t.settings.title}</h3>
-          <button className="icon-btn" onClick={onClose} title={t.common.close}>
-            ✕
-          </button>
-        </div>
+  const footerContent = (
+    <div className="dialog-footer" style={{ borderTop: 'none', padding: 0 }}>
+      <button className="btn primary" onClick={onClose} style={{ padding: '7px 24px', width: isMobile ? '100%' : undefined }}>
+        {t.common.complete}
+      </button>
+    </div>
+  )
 
-        <div className="dialog-body">
+  const bodyContent = (
+    <>
           {/* 1. 界面与感官偏好 */}
           <div className="apple-group">
             <div className="apple-group-title">{lang === 'zh' ? '界面偏好' : 'PREFERENCES'}</div>
@@ -229,13 +231,33 @@ export function SettingsDialog({ onClose }: Props) {
           <p style={{ fontSize: 11.5, color: 'var(--ink-2)', margin: '0', textAlign: 'center', opacity: 0.8 }}>
             {t.settings.slogan}
           </p>
-        </div>
+    </>
+  )
 
-        <div className="dialog-footer">
-          <button className="btn primary" onClick={onClose} style={{ padding: '7px 24px' }}>
-            {t.common.complete}
+  if (isMobile) {
+    return (
+      <BottomSheet open={true} onClose={onClose} title={t.settings.title} footer={footerContent}>
+        {bodyContent}
+        {msg && <div className="toast">{msg}</div>}
+      </BottomSheet>
+    )
+  }
+
+  return (
+    <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 480, maxWidth: '92vw' }}>
+        <div className="dialog-header">
+          <h3>{t.settings.title}</h3>
+          <button className="icon-btn" onClick={onClose} title={t.common.close}>
+            ✕
           </button>
         </div>
+
+        <div className="dialog-body">
+          {bodyContent}
+        </div>
+
+        {footerContent}
 
         {msg && <div className="toast">{msg}</div>}
       </div>

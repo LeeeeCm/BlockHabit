@@ -3,6 +3,8 @@ import type { Habit, HabitFrequency, HabitKind, HabitPeriod } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useI18n } from '../i18n'
 import { IconOptional, IconRequired } from './Icons'
+import { usePlatform } from '../platform'
+import { BottomSheet } from './BottomSheet'
 interface Props {
   habit?: Habit
   onClose: () => void
@@ -34,6 +36,7 @@ function FieldLabel({ required, optionalText, children }: { required?: boolean; 
 
 export function HabitDialog({ habit, onClose }: Props) {
   const { t } = useI18n()
+  const { isMobile } = usePlatform()
   const addHabit = useAppStore((s) => s.addHabit)
   const updateHabit = useAppStore((s) => s.updateHabit)
   const archiveHabit = useAppStore((s) => s.archiveHabit)
@@ -99,18 +102,33 @@ export function HabitDialog({ habit, onClose }: Props) {
     }
     onClose()
   }
+  const title = editing ? t.habitDialog.editTitle : t.habitDialog.newTitle
 
-  return (
-    <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="dialog habit-dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 460, maxWidth: '92vw' }}>
-        <div className="dialog-header">
-          <h3>{editing ? t.habitDialog.editTitle : t.habitDialog.newTitle}</h3>
-          <button className="icon-btn" onClick={onClose} title={t.common.close}>
-            ✕
-          </button>
-        </div>
+  const footerContent = (
+    <div className="dialog-footer" style={{ borderTop: 'none', padding: 0 }}>
+      {editing && (
+        <button
+          className="btn ghost"
+          style={{ marginRight: 'auto' }}
+          onClick={() => {
+            archiveHabit(habit!.id)
+            onClose()
+          }}
+        >
+          {t.habitDialog.archiveBtn}
+        </button>
+      )}
+      <button className="btn ghost" onClick={onClose}>
+        {t.common.cancel}
+      </button>
+      <button className="btn primary" disabled={!canSave} onClick={save}>
+        {t.common.save}
+      </button>
+    </div>
+  )
 
-        <div className="dialog-body">
+  const formContent = (
+    <>
         <div className="field">
           <FieldLabel required optionalText={t.common.optional}>{t.habitDialog.typeLabel}</FieldLabel>
           <div className="seg">
@@ -333,28 +351,32 @@ export function HabitDialog({ habit, onClose }: Props) {
           />
         </div>
 
+    </>
+  )
+
+  if (isMobile) {
+    return (
+      <BottomSheet open={true} onClose={onClose} title={title} footer={footerContent}>
+        {formContent}
+      </BottomSheet>
+    )
+  }
+
+  return (
+    <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="dialog habit-dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 460, maxWidth: '92vw' }}>
+        <div className="dialog-header">
+          <h3>{title}</h3>
+          <button className="icon-btn" onClick={onClose} title={t.common.close}>
+            ✕
+          </button>
         </div>
 
-        <div className="dialog-footer">
-          {editing && (
-            <button
-              className="btn ghost"
-              style={{ marginRight: 'auto' }}
-              onClick={() => {
-                archiveHabit(habit!.id)
-                onClose()
-              }}
-            >
-              {t.habitDialog.archiveBtn}
-            </button>
-          )}
-          <button className="btn ghost" onClick={onClose}>
-            {t.common.cancel}
-          </button>
-          <button className="btn primary" disabled={!canSave} onClick={save}>
-            {t.common.save}
-          </button>
+        <div className="dialog-body">
+          {formContent}
         </div>
+
+        {footerContent}
       </div>
     </div>
   )
