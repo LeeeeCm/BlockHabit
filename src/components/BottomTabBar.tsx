@@ -112,7 +112,7 @@ export function BottomTabBar({
             type="button"
             data-testid={`tab-${tab.id}`}
             data-active={active ? 'true' : 'false'}
-            aria-selected={active}
+            aria-current={active ? 'page' : undefined}
             className={active ? 'tab-item active' : 'tab-item'}
             onClick={() => {
               if (!active) {

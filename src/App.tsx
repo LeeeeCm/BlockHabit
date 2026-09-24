@@ -287,8 +287,9 @@ export default function App() {
           <button
             className="icon-btn"
             title={t.titlebar.settings}
+            aria-label={t.titlebar.settings}
             onClick={() => setSettingsOpen(true)}
-            style={{ width: 36, height: 36 }}
+            style={{ width: 44, height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <IconSettings size={20} />
           </button>
