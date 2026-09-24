@@ -26,8 +26,11 @@ import {
   IconWinRestore,
 } from './components/Icons'
 import logoUrl from './assets/logo-mark.svg'
+import { usePlatform } from './platform'
+import { BottomTabBar, type MobileTab } from './components/BottomTabBar'
+import { habitMetOnDay } from './logic/checkin'
 
-type Tab = 'today' | 'build' | 'showcase' | 'stats'
+type Tab = MobileTab
 
 const inTauri =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -182,6 +185,22 @@ export default function App() {
   })
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [miniMode, setMiniMode] = useState(false)
+  const { isMobile } = usePlatform()
+  const habits = useAppStore((s) => s.habits)
+  const checkIns = useAppStore((s) => s.checkIns)
+  const builds = useAppStore((s) => s.builds)
+  const activeBlueprintId = useAppStore((s) => s.activeBlueprintId)
+
+  const day = todayKey()
+  const activeHabits = habits.filter((h) => !h.archivedAt)
+  const hasUnfinishedToday =
+    activeHabits.length > 0 &&
+    activeHabits.some((h) => !habitMetOnDay(h, checkIns, day))
+
+  const bp = getBlueprint(activeBlueprintId)
+  const placedCount = builds.filter((b) => b.blueprintId === activeBlueprintId).length
+  const buildProgressPercent =
+    bp.blocks.length > 0 ? Math.round((placedCount / bp.blocks.length) * 100) : 0
 
   async function toggleMini(enable: boolean) {
     setMiniMode(enable)
@@ -239,24 +258,72 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <TitleBar onSettings={() => setSettingsOpen(true)} onToggleMini={() => void toggleMini(true)} />
+    <div className={`app ${isMobile ? 'mobile-app-root' : ''}`}>
+      {isMobile ? (
+        <header
+          className="mobile-header"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingTop: 'max(12px, var(--sat))',
+            paddingBottom: '12px',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+            background: 'color-mix(in srgb, var(--surface) 85%, transparent)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderBottom: '1px solid var(--line)',
+            flexShrink: 0,
+            zIndex: 80,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src={logoUrl} alt="BlockHabit" width={24} height={24} />
+            <span style={{ fontSize: 16, fontWeight: 700, fontFamily: "'Rubik', sans-serif" }}>
+              {tabs.find(([id]) => id === tab)?.[1] ?? 'BlockHabit'}
+            </span>
+          </div>
+          <button
+            className="icon-btn"
+            title={t.titlebar.settings}
+            onClick={() => setSettingsOpen(true)}
+            style={{ width: 36, height: 36 }}
+          >
+            <IconSettings size={20} />
+          </button>
+        </header>
+      ) : (
+        <TitleBar onSettings={() => setSettingsOpen(true)} onToggleMini={() => void toggleMini(true)} />
+      )}
       {inTauri && <TraySync />}
       <TimerWatcher />
-      <main className="content">
+      <main
+        className={`content ${isMobile ? 'mobile-content-area' : ''}`}
+        style={isMobile ? { paddingTop: 12 } : undefined}
+      >
         {tab === 'today' && <Today onCelebrate={() => setTab('build')} />}
         {tab === 'build' && <Build />}
         {tab === 'showcase' && <Showcase />}
         {tab === 'stats' && <Stats />}
       </main>
-      <nav className="tabbar">
-        {tabs.map(([id, label, Icon]) => (
-          <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
-            <Icon size={21} />
-            {label}
-          </button>
-        ))}
-      </nav>
+      {isMobile ? (
+        <BottomTabBar
+          currentTab={tab}
+          onChange={(nextTab) => setTab(nextTab)}
+          hasUnfinishedToday={hasUnfinishedToday}
+          buildProgressPercent={buildProgressPercent}
+        />
+      ) : (
+        <nav className="tabbar">
+          {tabs.map(([id, label, Icon]) => (
+            <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
+              <Icon size={21} />
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
     </div>
   )
