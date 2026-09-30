@@ -39,7 +39,7 @@ const inTauri =
 
 /** 倒计时到点提醒：全局监听，toast + 系统通知 */
 function TimerWatcher() {
-  const { lang } = useI18n()
+  const { t } = useI18n()
   const sessions = useTimerStore((s) => s.sessions)
   const [toast, setToast] = useState<string | null>(null)
   const notified = useRef<Set<string>>(new Set())
@@ -57,17 +57,14 @@ function TimerWatcher() {
       }
     }
 
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       const nowMs = Date.now()
       for (const [id, s] of Object.entries(sessions)) {
         const sessionKey = `${id}_${s.startedAt}`
         if (nowMs - s.startedAt >= s.targetMs && !notified.current.has(sessionKey)) {
           notified.current.add(sessionKey)
           const name = useAppStore.getState().habits.find((h) => h.id === id)?.name ?? 'Habit'
-          const msg =
-            lang === 'zh'
-              ? `「${name}」计时完成，回到卡片点击打卡`
-              : `"${name}" focus completed! Click card to check in`
+          const msg = t.today.timerDoneNotify(name)
           setToast(msg)
           try {
             new Notification('BlockHabit', { body: msg })
@@ -78,8 +75,8 @@ function TimerWatcher() {
         }
       }
     }, 1000)
-    return () => clearInterval(t)
-  }, [sessions, lang])
+    return () => clearInterval(timer)
+  }, [sessions, t])
 
   if (!toast) return null
   return (

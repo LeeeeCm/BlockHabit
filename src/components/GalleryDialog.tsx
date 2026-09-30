@@ -19,7 +19,7 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
 
   function handleSelect(id: string) {
     if (!canSelectBlueprint(id, completed)) {
-      setToast(lang === 'zh' ? '请完成上一个积木拼装任务' : 'Please complete the previous building first')
+      setToast(t.gallery.completePreviousFirst)
       setTimeout(() => setToast(null), 2200)
       return
     }
@@ -72,7 +72,7 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
                 key={id}
                 className={`gallery-card${unlocked ? '' : ' locked'}`}
                 onClick={() => handleSelect(id)}
-                title={unlocked ? bpName : (lang === 'zh' ? '请完成上一个积木拼装任务' : 'Please complete the previous building first')}
+                title={unlocked ? bpName : t.gallery.completePreviousFirst}
               >
                 <div className="gallery-name">{bpName}</div>
                 <div className="gallery-status" style={{ color: status.color }}>

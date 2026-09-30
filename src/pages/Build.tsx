@@ -79,7 +79,7 @@ export default function Build() {
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <IconFoundation size={15} style={{ flexShrink: 0 }} />
-                <span>{foundationNote ? (lang === 'zh' ? '奠基铭言' : 'Dedication') : (lang === 'zh' ? '镌刻奠基' : 'Dedicate')}</span>
+                <span>{foundationNote ? t.build.dedication : t.build.dedicate}</span>
               </span>
             </button>
             <button
@@ -102,11 +102,11 @@ export default function Build() {
             triggerHaptic('selection')
             setXrayMode((v) => !v)
           }}
-          title={lang === 'zh' ? '开启/关闭透视考古探针' : 'Toggle X-Ray Inspection'}
+          title={t.build.xray.toggleTooltip}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <IconEcho size={15} style={{ color: xrayMode ? 'var(--accent)' : 'currentColor' }} />
-            <span>{lang === 'zh' ? '透视考古' : 'X-Ray'}</span>
+            <span>{t.build.xray.btn}</span>
           </span>
         </button>
         <button
@@ -226,19 +226,9 @@ export default function Build() {
               lineHeight: 1.7,
             }}
           >
-            {lang === 'zh' ? (
-              <>
-                虚线框是「{getBlueprintName(blueprint.id, lang)}」的地基范围。
-                <br />
-                回到「今日」完成打卡，积木会一层层落进来。
-              </>
-            ) : (
-              <>
-                The dashed border marks the foundation for "{getBlueprintName(blueprint.id, lang)}".
-                <br />
-                Complete check-ins in "Today" to drop blocks layer by layer.
-              </>
-            )}
+            <span style={{ whiteSpace: 'pre-line' }}>
+              {t.build.foundationGuide(getBlueprintName(blueprint.id, lang))}
+            </span>
           </div>
         )}
 
@@ -283,7 +273,7 @@ export default function Build() {
               </button>
               {nextChoice && (
                 <button className="btn" onClick={() => chooseBlueprint(nextChoice.id)}>
-                  {t.build.nextTargetPrompt}：{getBlueprintName(nextChoice.id, lang)}
+                  {t.build.nextTargetPrompt(getBlueprintName(nextChoice.id, lang))}
                 </button>
               )}
               <button className="btn ghost" onClick={() => setCeremonyShown(true)}>

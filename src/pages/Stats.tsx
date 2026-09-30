@@ -13,7 +13,7 @@ import type { MicroMood } from '../types'
 const MOODS: MicroMood[] = ['energetic', 'hard', 'spark', 'calm']
 
 export default function Stats() {
-  const { lang, t } = useI18n()
+  const { t } = useI18n()
   const habits = useAppStore((s) => s.habits)
   const checkIns = useAppStore((s) => s.checkIns)
   const repairBricks = useAppStore((s) => s.repairBricks ?? 0)
@@ -111,9 +111,9 @@ export default function Stats() {
 
   async function handleExportMarkdown() {
     const lines = [
-      `# BlockHabit ${lang === 'zh' ? '自律手账与建造纪元' : 'Chronicle of Discipline'}`,
+      `# BlockHabit ${t.stats.exportTitle}`,
       '',
-      `> ${lang === 'zh' ? '导出日期' : 'Exported'}: ${new Date().toISOString().slice(0, 10)} | ${lang === 'zh' ? `共 ${chronicleItems.length} 条随笔记录` : `${chronicleItems.length} reflections recorded`}`,
+      `> ${t.stats.exportDate}: ${new Date().toISOString().slice(0, 10)} | ${t.stats.exportCount(chronicleItems.length)}`,
       '',
       '---',
       '',
@@ -123,15 +123,15 @@ export default function Stats() {
       const moodLabel = item.mood ? t.microMood[item.mood] : undefined
       lines.push(`### ${item.date} · ${h?.name || '—'}`)
       if (item.actualMinutes) {
-        lines.push(`- **${lang === 'zh' ? '专注' : 'Focus'}**: ${item.actualMinutes} ${lang === 'zh' ? '分钟' : 'min'}`)
+        lines.push(`- **${t.stats.exportFocus}**: ${t.stats.metric.minutes(item.actualMinutes)}`)
       }
       if (moodLabel) {
-        lines.push(`- **${lang === 'zh' ? '心境' : 'Mood'}**: ${moodLabel}`)
+        lines.push(`- **${t.stats.exportMood}**: ${moodLabel}`)
       }
       if (item.starred) {
-        lines.push(`- **${lang === 'zh' ? '精选' : 'Featured'}**: ⭐`)
+        lines.push(`- **${t.stats.exportFeatured}**: ⭐`)
       }
-      lines.push(`- **${lang === 'zh' ? '感悟' : 'Reflection'}**: ${item.note}`)
+      lines.push(`- **${t.stats.exportReflection}**: ${item.note}`)
       lines.push('')
     }
 
@@ -185,10 +185,10 @@ export default function Stats() {
               triggerHaptic('light')
               setPosterOpen(true)
             }}
-            title={lang === 'zh' ? '生成月度包豪斯自律画报' : 'Generate Monthly Discipline Poster'}
+            title={t.stats.posterTooltip}
           >
             <IconPoster size={14} style={{ color: 'var(--ink)' }} />
-            <span>{lang === 'zh' ? '月度画报' : 'Poster'}</span>
+            <span>{t.stats.posterBtn}</span>
           </button>
 
           <div
@@ -223,7 +223,7 @@ export default function Stats() {
           }}
         >
           <IconStats size={14} />
-          <span>{lang === 'zh' ? '指标热图' : 'Metrics'}</span>
+          <span>{t.stats.tabMetrics}</span>
         </button>
         <button
           type="button"
@@ -234,7 +234,7 @@ export default function Stats() {
           }}
         >
           <IconNote size={14} />
-          <span>{lang === 'zh' ? '自律手账' : 'Chronicle'}</span>
+          <span>{t.stats.tabChronicle}</span>
         </button>
       </div>
 
@@ -251,7 +251,7 @@ export default function Stats() {
             “{echoEntry.note}”
           </div>
           <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>
-            — 来自【{habits.find((h) => h.id === echoEntry.habitId)?.name || '—'}】
+            {t.reflections.echoFromHabit(habits.find((h) => h.id === echoEntry.habitId)?.name || '—')}
           </div>
         </div>
       )}
@@ -310,17 +310,17 @@ export default function Stats() {
                   </div>
                   {totalMinutes > 0 && (
                     <Stat
-                      label={lang === 'zh' ? '专注时长' : 'Focus'}
+                      label={t.stats.metric.focusTime}
                       value={
                         totalMinutes >= 60
-                          ? (lang === 'zh' ? `${(totalMinutes / 60).toFixed(1)} 小时` : `${(totalMinutes / 60).toFixed(1)}h`)
-                          : (lang === 'zh' ? `${totalMinutes} 分钟` : `${totalMinutes}m`)
+                          ? t.stats.metric.hours((totalMinutes / 60).toFixed(1))
+                          : t.stats.metric.minutes(totalMinutes)
                       }
                     />
                   )}
-                  <Stat label={lang === 'zh' ? '当前连击' : 'Current'} value={current} accent={current > 0 && current % 7 === 0} />
-                  <Stat label={lang === 'zh' ? '最长连击' : 'Best'} value={best} />
-                  <Stat label={lang === 'zh' ? '总打卡' : 'Total'} value={total} />
+                  <Stat label={t.stats.metric.currentStreak} value={current} accent={current > 0 && current % 7 === 0} />
+                  <Stat label={t.stats.metric.bestStreak} value={best} title={t.stats.bestStreak(best)} />
+                  <Stat label={t.stats.metric.totalCheckIns} value={total} />
                 </div>
 
                 {(() => {
@@ -333,7 +333,7 @@ export default function Stats() {
                     <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line)' }}>
                       <div style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 6, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                         <IconNote size={13} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
-                        <span>{lang === 'zh' ? '近期打卡随笔' : 'Recent Reflections'}</span>
+                        <span>{t.stats.recentReflections}</span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {notes.map((n) => (
@@ -390,7 +390,7 @@ export default function Stats() {
                 title={t.reflections.exportMarkdown}
               >
                 <IconExport size={13} style={{ flexShrink: 0 }} />
-                <span>{lang === 'zh' ? '导出 MD' : 'Export MD'}</span>
+                <span>{t.stats.exportMd}</span>
               </button>
             </div>
 
@@ -421,7 +421,7 @@ export default function Stats() {
                   className={`micro-mood-chip${filterMood === 'all' ? ' active' : ''}`}
                   onClick={() => setFilterMood('all')}
                 >
-                  {lang === 'zh' ? '全部心境' : 'All Moods'}
+                  {t.stats.allMoods}
                 </button>
                 {MOODS.map((m) => (
                   <button
@@ -479,7 +479,7 @@ export default function Stats() {
                         </span>
                         {item.actualMinutes && (
                           <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>
-                            · {item.actualMinutes} {lang === 'zh' ? '分钟' : 'min'}
+                            · {t.stats.metric.minutes(item.actualMinutes)}
                           </span>
                         )}
                       </div>
@@ -534,9 +534,7 @@ export default function Stats() {
                       setVisibleCount((prev) => prev + 25)
                     }}
                   >
-                    {lang === 'zh'
-                      ? `加载更多随笔 (${visibleCount}/${chronicleItems.length})`
-                      : `Load More (${visibleCount}/${chronicleItems.length})`}
+                    {t.stats.loadMoreReflections(visibleCount, chronicleItems.length)}
                   </button>
                 </div>
               )}
@@ -578,9 +576,19 @@ export default function Stats() {
   )
 }
 
-function Stat({ label, value, accent = false }: { label: string; value: number | string; accent?: boolean }) {
+function Stat({
+  label,
+  value,
+  accent = false,
+  title,
+}: {
+  label: string
+  value: number | string
+  accent?: boolean
+  title?: string
+}) {
   return (
-    <div style={{ textAlign: 'center', minWidth: 56 }}>
+    <div style={{ textAlign: 'center', minWidth: 56 }} title={title}>
       <div
         style={{
           fontSize: 18,

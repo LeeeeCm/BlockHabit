@@ -60,6 +60,12 @@ describe('i18n system', () => {
       expect(t.polaroid.copyImage).toBeTruthy()
       expect(t.stats.repairArchivedToast).toBeTruthy()
       expect(t.stats.repairFutureToast).toBeTruthy()
+      expect(t.today.fullCard.title).toBeTruthy()
+      expect(t.settings.webdav.serverUrl).toBeTruthy()
+      expect(t.stats.metric.focusTime).toBeTruthy()
+      expect(t.build.xray.btn).toBeTruthy()
+      expect(t.poster.modalTitle).toBeTruthy()
+      expect(t.gallery.completePreviousFirst).toBeTruthy()
     }
   })
 

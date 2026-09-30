@@ -110,7 +110,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
 
     ctx.font = '600 12px "Rubik", "MiSans", sans-serif'
     ctx.fillStyle = colorInk2
-    ctx.fillText(lang === 'zh' ? '自律积木纪元档案' : 'DISCIPLINE CHRONICLE', W - margin, margin + 32)
+    ctx.fillText(t.poster.disciplineChronicle, W - margin, margin + 32)
     ctx.textAlign = 'left'
 
     // 分割线
@@ -203,21 +203,22 @@ export function MonthlyPosterModal({ onClose }: Props) {
     // 建筑标签与实时进度徽章
     ctx.fillStyle = colorInk
     ctx.font = '700 19px "Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
+    // 画布例外：中英文书名号《》与引号""排版规范差异
     ctx.fillText(lang === 'zh' ? `《${bpName}》` : `"${bpName}"`, margin + 18, stageY + 30)
     ctx.font = '600 13px "Rubik", "MiSans", sans-serif'
     ctx.fillStyle = isComplete ? colorGreen : colorAccent
     const progressText = isComplete
-      ? (lang === 'zh' ? `已落成 · 共 ${totalBlocks} 块` : `Completed · ${totalBlocks} blocks`)
+      ? t.poster.completedTotal(totalBlocks)
       : placedCount === 0
-        ? (lang === 'zh' ? `地基已就绪 · 共 ${totalBlocks} 块待建` : `Foundation ready · ${totalBlocks} blocks to build`)
-        : (lang === 'zh' ? `建造中 · ${placedCount} / ${totalBlocks} 块 (${Math.round((placedCount / totalBlocks) * 100)}%)` : `Building · ${placedCount} / ${totalBlocks} (${Math.round((placedCount / totalBlocks) * 100)}%)`)
+        ? t.poster.foundationReady(totalBlocks)
+        : t.poster.buildingProgress(placedCount, totalBlocks, Math.round((placedCount / totalBlocks) * 100))
     ctx.fillText(progressText, margin + 18, stageY + 48)
 
     // 4. 当月 30 天积木热力矩阵 (30-Day Brick Matrix)
     const matrixY = stageY + stageH + 14
     ctx.fillStyle = colorInk
     ctx.font = '700 15px "Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
-    ctx.fillText(lang === 'zh' ? '月度打卡热力点阵' : '30-DAY BRICK MATRIX', margin, matrixY + 12)
+    ctx.fillText(t.poster.matrixTitle, margin, matrixY + 12)
 
     const cellSize = 25
     const cellGap = 5
@@ -284,10 +285,10 @@ export function MonthlyPosterModal({ onClose }: Props) {
     }
 
     const metrics = [
-      { label: lang === 'zh' ? '当月打卡' : 'Check-ins', val: `${monthCheckIns}` },
-      { label: lang === 'zh' ? '深度专注' : 'Focus Time', val: `${(monthFocusMins / 60).toFixed(1)}h` },
-      { label: lang === 'zh' ? '新增积木' : 'Blocks Added', val: `+${monthBlocks}` },
-      { label: lang === 'zh' ? '连续达标' : 'Streak', val: `${curr}d` },
+      { label: t.poster.metricCheckIns, val: `${monthCheckIns}` },
+      { label: t.poster.metricFocusTime, val: `${(monthFocusMins / 60).toFixed(1)}h` },
+      { label: t.poster.metricBlocksAdded, val: `+${monthBlocks}` },
+      { label: t.poster.metricStreak, val: `${curr}d` },
     ]
 
     const mCellH = 43
@@ -323,10 +324,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
     const currentNote = monthNotes[quoteIdx % monthNotes.length]
     ctx.fillStyle = colorInk
     ctx.font = '500 13px "Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
-    const defaultQuote =
-      lang === 'zh'
-        ? '“每一块积木落下的声音，都是击碎拖延的响指。”'
-        : '"Every brick clicked builds something lasting."'
+    const defaultQuote = t.poster.defaultQuote
     const quoteText = currentNote ? `“${currentNote.note}”` : defaultQuote
     const maxQuoteW = innerW - 170
     let displayQuote = quoteText
@@ -342,7 +340,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
     ctx.font = '700 10.5px "Rubik", sans-serif'
     ctx.textAlign = 'right'
     const rightTag = currentNote
-      ? (lang === 'zh' ? `筑造者记 · ${currentNote.date}` : `BUILDER · ${currentNote.date}`)
+      ? t.poster.builderRecord(currentNote.date)
       : 'BLOCKHABIT CHRONICLE'
     ctx.fillText(rightTag, W - margin, footerY + 22)
     ctx.textAlign = 'left'
@@ -359,9 +357,9 @@ export function MonthlyPosterModal({ onClose }: Props) {
       }
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-        setToast(lang === 'zh' ? '已复制月度画报到剪贴板！' : 'Copied monthly poster to clipboard!')
+        setToast(t.poster.copySuccess)
       } catch {
-        setToast(lang === 'zh' ? '复制失败，可点击保存图片' : 'Copy failed. Click Save Image.')
+        setToast(t.poster.copyFail)
       }
       setCopying(false)
       setTimeout(() => setToast(null), 2500)
@@ -404,7 +402,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
         <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
           <span style={{ fontSize: 16, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <IconPoster size={18} />
-            <span>{lang === 'zh' ? '月度包豪斯自律画报' : 'Monthly Bauhaus Discipline Poster'}</span>
+            <span>{t.poster.modalTitle}</span>
           </span>
           <button
             className="icon-btn"
@@ -432,7 +430,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
                   setAspectRatio(r)
                 }}
               >
-                {r === '4:5' ? (lang === 'zh' ? '4:5 长卡' : '4:5 Card') : r === '9:16' ? (lang === 'zh' ? '9:16 故事' : '9:16 Story') : (lang === 'zh' ? '1:1 方块' : '1:1 Square')}
+                {r === '4:5' ? t.poster.ratioCard45 : r === '9:16' ? t.poster.ratioStory916 : t.poster.ratioSquare11}
               </button>
             ))}
           </div>
@@ -459,21 +457,19 @@ export function MonthlyPosterModal({ onClose }: Props) {
               className="btn ghost"
               onClick={() => setQuoteIdx((prev) => (prev + 1) % monthNotes.length)}
               style={{ fontSize: 12, padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-              title={lang === 'zh' ? '切换印制的打卡随笔' : 'Cycle reflection quote'}
+              title={t.poster.cycleQuoteTooltip}
             >
               <IconShuffle size={13} style={{ flexShrink: 0 }} />
               <span>
-                {lang === 'zh'
-                  ? `换一条随笔 (${(quoteIdx % monthNotes.length) + 1}/${monthNotes.length})`
-                  : `Next Quote (${(quoteIdx % monthNotes.length) + 1}/${monthNotes.length})`}
+                {t.poster.cycleQuote((quoteIdx % monthNotes.length) + 1, monthNotes.length)}
               </span>
             </button>
           )}
           <button className="btn ghost" onClick={handleDownload}>
-            {lang === 'zh' ? '保存图片' : 'Save Image'}
+            {t.poster.saveImage}
           </button>
           <button className="btn primary" disabled={copying} onClick={handleCopy}>
-            {lang === 'zh' ? '复制图片' : 'Copy Image'}
+            {t.poster.copyImage}
           </button>
         </div>
 

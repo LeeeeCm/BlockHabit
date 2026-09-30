@@ -102,7 +102,7 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
         {candidates.length > 0 && (
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 6 }}>
-              {lang === 'zh' ? '从本建筑建造随笔中挑选：' : 'Pick from construction reflections:'}
+              {t.reflections.pickFromReflections}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {candidates.map((c) => {
@@ -123,7 +123,7 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
                       gap: 8,
                       transition: 'border-color 0.15s ease',
                     }}
-                    title={lang === 'zh' ? '点击选用作为奠基语' : 'Click to use as dedication'}
+                    title={t.reflections.clickToUseDedication}
                   >
                     {c.starred && <IconStar size={12} filled style={{ color: 'var(--accent)', flexShrink: 0 }} />}
                     <span style={{ color: 'var(--ink)', flex: 1, wordBreak: 'break-word' }}>“{c.note}”</span>

@@ -177,7 +177,7 @@ export default function Today({ onCelebrate }: Props) {
               border: '1px solid var(--line)',
               background: 'var(--surface)',
             }}
-            title={lang === 'zh' ? '前往建造页面查看 3D 模型' : 'View 3D Model in Build page'}
+            title={t.today.view3dModel}
           >
             <IconBuild size={15} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{getBlueprintName(blueprint.id, lang)}</span>
@@ -220,7 +220,7 @@ export default function Today({ onCelebrate }: Props) {
               setSelectedCat(null)
             }}
           >
-            {lang === 'zh' ? '全部' : 'All'} · {active.length}
+            {t.today.filterAll} · {active.length}
           </button>
           {categories.map((cat) => (
             <button
@@ -257,12 +257,12 @@ export default function Today({ onCelebrate }: Props) {
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <IconCheck size={16} style={{ color: 'var(--accent)', strokeWidth: 2.2, flexShrink: 0 }} />
-              <span>{lang === 'zh' ? '今日全勤大满贯！' : 'Daily All-Clear Achieved!'}</span>
+              <span>{t.today.fullCard.title}</span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 2 }}>
               {dayClaims.some((c) => c.date === day)
-                ? (lang === 'zh' ? '今日专属全勤奖励积木已落位 ✨' : 'Daily bonus milestone block has been placed ✨')
-                : (lang === 'zh' ? '所有在册习惯已全部打卡完成，可领取 1 块全勤奖励积木' : 'All habits completed. Claim your +1 daily bonus block')}
+                ? t.today.fullCard.subtitlePlaced
+                : t.today.fullCard.subtitlePending}
             </div>
           </div>
           {!dayClaims.some((c) => c.date === day) ? (
@@ -280,10 +280,10 @@ export default function Today({ onCelebrate }: Props) {
                 triggerHaptic('medium')
                 const res = checkInDay()
                 playCelebrationSound()
-                showToast(lang === 'zh' ? '已领取今日全勤奖励积木！' : 'Claimed daily milestone block!', true)
+                showToast(t.today.fullCard.claimToast, true)
                 if (res.complete) {
                   setDropModal({
-                    habitName: lang === 'zh' ? '每日全勤大满贯' : 'Daily All-Clear',
+                    habitName: t.today.fullCard.bonusHabitName,
                     placedCount: placedCount + 1,
                     complete: true,
                   })
@@ -291,14 +291,14 @@ export default function Today({ onCelebrate }: Props) {
               }}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                <span>{lang === 'zh' ? '领取全勤积木' : 'Claim Bonus'}</span>
+                <span>{t.today.fullCard.claimBtn}</span>
                 <IconSparkle size={13} style={{ color: 'currentColor' }} />
               </span>
             </button>
           ) : (
             <span style={{ fontSize: 12, color: 'var(--progress-green)', fontWeight: 600, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <IconCheck size={14} />
-              <span>{lang === 'zh' ? '已领全勤' : 'Claimed'}</span>
+              <span>{t.today.fullCard.claimed}</span>
             </span>
           )}
         </div>
@@ -315,7 +315,7 @@ export default function Today({ onCelebrate }: Props) {
             “{echoEntry.note}”
           </div>
           <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>
-            — 来自【{habits.find((h) => h.id === echoEntry.habitId)?.name || '—'}】
+            {t.reflections.echoFromHabit(habits.find((h) => h.id === echoEntry.habitId)?.name || '—')}
           </div>
         </div>
       )}
@@ -353,7 +353,7 @@ export default function Today({ onCelebrate }: Props) {
             <IconToday size={28} />
           </div>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>
-            {lang === 'zh' ? '开启第一块积木的专注旅途' : 'Begin Your Voxel Journey'}
+            {t.today.startJourney}
           </div>
           <div style={{ fontSize: 13, color: 'var(--ink-2)', maxWidth: 360, lineHeight: 1.6, whiteSpace: 'pre-line' }}>
             {t.today.emptyHint(getBlueprintName(blueprint.id, lang))}

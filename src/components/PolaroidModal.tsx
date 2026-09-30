@@ -226,7 +226,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       // 3. 头部标题
       ctx.fillStyle = '#292524'
       ctx.font = '700 20px "Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
-      ctx.fillText(`${bpName} · ${lang === 'zh' ? '筑造手账纪事' : 'BUILDER CHRONICLE'}`, 38, 56)
+      ctx.fillText(`${bpName} · ${t.polaroid.builderChronicle}`, 38, 56)
 
       ctx.fillStyle = '#a8a29e'
       ctx.font = '600 11px "Rubik", sans-serif'
@@ -245,14 +245,11 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
 
       ctx.fillStyle = '#b45309'
       ctx.font = '700 11px "Rubik", "MiSans", sans-serif'
-      ctx.fillText(lang === 'zh' ? '奠基石铭言 · FOUNDATION' : 'FOUNDATION INSCRIPTION', 48, stampY + 20)
+      ctx.fillText(t.polaroid.foundationInscription, 48, stampY + 20)
 
       ctx.fillStyle = '#44403c'
       ctx.font = 'italic 500 12.5px "Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
-      const defaultDedication =
-        lang === 'zh'
-          ? '每一块积木落下的声音，都是击碎拖延的响指。'
-          : 'Every brick clicked builds something lasting.'
+      const defaultDedication = t.polaroid.defaultDedication
       const rawDedication = `“${foundationNote || defaultDedication}”`
       let quoteStr = rawDedication
       const maxStampW = W - 110
@@ -317,13 +314,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         ctx.fillStyle = '#a8a29e'
         ctx.font = 'italic 12.5px "Rubik", "MiSans", sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(
-          lang === 'zh'
-            ? '整座建筑在专注中悄然落成，每一砖一瓦皆是静水流深。'
-            : 'Silently crafted with focus and persistence.',
-          W / 2,
-          320,
-        )
+        ctx.fillText(t.polaroid.emptyNotesHint, W / 2, 320)
         ctx.textAlign = 'left'
       }
 
@@ -400,7 +391,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
           <span style={{ fontSize: 16, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <IconCamera size={18} />
-            <span>{isBack ? (lang === 'zh' ? '筑造手账相卡 (背面)' : 'Builder Journal (Back)') : t.polaroid.modalTitle}</span>
+            <span>{isBack ? t.polaroid.modalTitleBack : t.polaroid.modalTitle}</span>
           </span>
           <button
             className="icon-btn"
@@ -433,10 +424,10 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
             className="btn ghost"
             onClick={() => setIsBack((prev) => !prev)}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-            title={lang === 'zh' ? '翻转卡片正反面' : 'Flip Card'}
+            title={t.polaroid.flipTooltip}
           >
             <IconFlip size={14} style={{ flexShrink: 0 }} />
-            <span>{isBack ? (lang === 'zh' ? '查看相片正面' : 'View Front') : (lang === 'zh' ? '翻转手账背面' : 'View Back (Journal)')}</span>
+            <span>{isBack ? t.polaroid.viewFront : t.polaroid.viewBack}</span>
           </button>
           <button className="btn ghost" onClick={handleDownload}>
             {t.polaroid.savePng}

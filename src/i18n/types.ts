@@ -13,7 +13,6 @@ export interface TranslationSchema {
     skip: string
     close: string
     optional: string
-    required: string
     weekdays: string[]
     weekdaysShort: string[]
     weekdaysSingle: string[]
@@ -67,13 +66,30 @@ export interface TranslationSchema {
     focus: string
     cancelTimer: string
     earlyFinish: string
-    earlyConfirmTitle: string
     earlyConfirmMsg: (mins: number) => string
     checkInTooltip: string
     undoTooltip: string
     timingTooltip: string
     completedPill: string
     readyToFinish: string
+    fullCard: {
+      title: string
+      subtitlePlaced: string
+      subtitlePending: string
+      claimToast: string
+      bonusHabitName: string
+      claimBtn: string
+      claimed: string
+    }
+    view3dModel: string
+    filterAll: string
+    startJourney: string
+    inRestPeriod: string
+    unpinHabit: string
+    pinHabit: string
+    addReflectionPlaceholder: string
+    focusedMinutes: (mins: number) => string
+    timerDoneNotify: (name: string) => string
   }
   blockDrop: {
     plusOne: string
@@ -81,7 +97,6 @@ export interface TranslationSchema {
     skip: string
     progress: (placed: number, total: number, pct: number) => string
     completedBlueprint: (name: string) => string
-    nextTargetUnlocked: (name: string) => string
   }
   build: {
     blocksCount: (placed: number, total: number) => string
@@ -89,11 +104,17 @@ export interface TranslationSchema {
     galleryBtn: string
     rotCcw: string
     rotCw: string
-    nextTargetPrompt: string
+    nextTargetPrompt: (name: string) => string
     startBuildBtn: string
     ceremonyTitle: (name: string) => string
     ceremonySubtitle: (total: number) => string
-    exploreShowcase: string
+    dedication: string
+    dedicate: string
+    xray: {
+      toggleTooltip: string
+      btn: string
+    }
+    foundationGuide: (name: string) => string
   }
   showcase: {
     title: string
@@ -112,8 +133,6 @@ export interface TranslationSchema {
     empty: string
     currentStreak: (days: number) => string
     bestStreak: (days: number) => string
-    totalCount: (times: number) => string
-    totalFocusTime: (hours: string) => string
     repairDialogTitle: string
     repairDialogMsg: (habitName: string, date: string, count: number) => string
     repairSuccessToast: (name: string) => string
@@ -126,6 +145,29 @@ export interface TranslationSchema {
     repairNoBricksToast: string
     heatmapDone: string
     heatmapRepair: string
+    exportTitle: string
+    exportDate: string
+    exportCount: (n: number) => string
+    exportFocus: string
+    exportMood: string
+    exportFeatured: string
+    exportReflection: string
+    posterTooltip: string
+    posterBtn: string
+    tabMetrics: string
+    tabChronicle: string
+    metric: {
+      focusTime: string
+      currentStreak: string
+      bestStreak: string
+      totalCheckIns: string
+      hours: (h: string) => string
+      minutes: (m: number) => string
+    }
+    recentReflections: string
+    exportMd: string
+    allMoods: string
+    loadMoreReflections: (cur: number, total: number) => string
   }
   habitDialog: {
     newTitle: string
@@ -167,6 +209,7 @@ export interface TranslationSchema {
     blocks: (placed: number, total: number) => string
     switchTarget: string
     currentTarget: string
+    completePreviousFirst: string
   }
   polaroid: {
     modalTitle: string
@@ -176,6 +219,14 @@ export interface TranslationSchema {
     copyImage: string
     copiedToast: string
     copyFailedToast: string
+    builderChronicle: string
+    foundationInscription: string
+    defaultDedication: string
+    emptyNotesHint: string
+    modalTitleBack: string
+    flipTooltip: string
+    viewFront: string
+    viewBack: string
   }
   settings: {
     title: string
@@ -187,6 +238,23 @@ export interface TranslationSchema {
     themeDark: string
     themeOat: string
     themeFog: string
+    groupPreferences: string
+    groupSystem: string
+    groupData: string
+    webdav: {
+      groupTitle: string
+      serverUrl: string
+      username: string
+      password: string
+      passwordPlaceholder: string
+      syncing: string
+      lastSync: string
+      notSynced: string
+      syncingBtn: string
+      syncNowBtn: string
+      syncSuccess: string
+      syncFailed: string
+    }
     shortcutsTitle: string
     shortcutsDetail: string
     soundLabel: string
@@ -293,5 +361,31 @@ export interface TranslationSchema {
     echoDaysAgo: (days: number) => string
     exportMarkdown: string
     exportSuccessToast: string
+    pickFromReflections: string
+    clickToUseDedication: string
+    echoFromHabit: (name: string) => string
+  }
+  poster: {
+    modalTitle: string
+    ratioCard45: string
+    ratioStory916: string
+    ratioSquare11: string
+    cycleQuoteTooltip: string
+    cycleQuote: (cur: number, total: number) => string
+    saveImage: string
+    copyImage: string
+    copySuccess: string
+    copyFail: string
+    disciplineChronicle: string
+    completedTotal: (total: number) => string
+    foundationReady: (total: number) => string
+    buildingProgress: (cur: number, total: number, pct: number) => string
+    matrixTitle: string
+    metricCheckIns: string
+    metricFocusTime: string
+    metricBlocksAdded: string
+    metricStreak: string
+    defaultQuote: string
+    builderRecord: (date: string) => string
   }
 }

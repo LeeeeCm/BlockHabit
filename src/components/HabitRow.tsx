@@ -54,7 +54,7 @@ function fmtRemaining(ms: number): string {
  */
 export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEdit, onNoteSaved }: Props) {
   const { isMobile } = usePlatform()
-  const { lang, t } = useI18n()
+  const { t } = useI18n()
   const checkIn = useAppStore((s) => s.checkIn)
   const uncheckIn = useAppStore((s) => s.uncheckIn)
   const deleteHabit = useAppStore((s) => s.deleteHabit)
@@ -134,7 +134,7 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
   const meta = [
     habit.category ? `#${habit.category}` : '',
     freqLabel,
-    inRestPeriod && !done ? (lang === 'zh' ? '晨雾休整期 (今日打卡接续)' : 'Weathering (Check in to resume)') : '',
+    inRestPeriod && !done ? t.today.inRestPeriod : '',
     habit.period && habit.period !== 'any' ? t.today.periods[habit.period] : '',
     isFocus
       ? t.today.targetMinutes(habit.targetMinutes ?? 25)
@@ -306,8 +306,8 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
               ...(habit.pinned ? { color: 'var(--accent)' } : undefined),
               ...(isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined),
             }}
-            title={habit.pinned ? (lang === 'zh' ? '取消置顶' : 'Unpin') : (lang === 'zh' ? '置顶习惯' : 'Pin to top')}
-            aria-label={habit.pinned ? (lang === 'zh' ? '取消置顶' : 'Unpin') : (lang === 'zh' ? '置顶习惯' : 'Pin to top')}
+            title={habit.pinned ? t.today.unpinHabit : t.today.pinHabit}
+            aria-label={habit.pinned ? t.today.unpinHabit : t.today.pinHabit}
             onClick={(e) => {
               e.stopPropagation()
               triggerHaptic('selection')
@@ -504,7 +504,7 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
               )}
               <IconNote size={13} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
               <span style={{ fontStyle: todayCheckIn?.note ? 'normal' : 'italic' }}>
-                {todayCheckIn?.note || (lang === 'zh' ? '添加打卡随笔...' : 'Add reflection note...')}
+                {todayCheckIn?.note || t.today.addReflectionPlaceholder}
               </span>
             </div>
           )}
@@ -529,7 +529,7 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
                 {fmtRemaining(session ? session.startedAt + targetMs - now : 0)}
               </span>
               <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>
-                {lang === 'zh' ? `已专注 ${actualMinutes} 分钟` : `Focused ${actualMinutes} min`}
+                {t.today.focusedMinutes(actualMinutes)}
               </span>
             </div>
 
@@ -649,7 +649,7 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
               handleStartFocus()
             }}
           >
-            {t.today.focus} ({habit.targetMinutes}{lang === 'zh' ? ' 分钟' : 'm'})
+            {t.today.focus} ({t.today.targetMinutes(habit.targetMinutes ?? 25)})
           </button>
         </div>
       )}

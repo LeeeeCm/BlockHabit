@@ -82,9 +82,9 @@ export function SettingsDialog({ onClose }: Props) {
   async function handleSync() {
     const ok = await syncNow()
     if (ok) {
-      setMsg(lang === 'zh' ? '同步成功！数据已与云端合并' : 'Sync successful! Data merged with cloud.')
+      setMsg(t.settings.webdav.syncSuccess)
     } else {
-      setMsg(syncErrorText(getLastError()) ?? (lang === 'zh' ? '同步失败，请检查配置与网络' : 'Sync failed, please check configuration.'))
+      setMsg(syncErrorText(getLastError()) ?? t.settings.webdav.syncFailed)
     }
     setTimeout(() => setMsg(null), 3000)
   }
@@ -156,7 +156,7 @@ export function SettingsDialog({ onClose }: Props) {
     <>
           {/* 1. 界面与感官偏好 */}
           <div className="apple-group">
-            <div className="apple-group-title">{lang === 'zh' ? '界面偏好' : 'PREFERENCES'}</div>
+            <div className="apple-group-title">{t.settings.groupPreferences}</div>
 
             <div className="field" style={{ marginBottom: 12 }}>
               <label>{t.settings.languageLabel}</label>
@@ -395,7 +395,7 @@ export function SettingsDialog({ onClose }: Props) {
           {/* 2. 系统与常驻 */}
           {inTauri && (
             <div className="apple-group">
-              <div className="apple-group-title">{lang === 'zh' ? '系统集成' : 'SYSTEM'}</div>
+              <div className="apple-group-title">{t.settings.groupSystem}</div>
               <div className="field" style={{ marginBottom: 0 }}>
                 <label>{t.settings.autostartLabel}</label>
                 <div className="seg">
@@ -412,7 +412,7 @@ export function SettingsDialog({ onClose }: Props) {
 
           {/* 3. 数据备份 */}
           <div className="apple-group">
-            <div className="apple-group-title">{lang === 'zh' ? '数据安全' : 'BACKUP & DATA'}</div>
+            <div className="apple-group-title">{t.settings.groupData}</div>
             <div className="field" style={{ marginBottom: 0 }}>
               <label>{t.settings.dataLabel}</label>
               <div style={{ display: 'flex', gap: 10 }}>
@@ -439,9 +439,9 @@ export function SettingsDialog({ onClose }: Props) {
 
           {/* 3.1 WebDAV 数据同步 */}
           <div className="apple-group">
-            <div className="apple-group-title">{lang === 'zh' ? 'WebDAV 数据同步' : 'WEBDAV CLOUD SYNC'}</div>
+            <div className="apple-group-title">{t.settings.webdav.groupTitle}</div>
             <div className="field" style={{ marginBottom: 10 }}>
-              <label>{lang === 'zh' ? 'WebDAV 地址' : 'Server URL'}</label>
+              <label>{t.settings.webdav.serverUrl}</label>
               <input
                 type="text"
                 placeholder="https://dav.example.com/sync/"
@@ -455,10 +455,10 @@ export function SettingsDialog({ onClose }: Props) {
             </div>
             <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
               <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                <label>{lang === 'zh' ? '用户名' : 'Username'}</label>
+                <label>{t.settings.webdav.username}</label>
                 <input
                   type="text"
-                  placeholder={lang === 'zh' ? '用户名' : 'Username'}
+                  placeholder={t.settings.webdav.username}
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value)
@@ -468,10 +468,10 @@ export function SettingsDialog({ onClose }: Props) {
                 />
               </div>
               <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                <label>{lang === 'zh' ? '密码' : 'Password'}</label>
+                <label>{t.settings.webdav.password}</label>
                 <input
                   type="password"
-                  placeholder={lang === 'zh' ? '密码 / Token' : 'Password / Token'}
+                  placeholder={t.settings.webdav.passwordPlaceholder}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value)
@@ -493,12 +493,12 @@ export function SettingsDialog({ onClose }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 4 }}>
               <div style={{ fontSize: 11, color: syncStatus === 'error' ? 'var(--danger)' : 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {isSyncing
-                  ? (lang === 'zh' ? '正在连接同步中...' : 'Syncing data...')
+                  ? t.settings.webdav.syncing
                   : syncError
                     ? (syncErrorText(syncError) ?? syncError)
                     : lastSyncAt
-                      ? `${lang === 'zh' ? '上次同步: ' : 'Last sync: '}${new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      : (lang === 'zh' ? '未同步' : 'Not synced yet')}
+                      ? `${t.settings.webdav.lastSync}${new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      : t.settings.webdav.notSynced}
               </div>
               <button
                 className="btn primary"
@@ -506,7 +506,7 @@ export function SettingsDialog({ onClose }: Props) {
                 disabled={isSyncing || !endpoint.trim()}
                 style={{ padding: '6px 16px', fontSize: 12.5, flexShrink: 0 }}
               >
-                {isSyncing ? (lang === 'zh' ? '同步中...' : 'Syncing...') : (lang === 'zh' ? '立即同步' : 'Sync Now')}
+                {isSyncing ? t.settings.webdav.syncingBtn : t.settings.webdav.syncNowBtn}
               </button>
             </div>
           </div>

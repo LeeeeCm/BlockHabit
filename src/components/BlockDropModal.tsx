@@ -151,7 +151,7 @@ export function BlockDropModal({
                 textOverflow: 'ellipsis',
               }}
             >
-              {t.blockDrop.completedHabit(habitName)}
+              {complete ? t.blockDrop.completedBlueprint(getBlueprintName(blueprint.id, lang)) : t.blockDrop.completedHabit(habitName)}
             </span>
           </div>
 
