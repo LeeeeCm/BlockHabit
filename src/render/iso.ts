@@ -380,6 +380,176 @@ function drawStud(
   ctx.lineWidth = 1.2
   ctx.stroke()
 }
+type SpriteCanvas = HTMLCanvasElement | OffscreenCanvas
+
+export interface CubeSprite {
+  canvas: SpriteCanvas
+  anchorX: number
+  anchorY: number
+  width: number
+  height: number
+}
+
+const spriteCache = new Map<string, CubeSprite>()
+const MAX_SPRITE_CACHE = 512
+
+export function clearCubeSpriteCache(): void {
+  spriteCache.clear()
+}
+
+export function getCubeSprite(
+  color: string | undefined,
+  type: BlockType,
+  noStuds: boolean,
+  c: IsoConfig,
+  p: IsoPalette,
+  dpr: number,
+): CubeSprite | null {
+  const colorPart = color ? color : `${p.top}_${p.left}_${p.right}`
+  const cacheKey = `${colorPart}_${type}_${noStuds}_${c.tileW}_${c.tileH}_${c.blockH}_${dpr}_${p.ink}_${p.accent}`
+  let sprite = spriteCache.get(cacheKey)
+  if (sprite) return sprite
+
+  const pad = 4
+  const w = c.tileW / 2
+  const h = c.tileH / 2
+  const cssW = Math.ceil(c.tileW + pad * 2)
+  const cssH = Math.ceil(c.tileH + c.blockH + STUD_H + pad * 2)
+  const pixW = Math.round(cssW * dpr)
+  const pixH = Math.round(cssH * dpr)
+
+  let canvas: SpriteCanvas
+  if (typeof OffscreenCanvas !== 'undefined') {
+    canvas = new OffscreenCanvas(pixW, pixH)
+  } else if (typeof document !== 'undefined' && document.createElement) {
+    const el = document.createElement('canvas')
+    el.width = pixW
+    el.height = pixH
+    canvas = el
+  } else {
+    return null
+  }
+
+  const sCtx = canvas.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null
+  if (!sCtx) return null
+
+  sCtx.scale(dpr, dpr)
+  const anchorX = w + pad
+  const anchorY = h + STUD_H + pad
+
+  drawCubeBody(sCtx as unknown as CanvasRenderingContext2D, anchorX, anchorY, c, p, color, type, noStuds)
+
+  sprite = { canvas, anchorX, anchorY, width: cssW, height: cssH }
+  if (spriteCache.size >= MAX_SPRITE_CACHE) {
+    const firstKey = spriteCache.keys().next().value
+    if (firstKey) spriteCache.delete(firstKey)
+  }
+  spriteCache.set(cacheKey, sprite)
+  return sprite
+}
+
+function drawCubeBody(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  c: IsoConfig,
+  p: IsoPalette,
+  color: string | undefined,
+  type: BlockType,
+  noStuds: boolean,
+): void {
+  const w = c.tileW / 2
+  const h = c.tileH / 2
+  const bh = c.blockH
+
+  const T: Pt = [sx, sy - h]
+  const R: Pt = [sx + w, sy]
+  const BR: Pt = [sx + w, sy + bh]
+  const B: Pt = [sx, sy + h + bh]
+  const BL: Pt = [sx - w, sy + bh]
+  const L: Pt = [sx - w, sy]
+  const F: Pt = [sx, sy + h]
+
+  const sil: Pt[] = [T, R, BR, B, BL, L]
+  const top: Pt[] = [T, R, F, L]
+  const left: Pt[] = [L, F, B, BL]
+  const right: Pt[] = [F, R, BR, B]
+
+  const cornerR = Math.min(3, c.tileW * 0.0625)
+  const silR = [0, cornerR, cornerR, 0, cornerR, cornerR]
+
+  const sh = color ? deriveShadingForColor(color) : deriveShading(p)
+  const polyPath = (pts: Pt[]) => {
+    ctx.beginPath()
+    ctx.moveTo(pts[0][0], pts[0][1])
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1])
+    ctx.closePath()
+  }
+
+  ctx.save()
+  roundedPoly(ctx, sil, silR)
+  ctx.clip()
+
+  const gTop = ctx.createLinearGradient(sx, sy - h, sx, sy + h)
+  gTop.addColorStop(0, sh.topA)
+  gTop.addColorStop(1, sh.topB)
+
+  const gLeft = ctx.createLinearGradient(sx, sy, sx, sy + bh)
+  gLeft.addColorStop(0, sh.leftA)
+  gLeft.addColorStop(1, sh.leftB)
+
+  const gRight = ctx.createLinearGradient(sx, sy, sx, sy + bh)
+  gRight.addColorStop(0, sh.rightA)
+  gRight.addColorStop(1, sh.rightB)
+
+  polyPath(left)
+  ctx.fillStyle = gLeft
+  ctx.fill()
+  polyPath(right)
+  ctx.fillStyle = gRight
+  ctx.fill()
+
+  const gAo = ctx.createLinearGradient(sx, sy + bh * 0.45, sx, sy + h + bh)
+  gAo.addColorStop(0, 'rgba(0, 0, 0, 0)')
+  gAo.addColorStop(1, withAlpha(p.ink, 0.15))
+  ctx.fillStyle = gAo
+  polyPath(left)
+  ctx.fill()
+  polyPath(right)
+  ctx.fill()
+
+  polyPath(top)
+  ctx.fillStyle = gTop
+  ctx.fill()
+
+  const gTopSpec = ctx.createLinearGradient(sx - w, sy - h, sx + w, sy + h)
+  gTopSpec.addColorStop(0, 'rgba(255, 255, 255, 0.14)')
+  gTopSpec.addColorStop(0.65, 'rgba(255, 255, 255, 0)')
+  ctx.fillStyle = gTopSpec
+  polyPath(top)
+  ctx.fill()
+
+  ctx.beginPath()
+  ctx.moveTo(L[0], L[1])
+  ctx.lineTo(F[0], F[1])
+  ctx.lineTo(R[0], R[1])
+  ctx.moveTo(F[0], F[1])
+  ctx.lineTo(B[0], B[1])
+  ctx.strokeStyle = withAlpha(p.ink, 0.4)
+  ctx.lineWidth = 1
+  ctx.stroke()
+  ctx.restore()
+
+  roundedPoly(ctx, sil, silR)
+  ctx.strokeStyle = withAlpha(p.ink, 0.58)
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  if (!noStuds) {
+    drawStud(ctx, sx, sy, c.tileW * 0.25, c.tileW * 0.25 * (c.tileH / c.tileW), STUD_H, sh, p.ink)
+  }
+  decorate(ctx, sx, sy, c, p, type)
+}
 
 export function drawCube(
   ctx: CanvasRenderingContext2D,
@@ -413,8 +583,6 @@ export function drawCube(
 
   const sil: Pt[] = [T, R, BR, B, BL, L]
   const top: Pt[] = [T, R, F, L]
-  const left: Pt[] = [L, F, B, BL]
-  const right: Pt[] = [F, R, BR, B]
 
   // 外剪影四角圆润倒角 ≈3px（T/B 保持尖角），三面共享精确边，不倒角出透缝
   const cornerR = Math.min(3, c.tileW * 0.0625)
@@ -434,7 +602,6 @@ export function drawCube(
     return
   }
 
-  const sh = opts.color ? deriveShadingForColor(opts.color) : deriveShading(p)
   const polyPath = (pts: Pt[]) => {
     ctx.beginPath()
     ctx.moveTo(pts[0][0], pts[0][1])
@@ -442,75 +609,19 @@ export function drawCube(
     ctx.closePath()
   }
 
-  // 裁剪到圆角剪影内：三面纯色渐变填充，交界笔直，外缘倒角干净
-  ctx.save()
-  roundedPoly(ctx, sil, silR)
-  ctx.clip()
-
-  // 顶面：后缘 → 前缘 100% → 90%
-  const gTop = ctx.createLinearGradient(sx, sy - h, sx, sy + h)
-  gTop.addColorStop(0, sh.topA)
-  gTop.addColorStop(1, sh.topB)
-  // 左面：上 → 下 65% → 50%
-  const gLeft = ctx.createLinearGradient(sx, sy, sx, sy + bh)
-  gLeft.addColorStop(0, sh.leftA)
-  gLeft.addColorStop(1, sh.leftB)
-  // 右面：上 → 下 35% → 22%
-  const gRight = ctx.createLinearGradient(sx, sy, sx, sy + bh)
-  gRight.addColorStop(0, sh.rightA)
-  gRight.addColorStop(1, sh.rightB)
-
-  polyPath(left)
-  ctx.fillStyle = gLeft
-  ctx.fill()
-  polyPath(right)
-  ctx.fillStyle = gRight
-  ctx.fill()
-
-  // 底缘接触环境阴影 (Contact AO)：提升多层堆叠时的体积感与落地重力感
-  const gAo = ctx.createLinearGradient(sx, sy + bh * 0.45, sx, sy + h + bh)
-  gAo.addColorStop(0, 'rgba(0, 0, 0, 0)')
-  gAo.addColorStop(1, withAlpha(p.ink, 0.15))
-  ctx.fillStyle = gAo
-  polyPath(left)
-  ctx.fill()
-  polyPath(right)
-  ctx.fill()
-
-  polyPath(top)
-  ctx.fillStyle = gTop
-  ctx.fill()
-
-  // 顶面左上微光泽倒角
-  const gTopSpec = ctx.createLinearGradient(sx - w, sy - h, sx + w, sy + h)
-  gTopSpec.addColorStop(0, 'rgba(255, 255, 255, 0.14)')
-  gTopSpec.addColorStop(0.65, 'rgba(255, 255, 255, 0)')
-  ctx.fillStyle = gTopSpec
-  polyPath(top)
-  ctx.fill()
-  // 面与面交界线（墨 40%，1px，笔直）
-  ctx.beginPath()
-  ctx.moveTo(L[0], L[1])
-  ctx.lineTo(F[0], F[1])
-  ctx.lineTo(R[0], R[1])
-  ctx.moveTo(F[0], F[1])
-  ctx.lineTo(B[0], B[1])
-  ctx.strokeStyle = withAlpha(p.ink, 0.4)
-  ctx.lineWidth = 1
-  ctx.stroke()
-  ctx.restore()
-
-  // 整块剪影描边（墨 58%，1.5px）
-  roundedPoly(ctx, sil, silR)
-  ctx.strokeStyle = withAlpha(p.ink, 0.58)
-  ctx.lineWidth = 1.5
-  ctx.stroke()
-
-  if (!noStuds) {
-    drawStud(ctx, sx, sy, c.tileW * 0.25, c.tileW * 0.25 * (c.tileH / c.tileW), STUD_H, sh, p.ink)
+  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
+  const sprite = getCubeSprite(opts.color, type, noStuds, c, p, dpr)
+  if (sprite) {
+    ctx.drawImage(
+      sprite.canvas as CanvasImageSource,
+      sx - sprite.anchorX,
+      sy - sprite.anchorY,
+      sprite.width,
+      sprite.height,
+    )
+  } else {
+    drawCubeBody(ctx, sx, sy, c, p, opts.color, type, noStuds)
   }
-  decorate(ctx, sx, sy, c, p, type)
-
   if (hasNote) {
     ctx.save()
     ctx.beginPath()

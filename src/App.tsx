@@ -1,3 +1,4 @@
+import { clearCubeSpriteCache } from './render/iso'
 import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window'
 import { listen } from '@tauri-apps/api/event'
@@ -264,6 +265,7 @@ export default function App() {
   const langSetting = useAppStore((s) => s.settings.language)
   useEffect(() => {
     document.documentElement.dataset.theme = themeSetting
+    clearCubeSpriteCache()
   }, [themeSetting])
   useEffect(() => {
     document.documentElement.lang = langSetting

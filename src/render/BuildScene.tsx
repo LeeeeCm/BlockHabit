@@ -1,5 +1,5 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
-import type { BlockDef, Blueprint, MicroMood } from '../types'
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react'
+import type { BlockDef, Blueprint, CheckIn, MicroMood, PlacedBlock } from '../types'
 import {
   DEFAULT_ISO_CONFIG,
   STUD_H,
@@ -117,18 +117,73 @@ export function BuildScene({
   xrayMode = false,
   onAnimated,
 }: Props) {
-  const { t } = useI18n()
+  const { lang, t } = useI18n()
   const builds = useAppStore((s) => s.builds)
   const checkIns = useAppStore((s) => s.checkIns)
   const habits = useAppStore((s) => s.habits)
 
-  const buildsRef = useRef(builds)
-  const checkInsRef = useRef(checkIns)
-  const habitsRef = useRef(habits)
-  buildsRef.current = builds
-  checkInsRef.current = checkIns
-  habitsRef.current = habits
+  // 1. 蓝图几何包围盒与中心点（纯蓝图静态，不随帧刷新）
+  const { cx, cy } = useMemo(() => {
+    let minBx = Infinity, maxBx = -Infinity, minBy = Infinity, maxBy = -Infinity
+    for (const b of blueprint.blocks) {
+      minBx = Math.min(minBx, b.x)
+      maxBx = Math.max(maxBx, b.x)
+      minBy = Math.min(minBy, b.y)
+      maxBy = Math.max(maxBy, b.y)
+    }
+    return {
+      cx: Math.round((minBx + maxBx) / 2),
+      cy: Math.round((minBy + maxBy) / 2),
+    }
+  }, [blueprint])
 
+  // 2. 深度排序积木序列（仅当蓝图或视角旋转变更时重算）
+  const sortedCubes = useMemo(() => {
+    return blueprint.blocks
+      .map((b, i) => {
+        const { rx, ry } = rotateCoord(b.x, b.y, cx, cy, rotation)
+        return { b, i, rx, ry }
+      })
+      .sort((m, n) => {
+        const a = m.rx + m.ry
+        const c = n.rx + n.ry
+        if (a !== c) return a - c
+        return m.b.z - n.b.z
+      })
+  }, [blueprint, cx, cy, rotation])
+
+  // 3. 空间坐标映射表（仅当已放置块数变更时重算）
+  const indexAt = useMemo(() => {
+    const map = new Map<string, number>()
+    blueprint.blocks.slice(0, placedCount).forEach((b, i) => map.set(`${b.x},${b.y},${b.z}`, i))
+    return map
+  }, [blueprint, placedCount])
+
+  // 4. 块序号 → 打卡事实元数据索引（O(1) 代替每帧循环内双重线性 find）
+  const blockMetaByIndex = useMemo(() => {
+    const map = new Map<number, { pb?: PlacedBlock; ci?: CheckIn; habitName?: string }>()
+    const ciByPlacedBlockId = new Map<string, CheckIn>()
+    for (const c of checkIns) {
+      if (c.placedBlockId && !c.deletedAt) {
+        ciByPlacedBlockId.set(c.placedBlockId, c)
+      }
+    }
+    const habitMap = new Map(habits.map((h) => [h.id, h.name]))
+    for (const pb of builds) {
+      if (pb.blueprintId === blueprint.id) {
+        const ci = ciByPlacedBlockId.get(pb.id)
+        map.set(pb.index, {
+          pb,
+          ci,
+          habitName: ci ? habitMap.get(ci.habitId) : undefined,
+        })
+      }
+    }
+    return map
+  }, [blueprint.id, builds, checkIns, habits])
+
+  const derivedRef = useRef({ cx, cy, sortedCubes, indexAt, blockMetaByIndex })
+  derivedRef.current = { cx, cy, sortedCubes, indexAt, blockMetaByIndex }
   const [hoveredBlock, setHoveredBlock] = useState<{
     index: number
     x: number
@@ -174,15 +229,8 @@ export function BuildScene({
     ctx.translate(view.panX + gyro.x, view.panY + gyro.y)
     ctx.scale(view.scale, view.scale)
 
-    let minBx = Infinity, maxBx = -Infinity, minBy = Infinity, maxBy = -Infinity
-    for (const b of bp.blocks) {
-      minBx = Math.min(minBx, b.x)
-      maxBx = Math.max(maxBx, b.x)
-      minBy = Math.min(minBy, b.y)
-      maxBy = Math.max(maxBy, b.y)
-    }
-    const cx = Math.round((minBx + maxBx) / 2)
-    const cy = Math.round((minBy + maxBy) / 2)
+    const { cx, cy, sortedCubes: cubes, indexAt, blockMetaByIndex } = derivedRef.current
+    cubesRef.current = cubes
 
     const cfg = DEFAULT_ISO_CONFIG
     drawGroundBounds(ctx, bp.blocks, cfg, palette, rot, cx, cy, stateRef.current.enableEcoProps)
@@ -198,21 +246,6 @@ export function BuildScene({
       animating = p < 1
     }
 
-    // 已放置块坐标 → 序号：用于定位某块正上方的块并判断其是否已落地
-    const indexAt = new Map<string, number>()
-    bp.blocks.slice(0, pc).forEach((b, i) => indexAt.set(`${b.x},${b.y},${b.z}`, i))
-    const cubes = bp.blocks
-      .map((b, i) => {
-        const { rx, ry } = rotateCoord(b.x, b.y, cx, cy, rot)
-        return { b, i, rx, ry }
-      })
-      .sort((m, n) => {
-        const a = m.rx + m.ry
-        const c = n.rx + n.ry
-        if (a !== c) return a - c
-        return m.b.z - n.b.z
-      })
-    cubesRef.current = cubes
     let cascadeRunning = false
     for (const { b, i, rx, ry } of cubes) {
       if (i >= pc) continue
@@ -227,8 +260,8 @@ export function BuildScene({
         }
       }
 
-      const pb = buildsRef.current.find((x) => x.blueprintId === bp.id && x.index === i)
-      const ci = pb ? checkInsRef.current.find((c) => c.placedBlockId === pb.id) : undefined
+      const meta = blockMetaByIndex.get(i)
+      const ci = meta?.ci
       const hasNote = Boolean(ci?.note?.trim())
       const starred = Boolean(ci?.starred)
       const isHovered = Boolean(interactiveInspect && hoveredIndexRef.current === i)
@@ -428,7 +461,6 @@ export function BuildScene({
             const my = (state.startY - rect.top - view.panY) / view.scale
 
             const pc = stateRef.current.placedCount
-            const bp = stateRef.current.blueprint
             let hit: { b: BlockDef; i: number; rx: number; ry: number } | null = null
             const cubes = cubesRef.current
             for (let k = cubes.length - 1; k >= 0; k--) {
@@ -444,14 +476,14 @@ export function BuildScene({
             if (hit) {
               triggerHaptic('light')
               hoveredIndexRef.current = hit.i
-              const pb = buildsRef.current.find((x) => x.blueprintId === bp.id && x.index === hit.i)
-              const ci = pb ? checkInsRef.current.find((c) => c.placedBlockId === pb.id) : undefined
-              const h = ci ? habitsRef.current.find((x) => x.id === ci.habitId) : undefined
+              const meta = derivedRef.current.blockMetaByIndex.get(hit.i)
+              const ci = meta?.ci
+              const habitName = meta?.habitName || (ci ? '习惯' : (meta?.pb?.bonus ? (lang === 'zh' ? '每日全勤大满贯' : 'Daily All-Clear') : '—'))
               setHoveredBlock({
                 index: hit.i,
                 x: state.startX - rect.left,
                 y: state.startY - rect.top,
-                habitName: h?.name || '—',
+                habitName,
                 date: ci?.date || '',
                 note: ci?.note,
                 mood: ci?.mood,
@@ -670,7 +702,6 @@ export function BuildScene({
       const my = (e.clientY - rect.top - view.panY) / view.scale
 
       const pc = stateRef.current.placedCount
-      const bp = stateRef.current.blueprint
       let hit: { b: BlockDef; i: number; rx: number; ry: number } | null = null
       const cubes = cubesRef.current
       for (let k = cubes.length - 1; k >= 0; k--) {
@@ -686,14 +717,14 @@ export function BuildScene({
       if (hit) {
         if (hoveredIndexRef.current !== hit.i) {
           hoveredIndexRef.current = hit.i
-          const pb = buildsRef.current.find((x) => x.blueprintId === bp.id && x.index === hit.i)
-          const ci = pb ? checkInsRef.current.find((c) => c.placedBlockId === pb.id) : undefined
-          const h = ci ? habitsRef.current.find((x) => x.id === ci.habitId) : undefined
+          const meta = derivedRef.current.blockMetaByIndex.get(hit.i)
+          const ci = meta?.ci
+          const habitName = meta?.habitName || (ci ? '习惯' : (meta?.pb?.bonus ? (lang === 'zh' ? '每日全勤大满贯' : 'Daily All-Clear') : '—'))
           setHoveredBlock({
             index: hit.i,
             x: e.clientX - rect.left,
             y: e.clientY - rect.top,
-            habitName: h?.name || '—',
+            habitName,
             date: ci?.date || '',
             note: ci?.note,
             mood: ci?.mood,

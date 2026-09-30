@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useMemo } from 'react'
 import type { Blueprint, ShowcasePlacement } from '../types'
 import {
   DEFAULT_ISO_CONFIG,
@@ -11,6 +11,7 @@ import {
 import {
   canPlaceModel,
   getModelFootprint,
+  type ModelFootprint,
   screenToGroundIso,
   SHOWCASE_GRID_SIZE,
 } from '../logic/showcase'
@@ -67,33 +68,18 @@ export function ShowcaseScene({
   const cfg = DEFAULT_ISO_CONFIG
   const G = SHOWCASE_GRID_SIZE
 
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+  const placementsRef = useRef(placements)
+  placementsRef.current = placements
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    const w = canvas.clientWidth
-    const h = canvas.clientHeight
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    ctx.clearRect(0, 0, w, h)
-
-    const { enableAmbient: ambient, enableGyroscope: gyroEnabled } = settingsRef.current
-    const palette = paletteFromDocument(undefined, ambient)
-    const view = viewRef.current
-    const gyro = gyroEnabled ? gyroOffsetRef.current : { x: 0, y: 0 }
-    ctx.translate(view.panX + gyro.x, view.panY + gyro.y)
-    ctx.scale(view.scale, view.scale)
-    // 1. 展台底座（透视圆角实体托盘：底角最大平缓 > 左右对称第二大 > 顶角紧凑自然）
+  // 1. 静态实木沙盘底托曲线采样点（纯几何静态，不随帧刷新）
+  const baseGeometry = useMemo(() => {
     const slabH = 12
     const radii: IsoCornerRadii = {
-      bottom: 2.6, // 视点最近：最大圆角弧线，平缓饱满
-      side: 2.1,   // 左右两侧：对称中等圆角，完全镜像一致
-      top: 1.7,    // 远端顶角：优雅自然圆角，透视消逝感
+      bottom: 2.6,
+      side: 2.1,
+      top: 1.7,
     }
 
-    // 采样顶面与底面的连续投影轮廓点集
     const STEPS = 20
     const topPts: { sx: number; sy: number }[] = []
     const botPts: { sx: number; sy: number }[] = []
@@ -124,7 +110,6 @@ export function ShowcaseScene({
       addSample(rs - rs * Math.sin(a), G - rs + rs * Math.cos(a))
     }
 
-    // 找到最左与最右切点位置，构建朝向相机的无缝连续 3D 侧裙面
     let leftIdx = 0
     let rightIdx = 0
     for (let i = 1; i < topPts.length; i++) {
@@ -138,6 +123,37 @@ export function ShowcaseScene({
       for (let i = leftIdx; i >= rightIdx; i--) skirtPts.push(botPts[i])
     }
 
+    return { topPts, botPts, skirtPts }
+  }, [cfg, G])
+
+  // 2. 蓝图模型包围盒尺寸缓存
+  const footprintMap = useMemo(() => {
+    const map = new Map<string, ModelFootprint>()
+    for (const [id, bp] of Object.entries(blueprintsMap)) {
+      map.set(id, getModelFootprint(bp.blocks))
+    }
+    return map
+  }, [blueprintsMap])
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const w = canvas.clientWidth
+    const h = canvas.clientHeight
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.clearRect(0, 0, w, h)
+
+    const { enableAmbient: ambient, enableGyroscope: gyroEnabled } = settingsRef.current
+    const palette = paletteFromDocument(undefined, ambient)
+    const view = viewRef.current
+    const gyro = gyroEnabled ? gyroOffsetRef.current : { x: 0, y: 0 }
+    ctx.translate(view.panX + gyro.x, view.panY + gyro.y)
+    ctx.scale(view.scale, view.scale)
+    // 1. 展台底座（透视圆角实体托盘：底角最大平缓 > 左右对称第二大 > 顶角紧凑自然）
+    const { topPts, botPts, skirtPts } = baseGeometry
     // 底层环境光柔和阴影
     ctx.save()
     ctx.beginPath()
@@ -242,14 +258,15 @@ export function ShowcaseScene({
     }
 
     const allCubes: RenderCube[] = []
-    for (const p of placements) {
+    const curPlacements = placementsRef.current
+    for (const p of curPlacements) {
       const bp = blueprintsMap[p.blueprintId]
       if (!bp) continue
       const isDragging = drag?.blueprintId === p.blueprintId
       const gx = isDragging ? drag.currentGx : p.gridX
       const gy = isDragging ? drag.currentGy : p.gridY
 
-      const fp = getModelFootprint(bp.blocks)
+      const fp = footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks)
       for (const b of bp.blocks) {
         const wx = gx + (b.x - fp.minX)
         const wy = gy + (b.y - fp.minY)
@@ -283,8 +300,12 @@ export function ShowcaseScene({
         ghost: isDragging && !drag?.isValid,
       })
     }
-  }, [placements, blueprintsMap, cfg, G])
+  }, [blueprintsMap, cfg, G, baseGeometry, footprintMap])
 
+  // 当外部 placements 数据变更时（例如自动排列或 store 同步），触发即时画布重绘
+  useEffect(() => {
+    draw()
+  }, [placements, draw])
   // 初始化与自适应窗口大小
   useEffect(() => {
     const canvas = canvasRef.current
@@ -342,8 +363,9 @@ export function ShowcaseScene({
       const worldPx = (mx - view.panX) / view.scale
       const worldPy = (my - view.panY) / view.scale - cfg.tileH / 2
 
-      for (let i = placements.length - 1; i >= 0; i--) {
-        const p = placements[i]
+      const curPlacements = placementsRef.current
+      for (let i = curPlacements.length - 1; i >= 0; i--) {
+        const p = curPlacements[i]
         const bp = blueprintsMap[p.blueprintId]
         if (!bp) continue
         const fp = getModelFootprint(bp.blocks)
@@ -359,7 +381,7 @@ export function ShowcaseScene({
       }
       return null
     },
-    [placements, blueprintsMap, cfg.tileH, cfg.tileW],
+    [blueprintsMap, cfg.tileH, cfg.tileW],
   )
 
   const touchStateRef = useRef<TouchGestureState | null>(null)
@@ -513,9 +535,10 @@ export function ShowcaseScene({
     }
 
     function findModelUnderPointer(worldPx: number, worldPy: number): string | null {
+      const curPlacements = placementsRef.current
       // 从后往前检测模型
-      for (let i = placements.length - 1; i >= 0; i--) {
-        const p = placements[i]
+      for (let i = curPlacements.length - 1; i >= 0; i--) {
+        const p = curPlacements[i]
         const bp = blueprintsMap[p.blueprintId]
         if (!bp) continue
         const fp = getModelFootprint(bp.blocks)
@@ -540,7 +563,7 @@ export function ShowcaseScene({
 
       if (hitId) {
         // 命中建筑模型：进入模型拖拽状态
-        const p = placements.find((x) => x.blueprintId === hitId)!
+        const p = placementsRef.current.find((x) => x.blueprintId === hitId)!
         dragRef.current = {
           blueprintId: hitId,
           startGx: p.gridX,
@@ -582,7 +605,7 @@ export function ShowcaseScene({
         drag.currentGy = targetGy
         drag.isValid = canPlaceModel(
           { blueprintId: drag.blueprintId, gridX: targetGx, gridY: targetGy },
-          placements,
+          placementsRef.current,
           blueprintsMap,
           G,
         )
@@ -658,7 +681,7 @@ export function ShowcaseScene({
       canvas.removeEventListener('pointerup', onPointerUp)
       canvas.removeEventListener('wheel', onWheel)
     }
-  }, [placements, blueprintsMap, onUpdatePlacement, onSelectModel, draw, cfg, G])
+  }, [blueprintsMap, onUpdatePlacement, onSelectModel, draw, cfg, G])
   // 环境光照与重力视差偏好切换时触发重绘
   useEffect(() => {
     draw()
