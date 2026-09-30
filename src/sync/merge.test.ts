@@ -247,6 +247,35 @@ describe('mergeAppState facts merge (schema v2)', () => {
     expect(h2.pinned).toBe(true)
   })
 
+  it('filters out custom habits with empty days array during merge', () => {
+    const validHabit: Habit = {
+      id: 'h1',
+      name: 'Valid Custom',
+      frequency: { type: 'custom', days: [1, 3] },
+      createdAt: '2026-01-01T00:00:00.000Z',
+    }
+    const emptyCustomRemote: Habit = {
+      id: 'h_empty_remote',
+      name: 'Empty Remote',
+      frequency: { type: 'custom', days: [] },
+      createdAt: '2026-01-02T00:00:00.000Z',
+    }
+    const emptyCustomLocal: Habit = {
+      id: 'h_empty_local',
+      name: 'Empty Local',
+      frequency: { type: 'custom', days: [] },
+      createdAt: '2026-01-03T00:00:00.000Z',
+    }
+
+    const merged = mergeAppState(
+      createMockState({ habits: [validHabit, emptyCustomLocal] }),
+      createMockState({ habits: [emptyCustomRemote] }),
+    )
+
+    expect(merged.habits.length).toBe(1)
+    expect(merged.habits[0].id).toBe('h1')
+  })
+
   it('merges dayClaims by date with claimedAt/deletedAt LWW', () => {
     // 设备 A 撤销了昨天的全勤（deletedAt 晚于 claimedAt）；设备 B 仍领取
     const local = createMockState({

@@ -139,6 +139,8 @@ export const en: TranslationSchema = {
     repairSuccessToast: (name) => `Repaired check-in for "${name}"!`,
     repairAlreadyToast: 'That day already has a check-in',
     repairNoHabitToast: 'Habit not found',
+    repairArchivedToast: 'Cannot repair an archived habit',
+    repairFutureToast: 'Cannot repair a future date',
     repairFailToast: 'Repair failed, please try again',
     repairLimitToast: 'Can only repair check-ins within the past 7 days',
     repairNoBricksToast:

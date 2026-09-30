@@ -119,6 +119,8 @@ export interface TranslationSchema {
     repairSuccessToast: (name: string) => string
     repairAlreadyToast: string
     repairNoHabitToast: string
+    repairArchivedToast: string
+    repairFutureToast: string
     repairFailToast: string
     repairLimitToast: string
     repairNoBricksToast: string

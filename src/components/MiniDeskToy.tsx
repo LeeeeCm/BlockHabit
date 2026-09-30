@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { getBlueprint } from '../logic/blueprints'
 import { isHabitDueOnDay } from '../logic/checkin'
-import { todayKey } from '../logic/dates'
+import { useTodayKey } from '../logic/useTodayKey'
 import { BuildScene } from '../render/BuildScene'
 import { playCelebrationSound, playJellySound, playSnapSound } from '../audio/sound'
 import { getBlueprintName, useI18n } from '../i18n'
@@ -27,7 +27,7 @@ export function MiniDeskToy({ onExpand, onClose }: Props) {
   const checkIn = useAppStore((s) => s.checkIn)
   const [toast, setToast] = useState<string | null>(null)
 
-  const day = todayKey()
+  const day = useTodayKey()
   const blueprint = getBlueprint(activeBlueprintId)
   const placedCount = builds.filter((b) => b.blueprintId === activeBlueprintId).length
   const total = blueprint.blocks.length

@@ -58,6 +58,8 @@ describe('i18n system', () => {
       expect(t.polaroid.modalTitle).toBeTruthy()
       expect(t.polaroid.savePng).toBeTruthy()
       expect(t.polaroid.copyImage).toBeTruthy()
+      expect(t.stats.repairArchivedToast).toBeTruthy()
+      expect(t.stats.repairFutureToast).toBeTruthy()
     }
   })
 

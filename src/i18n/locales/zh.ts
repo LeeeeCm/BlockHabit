@@ -124,6 +124,8 @@ export const zh: TranslationSchema = {
     repairSuccessToast: (name) => `已成功为「${name}」补签！`,
     repairAlreadyToast: '该日已有打卡记录',
     repairNoHabitToast: '未找到该习惯',
+    repairArchivedToast: '已归档的习惯不可补签',
+    repairFutureToast: '无法为未来的日期补签',
     repairFailToast: '补签失败，请稍后再试',
     repairLimitToast: '只能补签过去 7 天以内的遗漏打卡',
     repairNoBricksToast:

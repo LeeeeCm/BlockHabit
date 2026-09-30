@@ -562,6 +562,8 @@ export default function Stats() {
                 'no-bricks': t.stats.repairNoBricksToast,
                 already: t.stats.repairAlreadyToast,
                 'no-habit': t.stats.repairNoHabitToast,
+                archived: t.stats.repairArchivedToast,
+                future: t.stats.repairFutureToast,
               }
               setToast(reasonToast[res.reason ?? ''] ?? t.stats.repairFailToast)
             }

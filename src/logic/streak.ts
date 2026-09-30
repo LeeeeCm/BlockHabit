@@ -39,6 +39,7 @@ export function currentStreak(habit: Habit, checkIns: CheckIn[], today: Date): n
     return streak
   }
   if (habit.frequency.type === 'custom') {
+    if (!habit.frequency.days || habit.frequency.days.length === 0) return 0
     let streak = 0
     let d = new Date(today)
     const todayKeyStr = dateKey(d)
@@ -155,6 +156,7 @@ export function bestStreak(habit: Habit, checkIns: CheckIn[]): number {
     return best
   }
   if (habit.frequency.type === 'custom') {
+    if (!habit.frequency.days || habit.frequency.days.length === 0) return 0
     const sorted = [...days].sort()
     if (sorted.length === 0) return 0
     let best = 1

@@ -95,6 +95,18 @@ describe('currentStreak (custom weekdays)', () => {
     const cs = [ci('h3', '2026-08-19'), ci('h3', '2026-08-21')]
     expect(currentStreak(customMWF, cs, new Date(2026, 7, 22))).toBe(2)
   })
+
+  it('empty custom days does not hang and returns 0', () => {
+    const emptyCustom: Habit = {
+      id: 'h_empty',
+      name: '空习惯',
+      frequency: { type: 'custom', days: [] },
+      createdAt: '2026-08-01T00:00:00.000Z',
+    }
+    const cs = [ci('h_empty', '2026-08-20')]
+    expect(currentStreak(emptyCustom, cs, new Date(2026, 7, 22))).toBe(0)
+    expect(bestStreak(emptyCustom, cs)).toBe(0)
+  })
 })
 
 describe('bestStreak', () => {

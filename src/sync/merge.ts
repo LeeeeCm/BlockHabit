@@ -30,12 +30,23 @@ function isNewerHabit(local: Habit, remote: Habit): boolean {
  * Merges habits by id with updatedAt LWW (newest edit wins, including archive/restore/pin).
  * Habits without updatedAt (legacy archives) fall back to local-priority spread.
  */
+function isValidHabit(h: Habit): boolean {
+  if (!h || !h.id) return false
+  if (h.frequency?.type === 'custom') {
+    return Array.isArray(h.frequency.days) && h.frequency.days.length > 0
+  }
+  return true
+}
+
 function mergeHabits(localHabits: Habit[], remoteHabits: Habit[]): Habit[] {
   const habitMap = new Map<string, Habit>()
   for (const h of remoteHabits || []) {
-    habitMap.set(h.id, { ...h })
+    if (isValidHabit(h)) {
+      habitMap.set(h.id, { ...h })
+    }
   }
   for (const h of localHabits || []) {
+    if (!isValidHabit(h)) continue
     const existing = habitMap.get(h.id)
     if (!existing) {
       habitMap.set(h.id, { ...h })
