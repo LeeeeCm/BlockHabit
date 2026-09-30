@@ -6,7 +6,7 @@ import * as platform from '../platform'
 import * as detectModule from '../platform/detect'
 import { HabitDialog } from './HabitDialog'
 import { SettingsDialog } from './SettingsDialog'
-
+import { ConfirmDialog } from './ConfirmDialog'
 function render(ui: React.ReactElement) {
   const container = document.createElement('div')
   document.body.appendChild(container)
@@ -217,6 +217,22 @@ describe('BottomSheet component', () => {
 
     detectSpy.mockReturnValue('desktop')
     const { queryByTestId: queryDesktop, unmount: unmountDesktop } = render(<SettingsDialog onClose={vi.fn()} />)
+    expect(queryDesktop('bottom-sheet-handle')).toBeNull()
+    unmountDesktop()
+  })
+
+  it('renders ConfirmDialog in BottomSheet when isMobile is true and in dialog when desktop', () => {
+    const detectSpy = vi.spyOn(detectModule, 'detectPlatform').mockReturnValue('mobile')
+    const { queryByTestId, unmount } = render(
+      <ConfirmDialog title="确认删除" message="此操作不可逆" onCancel={vi.fn()} onConfirm={vi.fn()} />
+    )
+    expect(queryByTestId('bottom-sheet-handle')).not.toBeNull()
+    unmount()
+
+    detectSpy.mockReturnValue('desktop')
+    const { queryByTestId: queryDesktop, unmount: unmountDesktop } = render(
+      <ConfirmDialog title="确认删除" message="此操作不可逆" onCancel={vi.fn()} onConfirm={vi.fn()} />
+    )
     expect(queryDesktop('bottom-sheet-handle')).toBeNull()
     unmountDesktop()
   })

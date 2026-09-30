@@ -149,7 +149,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.32);
+  background: var(--overlay);
   backdrop-filter: blur(14px) saturate(180%);
   -webkit-backdrop-filter: blur(14px) saturate(180%);
   display: flex;
@@ -157,10 +157,6 @@
   justify-content: center;
   z-index: 50;
   animation: overlay-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-:root[data-theme='dark'] .overlay {
-  background: rgba(0, 0, 0, 0.65);
 }
 
 @keyframes overlay-fade-in {

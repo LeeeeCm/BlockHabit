@@ -15,6 +15,7 @@
   --line: #e8e8e8;
   --accent: #f5b301;
   --accent-ink: #0a0a0a;
+  --overlay: rgba(0, 0, 0, 0.38);
   /* 危险操作红（删除等） */
   --danger: #e5484d;
   --danger-ink: #ffffff;
@@ -62,6 +63,7 @@
   --block-left: #282828;
   --block-right: #0f0f0f;
   --block-ghost: #1e1e1e;
+  --overlay: rgba(0, 0, 0, 0.65);
 }
 
 :root[data-theme='oat'] {
@@ -80,6 +82,7 @@
   --block-left: #dfd8cc;
   --block-right: #574f45;
   --block-ghost: #dfd8cc;
+  --overlay: rgba(41, 37, 36, 0.42);
 }
 
 :root[data-theme='fog'] {
@@ -98,6 +101,7 @@
   --block-left: #cbd5e1;
   --block-right: #334155;
   --block-ghost: #cbd5e1;
+  --overlay: rgba(30, 41, 59, 0.42);
 }
 
 html[data-win='tray-menu'],

@@ -77,18 +77,16 @@ html, body {
 }
 
 /* 移动端输入框防 iOS Safari 聚焦时强制缩放 (iOS 规范：字号 >= 16px 免自动放大破坏视口) */
-@media screen and (max-width: 768px) {
-  input[type='text'],
-  input[type='number'],
-  input[type='search'],
-  input[type='password'],
-  textarea,
-  select,
-  .field input,
-  .field textarea,
-  .micro-note-input {
-    font-size: 16px !important;
-  }
+.mobile-app-root input[type='text'],
+.mobile-app-root input[type='number'],
+.mobile-app-root input[type='search'],
+.mobile-app-root input[type='password'],
+.mobile-app-root textarea,
+.mobile-app-root select,
+.mobile-app-root .field input,
+.mobile-app-root .field textarea,
+.mobile-app-root .micro-note-input {
+  font-size: 16px !important;
 }
 
 /* 移动端触控优化与点击态反馈 */

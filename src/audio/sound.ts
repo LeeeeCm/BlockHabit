@@ -6,19 +6,33 @@ import { useAppStore } from '../store/appStore'
 import type { SoundMaterial } from '../types'
 
 let audioCtx: AudioContext | null = null
-function getAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null
+export function _resetAudioContextForTest(): void {
+  audioCtx = null
+}
+async function withAudioContext(run: (ctx: AudioContext) => void): Promise<void> {
+  if (typeof window === 'undefined' || soundMuted) return
   if (!audioCtx) {
-    const ctxCtor = window.AudioContext ?? ('webkitAudioContext' in window ? (window.webkitAudioContext as typeof AudioContext) : null)
+    const ctxCtor =
+      window.AudioContext ??
+      ('webkitAudioContext' in window ? (window.webkitAudioContext as typeof AudioContext) : null)
     if (ctxCtor) {
       audioCtx = new ctxCtor()
     }
   }
-  if (audioCtx && audioCtx.state === 'suspended') {
-    // 尽早恢复（首次触发多来自用户手势）；挂起窗口极短，事件积压风险可忽略（§7 取舍）
-    void audioCtx.resume()
+  if (!audioCtx) return
+
+  if (audioCtx.state === 'suspended') {
+    try {
+      await audioCtx.resume()
+    } catch {
+      // 恢复失败（如无用户手势授权）时静默跳过本次，避免事件积压（§7.14）
+      return
+    }
   }
-  return audioCtx
+
+  if (audioCtx.state === 'running') {
+    run(audioCtx)
+  }
 }
 
 export let soundMuted = false
@@ -35,11 +49,8 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
   if (soundMuted) return
   const material = overrideMaterial ?? useAppStore.getState().settings.soundMaterial ?? 'classic'
   if (material === 'mute') return
-  const ctx = getAudioContext()
-  if (!ctx) return
-
-  const now = ctx.currentTime
-
+  void withAudioContext((ctx) => {
+    const now = ctx.currentTime
   switch (material) {
     case 'walnut': {
       // 沉静原木：短促低频木质击打 (正弦波 280Hz -> 85Hz，低通共鸣)
@@ -160,6 +171,7 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
       break
     }
   }
+  })
 }
 
 /**
@@ -167,11 +179,8 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
  * 新积木落地果冻回弹时的弹性滑音
  */
 export function playJellySound(): void {
-  if (soundMuted) return
-  const ctx = getAudioContext()
-  if (!ctx) return
-
-  const now = ctx.currentTime
+  void withAudioContext((ctx) => {
+    const now = ctx.currentTime
   const osc = ctx.createOscillator()
   osc.type = 'sine'
   osc.frequency.setValueAtTime(160, now)
@@ -187,6 +196,7 @@ export function playJellySound(): void {
 
   osc.start(now)
   osc.stop(now + 0.24)
+  })
 }
 
 /**
@@ -194,11 +204,8 @@ export function playJellySound(): void {
  * 纯净明亮的谐波和弦，带来完成一整天或一座建筑的空灵成就感
  */
 export function playCelebrationSound(): void {
-  if (soundMuted) return
-  const ctx = getAudioContext()
-  if (!ctx) return
-
-  const now = ctx.currentTime
+  void withAudioContext((ctx) => {
+    const now = ctx.currentTime
   // 经典 C 大调五度和弦：C5 (523Hz), E5 (659Hz), G5 (784Hz), C6 (1046Hz)
   const notes = [523.25, 659.25, 783.99, 1046.5]
 
@@ -219,6 +226,7 @@ export function playCelebrationSound(): void {
     osc.start(startTime)
     osc.stop(startTime + 1.25)
   })
+  })
 }
 
 /**
@@ -229,11 +237,8 @@ export function playCelebrationSound(): void {
 const PENTATONIC_FREQS = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51]
 
 export function playComboChime(comboIndex: number = 0): void {
-  if (soundMuted) return
-  const ctx = getAudioContext()
-  if (!ctx) return
-
-  const now = ctx.currentTime
+  void withAudioContext((ctx) => {
+    const now = ctx.currentTime
   const freq = PENTATONIC_FREQS[Math.min(comboIndex, PENTATONIC_FREQS.length - 1)]
 
   // 主音：温暖清脆木琴/积木敲击声
@@ -265,4 +270,5 @@ export function playComboChime(comboIndex: number = 0): void {
   osc.stop(now + 0.4)
   overtone.start(now)
   overtone.stop(now + 0.3)
+  })
 }
