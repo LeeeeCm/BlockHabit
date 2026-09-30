@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CheckInResult, Habit, HabitPeriod } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useTodayKey } from '../logic/useTodayKey'
@@ -56,6 +56,8 @@ export default function Today({ onCelebrate }: Props) {
   const placedCount = builds.filter((b) => b.blueprintId === activeBlueprintId).length
   const total = blueprint.blocks.length
   const percent = Math.min(100, Math.round((placedCount / total) * 100))
+  const placedCountRef = useRef(placedCount)
+  placedCountRef.current = placedCount
 
   const categories = useMemo(() => {
     const list: string[] = []
@@ -109,26 +111,38 @@ export default function Today({ onCelebrate }: Props) {
     setTimeout(() => setToast(null), 2400)
   }
 
-  function handleHabitCheck(habitName: string, res: CheckInResult) {
-    if (res.complete) {
-      setDropModal({
-        habitName,
-        placedCount: placedCount + 1,
-        complete: true,
-        checkInId: res.checkInId,
-      })
-      playCelebrationSound()
-    } else if (res.placed) {
-      setDropModal({
-        habitName,
-        placedCount: placedCount + 1,
-        complete: false,
-        checkInId: res.checkInId,
-      })
-    } else {
-      showToast(t.today.checkedInToast(habitName))
-    }
-  }
+  const handleHabitCheck = useCallback(
+    (res: CheckInResult, h: Habit) => {
+      if (res.complete) {
+        setDropModal({
+          habitName: h.name,
+          placedCount: placedCountRef.current + 1,
+          complete: true,
+          checkInId: res.checkInId,
+        })
+        playCelebrationSound()
+      } else if (res.placed) {
+        setDropModal({
+          habitName: h.name,
+          placedCount: placedCountRef.current + 1,
+          complete: false,
+          checkInId: res.checkInId,
+        })
+      } else {
+        showToast(t.today.checkedInToast(h.name))
+      }
+    },
+    [t],
+  )
+
+  const handleEdit = useCallback((h: Habit) => {
+    setEditing(h)
+    setDialogOpen(true)
+  }, [])
+
+  const handleNoteSaved = useCallback(() => {
+    showToast(t.reflections.engravedToast, true)
+  }, [t])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -406,12 +420,9 @@ export default function Today({ onCelebrate }: Props) {
                       done={checkIns.some((c) => !c.deletedAt && c.habitId === h.id && c.date === day)}
                       streak={streakInfo.streak}
                       inRestPeriod={streakInfo.inRestPeriod}
-                      onCheck={(res) => handleHabitCheck(h.name, res)}
-                      onNoteSaved={() => showToast(t.reflections.engravedToast, true)}
-                      onEdit={() => {
-                        setEditing(h)
-                        setDialogOpen(true)
-                      }}
+                      onCheck={handleHabitCheck}
+                      onNoteSaved={handleNoteSaved}
+                      onEdit={handleEdit}
                     />
                   )
                 })}

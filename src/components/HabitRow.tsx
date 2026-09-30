@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, memo } from 'react'
 import { usePlatform, triggerHaptic } from '../platform'
-import type { CheckIn, CheckInResult, Habit, MicroMood } from '../types'
+import type { CheckInResult, Habit, MicroMood } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useTimerStore } from '../store/timerStore'
-import { canCheckIn, dayCheckInsFor, dayCounterValue, isHabitDueOnDay, weekCountFor } from '../logic/checkin'
+import { canCheckInHabit, isHabitDueOnDay } from '../logic/checkin'
+import { selectHabitCheckInSlice } from '../store/habitSelectors'
 import { playComboChime, playSnapSound } from '../audio/sound'
 import { useI18n } from '../i18n'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -25,17 +26,17 @@ interface Props {
   streak: number
   inRestPeriod?: boolean
   day: string
-  onCheck?: (res: CheckInResult) => void
-  onEdit?: () => void
+  onCheck?: (res: CheckInResult, habit: Habit) => void
+  onEdit?: (habit: Habit) => void
   /** 随笔镌刻保存成功后的回调（宿主页用于弹 toast） */
   onNoteSaved?: () => void
 }
 
 
 /** 周频习惯本周是否已无法达标（剩余天数 < 还需次数） */
-function weekMissed(habit: Habit, checkIns: CheckIn[], day: string): boolean {
+function weekMissed(habit: Habit, weekCount: number, day: string): boolean {
   if (habit.frequency.type !== 'weekly') return false
-  const need = habit.frequency.times - weekCountFor(checkIns, habit.id, day)
+  const need = habit.frequency.times - weekCount
   if (need <= 0) return false
   const d = new Date(day + 'T00:00:00')
   const daysLeft = 7 - ((d.getDay() + 6) % 7)
@@ -52,7 +53,16 @@ function fmtRemaining(ms: number): string {
  * 双列大卡片：
  * 点击未完成卡片 → 开始倒计时（蓝色/进行中）；倒计时到点 → 提醒后再次点击 → 真正打卡（绿色）。
  */
-export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEdit, onNoteSaved }: Props) {
+export const HabitRow = memo(function HabitRow({
+  habit,
+  done,
+  streak,
+  inRestPeriod,
+  day,
+  onCheck,
+  onEdit,
+  onNoteSaved,
+}: Props) {
   const { isMobile } = usePlatform()
   const { t } = useI18n()
   const checkIn = useAppStore((s) => s.checkIn)
@@ -60,8 +70,9 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
   const deleteHabit = useAppStore((s) => s.deleteHabit)
   const togglePinHabit = useAppStore((s) => s.togglePinHabit)
   const recordCheckInNote = useAppStore((s) => s.recordCheckInNote)
-  const habits = useAppStore((s) => s.habits)
-  const checkIns = useAppStore((s) => s.checkIns)
+  const { todayCheckIns, todayCheckIn, counterVal, weekCount } = useAppStore((s) =>
+    selectHabitCheckInSlice(s.checkIns, habit, day),
+  )
   const session = useTimerStore((s) => s.sessions[habit.id])
   const startTimer = useTimerStore((s) => s.start)
   const cancelTimer = useTimerStore((s) => s.cancel)
@@ -74,13 +85,8 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
 
   const isCounter = habit.kind === 'counter'
   const targetVal = habit.targetValue ?? 1
-  const counterVal = isCounter ? dayCounterValue(checkIns, habit.id, day) : 0
   const counterRatio = Math.min(1, counterVal / targetVal)
   const stepVal = habit.step ?? 1
-
-  // 复用谓词层过滤（含墓碑排除），避免每次渲染拷贝整个 checkIns 数组
-  const todayCheckIns = dayCheckInsFor(checkIns, habit.id, day)
-  const todayCheckIn = todayCheckIns[todayCheckIns.length - 1]
   const [editingNote, setEditingNote] = useState(false)
   const [noteVal, setNoteVal] = useState(todayCheckIn?.note ?? '')
   const [moodVal, setMoodVal] = useState<MicroMood | undefined>(todayCheckIn?.mood)
@@ -111,7 +117,7 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
     return () => clearInterval(t)
   }, [session])
 
-  const missed = !done && weekMissed(habit, checkIns, day)
+  const missed = !done && weekMissed(habit, weekCount, day)
   const isFocus = habit.kind === 'focus' && Boolean(habit.targetMinutes)
   const targetMs = (habit.targetMinutes ?? 25) * 60_000
   const elapsed = session ? now - session.startedAt : 0
@@ -145,7 +151,7 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
     .filter(Boolean)
     .join(' · ')
   function performCheckIn(actualMins?: number, noteText?: string) {
-    const verdict = canCheckIn(habits, checkIns, habit.id, day)
+    const verdict = canCheckInHabit(habit, todayCheckIns, day, weekCount)
     if (!verdict.ok) return
     triggerHaptic('medium')
     const res = checkIn(habit.id, actualMins, noteText)
@@ -159,13 +165,13 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
       setPulse(false)
       setFloatingPill(null)
     }, 1100)
-    onCheck?.(res)
+    onCheck?.(res, habit)
   }
 
   function handleStepCounter(e?: React.MouseEvent, delta = stepVal) {
     e?.stopPropagation()
     if (delta < 0 && counterVal <= 0) return
-    const verdict = canCheckIn(habits, checkIns, habit.id, day)
+    const verdict = canCheckInHabit(habit, todayCheckIns, day, weekCount)
     if (!verdict.ok && delta > 0) return
     triggerHaptic('light')
     const res = checkIn(habit.id, undefined, undefined, delta)
@@ -179,7 +185,7 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
       setPulse(false)
       setFloatingPill(null)
     }, 1100)
-    onCheck?.(res)
+    onCheck?.(res, habit)
   }
   function handleStatusClick() {
     if (done) {
@@ -206,7 +212,7 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
     performCheckIn()
   }
   function handleStartFocus() {
-    const verdict = canCheckIn(habits, checkIns, habit.id, day)
+    const verdict = canCheckInHabit(habit, todayCheckIns, day, weekCount)
     if (!verdict.ok) return
     startTimer(habit.id, targetMs)
     setPulse(true)
@@ -324,7 +330,7 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
             onClick={(e) => {
               e.stopPropagation()
               triggerHaptic('light')
-              onEdit?.()
+              onEdit?.(habit)
             }}
           >
             <IconEdit size={17} />
@@ -717,4 +723,4 @@ export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEd
       )}
     </div>
   )
-}
+})

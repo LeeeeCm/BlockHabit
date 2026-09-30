@@ -55,6 +55,26 @@ export function habitMetOnDay(habit: Habit, checkIns: CheckIn[], day: string): b
   }
   return false
 }
+export function canCheckInHabit(
+  habit: Habit,
+  checkIns: CheckIn[],
+  day: string,
+  weekCountOverride?: number,
+): CanCheckInResult {
+  if (habit.archivedAt) return { ok: false, reason: 'archived' }
+  if (habit.kind !== 'counter' && dayCheckInsFor(checkIns, habit.id, day).length > 0) {
+    return { ok: false, reason: 'already' }
+  }
+  // counter 习惯的"完成"以当日 targetValue 达成为准，周配额仅约束 instant/focus
+  if (habit.frequency.type === 'weekly' && habit.kind !== 'counter') {
+    const count = weekCountOverride !== undefined ? weekCountOverride : weekCountFor(checkIns, habit.id, day)
+    if (count >= habit.frequency.times) {
+      return { ok: false, reason: 'weekly-full' }
+    }
+  }
+  return { ok: true }
+}
+
 export function canCheckIn(
   habits: Habit[],
   checkIns: CheckIn[],
@@ -63,17 +83,7 @@ export function canCheckIn(
 ): CanCheckInResult {
   const habit = habits.find((h) => h.id === habitId)
   if (!habit) return { ok: false, reason: 'no-habit' }
-  if (habit.archivedAt) return { ok: false, reason: 'archived' }
-  if (habit.kind !== 'counter' && dayCheckInsFor(checkIns, habitId, day).length > 0) {
-    return { ok: false, reason: 'already' }
-  }
-  // counter 习惯的"完成"以当日 targetValue 达成为准，周配额仅约束 instant/focus
-  if (habit.frequency.type === 'weekly' && habit.kind !== 'counter') {
-    if (weekCountFor(checkIns, habitId, day) >= habit.frequency.times) {
-      return { ok: false, reason: 'weekly-full' }
-    }
-  }
-  return { ok: true }
+  return canCheckInHabit(habit, checkIns, day)
 }
 
 export function canUndoCheckIn(checkIns: CheckIn[], habitId: string, day: string): boolean {
