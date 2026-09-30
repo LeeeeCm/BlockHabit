@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="160" viewBox="0 0 720 160">
+  <rect width="720" height="160" fill="#FFFFFF"/>
+  <g transform="translate(25,0)" fill="none" stroke="#0A0A0A" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <!-- B -->
+    <g>
+      <path d="M8,40 V120"/>
+      <path d="M8,40 H30 a20,20 0 0 1 0,40 H8"/>
+      <path d="M8,80 H32 a20,20 0 0 1 0,40 H8"/>
+    </g>
+    <!-- l -->
+    <g transform="translate(76,0)">
+      <path d="M8,40 V120"/>
+    </g>
+    <!-- o -->
+    <g transform="translate(108,0)">
+      <circle cx="36" cy="92" r="28"/>
+    </g>
+    <!-- c -->
+    <g transform="translate(196,0)">
+      <path d="M57.45,74 A28,28 0 1 0 57.45,110"/>
+    </g>
+    <!-- k -->
+    <g transform="translate(277,0)">
+      <path d="M8,40 V120"/>
+      <path d="M44,64 L8,96"/>
+      <path d="M24,82 L46,120"/>
+    </g>
+    <!-- H -->
+    <g transform="translate(346,0)">
+      <path d="M8,40 V120"/>
+      <path d="M44,40 V120"/>
+      <path d="M8,80 H44"/>
+    </g>
+    <!-- a -->
+    <g transform="translate(414,0)">
+      <circle cx="36" cy="92" r="28"/>
+      <path d="M64,64 V120"/>
+    </g>
+    <!-- b -->
+    <g transform="translate(502,0)">
+      <path d="M8,40 V120"/>
+      <circle cx="36" cy="92" r="28"/>
+    </g>
+    <!-- i -->
+    <g transform="translate(590,0)">
+      <path d="M8,64 V120"/>
+    </g>
+    <!-- t -->
+    <g transform="translate(622,0)">
+      <path d="M24,44 V104 a16,16 0 0 0 16,16"/>
+      <path d="M8,64 H40"/>
+    </g>
+  </g>
+  <!-- i 点：品牌"完成块"绿色圆角方块 -->
+  <rect x="615" y="32" width="16" height="16" rx="4" fill="#22C55E"/>
+</svg>

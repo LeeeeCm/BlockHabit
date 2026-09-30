@@ -21,6 +21,7 @@ import {
   type TouchGestureState,
 } from './touchGesture'
 import { triggerHaptic } from '../platform'
+import { IconMood, IconStar } from '../components/Icons'
 interface Props {
   blueprint: Blueprint
   placedCount: number
@@ -28,8 +29,9 @@ interface Props {
   animateIndex?: number | null
   /** 视角旋转象限 0=0°, 1=90°, 2=180°, 3=270° */
   rotation?: number
-  /** 是否开启悬停拾取与读砖气泡卡 */
   interactiveInspect?: boolean
+  /** 是否开启 X-Ray 透视考古模式（普通块透视幽灵化，铭文随笔块琥珀高亮发光） */
+  xrayMode?: boolean
   onAnimated?: () => void
 }
 
@@ -112,6 +114,7 @@ export function BuildScene({
   animateIndex,
   rotation = 0,
   interactiveInspect = false,
+  xrayMode = false,
   onAnimated,
 }: Props) {
   const { t } = useI18n()
@@ -148,23 +151,27 @@ export function BuildScene({
   const prevSizeRef = useRef<{ w: number; h: number } | null>(null)
   const animRef = useRef<{ index: number; start: number } | null>(null)
   const cascadeRef = useRef<CascadePlan | null>(null)
-  const stateRef = useRef({ blueprint, placedCount, animateIndex, rotation })
-  stateRef.current = { blueprint, placedCount, animateIndex, rotation }
+  const rafRef = useRef<number | null>(null)
+  const enableAmbient = useAppStore((s) => s.settings.enableAmbientLighting !== false)
+  const enableGyroscope = useAppStore((s) => Boolean(s.settings.enableGyroscope))
+  const enableEcoProps = useAppStore((s) => s.settings.enableEcoProps !== false)
+  const gyroOffsetRef = useRef({ x: 0, y: 0 })
+  const stateRef = useRef({ blueprint, placedCount, animateIndex, rotation, enableAmbient, enableGyroscope, enableEcoProps, xrayMode })
+  stateRef.current = { blueprint, placedCount, animateIndex, rotation, enableAmbient, enableGyroscope, enableEcoProps, xrayMode }
   const draw = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    const { blueprint: bp, placedCount: pc, animateIndex: ai, rotation: rot } = stateRef.current
-    const dpr = window.devicePixelRatio || 1
-    const w = canvas.clientWidth
-    const h = canvas.clientHeight
+    const { blueprint: bp, placedCount: pc, animateIndex: ai, rotation: rot, enableAmbient: ambient, enableGyroscope: gyroEnabled } = stateRef.current
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    ctx.clearRect(0, 0, w, h)
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight)
 
-    const palette = paletteFromDocument()
+    const palette = paletteFromDocument(undefined, ambient)
     const view = viewRef.current
-    ctx.translate(view.panX, view.panY)
+    const gyro = gyroEnabled ? gyroOffsetRef.current : { x: 0, y: 0 }
+    ctx.translate(view.panX + gyro.x, view.panY + gyro.y)
     ctx.scale(view.scale, view.scale)
 
     let minBx = Infinity, maxBx = -Infinity, minBy = Infinity, maxBy = -Infinity
@@ -178,7 +185,7 @@ export function BuildScene({
     const cy = Math.round((minBy + maxBy) / 2)
 
     const cfg = DEFAULT_ISO_CONFIG
-    drawGroundBounds(ctx, bp.blocks, cfg, palette, rot, cx, cy)
+    drawGroundBounds(ctx, bp.blocks, cfg, palette, rot, cx, cy, stateRef.current.enableEcoProps)
 
     const now = performance.now()
     const anim = animRef.current
@@ -226,13 +233,17 @@ export function BuildScene({
       const starred = Boolean(ci?.starred)
       const isHovered = Boolean(interactiveInspect && hoveredIndexRef.current === i)
 
+      const isGhostXRay = Boolean(stateRef.current.xrayMode && !hasNote)
+      const isGlowXRay = Boolean(stateRef.current.xrayMode && hasNote)
+
       const faceOpts = {
         type: b.type,
-        color: b.color,
+        color: isGlowXRay ? '#f59e0b' : b.color,
         noStuds: aboveIdx !== undefined && aboveLanded,
         hasNote,
         starred,
-        highlight: isHovered || Boolean(isNew && !animating),
+        ghost: isGhostXRay,
+        highlight: isHovered || isGlowXRay || Boolean(isNew && !animating),
       }
 
       // 级联铺设：逐层落下 + 果冻回弹
@@ -268,10 +279,7 @@ export function BuildScene({
         drawCube(ctx, 0, -(cfg.tileH / 2 + cfg.blockH), cfg, palette, faceOpts)
         ctx.restore()
       } else {
-        drawCube(ctx, px, restSy - zOff * cfg.blockH, cfg, palette, {
-          ...faceOpts,
-          highlight: Boolean(isNew && !animating),
-        })
+        drawCube(ctx, px, restSy - zOff * cfg.blockH, cfg, palette, faceOpts)
       }
     }
 
@@ -281,14 +289,24 @@ export function BuildScene({
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
+    const scheduleNextFrame = () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+      }
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null
+        draw()
+      })
+    }
+
     if (anim && animating) {
-      requestAnimationFrame(draw)
+      scheduleNextFrame()
     } else if (anim) {
       animRef.current = null
       draw()
       onAnimated?.()
     } else if (cascadeRunning) {
-      requestAnimationFrame(draw)
+      scheduleNextFrame()
     } else if (cascade) {
       cascadeRef.current = null
       draw()
@@ -450,12 +468,14 @@ export function BuildScene({
         touchStateRef.current = null
       } else if (e.touches.length === 1) {
         const t = e.touches[0]
+        state.isMultiTouch = false
+        state.startX = t.clientX
+        state.startY = t.clientY
         state.lastX = t.clientX
         state.lastY = t.clientY
         state.lastPinchDist = 0
         state.maxDisplacement = 999
       } else if (e.touches.length >= 2) {
-        state.lastPinchDist = calculatePinchDistance(e.touches[0], e.touches[1])
         state.lastPinchCenter = calculateTouchCenter(e.touches[0], e.touches[1])
         state.maxDisplacement = 999
       }
@@ -543,7 +563,7 @@ export function BuildScene({
       }
     }
     const resize = () => {
-      const dpr = window.devicePixelRatio || 1
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const w = canvas.clientWidth
       const h = canvas.clientHeight
       if (w === 0 || h === 0) return
@@ -570,7 +590,21 @@ export function BuildScene({
     resize()
     const ro = new ResizeObserver(resize)
     ro.observe(canvas)
-    return () => ro.disconnect()
+    // 跨显示器拖动：DPR 变化不触发 ResizeObserver，用分辨率媒体查询监听补偿（触发后换绑新分辨率）
+    const dprQuery = () => `(resolution: ${Math.min(window.devicePixelRatio || 1, 2)}dppx)`
+    const onDprChange = () => {
+      resize()
+      dprMq?.removeEventListener('change', onDprChange)
+      dprMq = typeof window.matchMedia === 'function' ? window.matchMedia(dprQuery()) : null
+      dprMq?.addEventListener('change', onDprChange)
+    }
+    let dprMq: MediaQueryList | null =
+      typeof window.matchMedia === 'function' ? window.matchMedia(dprQuery()) : null
+    dprMq?.addEventListener('change', onDprChange)
+    return () => {
+      dprMq?.removeEventListener('change', onDprChange)
+      ro.disconnect()
+    }
   }, [draw])
 
   // 状态变化重绘：新块 → 慢落果冻；每次进入建造页 → 逐层级联
@@ -588,6 +622,11 @@ export function BuildScene({
   useEffect(() => {
     draw()
   }, [rotation, draw])
+  // 环境光照与重力视差偏好切换时触发重绘
+  // 环境光照、重力视差与微生态彩蛋偏好切换时触发重绘
+  useEffect(() => {
+    draw()
+  }, [enableAmbient, enableGyroscope, enableEcoProps, xrayMode, draw])
 
   // 交互：拖拽平移 / 滚轮缩放
   useEffect(() => {
@@ -712,6 +751,31 @@ export function BuildScene({
       canvas.removeEventListener('wheel', onWheel)
     }
   }, [draw, interactiveInspect])
+  // 移动端重力感应微视差交互（遵循无障碍减弱动态标准，仅在用户显式开启时激活）
+  useEffect(() => {
+    if (!enableGyroscope || typeof window === 'undefined' || !window.DeviceOrientationEvent) return
+    const onOrientation = (e: DeviceOrientationEvent) => {
+      if (e.gamma == null || e.beta == null) return
+      const targetX = Math.max(-5, Math.min(5, (e.gamma / 30) * 5))
+      const targetY = Math.max(-5, Math.min(5, ((e.beta - 45) / 30) * 5))
+      gyroOffsetRef.current = {
+        x: gyroOffsetRef.current.x * 0.8 + targetX * 0.2,
+        y: gyroOffsetRef.current.y * 0.8 + targetY * 0.2,
+      }
+      draw()
+    }
+    window.addEventListener('deviceorientation', onOrientation)
+    return () => window.removeEventListener('deviceorientation', onOrientation)
+  }, [enableGyroscope, draw])
+  // 组件卸载时安全取消未决动画帧，彻底杜绝后台泄漏
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+    }
+  }, [])
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
@@ -743,19 +807,23 @@ export function BuildScene({
               {t.reflections.brickInspectTitle(hoveredBlock.index)}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              {hoveredBlock.starred && <span style={{ color: '#f59e0b', fontSize: 13 }}>★</span>}
+              {hoveredBlock.starred && <IconStar size={12} filled style={{ color: 'var(--accent)', flexShrink: 0 }} />}
               {hoveredBlock.mood && (
                 <span
                   style={{
                     fontSize: 10,
-                    padding: '1px 6px',
+                    padding: '2px 6px',
                     borderRadius: 999,
                     background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
                     color: 'var(--ink)',
                     fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
                   }}
                 >
-                  {t.microMood[hoveredBlock.mood]}
+                  <IconMood mood={hoveredBlock.mood} size={11} style={{ flexShrink: 0 }} />
+                  <span>{t.microMood[hoveredBlock.mood]}</span>
                 </span>
               )}
             </div>

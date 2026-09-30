@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window'
 import { listen } from '@tauri-apps/api/event'
-import { initPersistence, useAppStore } from './store/appStore'
+import { initPersistence, useAppStore, forceFlush } from './store/appStore'
 import { pickAdapter } from './storage'
+import { setSoundMuted } from './audio/sound'
 import { getBlueprint } from './logic/blueprints'
-import { todayKey } from './logic/dates'
 import { useTimerStore } from './store/timerStore'
 import { getBlueprintName, useI18n } from './i18n'
 import Today from './pages/Today'
@@ -14,6 +14,7 @@ import Stats from './pages/Stats'
 import { SettingsDialog } from './components/SettingsDialog'
 import { MiniDeskToy } from './components/MiniDeskToy'
 import {
+  IconCheck,
   IconBuild,
   IconMiniWidget,
   IconSettings,
@@ -29,6 +30,7 @@ import logoUrl from './assets/logo-mark.svg'
 import { usePlatform } from './platform'
 import { BottomTabBar, type MobileTab } from './components/BottomTabBar'
 import { habitMetOnDay } from './logic/checkin'
+import { useTodayKey } from './logic/useTodayKey'
 
 type Tab = MobileTab
 
@@ -43,12 +45,24 @@ function TimerWatcher() {
   const notified = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    if (Object.keys(sessions).length === 0) return
+    if (Object.keys(sessions).length === 0) {
+      notified.current.clear()
+      return
+    }
+    // 清理已结束的旧 session 标记，防止同一习惯下次计时被永久静音
+    const activeKeys = new Set(Object.entries(sessions).map(([id, s]) => `${id}_${s.startedAt}`))
+    for (const key of Array.from(notified.current)) {
+      if (!activeKeys.has(key)) {
+        notified.current.delete(key)
+      }
+    }
+
     const t = setInterval(() => {
       const nowMs = Date.now()
       for (const [id, s] of Object.entries(sessions)) {
-        if (nowMs - s.startedAt >= s.targetMs && !notified.current.has(id)) {
-          notified.current.add(id)
+        const sessionKey = `${id}_${s.startedAt}`
+        if (nowMs - s.startedAt >= s.targetMs && !notified.current.has(sessionKey)) {
+          notified.current.add(sessionKey)
           const name = useAppStore.getState().habits.find((h) => h.id === id)?.name ?? 'Habit'
           const msg =
             lang === 'zh'
@@ -70,7 +84,9 @@ function TimerWatcher() {
   if (!toast) return null
   return (
     <div className="toast" style={{ bottom: 150, maxWidth: '80vw', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-      <span className="accent" style={{ color: 'var(--progress-green)' }}>✓ </span>
+      <span className="accent" style={{ color: 'var(--progress-green)', display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', marginRight: 5 }}>
+        <IconCheck size={14} />
+      </span>
       {toast}
     </div>
   )
@@ -85,12 +101,14 @@ function TraySync() {
   const builds = useAppStore((s) => s.builds)
   const activeBlueprintId = useAppStore((s) => s.activeBlueprintId)
 
+  const day = useTodayKey()
+
   useEffect(() => {
     if (!inTauri) return
-    const day = todayKey()
     const active = habits.filter((h) => !h.archivedAt)
-    const done = active.filter((h) => checkIns.some((c) => c.habitId === h.id && c.date === day)).length
-    const claimed = dayClaims.includes(day)
+    // 与 Today 页同一判定口径（周频/计数习惯达标即算完成）
+    const done = active.filter((h) => habitMetOnDay(h, checkIns, day)).length
+    const claimed = dayClaims.some((c) => c.date === day)
     const bp = getBlueprint(activeBlueprintId)
     const placed = builds.filter((b) => b.blueprintId === activeBlueprintId).length
     const bpName = getBlueprintName(activeBlueprintId, lang)
@@ -101,7 +119,7 @@ function TraySync() {
       const { invoke } = await import('@tauri-apps/api/core')
       await invoke('update_tray', { status })
     })()
-  }, [habits, checkIns, dayClaims, builds, activeBlueprintId, lang, t])
+  }, [habits, checkIns, dayClaims, builds, activeBlueprintId, lang, t, day])
 
   return null
 }
@@ -112,11 +130,12 @@ function TitleBar({ onSettings, onToggleMini }: { onSettings: () => void; onTogg
   const [maximized, setMaximized] = useState(false)
   useEffect(() => {
     if (!inTauri) return
-    let unlisten: (() => void) | undefined
+    let disposed = false
+    let cleanup: (() => void) | undefined
     void (async () => {
       const win = getCurrentWindow()
       setMaximized(await win.isMaximized())
-      unlisten = await listen('tauri://resize', async () => {
+      const unlistenResize = await listen('tauri://resize', async () => {
         setMaximized(await win.isMaximized())
       })
       // Alt+F4 / 系统关闭请求 → 收进托盘而不是退出
@@ -124,13 +143,20 @@ function TitleBar({ onSettings, onToggleMini }: { onSettings: () => void; onTogg
         event.preventDefault()
         await win.hide()
       })
-      const prev = unlisten
-      unlisten = () => {
-        prev?.()
+      if (disposed) {
+        unlistenResize()
+        unClose()
+        return
+      }
+      cleanup = () => {
+        unlistenResize()
         unClose()
       }
     })()
-    return () => unlisten?.()
+    return () => {
+      disposed = true
+      cleanup?.()
+    }
   }, [])
 
   async function winAction(action: 'min' | 'max' | 'close') {
@@ -191,7 +217,7 @@ export default function App() {
   const builds = useAppStore((s) => s.builds)
   const activeBlueprintId = useAppStore((s) => s.activeBlueprintId)
 
-  const day = todayKey()
+  const day = useTodayKey()
   const activeHabits = habits.filter((h) => !h.archivedAt)
   const hasUnfinishedToday =
     activeHabits.length > 0 &&
@@ -202,16 +228,25 @@ export default function App() {
   const buildProgressPercent =
     bp.blocks.length > 0 ? Math.round((placedCount / bp.blocks.length) * 100) : 0
 
+  // 进入迷你模式前的原始窗口尺寸（退出时恢复）
+  const preMiniSizeRef = useRef<{ width: number; height: number } | null>(null)
+
   async function toggleMini(enable: boolean) {
     setMiniMode(enable)
     if (inTauri) {
       const win = getCurrentWindow()
       if (enable) {
+        // 记录原始窗口尺寸（outerSize 是物理像素，换算为逻辑像素供恢复用）
+        const size = await win.outerSize()
+        const f = await win.scaleFactor()
+        preMiniSizeRef.current = { width: Math.round(size.width / f), height: Math.round(size.height / f) }
         await win.setSize(new LogicalSize(260, 380))
         await win.setAlwaysOnTop(true)
         await win.setResizable(false)
       } else {
-        await win.setSize(new LogicalSize(1100, 760))
+        const prev = preMiniSizeRef.current
+        await win.setSize(new LogicalSize(prev?.width ?? 1100, prev?.height ?? 760))
+        preMiniSizeRef.current = null
         await win.setAlwaysOnTop(false)
         await win.setResizable(true)
         await win.center()
@@ -221,10 +256,84 @@ export default function App() {
   useEffect(() => {
     void initPersistence(pickAdapter())
   }, [])
+  // 静音开关持久化：settings.soundMuted 单向驱动音频引擎
+  const soundMutedSetting = useAppStore((s) => s.settings.soundMuted)
+  useEffect(() => {
+    setSoundMuted(soundMutedSetting === true)
+  }, [soundMutedSetting])
+
+  // 主题/语言副作用：store 只存状态，DOM 与跨窗口事件由这里驱动
+  const themeSetting = useAppStore((s) => s.settings.theme)
+  const langSetting = useAppStore((s) => s.settings.language)
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeSetting
+  }, [themeSetting])
+  useEffect(() => {
+    document.documentElement.lang = langSetting
+  }, [langSetting])
+  useEffect(() => {
+    if (!inTauri) return
+    void import('@tauri-apps/api/event').then(({ emit }) => emit('theme-changed', themeSetting))
+  }, [themeSetting])
+  useEffect(() => {
+    if (!inTauri) return
+    void import('@tauri-apps/api/event').then(({ emit }) => emit('language-changed', langSetting))
+  }, [langSetting])
+
+  // 存档保存失败感知：首次失败弹提示，10s 去抖避免持续失败时轰炸
+  const saveError = useAppStore((s) => s.saveError)
+  const [saveErrorVisible, setSaveErrorVisible] = useState(false)
+  const saveErrorShownAtRef = useRef(0)
+  useEffect(() => {
+    if (!saveError) {
+      setSaveErrorVisible(false)
+      return
+    }
+    if (Date.now() - saveErrorShownAtRef.current > 10_000) {
+      saveErrorShownAtRef.current = Date.now()
+      setSaveErrorVisible(true)
+    }
+  }, [saveError])
+
+  // 存档来自更高版本：本会话挂起持久化，提示用户升级
+  const needsUpgrade = useAppStore((s) => s.needsUpgrade)
+
+  // 托盘退出握手：Rust 发起退出 → 前端 flush 存档 → 确认 → Rust 退出（1.5s 超时强退兜底）
+  useEffect(() => {
+    if (!inTauri) return
+    let disposed = false
+    let stop: (() => void) | undefined
+    void (async () => {
+      const unlisten = await listen('app-quit-requested', () => {
+        void (async () => {
+          // 等待 flush 的写入真正完成（含 Tauri 端 rename）后再放行退出
+          try {
+            await forceFlush()
+          } finally {
+            try {
+              const { invoke } = await import('@tauri-apps/api/core')
+              await invoke('confirm_quit')
+            } catch {
+              // Rust 侧超时强退兜底
+            }
+          }
+        })()
+      })
+      if (disposed) unlisten()
+      else stop = unlisten
+    })()
+    return () => {
+      disposed = true
+      stop?.()
+    }
+  }, [])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase()
-      if (tag === 'input' || tag === 'textarea') return
+      const target = e.target as HTMLElement | null
+      const tag = target?.tagName?.toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || target?.isContentEditable) return
+      // 弹窗打开时不响应数字键切页
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return
       if (e.key === '1') setTab('today')
       else if (e.key === '2') setTab('build')
       else if (e.key === '3') setTab('showcase')
@@ -324,6 +433,14 @@ export default function App() {
             </button>
           ))}
         </nav>
+      )}
+      {needsUpgrade && (
+        <div className="toast" style={{ zIndex: 2000, whiteSpace: 'normal', maxWidth: '80vw' }}>
+          {t.settings.needsUpgradeToast}
+        </div>
+      )}
+      {saveErrorVisible && (
+        <div className="toast" style={{ zIndex: 2000 }}>{t.settings.saveFailedToast}</div>
       )}
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
     </div>

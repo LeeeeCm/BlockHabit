@@ -5,6 +5,7 @@ import { isHabitDueOnDay } from './checkin'
 function ownCheckIns(habit: Habit, checkIns: CheckIn[]): Set<string> {
   const days = new Set<string>()
   for (const c of checkIns) {
+    if (c.deletedAt) continue
     if (c.habitId === habit.id) days.add(c.date)
   }
   return days
@@ -45,7 +46,8 @@ export function currentStreak(habit: Habit, checkIns: CheckIn[], today: Date): n
     if (!days.has(todayKeyStr)) {
       d = addDays(d, -1)
     }
-    for (let step = 0; step < 365; step++) {
+    // 无上限回溯：custom 习惯连胜满一年后仍正确累计（days 有限，应执行日未打卡必然中断）
+    for (let step = 0; ; step++) {
       const k = dateKey(d)
       const due = isHabitDueOnDay(habit, k)
       if (days.has(k)) {
@@ -69,7 +71,60 @@ export function currentStreak(habit: Habit, checkIns: CheckIn[], today: Date): n
   }
   return streak
 }
+export interface StreakStatus {
+  streak: number
+  /** 是否处于温和休整期 (允许今日打卡接续) */
+  inRestPeriod: boolean
+  missedDays: number
+}
 
+/**
+ * 带温和抗断卡风化韧性机制的连胜计算 (Gentle Decay):
+ * 用户偶发遗漏 1 天时进入温和休整期，不立即残酷清零，保护用户自律成就感
+ */
+export function currentStreakWithResilience(
+  habit: Habit,
+  checkIns: CheckIn[],
+  today: Date,
+  enableGentleDecay: boolean = true,
+): StreakStatus {
+  if (!enableGentleDecay) {
+    return { streak: currentStreak(habit, checkIns, today), inRestPeriod: false, missedDays: 0 }
+  }
+
+  const days = ownCheckIns(habit, checkIns)
+  if (days.size === 0) {
+    return { streak: 0, inRestPeriod: false, missedDays: 0 }
+  }
+
+  if (habit.frequency.type === 'daily') {
+    const todayStr = dateKey(today)
+    const dYesterday = addDays(new Date(today), -1)
+    const dDayBefore = addDays(new Date(today), -2)
+    const doneToday = days.has(todayStr)
+    const missedYesterday = !days.has(dateKey(dYesterday))
+    const doneDayBefore = days.has(dateKey(dDayBefore))
+
+    // 场景 A: 今日已打卡，昨日休整，前天有打卡 -> 成功接续连胜 pastStreak + 1
+    if (doneToday && missedYesterday && doneDayBefore) {
+      const pastStreak = currentStreak(habit, checkIns, dDayBefore)
+      if (pastStreak > 0) {
+        return { streak: pastStreak + 1, inRestPeriod: false, missedDays: 0 }
+      }
+    }
+
+    // 场景 B: 今日未打卡，昨日休整，前天有打卡 -> 处于休整期，展示受保护的 pastStreak
+    if (!doneToday && missedYesterday && doneDayBefore) {
+      const pastStreak = currentStreak(habit, checkIns, dDayBefore)
+      if (pastStreak > 0) {
+        return { streak: pastStreak, inRestPeriod: true, missedDays: 1 }
+      }
+    }
+  }
+
+  const classic = currentStreak(habit, checkIns, today)
+  return { streak: classic, inRestPeriod: false, missedDays: 0 }
+}
 /** 连续领块天数（每日打卡领块的连击）：今日未领从昨日起算，断日清零 */
 export function dayClaimStreak(dayClaims: string[], today: Date): number {
   const days = new Set(dayClaims)

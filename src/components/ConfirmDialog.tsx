@@ -1,14 +1,15 @@
 import { type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useI18n } from '../i18n'
+import { IconClose } from './Icons'
+import { triggerHaptic } from '../platform'
+import { useDialogA11y } from './useDialogA11y'
 
 interface Props {
   title: string
   message: ReactNode
   confirmLabel?: string
-  confirmText?: string
   cancelLabel?: string
-  cancelText?: string
   danger?: boolean
   onCancel: () => void
   onConfirm: () => void
@@ -21,23 +22,37 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel,
-  confirmText,
   cancelLabel,
-  cancelText,
   danger = true,
   onCancel,
   onConfirm,
 }: Props) {
   const { t } = useI18n()
-  const confirm = confirmText ?? confirmLabel ?? (danger ? t.common.delete : t.common.confirm)
-  const cancel = cancelText ?? cancelLabel ?? t.common.cancel
+  const { ref: dialogRef } = useDialogA11y({ open: true, onClose: onCancel })
+  const confirm = confirmLabel ?? (danger ? t.common.delete : t.common.confirm)
+  const cancel = cancelLabel ?? t.common.cancel
   return createPortal(
     <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
-      <div className="dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 380, maxWidth: '92vw' }}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+        className="dialog"
+        onMouseDown={(e) => e.stopPropagation()}
+        style={{ width: 380, maxWidth: '92vw' }}
+      >
         <div className="dialog-header">
           <h3>{title}</h3>
-          <button className="icon-btn" onClick={onCancel} title={t.common.close}>
-            ✕
+          <button
+            className="icon-btn"
+            onClick={() => {
+              triggerHaptic('light')
+              onCancel()
+            }}
+            title={t.common.close}
+          >
+            <IconClose size={18} />
           </button>
         </div>
         <div className="dialog-body" style={{ padding: '20px 24px' }}>

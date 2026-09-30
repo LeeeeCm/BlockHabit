@@ -33,7 +33,24 @@ describe('Platform detection', () => {
   it('detects mobile when userAgent indicates mobile device or narrow viewport with touch', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 })
     Object.defineProperty(navigator, 'maxTouchPoints', { writable: true, configurable: true, value: 5 })
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      configurable: true,
+      value: (q: string) => ({ matches: q.includes('coarse'), media: q }),
+    })
     expect(detectPlatform()).toBe('mobile')
+  })
+
+  it('keeps desktop paradigm on touch devices with fine pointer (touch-screen laptop)', () => {
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 })
+    Object.defineProperty(navigator, 'maxTouchPoints', { writable: true, configurable: true, value: 5 })
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      configurable: true,
+      // fine pointer：coarse 媒体查询不匹配
+      value: (q: string) => ({ matches: false, media: q }),
+    })
+    expect(detectPlatform()).toBe('desktop')
   })
 
   it('detects mobile when in Tauri mobile environment', () => {
@@ -103,6 +120,10 @@ describe('Haptics trigger', () => {
     expect(vibrateSpy).toHaveBeenCalledWith(45)
     triggerHaptic('success')
     expect(vibrateSpy).toHaveBeenCalledWith([15, 50, 20])
+    triggerHaptic('selection')
+    expect(vibrateSpy).toHaveBeenCalledWith(8)
+    triggerHaptic('warning')
+    expect(vibrateSpy).toHaveBeenCalledWith([20, 40, 20])
   })
 
   it('safely handles missing navigator.vibrate gracefully without throwing', () => {

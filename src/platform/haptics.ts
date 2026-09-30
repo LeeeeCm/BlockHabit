@@ -1,4 +1,4 @@
-export type HapticType = 'light' | 'medium' | 'heavy' | 'success'
+export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'selection' | 'warning'
 
 export function triggerHaptic(type: HapticType = 'light'): void {
   if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
@@ -6,6 +6,9 @@ export function triggerHaptic(type: HapticType = 'light'): void {
   }
   try {
     switch (type) {
+      case 'selection':
+        navigator.vibrate(8)
+        break
       case 'light':
         navigator.vibrate(10)
         break
@@ -14,6 +17,9 @@ export function triggerHaptic(type: HapticType = 'light'): void {
         break
       case 'heavy':
         navigator.vibrate(45)
+        break
+      case 'warning':
+        navigator.vibrate([20, 40, 20])
         break
       case 'success':
         navigator.vibrate([15, 50, 20])

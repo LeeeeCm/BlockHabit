@@ -1,42 +1,80 @@
 import { create } from 'zustand'
 import type {
+  AppSettings,
   AppState,
   CheckIn,
   CheckInResult,
   ClaimDayResult,
+  DayClaim,
   Habit,
   HabitExtra,
   Language,
   MicroMood,
+  PlacedBlock,
+  ShowcasePlacement,
   Theme,
   UndoResult,
 } from '../types'
 import { canCheckIn, canClaimDay, habitMetOnDay } from '../logic/checkin'
 import { dayClaimStreak } from '../logic/streak'
 import { awardBlock, canSelectBlueprint, isComplete, nextSlot } from '../logic/blueprint'
+import { rebuildBuilds, liveCheckInsView } from '../logic/builds'
 import { blueprints, getBlueprint } from '../logic/blueprints'
 import { canPlaceModel, findNextAvailablePlacement } from '../logic/showcase'
-import { dateKey, todayKey } from '../logic/dates'
+import { todayKey } from '../logic/dates'
 import type { StorageAdapter } from '../storage/adapter'
-import { isValidState } from '../storage/adapter'
+import { prepareImport } from '../storage/adapter'
 
 const uid = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`
 
+/** 对账受影响蓝图的完成状态：重建后块数不足者退回未完成，并同步移出展台 */
+function reconcileCompletion(
+  affectedBpIds: Set<string>,
+  nextBuilds: PlacedBlock[],
+  completedBlueprintIds: string[],
+  showcase: ShowcasePlacement[],
+): { completed: string[]; showcase: ShowcasePlacement[] } {
+  let completed = completedBlueprintIds
+  let nextShowcase = showcase
+  for (const bpId of affectedBpIds) {
+    if (!completed.includes(bpId)) continue
+    const bp = getBlueprint(bpId)
+    const count = nextBuilds.filter((b) => b.blueprintId === bpId).length
+    if (count < bp.blocks.length) {
+      completed = completed.filter((x) => x !== bpId)
+      nextShowcase = nextShowcase.filter((p) => p.blueprintId !== bpId)
+    }
+  }
+  return { completed, showcase: nextShowcase }
+}
+
 function defaultState(): AppState {
   const initialLang: Language =
     typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en'
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     habits: [],
     checkIns: [],
     builds: [],
     activeBlueprintId: 'plant',
     completedBlueprintIds: [],
-    settings: { theme: 'light', language: initialLang },
+    settings: {
+      theme: 'light',
+      language: initialLang,
+      enableMiniWidget: false,
+      enableAmbientLighting: true,
+      enableGentleDecay: true,
+      enableEcoProps: true,
+      soundMaterial: 'classic',
+      soundMuted: false,
+      enableGyroscope: false,
+      enableXRayInspection: false,
+    },
     dayClaims: [],
+    deletedDayClaims: [],
     repairBricks: 0,
     showcasePlacements: [],
     foundationNotes: {},
@@ -71,13 +109,59 @@ interface AppActions {
   /** 展台沙盘位置调整（带 AABB 碰撞检测） */
   updateShowcasePlacement(blueprintId: string, gridX: number, gridY: number): boolean
   chooseBlueprint(id: string): void
+  updateSettings(patch: Partial<AppSettings>): void
   setTheme(t: Theme): void
   setLanguage(l: Language): void
   exportData(): string
   importData(json: string): boolean
 }
 
-export type AppStore = AppState & AppActions & { hydrated: boolean }
+export type AppStore = AppState & AppActions & { hydrated: boolean; saveError?: number; needsUpgrade?: boolean }
+
+/** initPersistence 注入的立即落盘实现；未初始化时为空操作 */
+let flushNowImpl: (() => void) | null = null
+/** 最近一次落盘的 Promise（供退出握手等待在途写入完成） */
+let lastSavePromise: Promise<void> = Promise.resolve()
+
+/** 关键变更（打卡/撤销/领取/补卡/导入）绕过防抖立即写盘 */
+function requestFlushNow(): void {
+  flushNowImpl?.()
+}
+
+/** 强制立即落盘并等待写入完成（托盘退出握手等关键路径使用） */
+export function forceFlush(): Promise<void> {
+  flushNowImpl?.()
+  return lastSavePromise
+}
+
+/** initPersistence 完成后 resolve；同步/自动同步需等待它避免与磁盘加载竞态 */
+let resolvePersistenceReadyImpl: (() => void) | null = null
+export const persistenceReady: Promise<void> = new Promise<void>((resolve) => {
+  resolvePersistenceReadyImpl = resolve
+})
+
+/** 演示模式（?demo-castle）：由 main.tsx 在启动时标记并注入内存态，不读写本地存档 */
+let demoMode = false
+export function markDemoMode(): void {
+  demoMode = true
+}
+export function isDemoMode(): boolean {
+  return demoMode
+}
+export function applyDemoCastleState(): void {
+  const N = getBlueprint('castle').blocks.length
+  useAppStore.setState({
+    builds: Array.from({ length: N }, (_, i) => ({
+      id: `demo-${i}`,
+      blueprintId: 'castle',
+      index: i,
+      placedAt: new Date(Date.now() - (N - i) * 86_400_000).toISOString(),
+      fromHabitId: '__day__',
+      bonus: false,
+    })),
+    completedBlueprintIds: ['castle'],
+  })
+}
 
 export const useAppStore = create<AppStore>()((set, get) => ({
   ...defaultState(),
@@ -89,6 +173,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       name: name.trim(),
       frequency,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       ...extra,
     }
     set((s) => ({ habits: [...s.habits, habit] }))
@@ -96,33 +181,60 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
   updateHabit(id, patch) {
-    set((s) => ({ habits: s.habits.map((h) => (h.id === id ? { ...h, ...patch } : h)) }))
+    set((s) => ({
+      habits: s.habits.map((h) =>
+        h.id === id ? { ...h, ...patch, updatedAt: new Date().toISOString() } : h,
+      ),
+    }))
+    requestFlushNow()
   },
 
   archiveHabit(id) {
     set((s) => ({
       habits: s.habits.map((h) =>
-        h.id === id && !h.archivedAt ? { ...h, archivedAt: new Date().toISOString() } : h,
+        h.id === id && !h.archivedAt
+          ? { ...h, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+          : h,
       ),
     }))
   },
 
   restoreHabit(id) {
     set((s) => ({
-      habits: s.habits.map((h) => (h.id === id ? { ...h, archivedAt: undefined } : h)),
+      habits: s.habits.map((h) =>
+        h.id === id ? { ...h, archivedAt: undefined, updatedAt: new Date().toISOString() } : h,
+      ),
     }))
   },
 
   deleteHabit(id) {
-    set((s) => ({
-      habits: s.habits.filter((h) => h.id !== id),
-      checkIns: s.checkIns.filter((c) => c.habitId !== id),
-    }))
+    const { habits, checkIns, builds, completedBlueprintIds, dayClaims } = get()
+    const remainingCheckIns = checkIns.filter((c) => c.habitId !== id)
+    const affectedBpIds = new Set(
+      builds.filter((b) => b.fromHabitId === id).map((b) => b.blueprintId),
+    )
+    const nextBuilds = rebuildBuilds(liveCheckInsView(remainingCheckIns), dayClaims)
+    const { completed: nextCompleted, showcase: nextShowcase } = reconcileCompletion(
+      affectedBpIds,
+      nextBuilds,
+      completedBlueprintIds,
+      get().showcasePlacements ?? [],
+    )
+    set({
+      habits: habits.filter((h) => h.id !== id),
+      checkIns: remainingCheckIns,
+      builds: nextBuilds,
+      completedBlueprintIds: nextCompleted,
+      showcasePlacements: nextShowcase,
+    })
+    requestFlushNow()
   },
 
   togglePinHabit(id) {
     set((s) => ({
-      habits: s.habits.map((h) => (h.id === id ? { ...h, pinned: !h.pinned } : h)),
+      habits: s.habits.map((h) =>
+        h.id === id ? { ...h, pinned: !h.pinned, updatedAt: new Date().toISOString() } : h,
+      ),
     }))
   },
 
@@ -202,7 +314,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         nextRepair = Math.min(2, nextRepair + 1) // 落成奖励 1 块修复积木，上限 2 块
         if (!nextPlacements.some((p) => p.blueprintId === activeBlueprintId)) {
           const placement = findNextAvailablePlacement(activeBlueprintId, nextPlacements, blueprints)
-          nextPlacements = [...nextPlacements, placement]
+          // 展台已满：跳过自动上展台（不阻塞落成）
+          if (placement) nextPlacements = [...nextPlacements, placement]
         }
       }
     } else {
@@ -215,6 +328,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       date: day,
       at: new Date().toISOString(),
       placedBlockId: slot ? blockId : undefined,
+      blueprintId: slot ? activeBlueprintId : undefined,
       actualMinutes: actualMinutes ?? habit?.targetMinutes,
       value: isCounter ? stepDelta : undefined,
       note: note?.trim() || undefined,
@@ -229,66 +343,71 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       repairBricks: nextRepair,
       showcasePlacements: nextPlacements,
     })
+    requestFlushNow()
     return { placed: slot ?? undefined, bonus: false, complete, checkInId: entry.id }
   },
 
   uncheckIn(habitId, day) {
-    const { habits, checkIns, builds, dayClaims, completedBlueprintIds, activeBlueprintId } = get()
+    const { habits, checkIns, builds, dayClaims, completedBlueprintIds } = get()
     const targetDay = day ?? todayKey()
-    const targetCheckIns = checkIns.filter((c) => c.habitId === habitId && c.date === targetDay)
+    const targetCheckIns = checkIns.filter((c) => !c.deletedAt && c.habitId === habitId && c.date === targetDay)
     if (targetCheckIns.length === 0) {
       return { ok: false, habitId, reason: 'no-checkin' }
     }
 
+    const nowIso = new Date().toISOString()
+    // 墓碑化打卡（不物理删除）：同步合并时删除胜出，防止撤销被并集复活
+    const targetIds = new Set(targetCheckIns.map((c) => c.id))
+    const nextCheckIns = checkIns.map((c) => (targetIds.has(c.id) ? { ...c, deletedAt: nowIso } : c))
     const removedBlockIds = new Set(
       targetCheckIns.map((c) => c.placedBlockId).filter((id): id is string => Boolean(id)),
     )
-    const nextCheckIns = checkIns.filter((c) => !(c.habitId === habitId && c.date === targetDay))
-    let nextBuilds = builds.filter((b) => !removedBlockIds.has(b.id))
     const removedBlock = removedBlockIds.size > 0
-    const affectedBlueprintId = activeBlueprintId
 
-    // 若撤销导致当日不再全勤，移除当日 dayClaims 记录并收回全勤奖励块（防止反复刷块）
+    // 受影响的蓝图 = 被移除块的蓝图（+ 可能被回收的全勤块蓝图）
+    const affectedBpIds = new Set<string>()
+    for (const b of builds) {
+      if (removedBlockIds.has(b.id)) affectedBpIds.add(b.blueprintId)
+    }
+
+    // 若撤销导致当日不再全勤：领取记录墓碑化（防反复刷块），精确回收全勤块
     let nextClaims = dayClaims
-    if (dayClaims.includes(targetDay)) {
+    let nextDeletedClaims = [...(get().deletedDayClaims ?? [])]
+    if (dayClaims.some((c) => c.date === targetDay)) {
       const activeHabits = habits.filter((h) => !h.archivedAt)
       const stillAllDone =
         activeHabits.length > 0 &&
-        activeHabits.every((h) => habitMetOnDay(h, nextCheckIns, targetDay))
+        activeHabits.every((h) => habitMetOnDay(h, liveCheckInsView(nextCheckIns), targetDay))
       if (!stillAllDone) {
-        nextClaims = dayClaims.filter((d) => d !== targetDay)
-        const dayBlock = nextBuilds.find(
-          (b) =>
-            b.fromHabitId === '__day__' &&
-            (b.placedAt.startsWith(targetDay) || dateKey(new Date(b.placedAt)) === targetDay),
-        )
-        if (dayBlock) {
-          nextBuilds = nextBuilds.filter((b) => b.id !== dayBlock.id)
+        const claim = dayClaims.find((c) => c.date === targetDay)!
+        nextClaims = dayClaims.filter((c) => c.date !== targetDay)
+        nextDeletedClaims = [...nextDeletedClaims, { date: targetDay, deletedAt: nowIso }]
+        if (claim.blockId && claim.blueprintId) {
+          affectedBpIds.add(claim.blueprintId)
         }
       }
     }
 
-    // 校验受影响蓝图的完成状态
-    let nextCompleted = completedBlueprintIds
-    const affectedIds = [affectedBlueprintId, activeBlueprintId].filter(
-      (id, idx, arr) => arr.indexOf(id) === idx,
+    // 事实层变更后统一重建积木投影（index 0..N-1 连续压实，多端一致）
+    const nextBuilds = rebuildBuilds(liveCheckInsView(nextCheckIns), nextClaims)
+
+    // 校验受影响蓝图的完成状态，退回未完成时同步移出展台
+    const { completed: nextCompleted, showcase: nextShowcase } = reconcileCompletion(
+      affectedBpIds,
+      nextBuilds,
+      completedBlueprintIds,
+      get().showcasePlacements ?? [],
     )
-    for (const bpId of affectedIds) {
-      if (nextCompleted.includes(bpId)) {
-        const bp = getBlueprint(bpId)
-        const count = nextBuilds.filter((b) => b.blueprintId === bpId).length
-        if (count < bp.blocks.length) {
-          nextCompleted = nextCompleted.filter((id) => id !== bpId)
-        }
-      }
-    }
 
     set({
       checkIns: nextCheckIns,
       builds: nextBuilds,
       completedBlueprintIds: nextCompleted,
       dayClaims: nextClaims,
+      deletedDayClaims: nextDeletedClaims,
+      showcasePlacements: nextShowcase,
     })
+    requestFlushNow()
 
     return { ok: true, habitId, removedBlock }
   },
@@ -299,7 +418,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (count <= 0) return { ok: false, reason: 'no-bricks' }
     const habit = habits.find((h) => h.id === habitId)
     if (!habit) return { ok: false, reason: 'no-habit' }
-    if (checkIns.some((c) => c.habitId === habitId && c.date === date)) {
+    if (habit.archivedAt) return { ok: false, reason: 'archived' }
+    // 拒绝未来日期（补卡只应发生在过去）
+    if (date > todayKey()) return { ok: false, reason: 'future' }
+    if (checkIns.some((c) => !c.deletedAt && c.habitId === habitId && c.date === date)) {
       return { ok: false, reason: 'already' }
     }
     const entry: CheckIn = {
@@ -312,6 +434,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       checkIns: [...checkIns, entry],
       repairBricks: count - 1,
     })
+    requestFlushNow()
     return { ok: true }
   },
 
@@ -330,11 +453,12 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   checkInDay(): ClaimDayResult {
     const { habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, dayClaims, repairBricks, showcasePlacements } = get()
     const day = todayKey()
-    const verdict = canClaimDay(habits, checkIns, dayClaims, day)
+    // 全勤判定基于有效打卡（排除墓碑），防止"打卡→领块→撤销→再领"刷块
+    const verdict = canClaimDay(habits, liveCheckInsView(checkIns), dayClaims, day)
     if (!verdict.ok) return { bonus: false, complete: false, reason: verdict.reason }
 
-    const nextClaims = [...dayClaims, day]
-    const streakAfter = dayClaimStreak(nextClaims, new Date())
+    const claimAt = new Date().toISOString()
+    const streakAfter = dayClaimStreak([...dayClaims.map((c) => c.date), day], new Date())
     const isStreakBonus = awardBlock(streakAfter)
 
     const blueprint = getBlueprint(activeBlueprintId)
@@ -347,14 +471,17 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     let nextCompleted = completedBlueprintIds
     let nextRepair = repairBricks ?? 0
     let nextPlacements = showcasePlacements ?? []
+    // 仅当真正掉块时才记录 blockId（蓝图已建完的领取无块可挂，重建时按空 blockId 跳过）
+    const blockId = slot ? uid() : ''
+
     if (slot) {
       nextBuilds = [
         ...builds,
         {
-          id: uid(),
+          id: blockId,
           blueprintId: activeBlueprintId,
           index: placedCount,
-          placedAt: new Date().toISOString(),
+          placedAt: claimAt,
           fromHabitId: '__day__',
           bonus: true, // 全勤专属奖励块自带高亮/点缀
         },
@@ -366,10 +493,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         nextRepair = Math.min(2, nextRepair + 1)
         if (!nextPlacements.some((p) => p.blueprintId === activeBlueprintId)) {
           const placement = findNextAvailablePlacement(activeBlueprintId, nextPlacements, blueprints)
-          nextPlacements = [...nextPlacements, placement]
+          // 展台已满：跳过自动上展台（不阻塞落成）
+          if (placement) nextPlacements = [...nextPlacements, placement]
         }
       }
     }
+
+    const nextClaims: DayClaim[] = [
+      ...dayClaims,
+      { date: day, claimedAt: claimAt, blockId, blueprintId: activeBlueprintId },
+    ]
     set({
       dayClaims: nextClaims,
       builds: nextBuilds,
@@ -377,7 +510,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       repairBricks: nextRepair,
       showcasePlacements: nextPlacements,
     })
-    return { placed: slot ?? undefined, bonus: isStreakBonus || true, complete }
+    requestFlushNow()
+    return { placed: slot ?? undefined, bonus: isStreakBonus, complete }
   },
   chooseBlueprint(id) {
     const { completedBlueprintIds, activeBlueprintId } = get()
@@ -385,27 +519,18 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!canSelectBlueprint(id, completedBlueprintIds)) return
     set({ activeBlueprintId: id })
   },
+  updateSettings(patch) {
+    const { settings } = get()
+    // 纯状态变更：DOM（data-theme/lang）与跨窗口事件由 App 层订阅 settings 驱动
+    set({ settings: { ...settings, ...patch } })
+  },
 
   setTheme(t) {
-    if (typeof document !== 'undefined') {
-      document.documentElement.dataset.theme = t
-    }
-    if (get().settings.theme === t) return
-    set((s) => ({ settings: { ...s.settings, theme: t } }))
-    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-      void import('@tauri-apps/api/event').then(({ emit }) => emit('theme-changed', t))
-    }
+    get().updateSettings({ theme: t })
   },
 
   setLanguage(l) {
-    if (typeof document !== 'undefined') {
-      document.documentElement.lang = l
-    }
-    if (get().settings.language === l) return
-    set((s) => ({ settings: { ...s.settings, language: l } }))
-    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-      void import('@tauri-apps/api/event').then(({ emit }) => emit('language-changed', l))
-    }
+    get().updateSettings({ language: l })
   },
 
   exportData() {
@@ -418,6 +543,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       completedBlueprintIds,
       settings,
       dayClaims,
+      deletedDayClaims,
       repairBricks,
       showcasePlacements,
       foundationNotes,
@@ -432,6 +558,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         completedBlueprintIds,
         settings,
         dayClaims,
+        deletedDayClaims,
         repairBricks,
         showcasePlacements,
         foundationNotes,
@@ -444,16 +571,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   importData(json) {
     try {
       const parsed: unknown = JSON.parse(json)
-      if (!isValidState(parsed)) return false
-      set({
-        ...parsed,
-        dayClaims: Array.isArray(parsed.dayClaims) ? parsed.dayClaims : [],
-        hydrated: true,
-      })
-      document.documentElement.dataset.theme = parsed.settings.theme
-      if (parsed.settings.language) {
-        document.documentElement.lang = parsed.settings.language
-      }
+      // prepareImport：v2 严格校验直通，v1 旧档迁移后校验，损坏/未来版本拒绝
+      const prepared = prepareImport(parsed)
+      if (!prepared) return false
+      set({ ...prepared, hydrated: true, needsUpgrade: false, saveError: undefined })
+      requestFlushNow()
       return true
     } catch {
       return false
@@ -468,40 +590,49 @@ export async function initPersistence(adapter: StorageAdapter): Promise<void> {
   if (persistenceStarted) return
   persistenceStarted = true
 
-  // 演示模式：?demo-castle 直接在内存里放一座建成的城堡（不读写本地存档）
-  if (typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo-castle')) {
-    const N = getBlueprint('castle').blocks.length
-    useAppStore.setState({
-      builds: Array.from({ length: N }, (_, i) => ({
-        id: `demo-${i}`,
-        blueprintId: 'castle',
-        index: i,
-        placedAt: new Date(Date.now() - (N - i) * 86_400_000).toISOString(),
-        fromHabitId: '__day__',
-        bonus: false,
-      })),
-      completedBlueprintIds: ['castle'],
-    })
-    return
+  try {
+    // 演示模式：main.tsx 已注入内存态（applyDemoCastleState），不读写本地存档
+    if (isDemoMode()) return
+
+    const res = await adapter.load()
+    if (res.needsUpgrade) {
+      // 存档来自更高版本的应用：挂起持久化（不注入 flush、不订阅保存），
+      // 防止低版本会话把默认空态写回、覆盖高版本存档；UI 层提示升级。
+      useAppStore.setState({ hydrated: true, needsUpgrade: true })
+      return
+    }
+    const saved = res.state
+    if (saved) {
+      const lang = saved.settings.language ?? (typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en')
+      useAppStore.setState({ ...saved, settings: { ...saved.settings, language: lang }, hydrated: true })
+    } else {
+      useAppStore.setState({ hydrated: true })
+    }
+  } finally {
+    resolvePersistenceReadyImpl?.()
   }
 
-  const saved = await adapter.load()
-  if (saved) {
-    const lang = saved.settings.language ?? (typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en')
-    useAppStore.setState({ ...saved, settings: { ...saved.settings, language: lang }, hydrated: true })
-    document.documentElement.dataset.theme = saved.settings.theme
-    document.documentElement.lang = lang
-  } else {
-    const initialLang = typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en'
-    useAppStore.setState({ hydrated: true })
-    document.documentElement.lang = initialLang
-  }
-  let timer: ReturnType<typeof setTimeout> | undefined
-  useAppStore.subscribe((state) => {
-    if (!state.hydrated) return
-    clearTimeout(timer)
-    timer = setTimeout(() => {
-      const {
+  let timer: number | undefined
+  let pendingState: AppState | null = null
+
+  function persistState(state: AppState): void {
+    const {
+      schemaVersion,
+      habits,
+      checkIns,
+      builds,
+      activeBlueprintId,
+      completedBlueprintIds,
+      settings,
+      dayClaims,
+      deletedDayClaims,
+      repairBricks,
+      showcasePlacements,
+      foundationNotes,
+    } = state
+    // saveError 是运行时字段，不进持久化 schema
+    lastSavePromise = adapter
+      .save({
         schemaVersion,
         habits,
         checkIns,
@@ -510,23 +641,53 @@ export async function initPersistence(adapter: StorageAdapter): Promise<void> {
         completedBlueprintIds,
         settings,
         dayClaims,
-        repairBricks,
-        showcasePlacements,
-        foundationNotes,
-      } = state
-      void adapter.save({
-        schemaVersion,
-        habits,
-        checkIns,
-        builds,
-        activeBlueprintId,
-        completedBlueprintIds,
-        settings,
-        dayClaims,
+        deletedDayClaims,
         repairBricks,
         showcasePlacements,
         foundationNotes,
       })
-    }, 300)
+      .then(() => {
+        // 恢复成功后清除错误标记；该 setState 会再触发一次订阅，但输出相同、自然收敛
+        if (useAppStore.getState().saveError !== undefined) {
+          useAppStore.setState({ saveError: undefined })
+        }
+      })
+      .catch(() => {
+        // 首次失败才置位，避免"失败→订阅→再保存→再失败"的循环
+        if (useAppStore.getState().saveError === undefined) {
+          useAppStore.setState({ saveError: Date.now() })
+        }
+      })
+  }
+
+  function flushSave() {
+    if (timer) {
+      clearTimeout(timer)
+      timer = undefined
+    }
+    if (!pendingState) return
+    const state = pendingState
+    pendingState = null
+    persistState(state)
+  }
+  flushNowImpl = flushSave
+
+  useAppStore.subscribe((state) => {
+    if (!state.hydrated) return
+    pendingState = state
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      flushSave()
+    }, 150)
   })
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', flushSave)
+    window.addEventListener('pagehide', flushSave)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        flushSave()
+      }
+    })
+  }
 }

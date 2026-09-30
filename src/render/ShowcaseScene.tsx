@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import type { Blueprint, ShowcasePlacement } from '../types'
 import {
   DEFAULT_ISO_CONFIG,
@@ -23,6 +23,7 @@ import {
   type TouchGestureState,
 } from './touchGesture'
 import { triggerHaptic } from '../platform'
+import { useAppStore } from '../store/appStore'
 
 interface Props {
   placements: ShowcasePlacement[]
@@ -56,7 +57,12 @@ export function ShowcaseScene({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const viewRef = useRef({ scale: 0.9, panX: 0, panY: 0, fitted: false })
   const dragRef = useRef<DragState | null>(null)
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const hoveredIdRef = useRef<string | null>(null)
+  const enableAmbient = useAppStore((s) => s.settings.enableAmbientLighting !== false)
+  const enableGyroscope = useAppStore((s) => Boolean(s.settings.enableGyroscope))
+  const gyroOffsetRef = useRef({ x: 0, y: 0 })
+  const settingsRef = useRef({ enableAmbient, enableGyroscope })
+  settingsRef.current = { enableAmbient, enableGyroscope }
 
   const cfg = DEFAULT_ISO_CONFIG
   const G = SHOWCASE_GRID_SIZE
@@ -67,15 +73,17 @@ export function ShowcaseScene({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const dpr = window.devicePixelRatio || 1
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
     const w = canvas.clientWidth
     const h = canvas.clientHeight
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, w, h)
 
-    const palette = paletteFromDocument()
+    const { enableAmbient: ambient, enableGyroscope: gyroEnabled } = settingsRef.current
+    const palette = paletteFromDocument(undefined, ambient)
     const view = viewRef.current
-    ctx.translate(view.panX, view.panY)
+    const gyro = gyroEnabled ? gyroOffsetRef.current : { x: 0, y: 0 }
+    ctx.translate(view.panX + gyro.x, view.panY + gyro.y)
     ctx.scale(view.scale, view.scale)
     // 1. 展台底座（透视圆角实体托盘：底角最大平缓 > 左右对称第二大 > 顶角紧凑自然）
     const slabH = 12
@@ -267,7 +275,7 @@ export function ShowcaseScene({
     // 绘制所有积木
     for (const { worldX, worldY, worldZ, block, blueprintId, isDragging } of allCubes) {
       const { sx: px, sy: py } = worldToScreen(worldX, worldY, worldZ, cfg)
-      const isHovered = hoveredId === blueprintId && !drag
+      const isHovered = hoveredIdRef.current === blueprintId && !drag
       drawCube(ctx, px, py + cfg.tileH / 2, cfg, palette, {
         type: block.type,
         color: block.color,
@@ -275,14 +283,14 @@ export function ShowcaseScene({
         ghost: isDragging && !drag?.isValid,
       })
     }
-  }, [placements, blueprintsMap, hoveredId, cfg, G])
+  }, [placements, blueprintsMap, cfg, G])
 
   // 初始化与自适应窗口大小
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const resize = () => {
-      const dpr = window.devicePixelRatio || 1
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const w = canvas.clientWidth
       const h = canvas.clientHeight
       if (w === 0 || h === 0) return
@@ -307,7 +315,21 @@ export function ShowcaseScene({
     resize()
     const ro = new ResizeObserver(resize)
     ro.observe(canvas)
-    return () => ro.disconnect()
+    // 跨显示器拖动：DPR 变化不触发 ResizeObserver，用分辨率媒体查询监听补偿（触发后换绑新分辨率）
+    const dprQuery = () => `(resolution: ${Math.min(window.devicePixelRatio || 1, 2)}dppx)`
+    const onDprChange = () => {
+      resize()
+      dprMq?.removeEventListener('change', onDprChange)
+      dprMq = typeof window.matchMedia === 'function' ? window.matchMedia(dprQuery()) : null
+      dprMq?.addEventListener('change', onDprChange)
+    }
+    let dprMq: MediaQueryList | null =
+      typeof window.matchMedia === 'function' ? window.matchMedia(dprQuery()) : null
+    dprMq?.addEventListener('change', onDprChange)
+    return () => {
+      dprMq?.removeEventListener('change', onDprChange)
+      ro.disconnect()
+    }
   }, [draw, cfg, G])
   const findModelAtScreenPoint = useCallback(
     (clientX: number, clientY: number): string | null => {
@@ -453,6 +475,7 @@ export function ShowcaseScene({
         touchStateRef.current = null
       } else if (e.touches.length === 1) {
         const t = e.touches[0]
+        state.isMultiTouch = false
         state.lastX = t.clientX
         state.lastY = t.clientY
         state.lastPinchDist = 0
@@ -578,11 +601,13 @@ export function ShowcaseScene({
         return
       }
 
-      // 悬停感应
+      // 悬停感应（使用 ref 记录，避免鼠标微小位移导致整组件无休止重渲染与事件解绑）
       const hovered = findModelUnderPointer(worldPx, worldPy)
-      setHoveredId(hovered)
-      canvas.style.cursor = hovered ? 'grab' : 'default'
-      draw()
+      if (hoveredIdRef.current !== hovered) {
+        hoveredIdRef.current = hovered
+        canvas.style.cursor = hovered ? 'grab' : 'default'
+        draw()
+      }
     }
 
     const onPointerUp = (e: PointerEvent) => {
@@ -593,9 +618,13 @@ export function ShowcaseScene({
           // 点击事件：打开该模型的拍立得落成纪念卡
           onSelectModel?.(drag.blueprintId)
         } else if (drag.isValid) {
-          // 允许放置：更新位置并播放轻脆咬合音效
+          // 允许放置：更新位置并播放轻脆咬合音效与实体落位触感
           onUpdatePlacement(drag.blueprintId, drag.currentGx, drag.currentGy)
           playSnapSound()
+          triggerHaptic('medium')
+        } else {
+          // 碰撞重叠无法放置：给出双重警示触感
+          triggerHaptic('warning')
         }
         // 若碰撞重叠 (drag.isValid === false)，自动回弹（丢弃本次无效移动）
         dragRef.current = null
@@ -630,6 +659,27 @@ export function ShowcaseScene({
       canvas.removeEventListener('wheel', onWheel)
     }
   }, [placements, blueprintsMap, onUpdatePlacement, onSelectModel, draw, cfg, G])
+  // 环境光照与重力视差偏好切换时触发重绘
+  useEffect(() => {
+    draw()
+  }, [enableAmbient, enableGyroscope, draw])
+
+  // 移动端重力感应微视差交互（遵循无障碍减弱动态标准，仅在用户显式开启时激活）
+  useEffect(() => {
+    if (!enableGyroscope || typeof window === 'undefined' || !window.DeviceOrientationEvent) return
+    const onOrientation = (e: DeviceOrientationEvent) => {
+      if (e.gamma == null || e.beta == null) return
+      const targetX = Math.max(-5, Math.min(5, (e.gamma / 30) * 5))
+      const targetY = Math.max(-5, Math.min(5, ((e.beta - 45) / 30) * 5))
+      gyroOffsetRef.current = {
+        x: gyroOffsetRef.current.x * 0.8 + targetX * 0.2,
+        y: gyroOffsetRef.current.y * 0.8 + targetY * 0.2,
+      }
+      draw()
+    }
+    window.addEventListener('deviceorientation', onOrientation)
+    return () => window.removeEventListener('deviceorientation', onOrientation)
+  }, [enableGyroscope, draw])
 
   return (
     <canvas

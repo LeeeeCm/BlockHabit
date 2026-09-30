@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { CheckInResult, Habit, HabitPeriod } from '../types'
 import { useAppStore } from '../store/appStore'
-import { todayKey } from '../logic/dates'
+import { useTodayKey } from '../logic/useTodayKey'
 import { habitMetOnDay } from '../logic/checkin'
-import { currentStreak } from '../logic/streak'
+import { currentStreakWithResilience } from '../logic/streak'
 import { getBlueprint } from '../logic/blueprints'
 import { getBlueprintName, useI18n } from '../i18n'
 import { HabitRow } from '../components/HabitRow'
@@ -11,7 +11,8 @@ import { HabitDialog } from '../components/HabitDialog'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { BlockDropModal } from '../components/BlockDropModal'
 import { playCelebrationSound } from '../audio/sound'
-import { IconBuild, IconCheck, IconEcho, IconPlus, IconRestore, IconTrash } from '../components/Icons'
+import { IconBuild, IconCheck, IconEcho, IconPlus, IconRestore, IconSparkle, IconToday, IconTrash } from '../components/Icons'
+import { triggerHaptic } from '../platform'
 
 // 自上而下：任意 → 早晨 → 午后 → 夜晚
 const PERIOD_ORDER: HabitPeriod[] = ['any', 'morning', 'afternoon', 'evening']
@@ -30,6 +31,7 @@ export default function Today({ onCelebrate }: Props) {
   const checkInDay = useAppStore((s) => s.checkInDay)
   const restoreHabit = useAppStore((s) => s.restoreHabit)
   const deleteHabit = useAppStore((s) => s.deleteHabit)
+  const enableGentleDecay = useAppStore((s) => s.settings.enableGentleDecay !== false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Habit | null>(null)
   const [toast, setToast] = useState<{ text: string; accent?: boolean } | null>(null)
@@ -41,9 +43,14 @@ export default function Today({ onCelebrate }: Props) {
     complete: boolean
     checkInId?: string
   } | null>(null)
-  const day = todayKey()
-  const now = new Date()
-  const active = habits.filter((h) => !h.archivedAt)
+  // 「今天」由统一 hook 驱动：10s 轮询 + 聚焦/可见性刷新（跨午夜翻转）
+  const day = useTodayKey()
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    setNow(new Date())
+  }, [day])
+  // memo 化：下游 categories/filteredActive/metCount/grouped 的 useMemo 依赖此引用
+  const active = useMemo(() => habits.filter((h) => !h.archivedAt), [habits])
   const archived = habits.filter((h) => h.archivedAt)
   const blueprint = getBlueprint(activeBlueprintId)
   const placedCount = builds.filter((b) => b.blueprintId === activeBlueprintId).length
@@ -83,7 +90,7 @@ export default function Today({ onCelebrate }: Props) {
   }, [filteredActive])
 
   const echoEntry = useMemo(() => {
-    const candidates = checkIns.filter((c) => c.date < day && c.note?.trim())
+    const candidates = checkIns.filter((c) => !c.deletedAt && c.date < day && c.note?.trim())
     if (candidates.length === 0) return null
     const dayOfYear = Math.floor(
       (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
@@ -137,7 +144,7 @@ export default function Today({ onCelebrate }: Props) {
 
 
   return (
-    <div style={{ padding: '24px 24px 80px', maxWidth: 720, margin: '0 auto' }}>
+    <div className="today-page-container" style={{ padding: '24px 24px 80px', maxWidth: 720, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: 24, margin: 0 }}>
           {lang === 'zh' ? (
@@ -156,7 +163,10 @@ export default function Today({ onCelebrate }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             className="btn ghost"
-            onClick={onCelebrate}
+            onClick={() => {
+              triggerHaptic('selection')
+              onCelebrate?.()
+            }}
             style={{
               padding: '4px 11px',
               fontSize: 12,
@@ -186,7 +196,15 @@ export default function Today({ onCelebrate }: Props) {
           >
             {metCount} / {active.length}
           </span>
-          <button className="icon-btn" title={t.today.newHabit} onClick={() => { setEditing(null); setDialogOpen(true) }}>
+          <button
+            className="icon-btn"
+            title={t.today.newHabit}
+            onClick={() => {
+              triggerHaptic('light')
+              setEditing(null)
+              setDialogOpen(true)
+            }}
+          >
             <IconPlus size={20} />
           </button>
         </div>
@@ -197,7 +215,10 @@ export default function Today({ onCelebrate }: Props) {
           <button
             className={`pill-action${selectedCat === null ? ' success' : ''}`}
             style={{ fontSize: 11.5, padding: '3px 11px' }}
-            onClick={() => setSelectedCat(null)}
+            onClick={() => {
+              triggerHaptic('selection')
+              setSelectedCat(null)
+            }}
           >
             {lang === 'zh' ? '全部' : 'All'} · {active.length}
           </button>
@@ -206,7 +227,10 @@ export default function Today({ onCelebrate }: Props) {
               key={cat}
               className={`pill-action${selectedCat === cat ? ' success' : ''}`}
               style={{ fontSize: 11.5, padding: '3px 11px' }}
-              onClick={() => setSelectedCat((curr) => (curr === cat ? null : cat))}
+              onClick={() => {
+                triggerHaptic('selection')
+                setSelectedCat((curr) => (curr === cat ? null : cat))
+              }}
             >
               #{cat} · {active.filter((h) => h.category === cat).length}
             </button>
@@ -236,12 +260,12 @@ export default function Today({ onCelebrate }: Props) {
               <span>{lang === 'zh' ? '今日全勤大满贯！' : 'Daily All-Clear Achieved!'}</span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 2 }}>
-              {dayClaims.includes(day)
+              {dayClaims.some((c) => c.date === day)
                 ? (lang === 'zh' ? '今日专属全勤奖励积木已落位 ✨' : 'Daily bonus milestone block has been placed ✨')
                 : (lang === 'zh' ? '所有在册习惯已全部打卡完成，可领取 1 块全勤奖励积木' : 'All habits completed. Claim your +1 daily bonus block')}
             </div>
           </div>
-          {!dayClaims.includes(day) ? (
+          {!dayClaims.some((c) => c.date === day) ? (
             <button
               className="btn primary"
               style={{
@@ -253,6 +277,7 @@ export default function Today({ onCelebrate }: Props) {
                 flexShrink: 0,
               }}
               onClick={() => {
+                triggerHaptic('medium')
                 const res = checkInDay()
                 playCelebrationSound()
                 showToast(lang === 'zh' ? '已领取今日全勤奖励积木！' : 'Claimed daily milestone block!', true)
@@ -265,11 +290,15 @@ export default function Today({ onCelebrate }: Props) {
                 }
               }}
             >
-              {lang === 'zh' ? '领取全勤积木 ✦' : 'Claim Bonus ✦'}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span>{lang === 'zh' ? '领取全勤积木' : 'Claim Bonus'}</span>
+                <IconSparkle size={13} style={{ color: 'currentColor' }} />
+              </span>
             </button>
           ) : (
-            <span style={{ fontSize: 12, color: 'var(--progress-green)', fontWeight: 600, flexShrink: 0 }}>
-              ✓ {lang === 'zh' ? '已领全勤' : 'Claimed'}
+            <span style={{ fontSize: 12, color: 'var(--progress-green)', fontWeight: 600, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <IconCheck size={14} />
+              <span>{lang === 'zh' ? '已领全勤' : 'Claimed'}</span>
             </span>
           )}
         </div>
@@ -295,9 +324,60 @@ export default function Today({ onCelebrate }: Props) {
       {active.length === 0 ? (
         <div
           className="card"
-          style={{ color: 'var(--ink-2)', padding: '52px 24px', textAlign: 'center', fontSize: 14, lineHeight: 2, whiteSpace: 'pre-line' }}
+          style={{
+            padding: '52px 24px',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            borderRadius: 'var(--r-lg)',
+            background: 'color-mix(in srgb, var(--surface) 96%, var(--ink))',
+            border: '1px dashed var(--line)',
+          }}
         >
-          {t.today.emptyHint(getBlueprintName(blueprint.id, lang))}
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 18,
+              background: 'color-mix(in srgb, var(--accent) 14%, transparent)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--accent)',
+              marginBottom: 4,
+            }}
+          >
+            <IconToday size={28} />
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>
+            {lang === 'zh' ? '开启第一块积木的专注旅途' : 'Begin Your Voxel Journey'}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--ink-2)', maxWidth: 360, lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+            {t.today.emptyHint(getBlueprintName(blueprint.id, lang))}
+          </div>
+          <button
+            className="btn primary"
+            style={{
+              marginTop: 6,
+              padding: '8px 20px',
+              borderRadius: 999,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 13,
+            }}
+            onClick={() => {
+              triggerHaptic('light')
+              setEditing(null)
+              setDialogOpen(true)
+            }}
+          >
+            <IconPlus size={16} />
+            <span>{t.today.newHabit}</span>
+          </button>
         </div>
       ) : (
         PERIOD_ORDER.map((p) => {
@@ -316,20 +396,25 @@ export default function Today({ onCelebrate }: Props) {
                 {t.today.periods[p]}
               </div>
               <div className="habit-grid">
-                {list.map((h) => (
-                  <HabitRow
-                    key={h.id}
-                    habit={h}
-                    day={day}
-                    done={checkIns.some((c) => c.habitId === h.id && c.date === day)}
-                    streak={currentStreak(h, checkIns, now)}
-                    onCheck={(res) => handleHabitCheck(h.name, res)}
-                    onEdit={() => {
-                      setEditing(h)
-                      setDialogOpen(true)
-                    }}
-                  />
-                ))}
+                {list.map((h) => {
+                  const streakInfo = currentStreakWithResilience(h, checkIns, now, enableGentleDecay)
+                  return (
+                    <HabitRow
+                      key={h.id}
+                      habit={h}
+                      day={day}
+                      done={checkIns.some((c) => !c.deletedAt && c.habitId === h.id && c.date === day)}
+                      streak={streakInfo.streak}
+                      inRestPeriod={streakInfo.inRestPeriod}
+                      onCheck={(res) => handleHabitCheck(h.name, res)}
+                      onNoteSaved={() => showToast(t.reflections.engravedToast, true)}
+                      onEdit={() => {
+                        setEditing(h)
+                        setDialogOpen(true)
+                      }}
+                    />
+                  )
+                })}
               </div>
             </section>
           )
@@ -382,8 +467,8 @@ export default function Today({ onCelebrate }: Props) {
               <ConfirmDialog
                 title={t.today.deleteConfirmTitle}
                 message={t.today.deleteConfirmMsg(archDelete.name)}
-                confirmText={t.common.delete}
-                cancelText={t.common.cancel}
+                confirmLabel={t.common.delete}
+                cancelLabel={t.common.cancel}
                 danger
                 onCancel={() => setArchDelete(null)}
                 onConfirm={() => {
@@ -418,6 +503,7 @@ export default function Today({ onCelebrate }: Props) {
           habitName={dropModal.habitName}
           complete={dropModal.complete}
           checkInId={dropModal.checkInId}
+          onEngraved={() => showToast(t.reflections.engravedToast, true)}
           onClose={() => {
             const wasComplete = dropModal.complete
             setDropModal(null)

@@ -46,7 +46,9 @@ describe('canClaimDay（每日全任务完成才掉一块积木）', () => {
 
   it('already claimed today → already', () => {
     const cs = [ci('h1', '2026-08-22')]
-    expect(canClaimDay([daily], cs, ['2026-08-22'], '2026-08-22')).toEqual({ ok: false, reason: 'already' })
+    expect(
+      canClaimDay([daily], cs, [{ date: '2026-08-22', claimedAt: '2026-08-22T20:00:00.000Z', blockId: '', blueprintId: 'plant' }], '2026-08-22'),
+    ).toEqual({ ok: false, reason: 'already' })
   })
 
   it('archived habits ignored', () => {

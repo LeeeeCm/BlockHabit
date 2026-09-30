@@ -175,9 +175,14 @@ export interface BlockShading {
   studTop: string
 }
 
+const paletteShadingCache = new Map<string, BlockShading>()
+
 export function deriveShading(p: IsoPalette): BlockShading {
+  const key = `${p.top}_${p.left}_${p.right}`
+  const cached = paletteShadingCache.get(key)
+  if (cached) return cached
   const topA = adjustLightness(p.top, 1.0)
-  return {
+  const result: BlockShading = {
     topA,
     topB: adjustLightness(p.top, 0.9), // 顶面：后缘 100% → 前缘 90%
     leftA: adjustLightness(p.left, 1.0),
@@ -186,12 +191,18 @@ export function deriveShading(p: IsoPalette): BlockShading {
     rightB: adjustLightness(p.right, 22 / 35), // 右面：上 35% → 下 22%
     studTop: adjustLightness(topA, 1.08), // 凸点顶比块顶亮 +8%
   }
+  paletteShadingCache.set(key, result)
+  return result
 }
+
+const shadingColorCache = new Map<string, BlockShading>()
 
 /** 为任意自定义十六进制或 RGB 颜色派生符合等距立体光照的三面渐变色 */
 export function deriveShadingForColor(baseColor: string): BlockShading {
+  const cached = shadingColorCache.get(baseColor)
+  if (cached) return cached
   const topA = adjustLightness(baseColor, 1.0)
-  return {
+  const result: BlockShading = {
     topA,
     topB: adjustLightness(baseColor, 0.88),
     leftA: adjustLightness(baseColor, 0.78),
@@ -200,6 +211,8 @@ export function deriveShadingForColor(baseColor: string): BlockShading {
     rightB: adjustLightness(baseColor, 0.36),
     studTop: adjustLightness(topA, 1.08),
   }
+  shadingColorCache.set(baseColor, result)
+  return result
 }
 
 /* ---------------- 几何工具 ---------------- */
@@ -638,8 +651,8 @@ export function drawGroundBounds(
   rot: number = 0,
   cx: number = 0,
   cy: number = 0,
+  enableEcoProps = false,
 ) {
-  if (blocks.length === 0) return
   // 全部楼层块的 x/y 包围盒（块坐标为格中心，外扩半格即水平占地范围；
   // 凸点水平投影位于格中心、半径小于半格宽，天然被包含）
   let minX = Infinity
@@ -677,13 +690,91 @@ export function drawGroundBounds(
   ctx.lineWidth = 1.4
   ctx.stroke()
   ctx.restore()
+
+  // 连胜微生态彩蛋：在底座边缘自然生长微缩鹅卵石与小草芽
+  if (enableEcoProps && blocks.length >= 2) {
+    ctx.save()
+    // 1. 微型鹅卵石点缀 (Pebbles)
+    const p1 = worldToScreen(x0 + 0.35, y1 - 0.45, 0, c)
+    const p2 = worldToScreen(x0 + 0.65, y1 - 0.3, 0, c)
+    ctx.fillStyle = p.left
+    ctx.beginPath()
+    ctx.ellipse(p1.sx, p1.sy, 3.2, 1.8, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.ellipse(p2.sx, p2.sy, 2.4, 1.4, 0, 0, Math.PI * 2)
+    ctx.fill()
+
+    // 2. 微型小萌芽 (Flora Sprout)
+    const sp = worldToScreen(x1 - 0.4, y0 + 0.4, 0, c)
+    ctx.fillStyle = '#22c55e'
+    ctx.beginPath()
+    ctx.ellipse(sp.sx - 2, sp.sy - 1, 2.5, 1.3, -0.4, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.ellipse(sp.sx + 2, sp.sy - 1, 2.5, 1.3, 0.4, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
+  }
+}
+export type TimePeriod = 'dawn' | 'noon' | 'dusk' | 'night'
+
+/** 获取当前时段（晨曦/正午/黄昏/夜幕） */
+export function getTimePeriod(hour = new Date().getHours()): TimePeriod {
+  if (hour >= 6 && hour < 10) return 'dawn'
+  if (hour >= 10 && hour < 16) return 'noon'
+  if (hour >= 16 && hour < 19) return 'dusk'
+  return 'night'
 }
 
-/** 从 CSS 变量读取当前主题的调色板 */
-export function paletteFromDocument(doc: Document = document): IsoPalette {
+function applyAmbientLighting(p: IsoPalette, period: TimePeriod): IsoPalette {
+  switch (period) {
+    case 'dawn':
+      // 晨曦：微暖金光，顶面与受光面泛起柔和晨光
+      return {
+        ...p,
+        top: adjustLightness(p.top, 1.04),
+        left: adjustLightness(p.left, 1.02),
+        right: adjustLightness(p.right, 0.96),
+      }
+    case 'dusk':
+      // 黄昏：日落暖橘光影，暗面加深，顶面微金
+      return {
+        ...p,
+        top: adjustLightness(p.top, 1.03),
+        left: adjustLightness(p.left, 0.95),
+        right: adjustLightness(p.right, 0.90),
+      }
+    case 'night':
+      // 夜幕：微缩夜灯质感，顶面保留台灯聚光，侧暗面更沉稳
+      return {
+        ...p,
+        top: adjustLightness(p.top, 0.98),
+        left: adjustLightness(p.left, 0.88),
+        right: adjustLightness(p.right, 0.82),
+        ghost: adjustLightness(p.ghost, 0.9),
+      }
+    case 'noon':
+    default:
+      // 正午：标准高对比度自然光
+      return p
+  }
+}
+
+let cachedThemeKey = ''
+let cachedPalette: IsoPalette | null = null
+
+/** 从 CSS 变量读取当前主题的调色板（支持时段感知昼夜环境光照与记忆化缓存） */
+export function paletteFromDocument(doc: Document = document, enableAmbient = false): IsoPalette {
+  const theme = doc.documentElement.getAttribute('data-theme') || 'light'
+  const period: TimePeriod = enableAmbient ? getTimePeriod() : 'noon'
+  const cacheKey = `${theme}_${enableAmbient ? period : 'std'}`
+  if (cachedPalette && cachedThemeKey === cacheKey) {
+    return cachedPalette
+  }
   const s = getComputedStyle(doc.documentElement)
   const v = (name: string) => s.getPropertyValue(name).trim()
-  return {
+  const basePalette: IsoPalette = {
     top: v('--block-top'),
     left: v('--block-left'),
     right: v('--block-right'),
@@ -692,4 +783,7 @@ export function paletteFromDocument(doc: Document = document): IsoPalette {
     accent: v('--accent'),
     ink: v('--ink'),
   }
+  cachedThemeKey = cacheKey
+  cachedPalette = enableAmbient ? applyAmbientLighting(basePalette, period) : basePalette
+  return cachedPalette
 }

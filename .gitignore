@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 .zcode/
+
+# Local automation scratch & demo artifacts
+.tmp/
+.tmp-*
+.qoder/
+*.zip
+vite.log

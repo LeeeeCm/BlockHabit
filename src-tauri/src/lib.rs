@@ -1,6 +1,10 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, PhysicalPosition};
 use tauri_plugin_autostart::MacosLauncher;
+
+/// 托盘退出握手门闩：前端 flush 完存档后置 true，Rust 侧等到置位或超时再退出
+struct QuitGate(AtomicBool);
 
 fn show_main(app: &AppHandle) {
     if let Some(win) = app.get_webview_window("main") {
@@ -46,21 +50,49 @@ fn tray_menu(app: AppHandle, action: String) {
     hide_tray_menu(&app);
     match action.as_str() {
         "open" => show_main(&app),
-        "quit" => app.exit(0),
+        "quit" => begin_quit(app),
         _ => {}
     }
+}
+
+/// 退出握手：先通知前端 flush 存档，等待确认（上限 1.5s）后真正退出
+fn begin_quit(app: AppHandle) {
+    use tauri::Emitter;
+    let _ = app.emit("app-quit-requested", ());
+    std::thread::spawn(move || {
+        let gate = app.state::<QuitGate>();
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(1500);
+        while std::time::Instant::now() < deadline {
+            if gate.0.load(Ordering::SeqCst) {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        app.exit(0);
+    });
+}
+
+/// 前端存档 flush 完成后调用，放行退出
+#[tauri::command]
+fn confirm_quit(app: AppHandle) {
+    app.state::<QuitGate>().0.store(true, Ordering::SeqCst);
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // 单实例保护：二次启动聚焦已有窗口，杜绝双实例并发写同一存档（必须最先注册）
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_main(app)
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             None,
         ))
-        .invoke_handler(tauri::generate_handler![update_tray, tray_menu])
+        .manage(QuitGate(AtomicBool::new(false)))
+        .invoke_handler(tauri::generate_handler![update_tray, tray_menu, confirm_quit])
         .setup(|app| {
             // 托盘菜单窗口：失焦即隐藏
             if let Some(win) = app.get_webview_window("tray-menu") {

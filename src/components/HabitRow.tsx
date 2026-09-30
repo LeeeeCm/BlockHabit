@@ -3,7 +3,7 @@ import { usePlatform, triggerHaptic } from '../platform'
 import type { CheckIn, CheckInResult, Habit, MicroMood } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useTimerStore } from '../store/timerStore'
-import { canCheckIn, dayCounterValue, isHabitDueOnDay, weekCountFor } from '../logic/checkin'
+import { canCheckIn, dayCheckInsFor, dayCounterValue, isHabitDueOnDay, weekCountFor } from '../logic/checkin'
 import { playComboChime, playSnapSound } from '../audio/sound'
 import { useI18n } from '../i18n'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -12,6 +12,7 @@ import {
   IconEdit,
   IconInProgress,
   IconMissed,
+  IconMood,
   IconNote,
   IconPin,
   IconStar,
@@ -22,9 +23,12 @@ interface Props {
   habit: Habit
   done: boolean
   streak: number
+  inRestPeriod?: boolean
   day: string
   onCheck?: (res: CheckInResult) => void
   onEdit?: () => void
+  /** 随笔镌刻保存成功后的回调（宿主页用于弹 toast） */
+  onNoteSaved?: () => void
 }
 
 
@@ -48,7 +52,7 @@ function fmtRemaining(ms: number): string {
  * 双列大卡片：
  * 点击未完成卡片 → 开始倒计时（蓝色/进行中）；倒计时到点 → 提醒后再次点击 → 真正打卡（绿色）。
  */
-export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
+export function HabitRow({ habit, done, streak, inRestPeriod, day, onCheck, onEdit, onNoteSaved }: Props) {
   const { isMobile } = usePlatform()
   const { lang, t } = useI18n()
   const checkIn = useAppStore((s) => s.checkIn)
@@ -74,9 +78,9 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
   const counterRatio = Math.min(1, counterVal / targetVal)
   const stepVal = habit.step ?? 1
 
-  const todayCheckIn = [...checkIns]
-    .reverse()
-    .find((c) => c.habitId === habit.id && c.date === day)
+  // 复用谓词层过滤（含墓碑排除），避免每次渲染拷贝整个 checkIns 数组
+  const todayCheckIns = dayCheckInsFor(checkIns, habit.id, day)
+  const todayCheckIn = todayCheckIns[todayCheckIns.length - 1]
   const [editingNote, setEditingNote] = useState(false)
   const [noteVal, setNoteVal] = useState(todayCheckIn?.note ?? '')
   const [moodVal, setMoodVal] = useState<MicroMood | undefined>(todayCheckIn?.mood)
@@ -97,6 +101,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
   function commitNote() {
     if (todayCheckIn) {
       recordCheckInNote(todayCheckIn.id, noteVal, moodVal ?? null, starVal)
+      onNoteSaved?.()
     }
     setEditingNote(false)
   }
@@ -129,6 +134,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
   const meta = [
     habit.category ? `#${habit.category}` : '',
     freqLabel,
+    inRestPeriod && !done ? (lang === 'zh' ? '晨雾休整期 (今日打卡接续)' : 'Weathering (Check in to resume)') : '',
     habit.period && habit.period !== 'any' ? t.today.periods[habit.period] : '',
     isFocus
       ? t.today.targetMinutes(habit.targetMinutes ?? 25)
@@ -178,6 +184,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
   function handleStatusClick() {
     if (done) {
       // 已完成状态点击：支持撤销打卡
+      triggerHaptic('light')
       uncheckIn(habit.id, day)
       return
     }
@@ -187,12 +194,15 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
     }
     if (running) {
       if (progressRatio >= 0.8) {
+        triggerHaptic('medium')
         performCheckIn(actualMinutes)
       } else if (progressRatio >= 0.2) {
+        triggerHaptic('light')
         setShowEarlyConfirm(true)
       }
       return
     }
+    triggerHaptic('medium')
     performCheckIn()
   }
   function handleStartFocus() {
@@ -238,14 +248,11 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
           : running || ended
             ? 'color-mix(in srgb, var(--progress-blue) 7%, var(--surface))'
             : undefined,
-        transition: 'transform 0.16s ease, background 0.2s ease, border-color 0.2s ease',
       }}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('button')) return
         handleCardClick()
       }}
-      onMouseEnter={!isMobile ? (e) => (e.currentTarget.style.transform = 'translateY(-2px)') : undefined}
-      onMouseLeave={!isMobile ? (e) => (e.currentTarget.style.transform = 'translateY(0)') : undefined}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <button
@@ -292,7 +299,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
             <IconTodo size={36} />
           )}
         </button>
-        <div style={{ display: 'flex', gap: isMobile ? 6 : 2 }}>
+        <div className="card-actions-group" style={{ display: 'flex', gap: isMobile ? 4 : 1 }}>
           <button
             className={`card-action${habit.pinned ? ' active' : ''}`}
             style={{
@@ -300,34 +307,40 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
               ...(isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined),
             }}
             title={habit.pinned ? (lang === 'zh' ? '取消置顶' : 'Unpin') : (lang === 'zh' ? '置顶习惯' : 'Pin to top')}
+            aria-label={habit.pinned ? (lang === 'zh' ? '取消置顶' : 'Unpin') : (lang === 'zh' ? '置顶习惯' : 'Pin to top')}
             onClick={(e) => {
               e.stopPropagation()
+              triggerHaptic('selection')
               togglePinHabit(habit.id)
             }}
           >
-            <IconPin size={18} pinned={habit.pinned} />
+            <IconPin size={17} pinned={habit.pinned} />
           </button>
           <button
             className="card-action"
             style={isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined}
             title={t.common.edit}
+            aria-label={t.common.edit}
             onClick={(e) => {
               e.stopPropagation()
+              triggerHaptic('light')
               onEdit?.()
             }}
           >
-            <IconEdit size={18} />
+            <IconEdit size={17} />
           </button>
           <button
             className="card-action danger"
             style={isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined}
             title={t.common.delete}
+            aria-label={t.common.delete}
             onClick={(e) => {
               e.stopPropagation()
+              triggerHaptic('warning')
               setConfirmDelete(true)
             }}
           >
-            <IconTrash size={18} />
+            <IconTrash size={17} />
           </button>
         </div>
       </div>
@@ -401,9 +414,14 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
                       key={m}
                       type="button"
                       className={`micro-mood-chip${moodVal === m ? ' active' : ''}`}
-                      onClick={() => setMoodVal((prev) => (prev === m ? undefined : m))}
+                      onClick={() => {
+                        triggerHaptic('selection')
+                        setMoodVal((prev) => (prev === m ? undefined : m))
+                      }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                     >
-                      {t.microMood[m]}
+                      <IconMood mood={m} size={12} style={{ flexShrink: 0 }} />
+                      <span>{t.microMood[m]}</span>
                     </button>
                   ))}
                 </div>
@@ -411,7 +429,10 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
                   type="button"
                   className={`star-toggle-btn${starVal ? ' starred' : ''}`}
                   style={{ padding: '3px 8px' }}
-                  onClick={() => setStarVal((prev) => !prev)}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    setStarVal((prev) => !prev)
+                  }}
                   title={starVal ? t.reflections.unstarTooltip : t.reflections.starTooltip}
                 >
                   <IconStar size={13} filled={starVal} />
@@ -461,20 +482,24 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
               title={t.reflections.brickInspectEditHint}
             >
               {todayCheckIn?.starred && (
-                <span style={{ color: '#f59e0b', fontSize: 12 }}>★</span>
+                <IconStar size={12} filled style={{ color: 'var(--accent)', flexShrink: 0 }} />
               )}
               {todayCheckIn?.mood && (
                 <span
                   style={{
-                    fontSize: 11,
-                    padding: '1px 6px',
+                    fontSize: 10.5,
+                    padding: '2px 7px',
                     borderRadius: 999,
                     background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
                     color: 'var(--ink)',
                     fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
                   }}
                 >
-                  {t.microMood[todayCheckIn.mood as MicroMood]}
+                  <IconMood mood={todayCheckIn.mood as MicroMood} size={11} style={{ flexShrink: 0 }} />
+                  <span>{t.microMood[todayCheckIn.mood as MicroMood]}</span>
                 </span>
               )}
               <IconNote size={13} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
@@ -517,7 +542,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
                     e.stopPropagation()
                     performCheckIn(actualMinutes)
                   }}
-                  title="已满 80%，可直接完成打卡"
+                  title={t.today.readyToFinish}
                 >
                   {t.common.complete}
                 </button>
@@ -606,7 +631,7 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
             }}
             style={{
               background: 'var(--progress-green)',
-              color: '#ffffff',
+              color: 'var(--surface)',
               ...(isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined),
             }}
           >
@@ -679,8 +704,8 @@ export function HabitRow({ habit, done, streak, day, onCheck, onEdit }: Props) {
         <ConfirmDialog
           title={t.today.deleteConfirmTitle}
           message={t.today.deleteConfirmMsg(habit.name)}
-          confirmText={t.common.delete}
-          cancelText={t.common.cancel}
+          confirmLabel={t.common.delete}
+          cancelLabel={t.common.cancel}
           danger
           onCancel={() => setConfirmDelete(false)}
           onConfirm={() => {

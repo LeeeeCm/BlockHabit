@@ -19,6 +19,12 @@ export interface TranslationSchema {
     weekdaysSingle: string[]
     dateHeader: (year: number, month: number, date: number, weekday: string) => string
     timeMinutes: (minutes: number) => string
+    dismiss: string
+  }
+  /** 无障碍朗读文案 */
+  a11y: {
+    unfinishedHabits: string
+    bottomNav: string
   }
   nav: {
     today: string
@@ -67,6 +73,7 @@ export interface TranslationSchema {
     undoTooltip: string
     timingTooltip: string
     completedPill: string
+    readyToFinish: string
   }
   blockDrop: {
     plusOne: string
@@ -94,6 +101,7 @@ export interface TranslationSchema {
     autoArrange: string
     dragHint: string
     emptyHint: string
+    fullHint: string
   }
   stats: {
     title: string
@@ -109,6 +117,9 @@ export interface TranslationSchema {
     repairDialogTitle: string
     repairDialogMsg: (habitName: string, date: string, count: number) => string
     repairSuccessToast: (name: string) => string
+    repairAlreadyToast: string
+    repairNoHabitToast: string
+    repairFailToast: string
     repairLimitToast: string
     repairNoBricksToast: string
     heatmapDone: string
@@ -187,10 +198,50 @@ export interface TranslationSchema {
     importJson: string
     importSuccess: string
     importFail: string
+    importConfirmTitle: string
+    importConfirmMsg: (habits: number, checkIns: number) => string
+    saveFailedToast: string
+    needsUpgradeToast: string
+    syncErrors: {
+      noEndpoint: string
+      auth: string
+      parse: string
+      incompatible: string
+      network: string
+      conflict: string
+      noCollection: string
+      http: string
+    }
     assetSummaryTitle: string
     assetSummaryDetail: (habits: number, buildings: number) => string
     repairInventory: string
     slogan: string
+    ambienceTitle: string
+    ambientLightingLabel: string
+    ambientLightingOn: string
+    ambientLightingOff: string
+    ambientLightingHint: string
+    gentleDecayLabel: string
+    gentleDecayOn: string
+    gentleDecayOff: string
+    gentleDecayHint: string
+    ecoPropsLabel: string
+    ecoPropsOn: string
+    ecoPropsOff: string
+    ecoPropsHint: string
+    soundMaterialLabel: string
+    soundMatClassic: string
+    soundMatWalnut: string
+    soundMatCrystal: string
+    soundMatMetal: string
+    gyroscopeLabel: string
+    gyroscopeOn: string
+    gyroscopeOff: string
+    gyroscopeHint: string
+    miniWidgetLabel: string
+    miniWidgetOn: string
+    miniWidgetOff: string
+    miniWidgetHint: string
   }
   mini: {
     expandTooltip: string

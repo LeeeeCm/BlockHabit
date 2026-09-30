@@ -72,6 +72,12 @@ describe('BottomSheet component', () => {
     expect(dialog).toBeDefined()
     expect(dialog.style.position).toBe('fixed')
     expect(dialog.style.zIndex).toBe('1000')
+    // 回归保护：标题栏必须保留 display:flex（曾因误删导致关闭按钮被挤到标题下一行）
+    const h3 = getByText('测试抽屉')
+    const headerRow = h3.parentElement as HTMLElement
+    expect(headerRow.style.display).toBe('flex')
+    expect(h3.style.flexGrow).toBe('1')
+    expect(h3.style.minWidth).toBe('0px')
     unmount()
   })
 
@@ -213,5 +219,44 @@ describe('BottomSheet component', () => {
     const { queryByTestId: queryDesktop, unmount: unmountDesktop } = render(<SettingsDialog onClose={vi.fn()} />)
     expect(queryDesktop('bottom-sheet-handle')).toBeNull()
     unmountDesktop()
+  })
+  it('triggers onClose and light haptic when dragged down beyond 75px threshold', () => {
+    const onClose = vi.fn()
+    const { getByTestId, unmount } = render(
+      <BottomSheet open={true} onClose={onClose} title="手势测试">
+        <div>手势测试内容</div>
+      </BottomSheet>
+    )
+    const handle = getByTestId('bottom-sheet-handle')
+
+    function dispatchTouch(el: HTMLElement, eventType: string, clientY?: number) {
+      const evt = new Event(eventType, { bubbles: true })
+      if (clientY !== undefined) {
+        Object.defineProperty(evt, 'touches', {
+          configurable: true,
+          value: [{ clientY }],
+        })
+      }
+      el.dispatchEvent(evt)
+    }
+
+    // 下拉未达 75px 阈值（仅移动 30px）
+    act(() => {
+      dispatchTouch(handle, 'touchstart', 100)
+      dispatchTouch(handle, 'touchmove', 130)
+      dispatchTouch(handle, 'touchend')
+    })
+    expect(onClose).not.toHaveBeenCalled()
+
+    // 下拉超过 75px 阈值（移动 100px）触发关闭与触感
+    act(() => {
+      dispatchTouch(handle, 'touchstart', 100)
+      dispatchTouch(handle, 'touchmove', 200)
+      dispatchTouch(handle, 'touchend')
+    })
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(hapticSpy).toHaveBeenCalledWith('light')
+
+    unmount()
   })
 })

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { canCheckIn, weekCountFor, isDayComplete } from './checkin'
+import { canCheckIn, weekCountFor, habitMetOnDay, isDayComplete } from './checkin'
 import type { Habit, CheckIn } from '../types'
 
 const daily: Habit = {
@@ -50,6 +50,30 @@ describe('canCheckIn', () => {
   it('weekly: previous week does not count toward this week', () => {
     const prev = [ci('h2', '2026-08-10'), ci('h2', '2026-08-11'), ci('h2', '2026-08-12')]
     expect(canCheckIn([weekly3], prev, 'h2', '2026-08-19').ok).toBe(true)
+  })
+
+  it('weekly counter: quota full but day target unmet → still allowed to step', () => {
+    const weeklyCounter: Habit = {
+      id: 'h3',
+      name: '喝水',
+      frequency: { type: 'weekly', times: 2 },
+      kind: 'counter',
+      targetValue: 2000,
+      step: 250,
+      unit: 'ml',
+      createdAt: '2026-08-01T00:00:00.000Z',
+    }
+    // 本周配额已用满（周内已有 2 次步进），当日数值尚未达标
+    const fullWeek = [
+      { id: 'h3-08-17', habitId: 'h3', date: '2026-08-17', at: '2026-08-17T12:00:00.000Z', value: 500 },
+      { id: 'h3-08-18', habitId: 'h3', date: '2026-08-18', at: '2026-08-18T12:00:00.000Z', value: 500 },
+    ]
+    // counter 的"完成"以当日 targetValue 为准，周配额不拦截步进
+    expect(canCheckIn([weeklyCounter], fullWeek, 'h3', '2026-08-20')).toEqual({ ok: true })
+    // 当日达标后即视为完成，全勤判定一致
+    const metDay = [...fullWeek, { id: 'h3-08-20', habitId: 'h3', date: '2026-08-20', at: '2026-08-20T12:00:00.000Z', value: 2000 }]
+    expect(habitMetOnDay(weeklyCounter, metDay, '2026-08-20')).toBe(true)
+    expect(isDayComplete([weeklyCounter], metDay, '2026-08-20')).toBe(true)
   })
 })
 

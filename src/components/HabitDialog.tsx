@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Habit, HabitFrequency, HabitKind, HabitPeriod } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useI18n } from '../i18n'
-import { IconOptional, IconRequired } from './Icons'
-import { usePlatform } from '../platform'
+import { IconClose, IconOptional, IconRequired } from './Icons'
+import { triggerHaptic, usePlatform } from '../platform'
 import { BottomSheet } from './BottomSheet'
+import { useDialogA11y } from './useDialogA11y'
 interface Props {
   habit?: Habit
   onClose: () => void
@@ -12,7 +13,7 @@ interface Props {
 
 
 /** 字段标签：必填 = 绿色实心小方块；选填 = 灰色空心小方块 + 「选填」 */
-function FieldLabel({ required, optionalText, children }: { required?: boolean; optionalText?: string; children: string }) {
+function FieldLabel({ required, optionalText, children }: { required?: boolean; optionalText: string; children: string }) {
   return (
     <label>
       {required ? <IconRequired /> : <IconOptional />}
@@ -27,7 +28,7 @@ function FieldLabel({ required, optionalText, children }: { required?: boolean; 
             color: 'var(--ink-2)',
           }}
         >
-          {optionalText ?? '选填'}
+          {optionalText}
         </span>
       )}
     </label>
@@ -69,13 +70,8 @@ export function HabitDialog({ habit, onClose }: Props) {
     Boolean(name.trim()) &&
     freqValid &&
     (kind === 'instant' || (kind === 'focus' && minutesValid) || (kind === 'counter' && targetValValid && stepValid))
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  const { ref: dialogRef } = useDialogA11y({ open: true, onClose })
+
   function save() {
     const trimmed = name.trim()
     if (!trimmed || !canSave) return
@@ -100,6 +96,7 @@ export function HabitDialog({ habit, onClose }: Props) {
     } else {
       addHabit(trimmed, frequency, extra)
     }
+    triggerHaptic('success')
     onClose()
   }
   const title = editing ? t.habitDialog.editTitle : t.habitDialog.newTitle
@@ -111,6 +108,7 @@ export function HabitDialog({ habit, onClose }: Props) {
           className="btn ghost"
           style={{ marginRight: 'auto' }}
           onClick={() => {
+            triggerHaptic('warning')
             archiveHabit(habit!.id)
             onClose()
           }}
@@ -363,12 +361,26 @@ export function HabitDialog({ habit, onClose }: Props) {
   }
 
   return (
-    <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      className="overlay"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="dialog habit-dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 460, maxWidth: '92vw' }}>
         <div className="dialog-header">
           <h3>{title}</h3>
-          <button className="icon-btn" onClick={onClose} title={t.common.close}>
-            ✕
+          <button
+            className="icon-btn"
+            onClick={() => {
+              triggerHaptic('light')
+              onClose()
+            }}
+            title={t.common.close}
+          >
+            <IconClose size={18} />
           </button>
         </div>
 

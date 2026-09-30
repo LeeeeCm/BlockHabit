@@ -30,7 +30,7 @@ export function BottomTabBar({
           {hasUnfinishedToday && (
             <span
               data-testid="badge-unfinished-today"
-              aria-label="unfinished habits"
+              aria-label={t.a11y.unfinishedHabits}
               style={{
                 position: 'absolute',
                 top: -2,
@@ -86,7 +86,7 @@ export function BottomTabBar({
   return (
     <nav
       className="bottom-tabbar"
-      aria-label="Bottom Navigation"
+      aria-label={t.a11y.bottomNav}
       style={{
         position: 'fixed',
         bottom: 0,
@@ -94,10 +94,13 @@ export function BottomTabBar({
         right: 0,
         height: 'calc(var(--tabbar-height, 56px) + max(12px, env(safe-area-inset-bottom, 0px)))',
         paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
-        background: 'color-mix(in srgb, var(--surface) 85%, transparent)',
-        borderTop: '1px solid var(--line)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        paddingLeft: 'max(8px, env(safe-area-inset-left, 0px))',
+        paddingRight: 'max(8px, env(safe-area-inset-right, 0px))',
+        background: 'color-mix(in srgb, var(--surface) 82%, transparent)',
+        borderTop: '0.5px solid color-mix(in srgb, var(--line) 80%, transparent)',
+        backdropFilter: 'blur(25px) saturate(190%)',
+        WebkitBackdropFilter: 'blur(25px) saturate(190%)',
+        boxShadow: '0 -2px 16px color-mix(in srgb, var(--ink) 3%, transparent)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
@@ -127,13 +130,17 @@ export function BottomTabBar({
               alignItems: 'center',
               justifyContent: 'center',
               gap: 3,
-              background: 'transparent',
+              background: active ? 'color-mix(in srgb, var(--ink) 4.5%, transparent)' : 'transparent',
+              borderRadius: 14,
               border: 'none',
               cursor: 'pointer',
-              padding: '6px 0',
+              padding: '6px 4px 7px',
+              margin: '0 4px',
               color: active ? 'var(--ink)' : 'var(--ink-2)',
-              transition: 'color 0.15s ease',
+              transition: 'background 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.16s ease, transform 0.12s ease',
               position: 'relative',
+              userSelect: 'none',
+              WebkitTapHighlightColor: 'transparent',
             }}
           >
             <span
@@ -156,10 +163,11 @@ export function BottomTabBar({
                 style={{
                   position: 'absolute',
                   bottom: 2,
-                  width: 12,
-                  height: 2,
-                  borderRadius: 1,
+                  width: 14,
+                  height: 2.5,
+                  borderRadius: 999,
                   background: 'var(--accent)',
+                  transition: 'width 0.2s ease',
                 }}
               />
             )}

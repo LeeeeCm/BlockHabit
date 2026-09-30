@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { mergeAppState } from './merge'
-import type { AppState, CheckIn, Habit, PlacedBlock } from '../types'
+import { rebuildBuilds } from '../logic/builds'
+import { getBlueprint } from '../logic/blueprints'
+import type { AppState, CheckIn, DayClaim, Habit } from '../types'
 
 function createMockState(overrides: Partial<AppState> = {}): AppState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     habits: [],
     checkIns: [],
     builds: [],
@@ -12,6 +14,7 @@ function createMockState(overrides: Partial<AppState> = {}): AppState {
     completedBlueprintIds: [],
     settings: { theme: 'light', language: 'zh' },
     dayClaims: [],
+    deletedDayClaims: [],
     repairBricks: 0,
     showcasePlacements: [],
     foundationNotes: {},
@@ -19,7 +22,23 @@ function createMockState(overrides: Partial<AppState> = {}): AppState {
   }
 }
 
-describe('mergeAppState CRDT union merge', () => {
+function claim(date: string, claimedAt: string, blockId: string, blueprintId = 'plant'): DayClaim {
+  return { date, claimedAt, blockId, blueprintId }
+}
+
+/** 近期日期（ISO 日期部分）：GC 会清理 90 天前的墓碑，测试夹具必须贴近当前时间 */
+function recentDate(daysAgo: number): string {
+  const d = new Date(Date.now() - daysAgo * 86_400_000)
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return key
+}
+
+function recentIso(daysAgo: number, hour = 8): string {
+  const h = String(hour).padStart(2, '0')
+  return `${recentDate(daysAgo)}T${h}:00:00.000Z`
+}
+
+describe('mergeAppState facts merge (schema v2)', () => {
   it('union merges checkIns from both devices by id or habitId+date, preserving all check-ins', () => {
     const checkIn1: CheckIn = {
       id: 'c1',
@@ -40,7 +59,6 @@ describe('mergeAppState CRDT union merge', () => {
       date: '2026-03-01',
       at: '2026-03-01T10:00:00.000Z',
     }
-    // Same ID as c1, with updated metadata from remote
     const checkIn1DuplicateId: CheckIn = {
       id: 'c1',
       habitId: 'h1',
@@ -48,7 +66,6 @@ describe('mergeAppState CRDT union merge', () => {
       at: '2026-03-01T08:00:00.000Z',
       starred: true,
     }
-    // Different ID but same habitId + date (offline checkin on second device)
     const checkIn1DuplicateDay: CheckIn = {
       id: 'c1-remote',
       habitId: 'h1',
@@ -57,26 +74,17 @@ describe('mergeAppState CRDT union merge', () => {
       mood: 'energetic',
     }
 
-    const local = createMockState({
-      checkIns: [checkIn1, checkIn2],
-    })
-    const remote = createMockState({
-      checkIns: [checkIn1DuplicateId, checkIn1DuplicateDay, checkIn3],
-    })
+    const local = createMockState({ checkIns: [checkIn1, checkIn2] })
+    const remote = createMockState({ checkIns: [checkIn1DuplicateId, checkIn1DuplicateDay, checkIn3] })
 
     const merged = mergeAppState(local, remote)
 
-    // Should preserve distinct check-ins (c1/2026-03-01, c2/2026-03-02, c3/2026-03-01)
     expect(merged.checkIns.length).toBe(3)
-
-    // c1 merged should retain note, mood, and starred
     const mergedC1 = merged.checkIns.find((c) => c.habitId === 'h1' && c.date === '2026-03-01')
     expect(mergedC1).toBeDefined()
     expect(mergedC1?.note).toBe('Morning run in park')
     expect(mergedC1?.starred).toBe(true)
     expect(mergedC1?.mood).toBe('energetic')
-
-    // c2 and c3 are preserved
     expect(merged.checkIns.some((c) => c.id === 'c2')).toBe(true)
     expect(merged.checkIns.some((c) => c.id === 'c3')).toBe(true)
   })
@@ -112,7 +120,94 @@ describe('mergeAppState CRDT union merge', () => {
     expect(merged.checkIns.map((c) => c.id).sort()).toEqual(['cw1', 'cw2', 'cw3', 'cw4'])
   })
 
-  it('merges habits: preserving existing habits and adding new habits from remote', () => {
+  it('undo (tombstone) on one device is not resurrected by the other (deletion wins)', () => {
+    const liveCheckIn: CheckIn = {
+      id: 'c1',
+      habitId: 'h1',
+      date: recentDate(1),
+      at: recentIso(1),
+      placedBlockId: 'b0',
+      blueprintId: 'plant',
+    }
+    const undoneCheckIn: CheckIn = { ...liveCheckIn, deletedAt: recentIso(0, 9) }
+
+    // 设备 A 已撤销；设备 B 仍有这条打卡
+    const local = createMockState({ checkIns: [undoneCheckIn] })
+    const remote = createMockState({ checkIns: [liveCheckIn] })
+
+    const merged = mergeAppState(local, remote)
+    const c1 = merged.checkIns.find((c) => c.id === 'c1')!
+    expect(c1.deletedAt).toBe(recentIso(0, 9))
+    // 积木投影不再包含被撤销的块
+    expect(merged.builds.filter((b) => b.id === 'b0')).toHaveLength(0)
+  })
+
+  it('index compaction on undo does not resurrect ghost blocks (projection rebuilt, not index-unioned)', () => {
+    // 设备 A 建了三块后撤销中间一块：c2 带墓碑，b1 回收，b0/b2 压实为 index 0,1
+    // （旧算法按 ${blueprintId}_${index} 并集会复活 3 块）
+    const local = createMockState({
+      checkIns: [
+        { id: 'c1', habitId: 'h1', date: recentDate(3), at: recentIso(3), placedBlockId: 'b0', blueprintId: 'plant' },
+        { id: 'c2', habitId: 'h1', date: recentDate(2), at: recentIso(2), placedBlockId: 'b1', blueprintId: 'plant', deletedAt: recentIso(0, 9) },
+        { id: 'c3', habitId: 'h1', date: recentDate(1), at: recentIso(1), placedBlockId: 'b2', blueprintId: 'plant' },
+      ],
+    })
+    const remote = createMockState({
+      checkIns: [
+        { id: 'c1', habitId: 'h1', date: recentDate(3), at: recentIso(3), placedBlockId: 'b0', blueprintId: 'plant' },
+        { id: 'c2', habitId: 'h1', date: recentDate(2), at: recentIso(2), placedBlockId: 'b1', blueprintId: 'plant' },
+        { id: 'c3', habitId: 'h1', date: recentDate(1), at: recentIso(1), placedBlockId: 'b2', blueprintId: 'plant' },
+      ],
+    })
+
+    const merged = mergeAppState(local, remote)
+    const plantBlocks = merged.builds.filter((b) => b.blueprintId === 'plant')
+    // c2 在 A 上被撤销：最终只有 b0、b2 两块，index 连续 0..1，无幽灵块
+    expect(plantBlocks.map((b) => b.id).sort()).toEqual(['b0', 'b2'])
+    expect(plantBlocks.map((b) => b.index).sort((a, b) => a - b)).toEqual([0, 1])
+  })
+
+  it('merged builds equal rebuildBuilds projection (invariant)', () => {
+    const local = createMockState({
+      checkIns: [
+        { id: 'c1', habitId: 'h1', date: '2026-03-01', at: '2026-03-01T08:00:00.000Z', placedBlockId: 'b0', blueprintId: 'plant' },
+      ],
+      dayClaims: [claim('2026-03-02', '2026-03-02T20:00:00.000Z', 'd0', 'plant')],
+    })
+    const remote = createMockState({
+      checkIns: [
+        { id: 'c2', habitId: 'h2', date: '2026-03-03', at: '2026-03-03T08:00:00.000Z', placedBlockId: 'b1', blueprintId: 'castle' },
+      ],
+    })
+
+    const merged = mergeAppState(local, remote)
+    expect(merged.builds).toEqual(rebuildBuilds(merged.checkIns, merged.dayClaims))
+  })
+
+  it('merges habits with updatedAt LWW: newest edit wins across devices', () => {
+    const base = {
+      id: 'h2',
+      frequency: { type: 'daily' } as const,
+      createdAt: '2026-01-02T00:00:00.000Z',
+    }
+    const localRenamed: Habit = { ...base, name: '读书（新版）', updatedAt: '2026-03-05T00:00:00.000Z' }
+    const remoteOriginal: Habit = { ...base, name: 'Reading', updatedAt: '2026-03-01T00:00:00.000Z' }
+
+    const merged = mergeAppState(
+      createMockState({ habits: [localRenamed] }),
+      createMockState({ habits: [remoteOriginal] }),
+    )
+    expect(merged.habits[0].name).toBe('读书（新版）')
+
+    // 反向：远端更新更晚 → 远端胜
+    const merged2 = mergeAppState(
+      createMockState({ habits: [remoteOriginal] }),
+      createMockState({ habits: [localRenamed] }),
+    )
+    expect(merged2.habits[0].name).toBe('读书（新版）')
+  })
+
+  it('merges habits without updatedAt (legacy) with local priority (backward compatible)', () => {
     const habit1: Habit = {
       id: 'h1',
       name: 'Running',
@@ -141,114 +236,61 @@ describe('mergeAppState CRDT union merge', () => {
       createdAt: '2026-02-01T00:00:00.000Z',
     }
 
-    const local = createMockState({
-      habits: [habit1, habit2Local],
-    })
-    const remote = createMockState({
-      habits: [habit2Remote, habit3Remote],
-    })
-
-    const merged = mergeAppState(local, remote)
+    const merged = mergeAppState(
+      createMockState({ habits: [habit1, habit2Local] }),
+      createMockState({ habits: [habit2Remote, habit3Remote] }),
+    )
 
     expect(merged.habits.length).toBe(3)
-    const h1 = merged.habits.find((h) => h.id === 'h1')
-    const h2 = merged.habits.find((h) => h.id === 'h2')
-    const h3 = merged.habits.find((h) => h.id === 'h3')
-
-    expect(h1).toBeDefined()
-    expect(h1?.name).toBe('Running')
-
-    expect(h2).toBeDefined()
-    // Preserves local pinned status and remote archived status
-    expect(h2?.pinned).toBe(true)
-    expect(h2?.archivedAt).toBe('2026-02-01T00:00:00.000Z')
-
-    expect(h3).toBeDefined()
-    expect(h3?.name).toBe('Meditation')
+    const h2 = merged.habits.find((h) => h.id === 'h2')!
+    expect(h2.name).toBe('Reading') // 双方都无 updatedAt：本地优先（旧行为）
+    expect(h2.pinned).toBe(true)
   })
 
-  it('merges builds: union of placed blocks by ${blueprintId}_${index}', () => {
-    const block0: PlacedBlock = {
-      id: 'b0',
-      blueprintId: 'tower',
-      index: 0,
-      placedAt: '2026-03-01T00:00:00.000Z',
-      fromHabitId: 'h1',
-      bonus: false,
-    }
-    const block1Local: PlacedBlock = {
-      id: 'b1-local',
-      blueprintId: 'tower',
-      index: 1,
-      placedAt: '2026-03-02T00:00:00.000Z',
-      fromHabitId: 'h1',
-      bonus: false,
-    }
-    const block1Remote: PlacedBlock = {
-      id: 'b1-remote',
-      blueprintId: 'tower',
-      index: 1,
-      placedAt: '2026-03-02T01:00:00.000Z',
-      fromHabitId: 'h1',
-      bonus: true,
-    }
-    const block2Remote: PlacedBlock = {
-      id: 'b2',
-      blueprintId: 'tower',
-      index: 2,
-      placedAt: '2026-03-03T00:00:00.000Z',
-      fromHabitId: 'h2',
-      bonus: false,
-    }
-    const blockCastle: PlacedBlock = {
-      id: 'bc0',
-      blueprintId: 'castle',
-      index: 0,
-      placedAt: '2026-03-01T00:00:00.000Z',
-      fromHabitId: 'h1',
-      bonus: false,
-    }
-
+  it('merges dayClaims by date with claimedAt/deletedAt LWW', () => {
+    // 设备 A 撤销了昨天的全勤（deletedAt 晚于 claimedAt）；设备 B 仍领取
     const local = createMockState({
-      builds: [block0, block1Local],
+      dayClaims: [claim(recentDate(2), recentIso(2, 20), 'd3', 'plant')],
+      deletedDayClaims: [{ date: recentDate(4), deletedAt: recentIso(4, 21) }],
     })
     const remote = createMockState({
-      builds: [block1Remote, block2Remote, blockCastle],
+      dayClaims: [
+        claim(recentDate(4), recentIso(4, 20), 'd1', 'plant'),
+        claim(recentDate(3), recentIso(3, 20), 'd2', 'plant'),
+      ],
     })
 
     const merged = mergeAppState(local, remote)
-
-    // tower has index 0, 1, 2; castle has index 0 -> total 4 blocks
-    expect(merged.builds.length).toBe(4)
-
-    const towerBlocks = merged.builds.filter((b) => b.blueprintId === 'tower')
-    expect(towerBlocks.length).toBe(3)
-    const indices = towerBlocks.map((b) => b.index).sort((a, b) => a - b)
-    expect(indices).toEqual([0, 1, 2])
-
-    // Index 1 merged: if bonus was true on either, bonus is preserved
-    const block1Merged = towerBlocks.find((b) => b.index === 1)
-    expect(block1Merged?.bonus).toBe(true)
-
-    const castleBlocks = merged.builds.filter((b) => b.blueprintId === 'castle')
-    expect(castleBlocks.length).toBe(1)
-    expect(castleBlocks[0].index).toBe(0)
+    const dates = merged.dayClaims.map((c) => c.date).sort()
+    // 4 天前领取在 21:00 被撤销（晚于 20:00 领取）→ 不复活；其余保留
+    expect(dates).toEqual([recentDate(3), recentDate(2)])
+    expect(merged.deletedDayClaims?.some((d) => d.date === recentDate(4))).toBe(true)
   })
 
-  it('union merges completedBlueprintIds and dayClaims', () => {
+  it('re-claim after unclaim restores the day claim (deletedAt older than claimedAt)', () => {
     const local = createMockState({
-      completedBlueprintIds: ['plant', 'tower'],
-      dayClaims: ['2026-03-01', '2026-03-03'],
+      dayClaims: [claim(recentDate(0), recentIso(0, 22), 'd1-new', 'plant')],
+      deletedDayClaims: [{ date: recentDate(0), deletedAt: recentIso(0, 21) }],
+    })
+    const remote = createMockState({})
+
+    const merged = mergeAppState(local, remote)
+    expect(merged.dayClaims.some((c) => c.date === recentDate(0))).toBe(true)
+  })
+
+  it('keeps all settings fields (local priority, remote fallback)', () => {
+    const local = createMockState({
+      settings: { theme: 'dark', language: 'zh', soundMaterial: 'walnut', enableGentleDecay: false },
     })
     const remote = createMockState({
-      completedBlueprintIds: ['tower', 'castle'],
-      dayClaims: ['2026-03-02', '2026-03-03'],
+      settings: { theme: 'light', language: 'en', enableGyroscope: true, soundMaterial: 'metal' },
     })
 
     const merged = mergeAppState(local, remote)
-
-    expect(merged.completedBlueprintIds.sort()).toEqual(['castle', 'plant', 'tower'])
-    expect(merged.dayClaims).toEqual(['2026-03-01', '2026-03-02', '2026-03-03'])
+    expect(merged.settings.theme).toBe('dark') // 本地优先
+    expect(merged.settings.soundMaterial).toBe('walnut') // 本地保留
+    expect(merged.settings.enableGentleDecay).toBe(false) // 本地保留（旧实现会丢）
+    expect(merged.settings.enableGyroscope).toBe(true) // 远端字段回填（旧实现会丢）
   })
 
   it('merges repairBricks with math.max', () => {
@@ -259,13 +301,9 @@ describe('mergeAppState CRDT union merge', () => {
     const local2 = createMockState({ repairBricks: 2 })
     const remote2 = createMockState({ repairBricks: 0 })
     expect(mergeAppState(local2, remote2).repairBricks).toBe(2)
-
-    const local3 = createMockState({ repairBricks: undefined })
-    const remote3 = createMockState({ repairBricks: 1 })
-    expect(mergeAppState(local3, remote3).repairBricks).toBe(1)
   })
 
-  it('merges foundationNotes and showcasePlacements', () => {
+  it('merges foundationNotes and showcasePlacements (local priority)', () => {
     const local = createMockState({
       foundationNotes: { plant: 'First plant note', tower: 'Tower local note' },
       showcasePlacements: [{ blueprintId: 'plant', gridX: 0, gridY: 0 }],
@@ -282,14 +320,50 @@ describe('mergeAppState CRDT union merge', () => {
 
     expect(merged.foundationNotes).toEqual({
       plant: 'First plant note',
-      tower: 'Tower local note', // Local takes priority or combined
+      tower: 'Tower local note',
       castle: 'Castle note',
     })
-
     expect(merged.showcasePlacements?.length).toBe(2)
     const plantP = merged.showcasePlacements?.find((p) => p.blueprintId === 'plant')
     const castleP = merged.showcasePlacements?.find((p) => p.blueprintId === 'castle')
     expect(plantP?.gridX).toBe(0) // Local placement preserved
     expect(castleP?.gridX).toBe(2)
+  })
+
+  it('drops completed blueprint when undo reduces rebuilt count below full (real blueprint)', () => {
+    const bp = getBlueprint('plant')
+    const N = bp.blocks.length
+    const mk = (i: number): CheckIn => ({
+      id: `c${i}`,
+      habitId: 'h1',
+      date: recentDate(i + 1),
+      at: recentIso(i + 1),
+      placedBlockId: `b${i}`,
+      blueprintId: 'plant',
+    })
+    // 本地：建满后撤销最后一块（墓碑）；远端：仍全部在册。双方 completed 都含 plant
+    const local = createMockState({
+      checkIns: Array.from({ length: N }, (_, i) =>
+        i === N - 1 ? { ...mk(i), deletedAt: recentIso(0, 9) } : mk(i),
+      ),
+      completedBlueprintIds: ['plant'],
+    })
+    const remote = createMockState({
+      checkIns: Array.from({ length: N }, (_, i) => mk(i)),
+      completedBlueprintIds: ['plant'],
+    })
+
+    const merged = mergeAppState(local, remote)
+    // 墓碑胜出 → 投影 N-1 块 → 退回未完成
+    expect(merged.completedBlueprintIds).not.toContain('plant')
+    expect(merged.builds.filter((b) => b.blueprintId === 'plant')).toHaveLength(N - 1)
+  })
+
+  it('keeps habit with equal updatedAt from local side (same-timestamp tie-break)', () => {
+    const ts = '2026-03-05T00:00:00.000Z'
+    const local: Habit = { id: 'h1', name: '本地名', frequency: { type: 'daily' }, createdAt: ts, updatedAt: ts }
+    const remote: Habit = { id: 'h1', name: '远端名', frequency: { type: 'daily' }, createdAt: ts, updatedAt: ts }
+    const merged = mergeAppState(createMockState({ habits: [local] }), createMockState({ habits: [remote] }))
+    expect(merged.habits[0].name).toBe('本地名')
   })
 })

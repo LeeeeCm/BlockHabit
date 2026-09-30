@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { blueprintOrder, getBlueprint } from '../logic/blueprints'
 import { canSelectBlueprint } from '../logic/blueprint'
 import { getBlueprintName, useI18n } from '../i18n'
+import { IconClose } from './Icons'
+import { triggerHaptic } from '../platform'
+import { useDialogA11y } from './useDialogA11y'
 /** 模型图鉴：按顺序解锁，前一座未落成时后一座不可选 */
 export function GalleryDialog({ onClose }: { onClose: () => void }) {
   const { lang, t } = useI18n()
@@ -11,13 +14,8 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
   const activeId = useAppStore((s) => s.activeBlueprintId)
   const choose = useAppStore((s) => s.chooseBlueprint)
   const [toast, setToast] = useState<string | null>(null)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  const { ref: dialogRef } = useDialogA11y({ open: true, onClose })
+
 
   function handleSelect(id: string) {
     if (!canSelectBlueprint(id, completed)) {
@@ -30,12 +28,26 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      className="overlay"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 500, maxWidth: '92vw' }}>
         <div className="dialog-header">
           <h3>{t.gallery.title} · {blueprintOrder.length}</h3>
-          <button className="icon-btn" onClick={onClose} title={t.common.close}>
-            ✕
+          <button
+            className="icon-btn"
+            onClick={() => {
+              triggerHaptic('light')
+              onClose()
+            }}
+            title={t.common.close}
+          >
+            <IconClose size={18} />
           </button>
         </div>
 

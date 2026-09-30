@@ -4,7 +4,9 @@ import { BuildScene } from '../render/BuildScene'
 import { playJellySound, playSnapSound } from '../audio/sound'
 import { getBlueprintName, useI18n } from '../i18n'
 import { useAppStore } from '../store/appStore'
-import { IconStar } from './Icons'
+import { IconCheck, IconClose, IconMood, IconStar } from './Icons'
+import { triggerHaptic } from '../platform'
+import { useDialogA11y } from './useDialogA11y'
 
 interface Props {
   blueprint: Blueprint
@@ -13,6 +15,8 @@ interface Props {
   complete?: boolean
   checkInId?: string
   onClose: () => void
+  /** 镌刻保存成功后的回调（宿主页用于弹 toast） */
+  onEngraved?: () => void
 }
 
 const MOODS: MicroMood[] = ['energetic', 'hard', 'spark', 'calm']
@@ -29,6 +33,7 @@ export function BlockDropModal({
   complete = false,
   checkInId,
   onClose,
+  onEngraved,
 }: Props) {
   const { lang, t } = useI18n()
   const recordCheckInNote = useAppStore((s) => s.recordCheckInNote)
@@ -43,6 +48,7 @@ export function BlockDropModal({
 
   function triggerClose() {
     if (closing) return
+    triggerHaptic('light')
     setClosing(true)
     setTimeout(() => {
       onClose()
@@ -52,6 +58,8 @@ export function BlockDropModal({
   function handleAnimated() {
     playJellySound()
     setAnimated(true)
+    // 落地后自动聚焦镌刻输入框，直接开始打字
+    inputRef.current?.focus()
     // 积木落地后启动柔和的自动淡出定时器（3.6s），给用户充足时间看清建筑或开始打字
     timerRef.current = window.setTimeout(() => {
       triggerClose()
@@ -73,8 +81,10 @@ export function BlockDropModal({
   function handleEngraveSubmit() {
     cancelAutoClose()
     if (checkInId) {
+      triggerHaptic('medium')
       recordCheckInNote(checkInId, note, selectedMood, starred)
       playSnapSound()
+      onEngraved?.()
       setEngraved(true)
       setTimeout(() => {
         triggerClose()
@@ -84,13 +94,10 @@ export function BlockDropModal({
     }
   }
 
+  const { ref: dialogRef } = useDialogA11y({ open: true, onClose: triggerClose })
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') triggerClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
       clearTimeout(timerRef.current)
     }
   }, [])
@@ -100,6 +107,10 @@ export function BlockDropModal({
 
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
       className={`drop-overlay${closing ? ' closing' : ''}`}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) triggerClose()
@@ -156,7 +167,10 @@ export function BlockDropModal({
               marginLeft: 12,
             }}
           >
-            {t.common.skip} ✕
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span>{t.common.skip}</span>
+              <IconClose size={13} />
+            </span>
           </button>
         </div>
 
@@ -193,8 +207,10 @@ export function BlockDropModal({
                     type="button"
                     className={`micro-mood-chip${selectedMood === m ? ' active' : ''}`}
                     onClick={() => handleMoodToggle(m)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                   >
-                    {t.microMood[m]}
+                    <IconMood mood={m} size={12} style={{ flexShrink: 0 }} />
+                    <span>{t.microMood[m]}</span>
                   </button>
                 ))}
               </div>
@@ -237,7 +253,7 @@ export function BlockDropModal({
                 disabled={engraved}
                 onClick={handleEngraveSubmit}
               >
-                {engraved ? '✓' : t.reflections.engraveAction}
+                {engraved ? <IconCheck size={14} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> : t.reflections.engraveAction}
               </button>
             </div>
           </div>

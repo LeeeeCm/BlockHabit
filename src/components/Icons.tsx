@@ -320,6 +320,59 @@ export function IconBulb(props: IconProps) {
   )
 }
 
+/** 充实心境：极简圆头闪电线条，与编辑/删除按钮风格严格统一，彻底替代 Emoji ⚡ */
+export function IconMoodEnergetic(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M13 2.5L5.5 13.5h5L9.5 21.5l9-11h-5.5l2-8z" />
+    </Svg>
+  )
+}
+
+/** 硬啃心境：极简圆头积木线条，与编辑/删除按钮风格严格统一，彻底替代 Emoji 🧱 */
+export function IconMoodHard(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3.5" y="6" width="17" height="12" rx="2.5" />
+      <path d="M3.5 12h17M12 6v6M7.5 12v6M16.5 12v6" />
+    </Svg>
+  )
+}
+
+/** 灵感心境：极简圆头灯泡线条，与编辑/删除按钮风格严格统一，彻底替代 Emoji 💡 */
+export function IconMoodSpark(props: IconProps) {
+  return <IconBulb {...props} />
+}
+
+/** 平静心境：极简圆头清茶线条，与编辑/删除按钮风格严格统一，彻底替代 Emoji 🍵 */
+export function IconMoodCalm(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4.5 9h12a3 3 0 013 3v1a3 3 0 01-3 3h-1M4.5 9v6a4 4 0 004 4h2a4 4 0 004-4V9M4.5 9H2.5" />
+      <path d="M3.5 20.5h15" />
+      <path d="M8 4c0 1.5-1 2-1 3M12 4c0 1.5-1 2-1 3" />
+    </Svg>
+  )
+}
+
+/** 心境图标分发器：统一渲染无 Emoji 矢量图标 */
+export function IconMood({
+  mood,
+  size = 14,
+  style,
+}: IconProps & { mood: 'energetic' | 'hard' | 'spark' | 'calm' }) {
+  switch (mood) {
+    case 'energetic':
+      return <IconMoodEnergetic size={size} style={style} />
+    case 'hard':
+      return <IconMoodHard size={size} style={style} />
+    case 'spark':
+      return <IconMoodSpark size={size} style={style} />
+    case 'calm':
+      return <IconMoodCalm size={size} style={style} />
+  }
+}
+
 /** 相机：圆头相机线条，替代彩色 Emoji 📸 */
 export function IconCamera(props: IconProps) {
   return (
@@ -433,6 +486,15 @@ export function IconWinClose(props: IconProps) {
   return (
     <Svg {...props} strokeWidth={1.7}>
       <path d="M7 7l10 10M17 7L7 17" />
+    </Svg>
+  )
+}
+
+/** 统一关闭：圆润几何对角线条，与编辑、删除、置顶图标风格严格统一 */
+export function IconClose(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 6l12 12M18 6L6 18" />
     </Svg>
   )
 }

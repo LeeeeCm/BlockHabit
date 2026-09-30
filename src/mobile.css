@@ -1,4 +1,5 @@
-/* src/mobile.css */
+/* src/mobile.css - Apple HIG 移动端专属响应式与沉浸式样式体系 */
+
 :root {
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
@@ -11,9 +12,10 @@ html, body {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   touch-action: pan-x pan-y;
-  overscroll-behavior: none;
+  overscroll-behavior-y: contain;
 }
 
+/* 移动端视口根容器 */
 .mobile-app-root {
   display: flex;
   flex-direction: column;
@@ -30,6 +32,69 @@ html, body {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-top: max(16px, var(--sat));
-  padding-bottom: calc(var(--tabbar-height) + max(12px, var(--sab)));
+  overscroll-behavior-y: contain;
+  padding-top: max(8px, var(--sat));
+  padding-bottom: calc(var(--tabbar-height) + max(16px, var(--sab)));
+}
+
+/* 今日页面移动端内边距与排版优化 */
+.mobile-app-root .today-page-container {
+  padding: 14px 14px calc(var(--tabbar-height) + max(20px, var(--sab))) !important;
+}
+
+/* 统计页面移动端内边距优化 */
+.mobile-app-root .stats-page-container {
+  padding: 16px 14px calc(var(--tabbar-height) + max(20px, var(--sab))) !important;
+}
+
+/* 移动端习惯卡片单列全宽自适应 */
+.mobile-app-root .habit-grid {
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+}
+
+/* 移动端习惯卡片紧凑呼吸感 */
+.mobile-app-root .habit-card {
+  padding: 14px 14px 12px;
+  min-height: auto;
+  border-radius: var(--r-md);
+}
+
+/* 移动端建造页顶栏 */
+.mobile-app-root .build-top-bar {
+  padding: 10px 14px !important;
+  gap: 8px !important;
+}
+.mobile-app-root .build-top-bar .btn {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+}
+
+/* 移动端展台页顶栏 */
+.mobile-app-root .showcase-top-bar {
+  padding: 10px 14px !important;
+  gap: 8px !important;
+}
+
+/* 移动端输入框防 iOS Safari 聚焦时强制缩放 (iOS 规范：字号 >= 16px 免自动放大破坏视口) */
+@media screen and (max-width: 768px) {
+  input[type='text'],
+  input[type='number'],
+  input[type='search'],
+  input[type='password'],
+  textarea,
+  select,
+  .field input,
+  .field textarea,
+  .micro-note-input {
+    font-size: 16px !important;
+  }
+}
+
+/* 移动端触控优化与点击态反馈 */
+.mobile-app-root button:active,
+.mobile-app-root .card-action:active,
+.mobile-app-root .pill-action:active {
+  transform: scale(0.94);
+  transition: transform 0.08s cubic-bezier(0.16, 1, 0.3, 1);
 }

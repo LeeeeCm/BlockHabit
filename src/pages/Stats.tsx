@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { bestStreak, currentStreak } from '../logic/streak'
-import { todayKey } from '../logic/dates'
+import { useTodayKey } from '../logic/useTodayKey'
 import { Heatmap } from '../components/Heatmap'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { MonthlyPosterModal } from '../components/MonthlyPosterModal'
-import { IconEcho, IconExport, IconNote, IconPoster, IconRepair, IconStar, IconStats } from '../components/Icons'
+import { IconEcho, IconExport, IconMood, IconNote, IconPoster, IconRepair, IconStar, IconStats } from '../components/Icons'
 import { useI18n } from '../i18n'
+import { triggerHaptic } from '../platform'
 import type { MicroMood } from '../types'
 
 const MOODS: MicroMood[] = ['energetic', 'hard', 'spark', 'calm']
@@ -24,14 +25,20 @@ export default function Stats() {
   const [filterHabitId, setFilterHabitId] = useState<string>('all')
   const [filterMood, setFilterMood] = useState<string>('all')
   const [onlyStarred, setOnlyStarred] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(25)
+
+  useEffect(() => {
+    setVisibleCount(25)
+  }, [filterHabitId, filterMood, onlyStarred, searchQuery])
 
   const [repairTarget, setRepairTarget] = useState<{ habitId: string; habitName: string; date: string } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [posterOpen, setPosterOpen] = useState(false)
 
-  const now = new Date()
-  const today = todayKey()
-  const active = habits.filter((h) => !h.archivedAt)
+  // 稳定引用：避免 rows useMemo 每次渲染失效（切换页签重挂时自然刷新）
+  const now = useMemo(() => new Date(), [])
+  const today = useTodayKey()
+  const active = useMemo(() => habits.filter((h) => !h.archivedAt), [habits])
 
   const rows = useMemo(
     () =>
@@ -49,7 +56,7 @@ export default function Stats() {
           totalMinutes,
         }
       }),
-    [active, checkIns],
+    [active, checkIns, now],
   )
 
   const grandTotalMinutes = useMemo(
@@ -150,7 +157,7 @@ export default function Stats() {
   }
 
   return (
-    <div style={{ padding: '28px 24px 80px', maxWidth: 680, margin: '0 auto' }}>
+    <div className="stats-page-container" style={{ padding: '28px 24px 80px', maxWidth: 680, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 20, margin: '0 0 6px' }}>{t.stats.title}</h1>
@@ -174,7 +181,10 @@ export default function Stats() {
               borderRadius: 999,
               flexShrink: 0,
             }}
-            onClick={() => setPosterOpen(true)}
+            onClick={() => {
+              triggerHaptic('light')
+              setPosterOpen(true)
+            }}
             title={lang === 'zh' ? '生成月度包豪斯自律画报' : 'Generate Monthly Discipline Poster'}
           >
             <IconPoster size={14} style={{ color: 'var(--ink)' }} />
@@ -202,20 +212,26 @@ export default function Stats() {
         </div>
       </div>
 
-      {/* 视图模式切换 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+      {/* 苹果风格分段视图控制器 */}
+      <div className="apple-segmented" style={{ marginBottom: 18 }}>
         <button
-          className={`btn ${viewMode === 'metrics' ? 'primary' : 'ghost'}`}
-          style={{ padding: '6px 14px', fontSize: 12.5, borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-          onClick={() => setViewMode('metrics')}
+          type="button"
+          className={`apple-segmented-item${viewMode === 'metrics' ? ' active' : ''}`}
+          onClick={() => {
+            triggerHaptic('selection')
+            setViewMode('metrics')
+          }}
         >
           <IconStats size={14} />
           <span>{lang === 'zh' ? '指标热图' : 'Metrics'}</span>
         </button>
         <button
-          className={`btn ${viewMode === 'chronicle' ? 'primary' : 'ghost'}`}
-          style={{ padding: '6px 14px', fontSize: 12.5, borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-          onClick={() => setViewMode('chronicle')}
+          type="button"
+          className={`apple-segmented-item${viewMode === 'chronicle' ? ' active' : ''}`}
+          onClick={() => {
+            triggerHaptic('selection')
+            setViewMode('chronicle')
+          }}
         >
           <IconNote size={14} />
           <span>{lang === 'zh' ? '自律手账' : 'Chronicle'}</span>
@@ -413,22 +429,31 @@ export default function Stats() {
                     type="button"
                     className={`micro-mood-chip${filterMood === m ? ' active' : ''}`}
                     onClick={() => setFilterMood((prev) => (prev === m ? 'all' : m))}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
                   >
-                    {t.microMood[m]}
+                    <IconMood mood={m} size={13} style={{ flexShrink: 0 }} />
+                    <span>{t.microMood[m]}</span>
                   </button>
                 ))}
               </div>
 
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, cursor: 'pointer', userSelect: 'none' }}>
-                <input
-                  type="checkbox"
-                  checked={onlyStarred}
-                  onChange={(e) => setOnlyStarred(e.target.checked)}
-                />
-                <span style={{ color: onlyStarred ? '#f59e0b' : 'var(--ink-2)', fontWeight: onlyStarred ? 600 : 400 }}>
-                  {t.reflections.onlyStarred}
-                </span>
-              </label>
+              <button
+                type="button"
+                className={`pill-action${onlyStarred ? ' active' : ''}`}
+                style={{
+                  fontSize: 11.5,
+                  padding: '3px 10px',
+                  color: onlyStarred ? 'var(--accent)' : 'var(--ink-2)',
+                  background: onlyStarred ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined,
+                }}
+                onClick={() => {
+                  triggerHaptic('selection')
+                  setOnlyStarred((v) => !v)
+                }}
+              >
+                <IconStar size={12} filled={onlyStarred} style={{ color: onlyStarred ? 'var(--accent)' : 'currentColor' }} />
+                <span>{t.reflections.onlyStarred}</span>
+              </button>
             </div>
           </div>
 
@@ -438,8 +463,9 @@ export default function Stats() {
               {t.reflections.emptyChronicle}
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {chronicleItems.map((item) => {
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {chronicleItems.slice(0, visibleCount).map((item) => {
                 const h = habits.find((x) => x.id === item.habitId)
                 return (
                   <div key={item.id} className="chronicle-card">
@@ -462,22 +488,28 @@ export default function Stats() {
                           <span
                             style={{
                               fontSize: 10.5,
-                              padding: '1px 6px',
+                              padding: '2px 8px',
                               borderRadius: 999,
                               background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
                               color: 'var(--ink)',
                               fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
                             }}
                           >
-                            {t.microMood[item.mood]}
+                            <IconMood mood={item.mood} size={11} style={{ flexShrink: 0 }} />
+                            <span>{t.microMood[item.mood]}</span>
                           </span>
                         )}
                         <button
                           type="button"
                           className={`star-toggle-btn${item.starred ? ' starred' : ''}`}
                           style={{ padding: '3px 7px' }}
-                          onClick={() => toggleCheckInStar(item.id)}
-                          title={item.starred ? t.reflections.unstarTooltip : t.reflections.starTooltip}
+                          onClick={() => {
+                            triggerHaptic('selection')
+                            toggleCheckInStar(item.id)
+                          }}
                         >
                           <IconStar size={13} filled={item.starred} />
                         </button>
@@ -491,6 +523,24 @@ export default function Stats() {
                 )
               })}
             </div>
+              {chronicleItems.length > visibleCount && (
+                <div style={{ textAlign: 'center', marginTop: 12 }}>
+                  <button
+                    type="button"
+                    className="pill-action"
+                    style={{ padding: '7px 20px', fontSize: 12 }}
+                    onClick={() => {
+                      triggerHaptic('light')
+                      setVisibleCount((prev) => prev + 25)
+                    }}
+                  >
+                    {lang === 'zh'
+                      ? `加载更多随笔 (${visibleCount}/${chronicleItems.length})`
+                      : `Load More (${visibleCount}/${chronicleItems.length})`}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -508,7 +558,12 @@ export default function Stats() {
             if (res.ok) {
               setToast(t.stats.repairSuccessToast(repairTarget.habitName))
             } else {
-              setToast(res.reason ?? 'error')
+              const reasonToast: Record<string, string> = {
+                'no-bricks': t.stats.repairNoBricksToast,
+                already: t.stats.repairAlreadyToast,
+                'no-habit': t.stats.repairNoHabitToast,
+              }
+              setToast(reasonToast[res.reason ?? ''] ?? t.stats.repairFailToast)
             }
             setTimeout(() => setToast(null), 2500)
           }}

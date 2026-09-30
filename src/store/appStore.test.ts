@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useAppStore } from './appStore'
 import { getBlueprint } from '../logic/blueprints'
+import { dateKey } from '../logic/dates'
 
 describe('appStore checkIn & uncheckIn block economy', () => {
   beforeEach(() => {
     useAppStore.setState({
-      schemaVersion: 1,
+      schemaVersion: 2,
       habits: [],
       checkIns: [],
       builds: [],
@@ -13,6 +14,7 @@ describe('appStore checkIn & uncheckIn block economy', () => {
       completedBlueprintIds: [],
       settings: { theme: 'light', language: 'zh' },
       dayClaims: [],
+      deletedDayClaims: [],
     })
   })
 
@@ -40,7 +42,47 @@ describe('appStore checkIn & uncheckIn block economy', () => {
     expect(updated.checkIns[0].actualMinutes).toBe(18)
   })
 
-  it('uncheckIn removes the checkin and rolls back the placed block', () => {
+  it('updateSettings persists soundMuted into exportData', () => {
+    const store = useAppStore.getState()
+    store.updateSettings({ soundMuted: true })
+    expect(JSON.parse(useAppStore.getState().exportData()).settings.soundMuted).toBe(true)
+    store.updateSettings({ soundMuted: false })
+    expect(JSON.parse(useAppStore.getState().exportData()).settings.soundMuted).toBe(false)
+  })
+
+  it('after undo the habit can check in again (tombstone invisible to canCheckIn)', () => {
+    const store = useAppStore.getState()
+    const habit = store.addHabit('跑步', { type: 'daily' })
+
+    store.checkIn(habit.id)
+    store.uncheckIn(habit.id)
+
+    // 撤销后当天可重新打卡：墓碑不算"已打卡"
+    const res = store.checkIn(habit.id)
+    expect(res.reason).toBeUndefined()
+    expect(res.placed).toBeDefined()
+  })
+
+  it('undo closes the day-claim re-exploit (tombstone not counted as met)', () => {
+    const store = useAppStore.getState()
+    const a = store.addHabit('习惯A', { type: 'daily' })
+    const b = store.addHabit('习惯B', { type: 'daily' })
+
+    store.checkIn(a.id)
+    store.checkIn(b.id)
+    expect(store.checkInDay().placed).toBeDefined()
+
+    // 撤销 A → 全勤回收
+    store.uncheckIn(a.id)
+    expect(useAppStore.getState().dayClaims).toHaveLength(0)
+
+    // B2 防御：直接再次领取必须判定 incomplete，不得刷块
+    const res = store.checkInDay()
+    expect(res.reason).toBe('incomplete')
+    expect(useAppStore.getState().dayClaims).toHaveLength(0)
+  })
+
+  it('uncheckIn tombstones the checkin and rolls back the placed block', () => {
     const store = useAppStore.getState()
     const habit = store.addHabit('晨起做拉伸', { type: 'daily' })
 
@@ -52,7 +94,9 @@ describe('appStore checkIn & uncheckIn block economy', () => {
     expect(undoRes.removedBlock).toBe(true)
 
     const updated = useAppStore.getState()
-    expect(updated.checkIns).toHaveLength(0)
+    // v2 语义：打卡记录墓碑化（保留用于同步删除语义），积木投影回收
+    expect(updated.checkIns).toHaveLength(1)
+    expect(updated.checkIns[0].deletedAt).toBeDefined()
     expect(updated.builds).toHaveLength(0)
   })
 
@@ -67,13 +111,34 @@ describe('appStore checkIn & uncheckIn block economy', () => {
     // 全勤打卡 (额外获得 1 块带 bonus 标记的里程碑块)
     const claimRes = store.checkInDay()
     expect(claimRes.placed).toBeDefined()
-    expect(claimRes.bonus).toBe(true)
+    // 返回值 bonus 是「连击满 7 天」的里程碑标记，单日全勤为 false
+    expect(claimRes.bonus).toBe(false)
 
     const updated = useAppStore.getState()
     expect(updated.dayClaims).toHaveLength(1)
     expect(updated.builds).toHaveLength(2)
     expect(updated.builds[1].fromHabitId).toBe('__day__')
     expect(updated.builds[1].bonus).toBe(true)
+  })
+
+  it('checkInDay returns bonus=true exactly on the 7th consecutive day', () => {
+    const store = useAppStore.getState()
+    const habit = store.addHabit('读书', { type: 'daily' })
+    store.checkIn(habit.id)
+
+    // 预置此前连续 6 天的全勤领取记录
+    const dayMs = 86_400_000
+    const prevDays = Array.from({ length: 6 }, (_, i) => dateKey(new Date(Date.now() - (i + 1) * dayMs)))
+    useAppStore.setState({
+      dayClaims: prevDays.map((d) => ({ date: d, claimedAt: `${d}T12:00:00.000Z`, blockId: '', blueprintId: 'plant' })),
+    })
+
+    const claimRes = store.checkInDay()
+    expect(claimRes.placed).toBeDefined()
+    expect(claimRes.bonus).toBe(true)
+
+    const claimRes2 = store.checkInDay()
+    expect(claimRes2.reason).toBe('already')
   })
 
   it('completes blueprint when total blocks are reached', () => {
@@ -111,8 +176,10 @@ describe('appStore checkIn & uncheckIn block economy', () => {
     // 撤销打卡：全勤不再成立，应该同时收回打卡块和全勤奖励块
     store.uncheckIn(habit.id)
     const state = useAppStore.getState()
-    expect(state.checkIns).toHaveLength(0)
+    expect(state.checkIns).toHaveLength(1) // 墓碑保留
+    expect(state.checkIns[0].deletedAt).toBeDefined()
     expect(state.dayClaims).toHaveLength(0)
+    expect(state.deletedDayClaims).toHaveLength(1) // 领取记录墓碑化，防反复刷块
     expect(state.builds).toHaveLength(0)
   })
 
@@ -276,14 +343,12 @@ describe('appStore checkIn & uncheckIn block economy', () => {
     expect(useAppStore.getState().foundationNotes?.['castle']).toBe('历时百日，终成城堡')
   })
 
-  it('supports oat and fog themes in appStore', () => {
+  it('supports oat and fog themes in appStore (DOM sync lives in App layer)', () => {
     const store = useAppStore.getState()
     store.setTheme('oat')
     expect(useAppStore.getState().settings.theme).toBe('oat')
-    expect(document.documentElement.dataset.theme).toBe('oat')
 
     store.setTheme('fog')
     expect(useAppStore.getState().settings.theme).toBe('fog')
-    expect(document.documentElement.dataset.theme).toBe('fog')
   })
 })

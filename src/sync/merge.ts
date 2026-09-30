@@ -1,9 +1,34 @@
-import type { AppState, CheckIn, Habit, PlacedBlock, ShowcasePlacement } from '../types'
+import type { AppState, CheckIn, DayClaim, Habit } from '../types'
+import { blueprints } from '../logic/blueprints'
+import { rebuildBuilds, liveCheckInsView } from '../logic/builds'
+
+/** 安全获取蓝图总块数（未知/畸形 id 返回 null，不抛异常） */
+function blueprintBlockCount(id: string): number | null {
+  const bp = blueprints[id]
+  return bp ? bp.blocks.length : null
+}
 
 /**
- * Merges local and remote habits without data loss.
- * Preserves existing local habits, adds new remote habits,
- * and unions flags like archivedAt and pinned.
+ * 同步合并原则（schema v2）：
+ * - 只对「事实层」合并：习惯（LWW）、打卡（id 合并 + 删除墓碑）、全勤领取（按日 LWW + 墓碑）；
+ * - 积木层是事实的确定性投影：合并完成后由 rebuildBuilds 重建，index 天然压实且多端一致；
+ * - 设置为全字段并集（本地优先），低冲突可接受。
+ */
+
+/** 新者胜：updatedAt 缺失的一方视为旧（兼容旧档，保持本地优先的旧行为） */
+function isNewerHabit(local: Habit, remote: Habit): boolean {
+  if (local.updatedAt && remote.updatedAt) {
+    if (local.updatedAt !== remote.updatedAt) return local.updatedAt > remote.updatedAt
+    return true // 同刻本地胜
+  }
+  if (local.updatedAt) return true
+  if (remote.updatedAt) return false
+  return true
+}
+
+/**
+ * Merges habits by id with updatedAt LWW (newest edit wins, including archive/restore/pin).
+ * Habits without updatedAt (legacy archives) fall back to local-priority spread.
  */
 function mergeHabits(localHabits: Habit[], remoteHabits: Habit[]): Habit[] {
   const habitMap = new Map<string, Habit>()
@@ -15,20 +40,16 @@ function mergeHabits(localHabits: Habit[], remoteHabits: Habit[]): Habit[] {
     if (!existing) {
       habitMap.set(h.id, { ...h })
     } else {
-      habitMap.set(h.id, {
-        ...existing,
-        ...h,
-        archivedAt: h.archivedAt || existing.archivedAt,
-        pinned: h.pinned ?? existing.pinned,
-      })
+      habitMap.set(h.id, isNewerHabit(h, existing) ? { ...h } : existing)
     }
   }
   return Array.from(habitMap.values())
 }
 
 /**
- * Merges check-ins from both devices by id or habitId+date, preserving all check-ins.
- * Enriches check-ins by merging metadata (notes, mood, starred).
+ * Merges check-ins by id (counter habits) or habitId+date (others), with deletion tombstones:
+ * any side carrying deletedAt wins — an undo on one device must not be resurrected by the other.
+ * Enriches surviving check-ins by merging metadata (notes, mood, starred).
  */
 function mergeCheckIns(
   localCheckIns: CheckIn[],
@@ -63,10 +84,12 @@ function mergeCheckIns(
         note: (base.note && base.note.trim()) ? base.note : other.note,
         mood: base.mood || other.mood,
         starred: Boolean(base.starred || other.starred),
-        rewardBlockIndex: base.rewardBlockIndex ?? other.rewardBlockIndex,
         placedBlockId: base.placedBlockId || other.placedBlockId,
+        blueprintId: base.blueprintId || other.blueprintId,
         actualMinutes: base.actualMinutes ?? other.actualMinutes,
         value: base.value ?? other.value,
+        // 墓碑一旦出现即生效（不可逆），任一侧携带即保留
+        deletedAt: base.deletedAt ?? other.deletedAt,
       }
       merged[existingIndex] = combined
       if (c.id) idMap.set(c.id, existingIndex)
@@ -89,67 +112,92 @@ function mergeCheckIns(
 }
 
 /**
- * Union merge of placed blocks by `${blueprintId}_${index}`.
+ * Merges day claims per date with timestamp LWW:
+ * the later of (claimedAt, deletedAt) decides whether the day is claimed —
+ * supports repeated claim / unclaim of the same day converging across devices.
  */
-function mergeBuilds(localBuilds: PlacedBlock[], remoteBuilds: PlacedBlock[]): PlacedBlock[] {
-  const map = new Map<string, PlacedBlock>()
-  for (const b of remoteBuilds || []) {
-    const key = `${b.blueprintId}_${b.index}`
-    map.set(key, { ...b })
+function mergeDayClaims(
+  localClaims: DayClaim[],
+  remoteClaims: DayClaim[],
+  localDeleted: { date: string; deletedAt: string }[],
+  remoteDeleted: { date: string; deletedAt: string }[],
+): { claims: DayClaim[]; deleted: { date: string; deletedAt: string }[] } {
+  const claimByDate = new Map<string, DayClaim>()
+  for (const c of remoteClaims || []) {
+    if (!claimByDate.has(c.date)) claimByDate.set(c.date, { ...c })
   }
-  for (const b of localBuilds || []) {
-    const key = `${b.blueprintId}_${b.index}`
-    const existing = map.get(key)
+  for (const c of localClaims || []) {
+    const existing = claimByDate.get(c.date)
     if (!existing) {
-      map.set(key, { ...b })
-    } else {
-      map.set(key, {
-        ...existing,
-        ...b,
-        bonus: Boolean(b.bonus || existing.bonus),
+      claimByDate.set(c.date, { ...c })
+    } else if (c.claimedAt > existing.claimedAt) {
+      claimByDate.set(c.date, { ...c })
+    } else if (c.claimedAt === existing.claimedAt) {
+      // 同刻：合并双方字段，blockId/blueprintId 取非空者
+      claimByDate.set(c.date, {
+        date: c.date,
+        claimedAt: c.claimedAt,
+        blockId: c.blockId || existing.blockId,
+        blueprintId: c.blueprintId || existing.blueprintId,
       })
     }
   }
-  return Array.from(map.values()).sort((a, b) => {
-    if (a.blueprintId !== b.blueprintId) {
-      return a.blueprintId.localeCompare(b.blueprintId)
+
+  const deletedByDate = new Map<string, string>()
+  for (const d of remoteDeleted || []) {
+    if (!deletedByDate.has(d.date) || d.deletedAt > deletedByDate.get(d.date)!) {
+      deletedByDate.set(d.date, d.deletedAt)
     }
-    return a.index - b.index
-  })
+  }
+  for (const d of localDeleted || []) {
+    if (!deletedByDate.has(d.date) || d.deletedAt > deletedByDate.get(d.date)!) {
+      deletedByDate.set(d.date, d.deletedAt)
+    }
+  }
+
+  const claims: DayClaim[] = []
+  for (const c of claimByDate.values()) {
+    const deletedAt = deletedByDate.get(c.date)
+    if (deletedAt && deletedAt >= c.claimedAt) continue // 撤销晚于领取：该日未领取
+    claims.push(c)
+  }
+  // 已被更晚的重新领取覆盖的墓碑不再需要保留
+  const deleted: { date: string; deletedAt: string }[] = []
+  for (const [date, deletedAt] of deletedByDate) {
+    const c = claimByDate.get(date)
+    if (c && c.claimedAt > deletedAt) continue
+    deleted.push({ date, deletedAt })
+  }
+  return { claims, deleted }
 }
 
 /**
- * Merges showcase placements without duplicates.
- */
-function mergeShowcasePlacements(
-  local?: ShowcasePlacement[],
-  remote?: ShowcasePlacement[],
-): ShowcasePlacement[] {
-  const map = new Map<string, ShowcasePlacement>()
-  for (const p of remote || []) {
-    map.set(p.blueprintId, { ...p })
-  }
-  for (const p of local || []) {
-    map.set(p.blueprintId, { ...p })
-  }
-  return Array.from(map.values())
-}
-
-/**
- * CRDT union merge algorithm between local and remote AppState.
- * Guarantees zero data loss across multi-device synchronizations.
+ * CRDT merge between local and remote AppState (schema v2).
+ * Facts are merged; the block layer is rebuilt deterministically from merged facts,
+ * guaranteeing identical projections (compact 0..N-1 indices) on every device.
  */
 export function mergeAppState(local: AppState, remote: AppState): AppState {
   const habits = mergeHabits(local.habits, remote.habits)
   const checkIns = mergeCheckIns(local.checkIns, remote.checkIns, habits)
-  const builds = mergeBuilds(local.builds, remote.builds)
+  const { claims: dayClaims, deleted: deletedDayClaims } = mergeDayClaims(
+    local.dayClaims || [],
+    remote.dayClaims || [],
+    local.deletedDayClaims || [],
+    remote.deletedDayClaims || [],
+  )
 
-  const completedBlueprintIds = Array.from(
-    new Set([...(local.completedBlueprintIds || []), ...(remote.completedBlueprintIds || [])]),
-  ).sort()
-  const dayClaims = Array.from(
-    new Set([...(local.dayClaims || []), ...(remote.dayClaims || [])]),
-  ).sort()
+  // 墓碑 GC：清理超过 90 天的删除墓碑，防止存档无限膨胀
+  // （已知限制：离线超过 90 天的设备参与合并时，对应删除可能复活一次）
+  const gcCutoff = Date.now() - 90 * 86_400_000
+  const gcCheckIns = checkIns.filter(
+    (c) => !c.deletedAt || new Date(c.deletedAt).getTime() >= gcCutoff,
+  )
+  const gcDeletedClaims = deletedDayClaims.filter(
+    (d) => new Date(d.deletedAt).getTime() >= gcCutoff,
+  )
+
+  // 积木层 = 事实投影（合并后重建，不再按 index 并集）
+  const builds = rebuildBuilds(liveCheckInsView(gcCheckIns), dayClaims)
 
   const repairBricks = Math.max(local.repairBricks ?? 0, remote.repairBricks ?? 0)
 
@@ -158,29 +206,52 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
     ...(local.foundationNotes || {}),
   }
 
-  const showcasePlacements = mergeShowcasePlacements(
-    local.showcasePlacements,
-    remote.showcasePlacements,
-  )
+  const placementMap = new Map<string, { blueprintId: string; gridX: number; gridY: number }>()
+  for (const p of remote.showcasePlacements || []) placementMap.set(p.blueprintId, { ...p })
+  for (const p of local.showcasePlacements || []) placementMap.set(p.blueprintId, { ...p })
+  const showcasePlacements = Array.from(placementMap.values())
 
+  // 设置全字段并集（本地优先，缺字段回退远端）
   const settings = {
-    theme: local.settings?.theme || remote.settings?.theme || 'light',
-    language: local.settings?.language || remote.settings?.language || 'zh',
+    ...(remote.settings || {}),
+    ...(local.settings || {}),
   }
 
   const activeBlueprintId = local.activeBlueprintId || remote.activeBlueprintId || 'plant'
 
+  // 完成态对账：完成列表取双方并集，但撤销可能让蓝图退回未完成——
+  // 重建投影后块数不足者剔除。展台摆放随之对账：无法判定完成态的（真实数据中不存在）保守保留。
+  const completedSet = new Set([
+    ...(local.completedBlueprintIds || []),
+    ...(remote.completedBlueprintIds || []),
+  ])
+  const activeCompleted = Array.from(completedSet).filter((id) => {
+    const total = blueprintBlockCount(id)
+    return total !== null && rebuildCountForBlueprint(builds, id) >= total
+  }).sort()
+  const showcasePlacementsFiltered = showcasePlacements.filter((p) => {
+    if (!completedSet.has(p.blueprintId)) return true
+    const total = blueprintBlockCount(p.blueprintId)
+    if (total === null) return true
+    return rebuildCountForBlueprint(builds, p.blueprintId) >= total
+  })
+
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     habits,
-    checkIns,
+    checkIns: gcCheckIns,
     builds,
     activeBlueprintId,
-    completedBlueprintIds,
-    settings,
+    completedBlueprintIds: activeCompleted,
+    settings: settings as AppState['settings'],
     dayClaims,
+    deletedDayClaims: gcDeletedClaims,
     repairBricks,
-    showcasePlacements,
+    showcasePlacements: showcasePlacementsFiltered,
     foundationNotes,
   }
+}
+
+function rebuildCountForBlueprint(builds: AppState['builds'], blueprintId: string): number {
+  return builds.filter((b) => b.blueprintId === blueprintId).length
 }

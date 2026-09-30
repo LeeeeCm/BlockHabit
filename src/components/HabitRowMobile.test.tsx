@@ -6,6 +6,7 @@ import type { Habit } from '../types'
 import * as platform from '../platform'
 import * as detectModule from '../platform/detect'
 import { useAppStore } from '../store/appStore'
+import { todayKey } from '../logic/dates'
 
 function render(ui: React.ReactElement) {
   const container = document.createElement('div')
@@ -94,7 +95,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
         habit={standardHabit}
         done={false}
         streak={2}
-        day="2026-09-24"
+        day={todayKey()}
         onCheck={vi.fn()}
         onEdit={vi.fn()}
       />
@@ -122,7 +123,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
         habit={standardHabit}
         done={false}
         streak={3}
-        day="2026-09-24"
+        day={todayKey()}
         onCheck={onCheck}
       />
     )
@@ -146,7 +147,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
         habit={counterHabit}
         done={false}
         streak={0}
-        day="2026-09-24"
+        day={todayKey()}
         onCheck={onCheck}
       />
     )
@@ -180,7 +181,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
         habit={standardHabit}
         done={false}
         streak={1}
-        day="2026-09-24"
+        day={todayKey()}
       />
     )
 
@@ -197,7 +198,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
         habit={focusHabit}
         done={false}
         streak={0}
-        day="2026-09-24"
+        day={todayKey()}
       />
     )
 
@@ -218,7 +219,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
         habit={standardHabit}
         done={false}
         streak={1}
-        day="2026-09-24"
+        day={todayKey()}
         onCheck={onCheck}
       />
     )
@@ -241,7 +242,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
         habit={standardHabit}
         done={false}
         streak={1}
-        day="2026-09-24"
+        day={todayKey()}
       />
     )
 

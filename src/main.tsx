@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import { TrayMenu } from './components/TrayMenu'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { initSmoothScroll } from './logic/smoothScroll'
+import { initSmoothScroll } from './platform/smoothScroll'
+import { applyDemoCastleState, markDemoMode } from './store/appStore'
 import '@fontsource/rubik/400.css'
 import '@fontsource/rubik/500.css'
 import '@fontsource/rubik/600.css'
@@ -24,6 +25,12 @@ if (isTrayMenu) {
   document.documentElement.dataset.win = 'tray-menu'
 } else {
   initSmoothScroll()
+}
+
+// 演示模式：?demo-castle 在内存中注入一座已建成的城堡，不读写本地存档
+if (typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo-castle')) {
+  markDemoMode()
+  applyDemoCastleState()
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

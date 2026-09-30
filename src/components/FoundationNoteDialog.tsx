@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { getBlueprintName, useI18n } from '../i18n'
 import { playSnapSound } from '../audio/sound'
-import { IconFoundation, IconStar } from './Icons'
+import { IconClose, IconFoundation, IconStar } from './Icons'
+import { triggerHaptic } from '../platform'
+import { useDialogA11y } from './useDialogA11y'
 
 interface Props {
   blueprintId: string
@@ -51,18 +53,17 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
     }, 450)
   }
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  const { ref: dialogRef } = useDialogA11y({ open: true, onClose })
+
 
   const bpName = getBlueprintName(blueprintId, lang)
 
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
       className="overlay"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose()
@@ -81,8 +82,15 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
               {bpName} · {t.reflections.foundationModalTitle}
             </span>
           </div>
-          <button className="icon-btn" onClick={onClose} title={t.common.close}>
-            ✕
+          <button
+            className="icon-btn"
+            onClick={() => {
+              triggerHaptic('light')
+              onClose()
+            }}
+            title={t.common.close}
+          >
+            <IconClose size={18} />
           </button>
         </div>
 
@@ -117,7 +125,7 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
                     }}
                     title={lang === 'zh' ? '点击选用作为奠基语' : 'Click to use as dedication'}
                   >
-                    {c.starred && <IconStar size={12} filled style={{ color: '#f59e0b', flexShrink: 0 }} />}
+                    {c.starred && <IconStar size={12} filled style={{ color: 'var(--accent)', flexShrink: 0 }} />}
                     <span style={{ color: 'var(--ink)', flex: 1, wordBreak: 'break-word' }}>“{c.note}”</span>
                     <span style={{ fontSize: 10.5, color: 'var(--ink-2)', flexShrink: 0 }}>
                       {h?.name} · {c.date}

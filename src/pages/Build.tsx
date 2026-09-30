@@ -6,7 +6,8 @@ import { BuildScene } from '../render/BuildScene'
 import { GalleryDialog } from '../components/GalleryDialog'
 import { PolaroidModal } from '../components/PolaroidModal'
 import { FoundationNoteDialog } from '../components/FoundationNoteDialog'
-import { IconCamera, IconFoundation, IconGallery, IconRotateCcw, IconRotateCw } from '../components/Icons'
+import { IconCamera, IconEcho, IconFoundation, IconGallery, IconRotateCcw, IconRotateCw } from '../components/Icons'
+import { triggerHaptic } from '../platform'
 export default function Build() {
   const { lang, t } = useI18n()
   const builds = useAppStore((s) => s.builds)
@@ -24,6 +25,7 @@ export default function Build() {
   const [foundationModalOpen, setFoundationModalOpen] = useState(false)
   const foundationNote = useAppStore((s) => s.foundationNotes?.[blueprint.id])
   const [rotation, setRotation] = useState(0)
+  const [xrayMode, setXrayMode] = useState(false)
   useEffect(() => {
     setCeremonyShown(
       builds.filter((b) => b.blueprintId === activeBlueprintId).length >=
@@ -42,6 +44,7 @@ export default function Build() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div
+        className="build-top-bar"
         style={{
           flex: 'none',
           display: 'flex',
@@ -92,6 +95,20 @@ export default function Build() {
             </button>
           </>
         )}
+        <button
+          className={`btn ${xrayMode ? 'primary' : 'ghost'}`}
+          style={{ padding: '7px 12px', fontSize: 13, borderRadius: 999 }}
+          onClick={() => {
+            triggerHaptic('selection')
+            setXrayMode((v) => !v)
+          }}
+          title={lang === 'zh' ? '开启/关闭透视考古探针' : 'Toggle X-Ray Inspection'}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <IconEcho size={15} style={{ color: xrayMode ? 'var(--accent)' : 'currentColor' }} />
+            <span>{lang === 'zh' ? '透视考古' : 'X-Ray'}</span>
+          </span>
+        </button>
         <button
           className="btn ghost"
           style={{ padding: '7px 14px', fontSize: 13 }}
@@ -157,6 +174,7 @@ export default function Build() {
           placedCount={placedCount}
           rotation={rotation}
           interactiveInspect={true}
+          xrayMode={xrayMode}
         />
 
         {complete && foundationNote && (

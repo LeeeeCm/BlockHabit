@@ -106,9 +106,9 @@ export function findNextAvailablePlacement(
   existing: ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,
   gridSize: number = SHOWCASE_GRID_SIZE,
-): ShowcasePlacement {
+): ShowcasePlacement | null {
   const bp = blueprintsMap[blueprintId]
-  if (!bp) return { blueprintId, gridX: 2, gridY: 2 }
+  if (!bp) return null
 
   const fp = getModelFootprint(bp.blocks)
 
@@ -130,7 +130,8 @@ export function findNextAvailablePlacement(
     }
   }
 
-  return { blueprintId, gridX: 0, gridY: 0 }
+  // 展台已满：返回 null（调用方提示，而非静默重叠落位）
+  return null
 }
 
 /**

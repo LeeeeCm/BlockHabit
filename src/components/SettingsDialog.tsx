@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
-import { soundMuted, setSoundMuted } from '../audio/sound'
 import { useI18n } from '../i18n'
-import { IconKeyboard, IconRepair } from './Icons'
-import { usePlatform } from '../platform'
+import { validateState } from '../storage/adapter'
+import { pickAdapter } from '../storage'
+import type { AppState } from '../types'
+import { IconClose, IconKeyboard, IconRepair } from './Icons'
+import { triggerHaptic, usePlatform } from '../platform'
 import { BottomSheet } from './BottomSheet'
+import { ConfirmDialog } from './ConfirmDialog'
+import { useDialogA11y } from './useDialogA11y'
 import { useSync } from '../sync/useSync'
 const inTauri =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -16,7 +20,9 @@ interface Props {
 export function SettingsDialog({ onClose }: Props) {
   const { lang, t } = useI18n()
   const { isMobile } = usePlatform()
-  const theme = useAppStore((s) => s.settings.theme)
+  const settings = useAppStore((s) => s.settings)
+  const updateSettings = useAppStore((s) => s.updateSettings)
+  const theme = settings.theme
   const setTheme = useAppStore((s) => s.setTheme)
   const setLanguage = useAppStore((s) => s.setLanguage)
   const exportData = useAppStore((s) => s.exportData)
@@ -25,8 +31,10 @@ export function SettingsDialog({ onClose }: Props) {
   const habits = useAppStore((s) => s.habits)
   const completed = useAppStore((s) => s.completedBlueprintIds)
   const repairBricks = useAppStore((s) => s.repairBricks ?? 0)
-  const [muted, setMuted] = useState(() => soundMuted)
+  const muted = settings.soundMuted === true
   const [msg, setMsg] = useState<string | null>(null)
+  /** 通过深度校验、待用户确认后覆盖导入的存档 */
+  const [importCandidate, setImportCandidate] = useState<AppState | null>(null)
   const [autostart, setAutostart] = useState<boolean | null>(null)
   useEffect(() => {
     if (!inTauri) return
@@ -55,23 +63,34 @@ export function SettingsDialog({ onClose }: Props) {
     setPassword(syncConfig.password)
   }, [syncConfig.endpoint, syncConfig.username, syncConfig.password])
 
+  /** 同步错误码 → 用户文案 */
+  function syncErrorText(code: string | null): string | null {
+    if (!code) return null
+    const map: Record<string, string> = {
+      'no-endpoint': t.settings.syncErrors.noEndpoint,
+      auth: t.settings.syncErrors.auth,
+      parse: t.settings.syncErrors.parse,
+      incompatible: t.settings.syncErrors.incompatible,
+      network: t.settings.syncErrors.network,
+      conflict: t.settings.syncErrors.conflict,
+      'no-collection': t.settings.syncErrors.noCollection,
+      http: t.settings.syncErrors.http,
+    }
+    return map[code] ?? t.settings.syncErrors.network
+  }
+
   async function handleSync() {
     const ok = await syncNow()
     if (ok) {
       setMsg(lang === 'zh' ? '同步成功！数据已与云端合并' : 'Sync successful! Data merged with cloud.')
     } else {
-      const err = getLastError()
-      setMsg(err || (lang === 'zh' ? '同步失败，请检查配置与网络' : 'Sync failed, please check configuration.'))
+      setMsg(syncErrorText(getLastError()) ?? (lang === 'zh' ? '同步失败，请检查配置与网络' : 'Sync failed, please check configuration.'))
     }
     setTimeout(() => setMsg(null), 3000)
   }
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  // 嵌套的导入确认弹窗打开时抑制本弹窗的 Esc/焦点管理
+  const { ref: dialogRef } = useDialogA11y({ open: true, onClose, enabled: !importCandidate })
+
 
   async function toggleAutostart() {
     if (!inTauri) return
@@ -93,8 +112,34 @@ export function SettingsDialog({ onClose }: Props) {
   }
 
   async function doImport(file: File) {
-    const text = await file.text()
-    const ok = importData(text)
+    let candidate: AppState | null = null
+    try {
+      const text = await file.text()
+      const verdict = validateState(JSON.parse(text))
+      if (verdict.ok) candidate = verdict.state
+    } catch {
+      candidate = null
+    }
+    if (!candidate) {
+      setMsg(t.settings.importFail)
+      setTimeout(() => setMsg(null), 2400)
+      return
+    }
+    setImportCandidate(candidate)
+  }
+
+  async function confirmImport() {
+    const candidate = importCandidate
+    setImportCandidate(null)
+    if (!candidate) return
+    // 覆盖前自动备份当前数据（Tauri 写入 appDataDir 带时间戳备份；web 写 localStorage）
+    try {
+      const current = JSON.parse(useAppStore.getState().exportData())
+      await pickAdapter().backup?.(current)
+    } catch {
+      // 备份失败不阻塞导入
+    }
+    const ok = importData(JSON.stringify(candidate))
     setMsg(ok ? t.settings.importSuccess : t.settings.importFail)
     setTimeout(() => setMsg(null), 2400)
   }
@@ -148,24 +193,203 @@ export function SettingsDialog({ onClose }: Props) {
               <div className="seg">
                 <button
                   className={!muted ? 'active' : ''}
-                  onClick={() => {
-                    setSoundMuted(false)
-                    setMuted(false)
-                  }}
+                  onClick={() => updateSettings({ soundMuted: false })}
                 >
                   {t.settings.soundOn}
                 </button>
                 <button
                   className={muted ? 'active' : ''}
-                  onClick={() => {
-                    setSoundMuted(true)
-                    setMuted(true)
-                  }}
+                  onClick={() => updateSettings({ soundMuted: true })}
                 >
                   {t.settings.soundOff}
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* 2. 感官与氛围体验 (Apple HIG Ambience Panel) */}
+          <div className="apple-group">
+            <div className="apple-group-title">{t.settings.ambienceTitle}</div>
+
+            {/* 时段感知昼夜光照 */}
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>{t.settings.ambientLightingLabel}</label>
+              <div className="seg">
+                <button
+                  type="button"
+                  className={settings.enableAmbientLighting !== false ? 'active' : ''}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    updateSettings({ enableAmbientLighting: true })
+                  }}
+                >
+                  {t.settings.ambientLightingOn}
+                </button>
+                <button
+                  type="button"
+                  className={settings.enableAmbientLighting === false ? 'active' : ''}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    updateSettings({ enableAmbientLighting: false })
+                  }}
+                >
+                  {t.settings.ambientLightingOff}
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
+                {t.settings.ambientLightingHint}
+              </div>
+            </div>
+
+            {/* 抗断卡温和风化机制 */}
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>{t.settings.gentleDecayLabel}</label>
+              <div className="seg">
+                <button
+                  type="button"
+                  className={settings.enableGentleDecay !== false ? 'active' : ''}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    updateSettings({ enableGentleDecay: true })
+                  }}
+                >
+                  {t.settings.gentleDecayOn}
+                </button>
+                <button
+                  type="button"
+                  className={settings.enableGentleDecay === false ? 'active' : ''}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    updateSettings({ enableGentleDecay: false })
+                  }}
+                >
+                  {t.settings.gentleDecayOff}
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
+                {t.settings.gentleDecayHint}
+              </div>
+            </div>
+
+            {/* 建筑微生态彩蛋 */}
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>{t.settings.ecoPropsLabel}</label>
+              <div className="seg">
+                <button
+                  type="button"
+                  className={settings.enableEcoProps !== false ? 'active' : ''}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    updateSettings({ enableEcoProps: true })
+                  }}
+                >
+                  {t.settings.ecoPropsOn}
+                </button>
+                <button
+                  type="button"
+                  className={settings.enableEcoProps === false ? 'active' : ''}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    updateSettings({ enableEcoProps: false })
+                  }}
+                >
+                  {t.settings.ecoPropsOff}
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
+                {t.settings.ecoPropsHint}
+              </div>
+            </div>
+
+            {/* ASMR 敲击音色 */}
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>{t.settings.soundMaterialLabel}</label>
+              <div className="seg">
+                {(['classic', 'walnut', 'crystal', 'metal'] as const).map((mat) => {
+                  const labelMap = {
+                    classic: t.settings.soundMatClassic,
+                    walnut: t.settings.soundMatWalnut,
+                    crystal: t.settings.soundMatCrystal,
+                    metal: t.settings.soundMatMetal,
+                  }
+                  const active = (settings.soundMaterial ?? 'classic') === mat
+                  return (
+                    <button
+                      key={mat}
+                      type="button"
+                      className={active ? 'active' : ''}
+                      onClick={() => {
+                        triggerHaptic('selection')
+                        updateSettings({ soundMaterial: mat })
+                      }}
+                    >
+                      {labelMap[mat]}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* 移动端专属陀螺仪开关 或 桌面端悬浮摆件开关 */}
+            {isMobile ? (
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label>{t.settings.gyroscopeLabel}</label>
+                <div className="seg">
+                  <button
+                    type="button"
+                    className={Boolean(settings.enableGyroscope) ? 'active' : ''}
+                    onClick={() => {
+                      triggerHaptic('selection')
+                      updateSettings({ enableGyroscope: true })
+                    }}
+                  >
+                    {t.settings.gyroscopeOn}
+                  </button>
+                  <button
+                    type="button"
+                    className={!settings.enableGyroscope ? 'active' : ''}
+                    onClick={() => {
+                      triggerHaptic('selection')
+                      updateSettings({ enableGyroscope: false })
+                    }}
+                  >
+                    {t.settings.gyroscopeOff}
+                  </button>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
+                  {t.settings.gyroscopeHint}
+                </div>
+              </div>
+            ) : (
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label>{t.settings.miniWidgetLabel}</label>
+                <div className="seg">
+                  <button
+                    type="button"
+                    className={Boolean(settings.enableMiniWidget) ? 'active' : ''}
+                    onClick={() => {
+                      triggerHaptic('selection')
+                      updateSettings({ enableMiniWidget: true })
+                    }}
+                  >
+                    {t.settings.miniWidgetOn}
+                  </button>
+                  <button
+                    type="button"
+                    className={!settings.enableMiniWidget ? 'active' : ''}
+                    onClick={() => {
+                      triggerHaptic('selection')
+                      updateSettings({ enableMiniWidget: false })
+                    }}
+                  >
+                    {t.settings.miniWidgetOff}
+                  </button>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
+                  {t.settings.miniWidgetHint}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 2. 系统与常驻 */}
@@ -267,11 +491,11 @@ export function SettingsDialog({ onClose }: Props) {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 4 }}>
-              <div style={{ fontSize: 11, color: syncStatus === 'error' ? 'var(--accent, #e53e3e)' : 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 11, color: syncStatus === 'error' ? 'var(--danger)' : 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {isSyncing
                   ? (lang === 'zh' ? '正在连接同步中...' : 'Syncing data...')
                   : syncError
-                    ? syncError
+                    ? (syncErrorText(syncError) ?? syncError)
                     : lastSyncAt
                       ? `${lang === 'zh' ? '上次同步: ' : 'Last sync: '}${new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                       : (lang === 'zh' ? '未同步' : 'Not synced yet')}
@@ -341,20 +565,48 @@ export function SettingsDialog({ onClose }: Props) {
 
   if (isMobile) {
     return (
-      <BottomSheet open={true} onClose={onClose} title={t.settings.title} footer={footerContent}>
+      <BottomSheet open={true} onClose={onClose} title={t.settings.title} footer={footerContent} escEnabled={!importCandidate}>
         {bodyContent}
         {msg && <div className="toast">{msg}</div>}
+        {importCandidate && (
+          <ConfirmDialog
+            title={t.settings.importConfirmTitle}
+            message={t.settings.importConfirmMsg(
+              useAppStore.getState().habits.length,
+              useAppStore.getState().checkIns.length,
+            )}
+            confirmLabel={t.common.confirm}
+            cancelLabel={t.common.cancel}
+            danger
+            onCancel={() => setImportCandidate(null)}
+            onConfirm={() => void confirmImport()}
+          />
+        )}
       </BottomSheet>
     )
   }
 
   return (
-    <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      className="overlay"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 480, maxWidth: '92vw' }}>
         <div className="dialog-header">
           <h3>{t.settings.title}</h3>
-          <button className="icon-btn" onClick={onClose} title={t.common.close}>
-            ✕
+          <button
+            className="icon-btn"
+            onClick={() => {
+              triggerHaptic('light')
+              onClose()
+            }}
+            title={t.common.close}
+          >
+            <IconClose size={18} />
           </button>
         </div>
 
@@ -365,6 +617,20 @@ export function SettingsDialog({ onClose }: Props) {
         {footerContent}
 
         {msg && <div className="toast">{msg}</div>}
+        {importCandidate && (
+          <ConfirmDialog
+            title={t.settings.importConfirmTitle}
+            message={t.settings.importConfirmMsg(
+              useAppStore.getState().habits.length,
+              useAppStore.getState().checkIns.length,
+            )}
+            confirmLabel={t.common.confirm}
+            cancelLabel={t.common.cancel}
+            danger
+            onCancel={() => setImportCandidate(null)}
+            onConfirm={() => void confirmImport()}
+          />
+        )}
       </div>
     </div>
   )

@@ -9,11 +9,20 @@ import {
   worldToScreen,
 } from '../render/iso'
 import { getBlueprintName, useI18n } from '../i18n'
-import { IconCamera, IconFlip } from './Icons'
+import { IconCamera, IconClose, IconFlip } from './Icons'
+import { triggerHaptic } from '../platform'
+import { useDialogA11y } from './useDialogA11y'
 
 interface Props {
   blueprint: Blueprint
   onClose: () => void
+}
+
+/** 画布绘制用：读取主题 CSS 变量（星标色跟随唯一点缀色 --accent） */
+function cssVar(name: string, fallback: string): string {
+  if (typeof document === 'undefined') return fallback
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return v || fallback
 }
 
 /**
@@ -28,13 +37,8 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
   const [copying, setCopying] = useState(false)
   const [isBack, setIsBack] = useState(false)
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  const { ref: dialogRef } = useDialogA11y({ open: true, onClose })
+
   const foundationNotes = useAppStore((s) => s.foundationNotes ?? {})
   const builds = useAppStore((s) => s.builds)
   const checkIns = useAppStore((s) => s.checkIns)
@@ -48,7 +52,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       .filter((b) => b.blueprintId === blueprint.id)
       .map((b) => b.id)
     const list = checkIns.filter(
-      (c) => c.placedBlockId && bpBuildIds.includes(c.placedBlockId) && c.note?.trim(),
+      (c) => !c.deletedAt && c.placedBlockId && bpBuildIds.includes(c.placedBlockId) && c.note?.trim(),
     )
     list.sort((a, b) => {
       if (a.starred && !b.starred) return -1
@@ -279,7 +283,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
           // 节点圆圈
           ctx.beginPath()
           ctx.arc(48, itemY + 8, 4, 0, Math.PI * 2)
-          ctx.fillStyle = entry.starred ? '#f59e0b' : '#a8a29e'
+          ctx.fillStyle = entry.starred ? cssVar('--accent', '#f5b301') : '#a8a29e'
           ctx.fill()
 
           // 标题行：日期 + 习惯 + 心境
@@ -374,6 +378,10 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
 
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
       className="overlay"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
       style={{ zIndex: 120 }}
@@ -394,8 +402,15 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
             <IconCamera size={18} />
             <span>{isBack ? (lang === 'zh' ? '筑造手账相卡 (背面)' : 'Builder Journal (Back)') : t.polaroid.modalTitle}</span>
           </span>
-          <button className="icon-btn" onClick={onClose} title={t.common.close}>
-            ✕
+          <button
+            className="icon-btn"
+            onClick={() => {
+              triggerHaptic('light')
+              onClose()
+            }}
+            title={t.common.close}
+          >
+            <IconClose size={18} />
           </button>
         </div>
 

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1024" height="1024">
+  <!-- BlockHabit 方向A「方块对勾」mark-dark：满幅直角深色底 -->
+  <rect width="512" height="512" fill="#0A0A0A"/>
+
+  <!-- 五块 45° 斜放积木沿对勾两臂边贴边拼成；组级 stroke 形成分缝 -->
+  <g transform="translate(-9 23)" stroke="#0A0A0A" stroke-width="6">
+    <!-- 短臂（向左上） -->
+    <rect x="89" y="219" width="92" height="92" rx="22" fill="#FAFAFA" transform="rotate(-45 135 265)"/>
+    <!-- 顶点（左下探出） -->
+    <rect x="154" y="284" width="92" height="92" rx="22" fill="#FAFAFA" transform="rotate(-45 200 330)"/>
+    <!-- 长臂（向右上） -->
+    <rect x="219" y="219" width="92" height="92" rx="22" fill="#FAFAFA" transform="rotate(-45 265 265)"/>
+    <rect x="284" y="154" width="92" height="92" rx="22" fill="#FAFAFA" transform="rotate(-45 330 200)"/>
+    <!-- 末端：绿色完成块 -->
+    <rect x="349" y="89" width="92" height="92" rx="22" fill="#22C55E" transform="rotate(-45 395 135)"/>
+  </g>
+</svg>

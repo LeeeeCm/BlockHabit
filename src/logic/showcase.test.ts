@@ -60,9 +60,10 @@ describe('showcase collision & layout logic', () => {
       { blueprintId: 'plant', gridX: 1, gridY: 1 },
     ]
     const p = findNextAvailablePlacement('coffee', existing, blueprints, SHOWCASE_GRID_SIZE)
-    expect(canPlaceModel(p, existing, blueprints, SHOWCASE_GRID_SIZE)).toBe(true)
-    expect(p.gridX).toBeGreaterThanOrEqual(0)
-    expect(p.gridY).toBeGreaterThanOrEqual(0)
+    expect(p).not.toBeNull()
+    expect(canPlaceModel(p!, existing, blueprints, SHOWCASE_GRID_SIZE)).toBe(true)
+    expect(p!.gridX).toBeGreaterThanOrEqual(0)
+    expect(p!.gridY).toBeGreaterThanOrEqual(0)
   })
 
   it('screenToGroundIso reverses isometric projection accurately', () => {

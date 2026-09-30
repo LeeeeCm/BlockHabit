@@ -13,7 +13,9 @@ import { getBlueprintName, useI18n } from '../i18n'
 import { dateKey } from '../logic/dates'
 import { dayCompletionRatio } from '../logic/checkin'
 import { bestStreak, currentStreak } from '../logic/streak'
-import { IconPoster, IconShuffle } from './Icons'
+import { IconClose, IconPoster, IconShuffle } from './Icons'
+import { triggerHaptic } from '../platform'
+import { useDialogA11y } from './useDialogA11y'
 interface Props {
   onClose: () => void
 }
@@ -28,7 +30,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [copying, setCopying] = useState(false)
-
+  const [aspectRatio, setAspectRatio] = useState<'4:5' | '9:16' | '1:1'>('4:5')
   const habits = useAppStore((s) => s.habits)
   const checkIns = useAppStore((s) => s.checkIns)
   const builds = useAppStore((s) => s.builds)
@@ -42,7 +44,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
   const monthPrefix = `${year}-${monthStr}`
 
   const monthNotes = useMemo(() => {
-    const list = checkIns.filter((c) => c.date.startsWith(monthPrefix) && c.note?.trim())
+    const list = checkIns.filter((c) => !c.deletedAt && c.date.startsWith(monthPrefix) && c.note?.trim())
     list.sort((a, b) => {
       if (a.starred && !b.starred) return -1
       if (!a.starred && b.starred) return 1
@@ -52,13 +54,8 @@ export function MonthlyPosterModal({ onClose }: Props) {
   }, [checkIns, monthPrefix])
 
   const [quoteIdx, setQuoteIdx] = useState(0)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  const { ref: dialogRef } = useDialogA11y({ open: true, onClose })
+
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -66,13 +63,15 @@ export function MonthlyPosterModal({ onClose }: Props) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // 2K 高倍高清画报尺寸：600 × 620（物理像素 1200 × 1240）
-    const W = 600
-    const H = 620
+    const dimMap = {
+      '4:5': { W: 600, H: 750 },
+      '9:16': { W: 540, H: 960 },
+      '1:1': { W: 600, H: 600 },
+    }
+    const { W, H } = dimMap[aspectRatio]
     canvas.width = W * 2
     canvas.height = H * 2
     ctx.scale(2, 2)
-
     const now = new Date()
     const year = now.getFullYear()
     const month = now.getMonth() + 1
@@ -270,7 +269,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
     // 5. 核心指标卡片 (Metrics Grid)
     const metricsX = matrixGridX + matrixTotalW + 18
     const metricsW = W - margin - metricsX
-    const monthCheckIns = checkIns.filter((c) => c.date.startsWith(monthPrefix)).length
+    const monthCheckIns = checkIns.filter((c) => !c.deletedAt && c.date.startsWith(monthPrefix)).length
     const monthFocusMins = checkIns
       .filter((c) => c.date.startsWith(monthPrefix))
       .reduce((s, c) => s + (c.actualMinutes ?? 0), 0)
@@ -314,7 +313,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
     })
 
     // 6. 底部自律寄语与专属印鉴
-    const footerY = 562
+    const footerY = H - 58
     ctx.strokeStyle = colorLine
     ctx.lineWidth = 1
     ctx.beginPath()
@@ -347,7 +346,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
       : 'BLOCKHABIT CHRONICLE'
     ctx.fillText(rightTag, W - margin, footerY + 22)
     ctx.textAlign = 'left'
-  }, [habits, checkIns, builds, activeBlueprintId, completed, lang, monthNotes, quoteIdx])
+  }, [habits, checkIns, builds, activeBlueprintId, completed, lang, monthNotes, quoteIdx, aspectRatio])
 
   async function handleCopy() {
     const canvas = canvasRef.current
@@ -382,6 +381,10 @@ export function MonthlyPosterModal({ onClose }: Props) {
 
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
       className="overlay"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
       style={{ zIndex: 120 }}
@@ -403,21 +406,51 @@ export function MonthlyPosterModal({ onClose }: Props) {
             <IconPoster size={18} />
             <span>{lang === 'zh' ? '月度包豪斯自律画报' : 'Monthly Bauhaus Discipline Poster'}</span>
           </span>
-          <button className="icon-btn" onClick={onClose} title={t.common.close}>
-            ✕
+          <button
+            className="icon-btn"
+            onClick={() => {
+              triggerHaptic('light')
+              onClose()
+            }}
+            title={t.common.close}
+          >
+            <IconClose size={18} />
           </button>
+        </div>
+
+        {/* 画报比例选择器 (Apple Segmented Control) */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+          <div className="apple-segmented">
+            {(['4:5', '9:16', '1:1'] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                className={`apple-segmented-item${aspectRatio === r ? ' active' : ''}`}
+                style={{ padding: '3px 14px', fontSize: 12 }}
+                onClick={() => {
+                  triggerHaptic('selection')
+                  setAspectRatio(r)
+                }}
+              >
+                {r === '4:5' ? (lang === 'zh' ? '4:5 长卡' : '4:5 Card') : r === '9:16' ? (lang === 'zh' ? '9:16 故事' : '9:16 Story') : (lang === 'zh' ? '1:1 方块' : '1:1 Square')}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* 画报预览视口 */}
         <canvas
           ref={canvasRef}
           style={{
-            width: 440,
-            height: 455,
+            width: aspectRatio === '4:5' ? 360 : aspectRatio === '9:16' ? 280 : 400,
+            height: aspectRatio === '4:5' ? 450 : aspectRatio === '9:16' ? 498 : 400,
+            maxWidth: '85vw',
+            maxHeight: '60vh',
             borderRadius: 12,
             boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
             border: '1px solid var(--line)',
             display: 'block',
+            margin: '0 auto',
           }}
         />
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>

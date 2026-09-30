@@ -1,30 +1,14 @@
 import React, { useEffect } from 'react'
 import { triggerHaptic } from '../platform'
-let sheetLockCount = 0
-let originalBodyOverflow = ''
-
-function lockBodyScroll() {
-  if (sheetLockCount === 0) {
-    originalBodyOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-  }
-  sheetLockCount++
-}
-
-function unlockBodyScroll() {
-  sheetLockCount = Math.max(0, sheetLockCount - 1)
-  if (sheetLockCount === 0) {
-    document.body.style.overflow = originalBodyOverflow
-  }
-}
+import { lockBodyScroll, unlockBodyScroll, _resetBodyScrollLockForTest } from '../platform/dom'
+import { useI18n } from '../i18n'
+import { IconClose } from './Icons'
 
 export function _resetSheetLockCountForTest() {
-  sheetLockCount = 0
-  originalBodyOverflow = ''
+  _resetBodyScrollLockForTest()
 }
 export interface BottomSheetProps {
-  open?: boolean
-  isOpen?: boolean
+  open: boolean
   onClose: () => void
   title?: React.ReactNode
   children: React.ReactNode
@@ -32,11 +16,12 @@ export interface BottomSheetProps {
   maxHeight?: string | number
   className?: string
   contentStyle?: React.CSSProperties
+  /** 嵌套场景：子弹窗（如导入确认框）打开时传 false 抑制本抽屉的 Esc 关闭 */
+  escEnabled?: boolean
 }
 
 export function BottomSheet({
   open,
-  isOpen,
   onClose,
   title,
   children,
@@ -44,8 +29,35 @@ export function BottomSheet({
   maxHeight = '85vh',
   className,
   contentStyle,
+  escEnabled = true,
 }: BottomSheetProps) {
-  const isSheetOpen = open ?? isOpen ?? true
+  const { t } = useI18n()
+  const isSheetOpen = open
+  const [dragY, setDragY] = React.useState(0)
+  const [isDragging, setIsDragging] = React.useState(false)
+  const dragStartYRef = React.useRef(0)
+  const currentDragYRef = React.useRef(0)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    dragStartYRef.current = e.touches[0].clientY
+    setIsDragging(true)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const dy = Math.max(0, e.touches[0].clientY - dragStartYRef.current)
+    currentDragYRef.current = dy
+    setDragY(dy)
+  }
+
+  const handleTouchEnd = () => {
+    setIsDragging(false)
+    if (currentDragYRef.current > 75) {
+      triggerHaptic('light')
+      onClose()
+    }
+    setDragY(0)
+    currentDragYRef.current = 0
+  }
 
   useEffect(() => {
     if (!isSheetOpen) return
@@ -62,14 +74,14 @@ export function BottomSheet({
     if (!isSheetOpen) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && escEnabled) {
         onClose()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isSheetOpen, onClose])
+  }, [isSheetOpen, onClose, escEnabled])
 
   if (!isSheetOpen) return null
 
@@ -117,7 +129,9 @@ export function BottomSheet({
           flexDirection: 'column',
           boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.16)',
           paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
-          animation: 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          transform: `translateY(${dragY}px)`,
+          transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          willChange: 'transform',
           overflow: 'hidden',
         }}
       >
@@ -126,8 +140,12 @@ export function BottomSheet({
           data-testid="bottom-sheet-handle"
           role="button"
           tabIndex={0}
-          aria-label="Dismiss sheet"
+          aria-label={t.common.dismiss}
           onClick={onClose}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
@@ -147,16 +165,20 @@ export function BottomSheet({
           <div
             style={{
               width: 36,
-              height: 4,
-              borderRadius: 2,
+              height: 4.5,
+              borderRadius: 3,
               background: 'color-mix(in srgb, var(--ink) 25%, transparent)',
             }}
           />
         </div>
 
-        {/* 标题栏 */}
+        {/* 标题栏（支持向下滑动手势） */}
         {title != null && (
           <div
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -164,11 +186,14 @@ export function BottomSheet({
               padding: '6px 20px 10px',
               borderBottom: '1px solid var(--line)',
               flexShrink: 0,
+              touchAction: 'none',
             }}
           >
             <h3
               id="bottom-sheet-title"
               style={{
+                flex: 1,
+                minWidth: 0,
                 fontSize: 17,
                 fontWeight: 700,
                 color: 'var(--ink)',
@@ -183,7 +208,7 @@ export function BottomSheet({
               data-testid="bottom-sheet-close"
               type="button"
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t.common.close}
               style={{
                 background: 'color-mix(in srgb, var(--ink) 6%, transparent)',
                 border: 'none',
@@ -200,7 +225,7 @@ export function BottomSheet({
                 flexShrink: 0,
               }}
             >
-              ✕
+              <IconClose size={16} />
             </button>
           </div>
         )}

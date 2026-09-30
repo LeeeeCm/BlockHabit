@@ -37,7 +37,7 @@ export function MiniDeskToy({ onExpand, onClose }: Props) {
   const pendingHabits = useMemo(() => {
     return habits
       .filter((h) => !h.archivedAt && isHabitDueOnDay(h, day))
-      .filter((h) => !checkIns.some((c) => c.habitId === h.id && c.date === day))
+      .filter((h) => !checkIns.some((c) => !c.deletedAt && c.habitId === h.id && c.date === day))
       .slice(0, 3)
   }, [habits, checkIns, day])
 

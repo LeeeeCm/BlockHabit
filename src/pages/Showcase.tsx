@@ -17,20 +17,35 @@ export default function Showcase() {
   const updateShowcasePlacement = useAppStore((s) => s.updateShowcasePlacement)
   const completed = useAppStore((s) => s.completedBlueprintIds)
   const [selectedBlueprintId, setSelectedBlueprintId] = useState<string | null>(null)
+  const [arrangeToast, setArrangeToast] = useState<string | null>(null)
   function handleAutoArrange() {
     const list = completed.length > 0 ? completed : ['plant']
     const next: ShowcasePlacement[] = []
+    let overflow = false
     for (const id of list) {
       const p = findNextAvailablePlacement(id, next, blueprints, SHOWCASE_GRID_SIZE)
+      if (!p) {
+        overflow = true
+        break
+      }
       next.push(p)
     }
-    useAppStore.setState({ showcasePlacements: next })
+    // 逐项走 action（保留碰撞校验），不再整库 setState
+    for (const p of next) {
+      updateShowcasePlacement(p.blueprintId, p.gridX, p.gridY)
+    }
+    if (overflow) {
+      setArrangeToast(t.showcase.fullHint)
+      setTimeout(() => setArrangeToast(null), 2400)
+    }
   }
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      {arrangeToast && <div className="toast">{arrangeToast}</div>}
       {/* 顶部标题与陈列统计 */}
       <div
+        className="showcase-top-bar"
         style={{
           flex: 'none',
           display: 'flex',

@@ -18,7 +18,8 @@ export function TrayMenu() {
 
   useEffect(() => {
     // 1. 初始化读取本地持久化语言与主题（只读同步，不建立自动写回订阅）
-    void pickAdapter().load().then((saved) => {
+    void pickAdapter().load().then((res) => {
+      const saved = res.state
       if (saved?.settings) {
         const l = saved.settings.language ?? 'zh'
         const th = saved.settings.theme ?? 'light'

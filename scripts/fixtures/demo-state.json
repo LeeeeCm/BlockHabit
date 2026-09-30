@@ -1,0 +1,7804 @@
+{
+  "schemaVersion": 1,
+  "habits": [],
+  "checkIns": [],
+  "builds": [
+    {
+      "id": "castle-0",
+      "blueprintId": "castle",
+      "index": 0,
+      "placedAt": "2026-07-01T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-1",
+      "blueprintId": "castle",
+      "index": 1,
+      "placedAt": "2026-07-01T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-2",
+      "blueprintId": "castle",
+      "index": 2,
+      "placedAt": "2026-07-01T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-3",
+      "blueprintId": "castle",
+      "index": 3,
+      "placedAt": "2026-07-01T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-4",
+      "blueprintId": "castle",
+      "index": 4,
+      "placedAt": "2026-07-01T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-5",
+      "blueprintId": "castle",
+      "index": 5,
+      "placedAt": "2026-07-01T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-6",
+      "blueprintId": "castle",
+      "index": 6,
+      "placedAt": "2026-07-01T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-7",
+      "blueprintId": "castle",
+      "index": 7,
+      "placedAt": "2026-07-01T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-8",
+      "blueprintId": "castle",
+      "index": 8,
+      "placedAt": "2026-07-01T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-9",
+      "blueprintId": "castle",
+      "index": 9,
+      "placedAt": "2026-07-01T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-10",
+      "blueprintId": "castle",
+      "index": 10,
+      "placedAt": "2026-07-01T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-11",
+      "blueprintId": "castle",
+      "index": 11,
+      "placedAt": "2026-07-01T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-12",
+      "blueprintId": "castle",
+      "index": 12,
+      "placedAt": "2026-07-01T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-13",
+      "blueprintId": "castle",
+      "index": 13,
+      "placedAt": "2026-07-01T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-14",
+      "blueprintId": "castle",
+      "index": 14,
+      "placedAt": "2026-07-02T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-15",
+      "blueprintId": "castle",
+      "index": 15,
+      "placedAt": "2026-07-02T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-16",
+      "blueprintId": "castle",
+      "index": 16,
+      "placedAt": "2026-07-02T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-17",
+      "blueprintId": "castle",
+      "index": 17,
+      "placedAt": "2026-07-02T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-18",
+      "blueprintId": "castle",
+      "index": 18,
+      "placedAt": "2026-07-02T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-19",
+      "blueprintId": "castle",
+      "index": 19,
+      "placedAt": "2026-07-02T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-20",
+      "blueprintId": "castle",
+      "index": 20,
+      "placedAt": "2026-07-02T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-21",
+      "blueprintId": "castle",
+      "index": 21,
+      "placedAt": "2026-07-02T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-22",
+      "blueprintId": "castle",
+      "index": 22,
+      "placedAt": "2026-07-02T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-23",
+      "blueprintId": "castle",
+      "index": 23,
+      "placedAt": "2026-07-02T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-24",
+      "blueprintId": "castle",
+      "index": 24,
+      "placedAt": "2026-07-02T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-25",
+      "blueprintId": "castle",
+      "index": 25,
+      "placedAt": "2026-07-02T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-26",
+      "blueprintId": "castle",
+      "index": 26,
+      "placedAt": "2026-07-02T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-27",
+      "blueprintId": "castle",
+      "index": 27,
+      "placedAt": "2026-07-02T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-28",
+      "blueprintId": "castle",
+      "index": 28,
+      "placedAt": "2026-07-02T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-29",
+      "blueprintId": "castle",
+      "index": 29,
+      "placedAt": "2026-07-02T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-30",
+      "blueprintId": "castle",
+      "index": 30,
+      "placedAt": "2026-07-02T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-31",
+      "blueprintId": "castle",
+      "index": 31,
+      "placedAt": "2026-07-02T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-32",
+      "blueprintId": "castle",
+      "index": 32,
+      "placedAt": "2026-07-02T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-33",
+      "blueprintId": "castle",
+      "index": 33,
+      "placedAt": "2026-07-02T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-34",
+      "blueprintId": "castle",
+      "index": 34,
+      "placedAt": "2026-07-02T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-35",
+      "blueprintId": "castle",
+      "index": 35,
+      "placedAt": "2026-07-02T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-36",
+      "blueprintId": "castle",
+      "index": 36,
+      "placedAt": "2026-07-02T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-37",
+      "blueprintId": "castle",
+      "index": 37,
+      "placedAt": "2026-07-02T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-38",
+      "blueprintId": "castle",
+      "index": 38,
+      "placedAt": "2026-07-03T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-39",
+      "blueprintId": "castle",
+      "index": 39,
+      "placedAt": "2026-07-03T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-40",
+      "blueprintId": "castle",
+      "index": 40,
+      "placedAt": "2026-07-03T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-41",
+      "blueprintId": "castle",
+      "index": 41,
+      "placedAt": "2026-07-03T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-42",
+      "blueprintId": "castle",
+      "index": 42,
+      "placedAt": "2026-07-03T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-43",
+      "blueprintId": "castle",
+      "index": 43,
+      "placedAt": "2026-07-03T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-44",
+      "blueprintId": "castle",
+      "index": 44,
+      "placedAt": "2026-07-03T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-45",
+      "blueprintId": "castle",
+      "index": 45,
+      "placedAt": "2026-07-03T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-46",
+      "blueprintId": "castle",
+      "index": 46,
+      "placedAt": "2026-07-03T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-47",
+      "blueprintId": "castle",
+      "index": 47,
+      "placedAt": "2026-07-03T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-48",
+      "blueprintId": "castle",
+      "index": 48,
+      "placedAt": "2026-07-03T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-49",
+      "blueprintId": "castle",
+      "index": 49,
+      "placedAt": "2026-07-03T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-50",
+      "blueprintId": "castle",
+      "index": 50,
+      "placedAt": "2026-07-03T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-51",
+      "blueprintId": "castle",
+      "index": 51,
+      "placedAt": "2026-07-03T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-52",
+      "blueprintId": "castle",
+      "index": 52,
+      "placedAt": "2026-07-03T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-53",
+      "blueprintId": "castle",
+      "index": 53,
+      "placedAt": "2026-07-03T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-54",
+      "blueprintId": "castle",
+      "index": 54,
+      "placedAt": "2026-07-03T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-55",
+      "blueprintId": "castle",
+      "index": 55,
+      "placedAt": "2026-07-03T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-56",
+      "blueprintId": "castle",
+      "index": 56,
+      "placedAt": "2026-07-03T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-57",
+      "blueprintId": "castle",
+      "index": 57,
+      "placedAt": "2026-07-03T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-58",
+      "blueprintId": "castle",
+      "index": 58,
+      "placedAt": "2026-07-03T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-59",
+      "blueprintId": "castle",
+      "index": 59,
+      "placedAt": "2026-07-03T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-60",
+      "blueprintId": "castle",
+      "index": 60,
+      "placedAt": "2026-07-03T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-61",
+      "blueprintId": "castle",
+      "index": 61,
+      "placedAt": "2026-07-03T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-62",
+      "blueprintId": "castle",
+      "index": 62,
+      "placedAt": "2026-07-04T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-63",
+      "blueprintId": "castle",
+      "index": 63,
+      "placedAt": "2026-07-04T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-64",
+      "blueprintId": "castle",
+      "index": 64,
+      "placedAt": "2026-07-04T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-65",
+      "blueprintId": "castle",
+      "index": 65,
+      "placedAt": "2026-07-04T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-66",
+      "blueprintId": "castle",
+      "index": 66,
+      "placedAt": "2026-07-04T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-67",
+      "blueprintId": "castle",
+      "index": 67,
+      "placedAt": "2026-07-04T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-68",
+      "blueprintId": "castle",
+      "index": 68,
+      "placedAt": "2026-07-04T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-69",
+      "blueprintId": "castle",
+      "index": 69,
+      "placedAt": "2026-07-04T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-70",
+      "blueprintId": "castle",
+      "index": 70,
+      "placedAt": "2026-07-04T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-71",
+      "blueprintId": "castle",
+      "index": 71,
+      "placedAt": "2026-07-04T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-72",
+      "blueprintId": "castle",
+      "index": 72,
+      "placedAt": "2026-07-04T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-73",
+      "blueprintId": "castle",
+      "index": 73,
+      "placedAt": "2026-07-04T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-74",
+      "blueprintId": "castle",
+      "index": 74,
+      "placedAt": "2026-07-04T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-75",
+      "blueprintId": "castle",
+      "index": 75,
+      "placedAt": "2026-07-04T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-76",
+      "blueprintId": "castle",
+      "index": 76,
+      "placedAt": "2026-07-04T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-77",
+      "blueprintId": "castle",
+      "index": 77,
+      "placedAt": "2026-07-04T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-78",
+      "blueprintId": "castle",
+      "index": 78,
+      "placedAt": "2026-07-04T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-79",
+      "blueprintId": "castle",
+      "index": 79,
+      "placedAt": "2026-07-04T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-80",
+      "blueprintId": "castle",
+      "index": 80,
+      "placedAt": "2026-07-04T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-81",
+      "blueprintId": "castle",
+      "index": 81,
+      "placedAt": "2026-07-04T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-82",
+      "blueprintId": "castle",
+      "index": 82,
+      "placedAt": "2026-07-04T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-83",
+      "blueprintId": "castle",
+      "index": 83,
+      "placedAt": "2026-07-04T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-84",
+      "blueprintId": "castle",
+      "index": 84,
+      "placedAt": "2026-07-04T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-85",
+      "blueprintId": "castle",
+      "index": 85,
+      "placedAt": "2026-07-04T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-86",
+      "blueprintId": "castle",
+      "index": 86,
+      "placedAt": "2026-07-05T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-87",
+      "blueprintId": "castle",
+      "index": 87,
+      "placedAt": "2026-07-05T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-88",
+      "blueprintId": "castle",
+      "index": 88,
+      "placedAt": "2026-07-05T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-89",
+      "blueprintId": "castle",
+      "index": 89,
+      "placedAt": "2026-07-05T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-90",
+      "blueprintId": "castle",
+      "index": 90,
+      "placedAt": "2026-07-05T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-91",
+      "blueprintId": "castle",
+      "index": 91,
+      "placedAt": "2026-07-05T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-92",
+      "blueprintId": "castle",
+      "index": 92,
+      "placedAt": "2026-07-05T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-93",
+      "blueprintId": "castle",
+      "index": 93,
+      "placedAt": "2026-07-05T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-94",
+      "blueprintId": "castle",
+      "index": 94,
+      "placedAt": "2026-07-05T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-95",
+      "blueprintId": "castle",
+      "index": 95,
+      "placedAt": "2026-07-05T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-96",
+      "blueprintId": "castle",
+      "index": 96,
+      "placedAt": "2026-07-05T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-97",
+      "blueprintId": "castle",
+      "index": 97,
+      "placedAt": "2026-07-05T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-98",
+      "blueprintId": "castle",
+      "index": 98,
+      "placedAt": "2026-07-05T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-99",
+      "blueprintId": "castle",
+      "index": 99,
+      "placedAt": "2026-07-05T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-100",
+      "blueprintId": "castle",
+      "index": 100,
+      "placedAt": "2026-07-05T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-101",
+      "blueprintId": "castle",
+      "index": 101,
+      "placedAt": "2026-07-05T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-102",
+      "blueprintId": "castle",
+      "index": 102,
+      "placedAt": "2026-07-05T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-103",
+      "blueprintId": "castle",
+      "index": 103,
+      "placedAt": "2026-07-05T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-104",
+      "blueprintId": "castle",
+      "index": 104,
+      "placedAt": "2026-07-05T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-105",
+      "blueprintId": "castle",
+      "index": 105,
+      "placedAt": "2026-07-05T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-106",
+      "blueprintId": "castle",
+      "index": 106,
+      "placedAt": "2026-07-05T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-107",
+      "blueprintId": "castle",
+      "index": 107,
+      "placedAt": "2026-07-05T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-108",
+      "blueprintId": "castle",
+      "index": 108,
+      "placedAt": "2026-07-05T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-109",
+      "blueprintId": "castle",
+      "index": 109,
+      "placedAt": "2026-07-05T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-110",
+      "blueprintId": "castle",
+      "index": 110,
+      "placedAt": "2026-07-06T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-111",
+      "blueprintId": "castle",
+      "index": 111,
+      "placedAt": "2026-07-06T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-112",
+      "blueprintId": "castle",
+      "index": 112,
+      "placedAt": "2026-07-06T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-113",
+      "blueprintId": "castle",
+      "index": 113,
+      "placedAt": "2026-07-06T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-114",
+      "blueprintId": "castle",
+      "index": 114,
+      "placedAt": "2026-07-06T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-115",
+      "blueprintId": "castle",
+      "index": 115,
+      "placedAt": "2026-07-06T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-116",
+      "blueprintId": "castle",
+      "index": 116,
+      "placedAt": "2026-07-06T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-117",
+      "blueprintId": "castle",
+      "index": 117,
+      "placedAt": "2026-07-06T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-118",
+      "blueprintId": "castle",
+      "index": 118,
+      "placedAt": "2026-07-06T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-119",
+      "blueprintId": "castle",
+      "index": 119,
+      "placedAt": "2026-07-06T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-120",
+      "blueprintId": "castle",
+      "index": 120,
+      "placedAt": "2026-07-06T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-121",
+      "blueprintId": "castle",
+      "index": 121,
+      "placedAt": "2026-07-06T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-122",
+      "blueprintId": "castle",
+      "index": 122,
+      "placedAt": "2026-07-06T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-123",
+      "blueprintId": "castle",
+      "index": 123,
+      "placedAt": "2026-07-06T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-124",
+      "blueprintId": "castle",
+      "index": 124,
+      "placedAt": "2026-07-06T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-125",
+      "blueprintId": "castle",
+      "index": 125,
+      "placedAt": "2026-07-06T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-126",
+      "blueprintId": "castle",
+      "index": 126,
+      "placedAt": "2026-07-06T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-127",
+      "blueprintId": "castle",
+      "index": 127,
+      "placedAt": "2026-07-06T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-128",
+      "blueprintId": "castle",
+      "index": 128,
+      "placedAt": "2026-07-06T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-129",
+      "blueprintId": "castle",
+      "index": 129,
+      "placedAt": "2026-07-06T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-130",
+      "blueprintId": "castle",
+      "index": 130,
+      "placedAt": "2026-07-06T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-131",
+      "blueprintId": "castle",
+      "index": 131,
+      "placedAt": "2026-07-06T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-132",
+      "blueprintId": "castle",
+      "index": 132,
+      "placedAt": "2026-07-06T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-133",
+      "blueprintId": "castle",
+      "index": 133,
+      "placedAt": "2026-07-06T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-134",
+      "blueprintId": "castle",
+      "index": 134,
+      "placedAt": "2026-07-07T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-135",
+      "blueprintId": "castle",
+      "index": 135,
+      "placedAt": "2026-07-07T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-136",
+      "blueprintId": "castle",
+      "index": 136,
+      "placedAt": "2026-07-07T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-137",
+      "blueprintId": "castle",
+      "index": 137,
+      "placedAt": "2026-07-07T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-138",
+      "blueprintId": "castle",
+      "index": 138,
+      "placedAt": "2026-07-07T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-139",
+      "blueprintId": "castle",
+      "index": 139,
+      "placedAt": "2026-07-07T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-140",
+      "blueprintId": "castle",
+      "index": 140,
+      "placedAt": "2026-07-07T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-141",
+      "blueprintId": "castle",
+      "index": 141,
+      "placedAt": "2026-07-07T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-142",
+      "blueprintId": "castle",
+      "index": 142,
+      "placedAt": "2026-07-07T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-143",
+      "blueprintId": "castle",
+      "index": 143,
+      "placedAt": "2026-07-07T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-144",
+      "blueprintId": "castle",
+      "index": 144,
+      "placedAt": "2026-07-07T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-145",
+      "blueprintId": "castle",
+      "index": 145,
+      "placedAt": "2026-07-07T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-146",
+      "blueprintId": "castle",
+      "index": 146,
+      "placedAt": "2026-07-07T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-147",
+      "blueprintId": "castle",
+      "index": 147,
+      "placedAt": "2026-07-07T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-148",
+      "blueprintId": "castle",
+      "index": 148,
+      "placedAt": "2026-07-07T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-149",
+      "blueprintId": "castle",
+      "index": 149,
+      "placedAt": "2026-07-07T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-150",
+      "blueprintId": "castle",
+      "index": 150,
+      "placedAt": "2026-07-07T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-151",
+      "blueprintId": "castle",
+      "index": 151,
+      "placedAt": "2026-07-07T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-152",
+      "blueprintId": "castle",
+      "index": 152,
+      "placedAt": "2026-07-07T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-153",
+      "blueprintId": "castle",
+      "index": 153,
+      "placedAt": "2026-07-07T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-154",
+      "blueprintId": "castle",
+      "index": 154,
+      "placedAt": "2026-07-07T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-155",
+      "blueprintId": "castle",
+      "index": 155,
+      "placedAt": "2026-07-07T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-156",
+      "blueprintId": "castle",
+      "index": 156,
+      "placedAt": "2026-07-07T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-157",
+      "blueprintId": "castle",
+      "index": 157,
+      "placedAt": "2026-07-07T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-158",
+      "blueprintId": "castle",
+      "index": 158,
+      "placedAt": "2026-07-08T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-159",
+      "blueprintId": "castle",
+      "index": 159,
+      "placedAt": "2026-07-08T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-160",
+      "blueprintId": "castle",
+      "index": 160,
+      "placedAt": "2026-07-08T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-161",
+      "blueprintId": "castle",
+      "index": 161,
+      "placedAt": "2026-07-08T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-162",
+      "blueprintId": "castle",
+      "index": 162,
+      "placedAt": "2026-07-08T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-163",
+      "blueprintId": "castle",
+      "index": 163,
+      "placedAt": "2026-07-08T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-164",
+      "blueprintId": "castle",
+      "index": 164,
+      "placedAt": "2026-07-08T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-165",
+      "blueprintId": "castle",
+      "index": 165,
+      "placedAt": "2026-07-08T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-166",
+      "blueprintId": "castle",
+      "index": 166,
+      "placedAt": "2026-07-08T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-167",
+      "blueprintId": "castle",
+      "index": 167,
+      "placedAt": "2026-07-08T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-168",
+      "blueprintId": "castle",
+      "index": 168,
+      "placedAt": "2026-07-08T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-169",
+      "blueprintId": "castle",
+      "index": 169,
+      "placedAt": "2026-07-08T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-170",
+      "blueprintId": "castle",
+      "index": 170,
+      "placedAt": "2026-07-08T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-171",
+      "blueprintId": "castle",
+      "index": 171,
+      "placedAt": "2026-07-08T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-172",
+      "blueprintId": "castle",
+      "index": 172,
+      "placedAt": "2026-07-08T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-173",
+      "blueprintId": "castle",
+      "index": 173,
+      "placedAt": "2026-07-08T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-174",
+      "blueprintId": "castle",
+      "index": 174,
+      "placedAt": "2026-07-08T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-175",
+      "blueprintId": "castle",
+      "index": 175,
+      "placedAt": "2026-07-08T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-176",
+      "blueprintId": "castle",
+      "index": 176,
+      "placedAt": "2026-07-08T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-177",
+      "blueprintId": "castle",
+      "index": 177,
+      "placedAt": "2026-07-08T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-178",
+      "blueprintId": "castle",
+      "index": 178,
+      "placedAt": "2026-07-08T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-179",
+      "blueprintId": "castle",
+      "index": 179,
+      "placedAt": "2026-07-08T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-180",
+      "blueprintId": "castle",
+      "index": 180,
+      "placedAt": "2026-07-08T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-181",
+      "blueprintId": "castle",
+      "index": 181,
+      "placedAt": "2026-07-08T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-182",
+      "blueprintId": "castle",
+      "index": 182,
+      "placedAt": "2026-07-09T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-183",
+      "blueprintId": "castle",
+      "index": 183,
+      "placedAt": "2026-07-09T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-184",
+      "blueprintId": "castle",
+      "index": 184,
+      "placedAt": "2026-07-09T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-185",
+      "blueprintId": "castle",
+      "index": 185,
+      "placedAt": "2026-07-09T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-186",
+      "blueprintId": "castle",
+      "index": 186,
+      "placedAt": "2026-07-09T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-187",
+      "blueprintId": "castle",
+      "index": 187,
+      "placedAt": "2026-07-09T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-188",
+      "blueprintId": "castle",
+      "index": 188,
+      "placedAt": "2026-07-09T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "castle-189",
+      "blueprintId": "castle",
+      "index": 189,
+      "placedAt": "2026-07-09T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-0",
+      "blueprintId": "factory",
+      "index": 0,
+      "placedAt": "2026-07-09T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-1",
+      "blueprintId": "factory",
+      "index": 1,
+      "placedAt": "2026-07-09T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-2",
+      "blueprintId": "factory",
+      "index": 2,
+      "placedAt": "2026-07-09T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-3",
+      "blueprintId": "factory",
+      "index": 3,
+      "placedAt": "2026-07-09T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-4",
+      "blueprintId": "factory",
+      "index": 4,
+      "placedAt": "2026-07-09T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-5",
+      "blueprintId": "factory",
+      "index": 5,
+      "placedAt": "2026-07-09T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-6",
+      "blueprintId": "factory",
+      "index": 6,
+      "placedAt": "2026-07-09T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-7",
+      "blueprintId": "factory",
+      "index": 7,
+      "placedAt": "2026-07-09T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-8",
+      "blueprintId": "factory",
+      "index": 8,
+      "placedAt": "2026-07-09T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-9",
+      "blueprintId": "factory",
+      "index": 9,
+      "placedAt": "2026-07-09T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-10",
+      "blueprintId": "factory",
+      "index": 10,
+      "placedAt": "2026-07-09T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-11",
+      "blueprintId": "factory",
+      "index": 11,
+      "placedAt": "2026-07-09T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-12",
+      "blueprintId": "factory",
+      "index": 12,
+      "placedAt": "2026-07-09T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-13",
+      "blueprintId": "factory",
+      "index": 13,
+      "placedAt": "2026-07-09T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-14",
+      "blueprintId": "factory",
+      "index": 14,
+      "placedAt": "2026-07-09T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-15",
+      "blueprintId": "factory",
+      "index": 15,
+      "placedAt": "2026-07-09T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-16",
+      "blueprintId": "factory",
+      "index": 16,
+      "placedAt": "2026-07-10T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-17",
+      "blueprintId": "factory",
+      "index": 17,
+      "placedAt": "2026-07-10T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-18",
+      "blueprintId": "factory",
+      "index": 18,
+      "placedAt": "2026-07-10T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-19",
+      "blueprintId": "factory",
+      "index": 19,
+      "placedAt": "2026-07-10T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-20",
+      "blueprintId": "factory",
+      "index": 20,
+      "placedAt": "2026-07-10T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-21",
+      "blueprintId": "factory",
+      "index": 21,
+      "placedAt": "2026-07-10T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-22",
+      "blueprintId": "factory",
+      "index": 22,
+      "placedAt": "2026-07-10T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-23",
+      "blueprintId": "factory",
+      "index": 23,
+      "placedAt": "2026-07-10T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-24",
+      "blueprintId": "factory",
+      "index": 24,
+      "placedAt": "2026-07-10T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-25",
+      "blueprintId": "factory",
+      "index": 25,
+      "placedAt": "2026-07-10T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-26",
+      "blueprintId": "factory",
+      "index": 26,
+      "placedAt": "2026-07-10T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-27",
+      "blueprintId": "factory",
+      "index": 27,
+      "placedAt": "2026-07-10T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-28",
+      "blueprintId": "factory",
+      "index": 28,
+      "placedAt": "2026-07-10T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-29",
+      "blueprintId": "factory",
+      "index": 29,
+      "placedAt": "2026-07-10T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-30",
+      "blueprintId": "factory",
+      "index": 30,
+      "placedAt": "2026-07-10T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-31",
+      "blueprintId": "factory",
+      "index": 31,
+      "placedAt": "2026-07-10T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-32",
+      "blueprintId": "factory",
+      "index": 32,
+      "placedAt": "2026-07-10T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-33",
+      "blueprintId": "factory",
+      "index": 33,
+      "placedAt": "2026-07-10T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-34",
+      "blueprintId": "factory",
+      "index": 34,
+      "placedAt": "2026-07-10T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-35",
+      "blueprintId": "factory",
+      "index": 35,
+      "placedAt": "2026-07-10T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-36",
+      "blueprintId": "factory",
+      "index": 36,
+      "placedAt": "2026-07-10T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-37",
+      "blueprintId": "factory",
+      "index": 37,
+      "placedAt": "2026-07-10T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-38",
+      "blueprintId": "factory",
+      "index": 38,
+      "placedAt": "2026-07-10T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-39",
+      "blueprintId": "factory",
+      "index": 39,
+      "placedAt": "2026-07-10T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-40",
+      "blueprintId": "factory",
+      "index": 40,
+      "placedAt": "2026-07-11T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-41",
+      "blueprintId": "factory",
+      "index": 41,
+      "placedAt": "2026-07-11T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-42",
+      "blueprintId": "factory",
+      "index": 42,
+      "placedAt": "2026-07-11T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-43",
+      "blueprintId": "factory",
+      "index": 43,
+      "placedAt": "2026-07-11T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-44",
+      "blueprintId": "factory",
+      "index": 44,
+      "placedAt": "2026-07-11T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-45",
+      "blueprintId": "factory",
+      "index": 45,
+      "placedAt": "2026-07-11T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-46",
+      "blueprintId": "factory",
+      "index": 46,
+      "placedAt": "2026-07-11T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-47",
+      "blueprintId": "factory",
+      "index": 47,
+      "placedAt": "2026-07-11T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-48",
+      "blueprintId": "factory",
+      "index": 48,
+      "placedAt": "2026-07-11T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-49",
+      "blueprintId": "factory",
+      "index": 49,
+      "placedAt": "2026-07-11T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-50",
+      "blueprintId": "factory",
+      "index": 50,
+      "placedAt": "2026-07-11T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-51",
+      "blueprintId": "factory",
+      "index": 51,
+      "placedAt": "2026-07-11T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-52",
+      "blueprintId": "factory",
+      "index": 52,
+      "placedAt": "2026-07-11T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-53",
+      "blueprintId": "factory",
+      "index": 53,
+      "placedAt": "2026-07-11T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-54",
+      "blueprintId": "factory",
+      "index": 54,
+      "placedAt": "2026-07-11T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-55",
+      "blueprintId": "factory",
+      "index": 55,
+      "placedAt": "2026-07-11T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-56",
+      "blueprintId": "factory",
+      "index": 56,
+      "placedAt": "2026-07-11T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-57",
+      "blueprintId": "factory",
+      "index": 57,
+      "placedAt": "2026-07-11T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-58",
+      "blueprintId": "factory",
+      "index": 58,
+      "placedAt": "2026-07-11T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-59",
+      "blueprintId": "factory",
+      "index": 59,
+      "placedAt": "2026-07-11T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-60",
+      "blueprintId": "factory",
+      "index": 60,
+      "placedAt": "2026-07-11T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-61",
+      "blueprintId": "factory",
+      "index": 61,
+      "placedAt": "2026-07-11T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-62",
+      "blueprintId": "factory",
+      "index": 62,
+      "placedAt": "2026-07-11T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-63",
+      "blueprintId": "factory",
+      "index": 63,
+      "placedAt": "2026-07-11T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-64",
+      "blueprintId": "factory",
+      "index": 64,
+      "placedAt": "2026-07-12T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-65",
+      "blueprintId": "factory",
+      "index": 65,
+      "placedAt": "2026-07-12T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-66",
+      "blueprintId": "factory",
+      "index": 66,
+      "placedAt": "2026-07-12T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-67",
+      "blueprintId": "factory",
+      "index": 67,
+      "placedAt": "2026-07-12T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-68",
+      "blueprintId": "factory",
+      "index": 68,
+      "placedAt": "2026-07-12T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-69",
+      "blueprintId": "factory",
+      "index": 69,
+      "placedAt": "2026-07-12T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-70",
+      "blueprintId": "factory",
+      "index": 70,
+      "placedAt": "2026-07-12T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-71",
+      "blueprintId": "factory",
+      "index": 71,
+      "placedAt": "2026-07-12T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-72",
+      "blueprintId": "factory",
+      "index": 72,
+      "placedAt": "2026-07-12T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-73",
+      "blueprintId": "factory",
+      "index": 73,
+      "placedAt": "2026-07-12T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-74",
+      "blueprintId": "factory",
+      "index": 74,
+      "placedAt": "2026-07-12T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-75",
+      "blueprintId": "factory",
+      "index": 75,
+      "placedAt": "2026-07-12T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-76",
+      "blueprintId": "factory",
+      "index": 76,
+      "placedAt": "2026-07-12T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-77",
+      "blueprintId": "factory",
+      "index": 77,
+      "placedAt": "2026-07-12T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-78",
+      "blueprintId": "factory",
+      "index": 78,
+      "placedAt": "2026-07-12T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-79",
+      "blueprintId": "factory",
+      "index": 79,
+      "placedAt": "2026-07-12T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-80",
+      "blueprintId": "factory",
+      "index": 80,
+      "placedAt": "2026-07-12T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-81",
+      "blueprintId": "factory",
+      "index": 81,
+      "placedAt": "2026-07-12T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-82",
+      "blueprintId": "factory",
+      "index": 82,
+      "placedAt": "2026-07-12T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-83",
+      "blueprintId": "factory",
+      "index": 83,
+      "placedAt": "2026-07-12T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-84",
+      "blueprintId": "factory",
+      "index": 84,
+      "placedAt": "2026-07-12T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-85",
+      "blueprintId": "factory",
+      "index": 85,
+      "placedAt": "2026-07-12T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-86",
+      "blueprintId": "factory",
+      "index": 86,
+      "placedAt": "2026-07-12T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-87",
+      "blueprintId": "factory",
+      "index": 87,
+      "placedAt": "2026-07-12T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-88",
+      "blueprintId": "factory",
+      "index": 88,
+      "placedAt": "2026-07-13T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-89",
+      "blueprintId": "factory",
+      "index": 89,
+      "placedAt": "2026-07-13T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-90",
+      "blueprintId": "factory",
+      "index": 90,
+      "placedAt": "2026-07-13T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-91",
+      "blueprintId": "factory",
+      "index": 91,
+      "placedAt": "2026-07-13T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-92",
+      "blueprintId": "factory",
+      "index": 92,
+      "placedAt": "2026-07-13T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-93",
+      "blueprintId": "factory",
+      "index": 93,
+      "placedAt": "2026-07-13T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-94",
+      "blueprintId": "factory",
+      "index": 94,
+      "placedAt": "2026-07-13T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-95",
+      "blueprintId": "factory",
+      "index": 95,
+      "placedAt": "2026-07-13T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-96",
+      "blueprintId": "factory",
+      "index": 96,
+      "placedAt": "2026-07-13T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-97",
+      "blueprintId": "factory",
+      "index": 97,
+      "placedAt": "2026-07-13T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-98",
+      "blueprintId": "factory",
+      "index": 98,
+      "placedAt": "2026-07-13T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-99",
+      "blueprintId": "factory",
+      "index": 99,
+      "placedAt": "2026-07-13T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-100",
+      "blueprintId": "factory",
+      "index": 100,
+      "placedAt": "2026-07-13T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-101",
+      "blueprintId": "factory",
+      "index": 101,
+      "placedAt": "2026-07-13T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-102",
+      "blueprintId": "factory",
+      "index": 102,
+      "placedAt": "2026-07-13T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-103",
+      "blueprintId": "factory",
+      "index": 103,
+      "placedAt": "2026-07-13T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-104",
+      "blueprintId": "factory",
+      "index": 104,
+      "placedAt": "2026-07-13T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-105",
+      "blueprintId": "factory",
+      "index": 105,
+      "placedAt": "2026-07-13T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-106",
+      "blueprintId": "factory",
+      "index": 106,
+      "placedAt": "2026-07-13T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-107",
+      "blueprintId": "factory",
+      "index": 107,
+      "placedAt": "2026-07-13T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-108",
+      "blueprintId": "factory",
+      "index": 108,
+      "placedAt": "2026-07-13T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-109",
+      "blueprintId": "factory",
+      "index": 109,
+      "placedAt": "2026-07-13T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-110",
+      "blueprintId": "factory",
+      "index": 110,
+      "placedAt": "2026-07-13T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-111",
+      "blueprintId": "factory",
+      "index": 111,
+      "placedAt": "2026-07-13T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-112",
+      "blueprintId": "factory",
+      "index": 112,
+      "placedAt": "2026-07-14T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-113",
+      "blueprintId": "factory",
+      "index": 113,
+      "placedAt": "2026-07-14T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-114",
+      "blueprintId": "factory",
+      "index": 114,
+      "placedAt": "2026-07-14T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-115",
+      "blueprintId": "factory",
+      "index": 115,
+      "placedAt": "2026-07-14T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-116",
+      "blueprintId": "factory",
+      "index": 116,
+      "placedAt": "2026-07-14T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-117",
+      "blueprintId": "factory",
+      "index": 117,
+      "placedAt": "2026-07-14T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-118",
+      "blueprintId": "factory",
+      "index": 118,
+      "placedAt": "2026-07-14T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-119",
+      "blueprintId": "factory",
+      "index": 119,
+      "placedAt": "2026-07-14T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-120",
+      "blueprintId": "factory",
+      "index": 120,
+      "placedAt": "2026-07-14T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-121",
+      "blueprintId": "factory",
+      "index": 121,
+      "placedAt": "2026-07-14T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-122",
+      "blueprintId": "factory",
+      "index": 122,
+      "placedAt": "2026-07-14T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-123",
+      "blueprintId": "factory",
+      "index": 123,
+      "placedAt": "2026-07-14T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-124",
+      "blueprintId": "factory",
+      "index": 124,
+      "placedAt": "2026-07-14T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-125",
+      "blueprintId": "factory",
+      "index": 125,
+      "placedAt": "2026-07-14T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-126",
+      "blueprintId": "factory",
+      "index": 126,
+      "placedAt": "2026-07-14T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-127",
+      "blueprintId": "factory",
+      "index": 127,
+      "placedAt": "2026-07-14T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-128",
+      "blueprintId": "factory",
+      "index": 128,
+      "placedAt": "2026-07-14T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-129",
+      "blueprintId": "factory",
+      "index": 129,
+      "placedAt": "2026-07-14T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-130",
+      "blueprintId": "factory",
+      "index": 130,
+      "placedAt": "2026-07-14T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-131",
+      "blueprintId": "factory",
+      "index": 131,
+      "placedAt": "2026-07-14T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-132",
+      "blueprintId": "factory",
+      "index": 132,
+      "placedAt": "2026-07-14T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-133",
+      "blueprintId": "factory",
+      "index": 133,
+      "placedAt": "2026-07-14T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-134",
+      "blueprintId": "factory",
+      "index": 134,
+      "placedAt": "2026-07-14T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-135",
+      "blueprintId": "factory",
+      "index": 135,
+      "placedAt": "2026-07-14T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-136",
+      "blueprintId": "factory",
+      "index": 136,
+      "placedAt": "2026-07-15T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-137",
+      "blueprintId": "factory",
+      "index": 137,
+      "placedAt": "2026-07-15T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-138",
+      "blueprintId": "factory",
+      "index": 138,
+      "placedAt": "2026-07-15T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-139",
+      "blueprintId": "factory",
+      "index": 139,
+      "placedAt": "2026-07-15T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-140",
+      "blueprintId": "factory",
+      "index": 140,
+      "placedAt": "2026-07-15T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-141",
+      "blueprintId": "factory",
+      "index": 141,
+      "placedAt": "2026-07-15T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-142",
+      "blueprintId": "factory",
+      "index": 142,
+      "placedAt": "2026-07-15T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-143",
+      "blueprintId": "factory",
+      "index": 143,
+      "placedAt": "2026-07-15T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-144",
+      "blueprintId": "factory",
+      "index": 144,
+      "placedAt": "2026-07-15T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-145",
+      "blueprintId": "factory",
+      "index": 145,
+      "placedAt": "2026-07-15T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-146",
+      "blueprintId": "factory",
+      "index": 146,
+      "placedAt": "2026-07-15T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-147",
+      "blueprintId": "factory",
+      "index": 147,
+      "placedAt": "2026-07-15T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-148",
+      "blueprintId": "factory",
+      "index": 148,
+      "placedAt": "2026-07-15T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-149",
+      "blueprintId": "factory",
+      "index": 149,
+      "placedAt": "2026-07-15T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-150",
+      "blueprintId": "factory",
+      "index": 150,
+      "placedAt": "2026-07-15T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-151",
+      "blueprintId": "factory",
+      "index": 151,
+      "placedAt": "2026-07-15T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-152",
+      "blueprintId": "factory",
+      "index": 152,
+      "placedAt": "2026-07-15T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-153",
+      "blueprintId": "factory",
+      "index": 153,
+      "placedAt": "2026-07-15T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-154",
+      "blueprintId": "factory",
+      "index": 154,
+      "placedAt": "2026-07-15T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-155",
+      "blueprintId": "factory",
+      "index": 155,
+      "placedAt": "2026-07-15T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-156",
+      "blueprintId": "factory",
+      "index": 156,
+      "placedAt": "2026-07-15T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-157",
+      "blueprintId": "factory",
+      "index": 157,
+      "placedAt": "2026-07-15T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-158",
+      "blueprintId": "factory",
+      "index": 158,
+      "placedAt": "2026-07-15T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-159",
+      "blueprintId": "factory",
+      "index": 159,
+      "placedAt": "2026-07-15T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-160",
+      "blueprintId": "factory",
+      "index": 160,
+      "placedAt": "2026-07-16T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-161",
+      "blueprintId": "factory",
+      "index": 161,
+      "placedAt": "2026-07-16T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-162",
+      "blueprintId": "factory",
+      "index": 162,
+      "placedAt": "2026-07-16T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-163",
+      "blueprintId": "factory",
+      "index": 163,
+      "placedAt": "2026-07-16T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-164",
+      "blueprintId": "factory",
+      "index": 164,
+      "placedAt": "2026-07-16T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-165",
+      "blueprintId": "factory",
+      "index": 165,
+      "placedAt": "2026-07-16T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-166",
+      "blueprintId": "factory",
+      "index": 166,
+      "placedAt": "2026-07-16T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-167",
+      "blueprintId": "factory",
+      "index": 167,
+      "placedAt": "2026-07-16T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-168",
+      "blueprintId": "factory",
+      "index": 168,
+      "placedAt": "2026-07-16T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-169",
+      "blueprintId": "factory",
+      "index": 169,
+      "placedAt": "2026-07-16T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-170",
+      "blueprintId": "factory",
+      "index": 170,
+      "placedAt": "2026-07-16T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-171",
+      "blueprintId": "factory",
+      "index": 171,
+      "placedAt": "2026-07-16T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-172",
+      "blueprintId": "factory",
+      "index": 172,
+      "placedAt": "2026-07-16T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-173",
+      "blueprintId": "factory",
+      "index": 173,
+      "placedAt": "2026-07-16T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "factory-174",
+      "blueprintId": "factory",
+      "index": 174,
+      "placedAt": "2026-07-16T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-0",
+      "blueprintId": "lighthouse",
+      "index": 0,
+      "placedAt": "2026-07-16T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-1",
+      "blueprintId": "lighthouse",
+      "index": 1,
+      "placedAt": "2026-07-16T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-2",
+      "blueprintId": "lighthouse",
+      "index": 2,
+      "placedAt": "2026-07-16T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-3",
+      "blueprintId": "lighthouse",
+      "index": 3,
+      "placedAt": "2026-07-16T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-4",
+      "blueprintId": "lighthouse",
+      "index": 4,
+      "placedAt": "2026-07-16T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-5",
+      "blueprintId": "lighthouse",
+      "index": 5,
+      "placedAt": "2026-07-16T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-6",
+      "blueprintId": "lighthouse",
+      "index": 6,
+      "placedAt": "2026-07-16T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-7",
+      "blueprintId": "lighthouse",
+      "index": 7,
+      "placedAt": "2026-07-16T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-8",
+      "blueprintId": "lighthouse",
+      "index": 8,
+      "placedAt": "2026-07-16T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-9",
+      "blueprintId": "lighthouse",
+      "index": 9,
+      "placedAt": "2026-07-17T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-10",
+      "blueprintId": "lighthouse",
+      "index": 10,
+      "placedAt": "2026-07-17T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-11",
+      "blueprintId": "lighthouse",
+      "index": 11,
+      "placedAt": "2026-07-17T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-12",
+      "blueprintId": "lighthouse",
+      "index": 12,
+      "placedAt": "2026-07-17T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-13",
+      "blueprintId": "lighthouse",
+      "index": 13,
+      "placedAt": "2026-07-17T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-14",
+      "blueprintId": "lighthouse",
+      "index": 14,
+      "placedAt": "2026-07-17T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-15",
+      "blueprintId": "lighthouse",
+      "index": 15,
+      "placedAt": "2026-07-17T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-16",
+      "blueprintId": "lighthouse",
+      "index": 16,
+      "placedAt": "2026-07-17T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-17",
+      "blueprintId": "lighthouse",
+      "index": 17,
+      "placedAt": "2026-07-17T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-18",
+      "blueprintId": "lighthouse",
+      "index": 18,
+      "placedAt": "2026-07-17T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-19",
+      "blueprintId": "lighthouse",
+      "index": 19,
+      "placedAt": "2026-07-17T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-20",
+      "blueprintId": "lighthouse",
+      "index": 20,
+      "placedAt": "2026-07-17T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-21",
+      "blueprintId": "lighthouse",
+      "index": 21,
+      "placedAt": "2026-07-17T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-22",
+      "blueprintId": "lighthouse",
+      "index": 22,
+      "placedAt": "2026-07-17T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-23",
+      "blueprintId": "lighthouse",
+      "index": 23,
+      "placedAt": "2026-07-17T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-24",
+      "blueprintId": "lighthouse",
+      "index": 24,
+      "placedAt": "2026-07-17T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-25",
+      "blueprintId": "lighthouse",
+      "index": 25,
+      "placedAt": "2026-07-17T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-26",
+      "blueprintId": "lighthouse",
+      "index": 26,
+      "placedAt": "2026-07-17T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-27",
+      "blueprintId": "lighthouse",
+      "index": 27,
+      "placedAt": "2026-07-17T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-28",
+      "blueprintId": "lighthouse",
+      "index": 28,
+      "placedAt": "2026-07-17T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-29",
+      "blueprintId": "lighthouse",
+      "index": 29,
+      "placedAt": "2026-07-17T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-30",
+      "blueprintId": "lighthouse",
+      "index": 30,
+      "placedAt": "2026-07-17T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-31",
+      "blueprintId": "lighthouse",
+      "index": 31,
+      "placedAt": "2026-07-17T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-32",
+      "blueprintId": "lighthouse",
+      "index": 32,
+      "placedAt": "2026-07-17T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-33",
+      "blueprintId": "lighthouse",
+      "index": 33,
+      "placedAt": "2026-07-18T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-34",
+      "blueprintId": "lighthouse",
+      "index": 34,
+      "placedAt": "2026-07-18T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-35",
+      "blueprintId": "lighthouse",
+      "index": 35,
+      "placedAt": "2026-07-18T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-36",
+      "blueprintId": "lighthouse",
+      "index": 36,
+      "placedAt": "2026-07-18T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-37",
+      "blueprintId": "lighthouse",
+      "index": 37,
+      "placedAt": "2026-07-18T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-38",
+      "blueprintId": "lighthouse",
+      "index": 38,
+      "placedAt": "2026-07-18T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-39",
+      "blueprintId": "lighthouse",
+      "index": 39,
+      "placedAt": "2026-07-18T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-40",
+      "blueprintId": "lighthouse",
+      "index": 40,
+      "placedAt": "2026-07-18T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-41",
+      "blueprintId": "lighthouse",
+      "index": 41,
+      "placedAt": "2026-07-18T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-42",
+      "blueprintId": "lighthouse",
+      "index": 42,
+      "placedAt": "2026-07-18T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-43",
+      "blueprintId": "lighthouse",
+      "index": 43,
+      "placedAt": "2026-07-18T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-44",
+      "blueprintId": "lighthouse",
+      "index": 44,
+      "placedAt": "2026-07-18T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-45",
+      "blueprintId": "lighthouse",
+      "index": 45,
+      "placedAt": "2026-07-18T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-46",
+      "blueprintId": "lighthouse",
+      "index": 46,
+      "placedAt": "2026-07-18T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-47",
+      "blueprintId": "lighthouse",
+      "index": 47,
+      "placedAt": "2026-07-18T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-48",
+      "blueprintId": "lighthouse",
+      "index": 48,
+      "placedAt": "2026-07-18T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-49",
+      "blueprintId": "lighthouse",
+      "index": 49,
+      "placedAt": "2026-07-18T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-50",
+      "blueprintId": "lighthouse",
+      "index": 50,
+      "placedAt": "2026-07-18T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-51",
+      "blueprintId": "lighthouse",
+      "index": 51,
+      "placedAt": "2026-07-18T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-52",
+      "blueprintId": "lighthouse",
+      "index": 52,
+      "placedAt": "2026-07-18T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-53",
+      "blueprintId": "lighthouse",
+      "index": 53,
+      "placedAt": "2026-07-18T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-54",
+      "blueprintId": "lighthouse",
+      "index": 54,
+      "placedAt": "2026-07-18T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-55",
+      "blueprintId": "lighthouse",
+      "index": 55,
+      "placedAt": "2026-07-18T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-56",
+      "blueprintId": "lighthouse",
+      "index": 56,
+      "placedAt": "2026-07-18T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-57",
+      "blueprintId": "lighthouse",
+      "index": 57,
+      "placedAt": "2026-07-19T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-58",
+      "blueprintId": "lighthouse",
+      "index": 58,
+      "placedAt": "2026-07-19T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-59",
+      "blueprintId": "lighthouse",
+      "index": 59,
+      "placedAt": "2026-07-19T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-60",
+      "blueprintId": "lighthouse",
+      "index": 60,
+      "placedAt": "2026-07-19T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-61",
+      "blueprintId": "lighthouse",
+      "index": 61,
+      "placedAt": "2026-07-19T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-62",
+      "blueprintId": "lighthouse",
+      "index": 62,
+      "placedAt": "2026-07-19T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-63",
+      "blueprintId": "lighthouse",
+      "index": 63,
+      "placedAt": "2026-07-19T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-64",
+      "blueprintId": "lighthouse",
+      "index": 64,
+      "placedAt": "2026-07-19T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-65",
+      "blueprintId": "lighthouse",
+      "index": 65,
+      "placedAt": "2026-07-19T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-66",
+      "blueprintId": "lighthouse",
+      "index": 66,
+      "placedAt": "2026-07-19T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-67",
+      "blueprintId": "lighthouse",
+      "index": 67,
+      "placedAt": "2026-07-19T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-68",
+      "blueprintId": "lighthouse",
+      "index": 68,
+      "placedAt": "2026-07-19T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-69",
+      "blueprintId": "lighthouse",
+      "index": 69,
+      "placedAt": "2026-07-19T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-70",
+      "blueprintId": "lighthouse",
+      "index": 70,
+      "placedAt": "2026-07-19T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-71",
+      "blueprintId": "lighthouse",
+      "index": 71,
+      "placedAt": "2026-07-19T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-72",
+      "blueprintId": "lighthouse",
+      "index": 72,
+      "placedAt": "2026-07-19T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-73",
+      "blueprintId": "lighthouse",
+      "index": 73,
+      "placedAt": "2026-07-19T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-74",
+      "blueprintId": "lighthouse",
+      "index": 74,
+      "placedAt": "2026-07-19T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-75",
+      "blueprintId": "lighthouse",
+      "index": 75,
+      "placedAt": "2026-07-19T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-76",
+      "blueprintId": "lighthouse",
+      "index": 76,
+      "placedAt": "2026-07-19T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-77",
+      "blueprintId": "lighthouse",
+      "index": 77,
+      "placedAt": "2026-07-19T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-78",
+      "blueprintId": "lighthouse",
+      "index": 78,
+      "placedAt": "2026-07-19T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-79",
+      "blueprintId": "lighthouse",
+      "index": 79,
+      "placedAt": "2026-07-19T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-80",
+      "blueprintId": "lighthouse",
+      "index": 80,
+      "placedAt": "2026-07-19T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-81",
+      "blueprintId": "lighthouse",
+      "index": 81,
+      "placedAt": "2026-07-20T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-82",
+      "blueprintId": "lighthouse",
+      "index": 82,
+      "placedAt": "2026-07-20T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-83",
+      "blueprintId": "lighthouse",
+      "index": 83,
+      "placedAt": "2026-07-20T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-84",
+      "blueprintId": "lighthouse",
+      "index": 84,
+      "placedAt": "2026-07-20T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-85",
+      "blueprintId": "lighthouse",
+      "index": 85,
+      "placedAt": "2026-07-20T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-86",
+      "blueprintId": "lighthouse",
+      "index": 86,
+      "placedAt": "2026-07-20T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-87",
+      "blueprintId": "lighthouse",
+      "index": 87,
+      "placedAt": "2026-07-20T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-88",
+      "blueprintId": "lighthouse",
+      "index": 88,
+      "placedAt": "2026-07-20T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-89",
+      "blueprintId": "lighthouse",
+      "index": 89,
+      "placedAt": "2026-07-20T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-90",
+      "blueprintId": "lighthouse",
+      "index": 90,
+      "placedAt": "2026-07-20T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-91",
+      "blueprintId": "lighthouse",
+      "index": 91,
+      "placedAt": "2026-07-20T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-92",
+      "blueprintId": "lighthouse",
+      "index": 92,
+      "placedAt": "2026-07-20T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-93",
+      "blueprintId": "lighthouse",
+      "index": 93,
+      "placedAt": "2026-07-20T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-94",
+      "blueprintId": "lighthouse",
+      "index": 94,
+      "placedAt": "2026-07-20T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-95",
+      "blueprintId": "lighthouse",
+      "index": 95,
+      "placedAt": "2026-07-20T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-96",
+      "blueprintId": "lighthouse",
+      "index": 96,
+      "placedAt": "2026-07-20T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-97",
+      "blueprintId": "lighthouse",
+      "index": 97,
+      "placedAt": "2026-07-20T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-98",
+      "blueprintId": "lighthouse",
+      "index": 98,
+      "placedAt": "2026-07-20T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-99",
+      "blueprintId": "lighthouse",
+      "index": 99,
+      "placedAt": "2026-07-20T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-100",
+      "blueprintId": "lighthouse",
+      "index": 100,
+      "placedAt": "2026-07-20T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-101",
+      "blueprintId": "lighthouse",
+      "index": 101,
+      "placedAt": "2026-07-20T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-102",
+      "blueprintId": "lighthouse",
+      "index": 102,
+      "placedAt": "2026-07-20T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-103",
+      "blueprintId": "lighthouse",
+      "index": 103,
+      "placedAt": "2026-07-20T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-104",
+      "blueprintId": "lighthouse",
+      "index": 104,
+      "placedAt": "2026-07-20T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-105",
+      "blueprintId": "lighthouse",
+      "index": 105,
+      "placedAt": "2026-07-21T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-106",
+      "blueprintId": "lighthouse",
+      "index": 106,
+      "placedAt": "2026-07-21T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-107",
+      "blueprintId": "lighthouse",
+      "index": 107,
+      "placedAt": "2026-07-21T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-108",
+      "blueprintId": "lighthouse",
+      "index": 108,
+      "placedAt": "2026-07-21T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-109",
+      "blueprintId": "lighthouse",
+      "index": 109,
+      "placedAt": "2026-07-21T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-110",
+      "blueprintId": "lighthouse",
+      "index": 110,
+      "placedAt": "2026-07-21T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-111",
+      "blueprintId": "lighthouse",
+      "index": 111,
+      "placedAt": "2026-07-21T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-112",
+      "blueprintId": "lighthouse",
+      "index": 112,
+      "placedAt": "2026-07-21T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-113",
+      "blueprintId": "lighthouse",
+      "index": 113,
+      "placedAt": "2026-07-21T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-114",
+      "blueprintId": "lighthouse",
+      "index": 114,
+      "placedAt": "2026-07-21T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-115",
+      "blueprintId": "lighthouse",
+      "index": 115,
+      "placedAt": "2026-07-21T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-116",
+      "blueprintId": "lighthouse",
+      "index": 116,
+      "placedAt": "2026-07-21T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-117",
+      "blueprintId": "lighthouse",
+      "index": 117,
+      "placedAt": "2026-07-21T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-118",
+      "blueprintId": "lighthouse",
+      "index": 118,
+      "placedAt": "2026-07-21T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-119",
+      "blueprintId": "lighthouse",
+      "index": 119,
+      "placedAt": "2026-07-21T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-120",
+      "blueprintId": "lighthouse",
+      "index": 120,
+      "placedAt": "2026-07-21T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-121",
+      "blueprintId": "lighthouse",
+      "index": 121,
+      "placedAt": "2026-07-21T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-122",
+      "blueprintId": "lighthouse",
+      "index": 122,
+      "placedAt": "2026-07-21T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-123",
+      "blueprintId": "lighthouse",
+      "index": 123,
+      "placedAt": "2026-07-21T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-124",
+      "blueprintId": "lighthouse",
+      "index": 124,
+      "placedAt": "2026-07-21T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-125",
+      "blueprintId": "lighthouse",
+      "index": 125,
+      "placedAt": "2026-07-21T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-126",
+      "blueprintId": "lighthouse",
+      "index": 126,
+      "placedAt": "2026-07-21T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-127",
+      "blueprintId": "lighthouse",
+      "index": 127,
+      "placedAt": "2026-07-21T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-128",
+      "blueprintId": "lighthouse",
+      "index": 128,
+      "placedAt": "2026-07-21T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-129",
+      "blueprintId": "lighthouse",
+      "index": 129,
+      "placedAt": "2026-07-22T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "lighthouse-130",
+      "blueprintId": "lighthouse",
+      "index": 130,
+      "placedAt": "2026-07-22T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-0",
+      "blueprintId": "pyramid",
+      "index": 0,
+      "placedAt": "2026-07-22T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-1",
+      "blueprintId": "pyramid",
+      "index": 1,
+      "placedAt": "2026-07-22T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-2",
+      "blueprintId": "pyramid",
+      "index": 2,
+      "placedAt": "2026-07-22T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-3",
+      "blueprintId": "pyramid",
+      "index": 3,
+      "placedAt": "2026-07-22T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-4",
+      "blueprintId": "pyramid",
+      "index": 4,
+      "placedAt": "2026-07-22T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-5",
+      "blueprintId": "pyramid",
+      "index": 5,
+      "placedAt": "2026-07-22T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-6",
+      "blueprintId": "pyramid",
+      "index": 6,
+      "placedAt": "2026-07-22T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-7",
+      "blueprintId": "pyramid",
+      "index": 7,
+      "placedAt": "2026-07-22T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-8",
+      "blueprintId": "pyramid",
+      "index": 8,
+      "placedAt": "2026-07-22T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-9",
+      "blueprintId": "pyramid",
+      "index": 9,
+      "placedAt": "2026-07-22T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-10",
+      "blueprintId": "pyramid",
+      "index": 10,
+      "placedAt": "2026-07-22T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-11",
+      "blueprintId": "pyramid",
+      "index": 11,
+      "placedAt": "2026-07-22T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-12",
+      "blueprintId": "pyramid",
+      "index": 12,
+      "placedAt": "2026-07-22T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-13",
+      "blueprintId": "pyramid",
+      "index": 13,
+      "placedAt": "2026-07-22T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-14",
+      "blueprintId": "pyramid",
+      "index": 14,
+      "placedAt": "2026-07-22T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-15",
+      "blueprintId": "pyramid",
+      "index": 15,
+      "placedAt": "2026-07-22T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-16",
+      "blueprintId": "pyramid",
+      "index": 16,
+      "placedAt": "2026-07-22T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-17",
+      "blueprintId": "pyramid",
+      "index": 17,
+      "placedAt": "2026-07-22T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-18",
+      "blueprintId": "pyramid",
+      "index": 18,
+      "placedAt": "2026-07-22T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-19",
+      "blueprintId": "pyramid",
+      "index": 19,
+      "placedAt": "2026-07-22T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-20",
+      "blueprintId": "pyramid",
+      "index": 20,
+      "placedAt": "2026-07-22T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-21",
+      "blueprintId": "pyramid",
+      "index": 21,
+      "placedAt": "2026-07-22T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-22",
+      "blueprintId": "pyramid",
+      "index": 22,
+      "placedAt": "2026-07-23T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-23",
+      "blueprintId": "pyramid",
+      "index": 23,
+      "placedAt": "2026-07-23T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-24",
+      "blueprintId": "pyramid",
+      "index": 24,
+      "placedAt": "2026-07-23T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-25",
+      "blueprintId": "pyramid",
+      "index": 25,
+      "placedAt": "2026-07-23T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-26",
+      "blueprintId": "pyramid",
+      "index": 26,
+      "placedAt": "2026-07-23T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-27",
+      "blueprintId": "pyramid",
+      "index": 27,
+      "placedAt": "2026-07-23T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-28",
+      "blueprintId": "pyramid",
+      "index": 28,
+      "placedAt": "2026-07-23T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-29",
+      "blueprintId": "pyramid",
+      "index": 29,
+      "placedAt": "2026-07-23T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-30",
+      "blueprintId": "pyramid",
+      "index": 30,
+      "placedAt": "2026-07-23T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-31",
+      "blueprintId": "pyramid",
+      "index": 31,
+      "placedAt": "2026-07-23T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-32",
+      "blueprintId": "pyramid",
+      "index": 32,
+      "placedAt": "2026-07-23T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-33",
+      "blueprintId": "pyramid",
+      "index": 33,
+      "placedAt": "2026-07-23T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-34",
+      "blueprintId": "pyramid",
+      "index": 34,
+      "placedAt": "2026-07-23T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-35",
+      "blueprintId": "pyramid",
+      "index": 35,
+      "placedAt": "2026-07-23T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-36",
+      "blueprintId": "pyramid",
+      "index": 36,
+      "placedAt": "2026-07-23T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-37",
+      "blueprintId": "pyramid",
+      "index": 37,
+      "placedAt": "2026-07-23T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-38",
+      "blueprintId": "pyramid",
+      "index": 38,
+      "placedAt": "2026-07-23T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-39",
+      "blueprintId": "pyramid",
+      "index": 39,
+      "placedAt": "2026-07-23T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-40",
+      "blueprintId": "pyramid",
+      "index": 40,
+      "placedAt": "2026-07-23T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-41",
+      "blueprintId": "pyramid",
+      "index": 41,
+      "placedAt": "2026-07-23T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-42",
+      "blueprintId": "pyramid",
+      "index": 42,
+      "placedAt": "2026-07-23T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-43",
+      "blueprintId": "pyramid",
+      "index": 43,
+      "placedAt": "2026-07-23T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-44",
+      "blueprintId": "pyramid",
+      "index": 44,
+      "placedAt": "2026-07-23T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-45",
+      "blueprintId": "pyramid",
+      "index": 45,
+      "placedAt": "2026-07-23T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-46",
+      "blueprintId": "pyramid",
+      "index": 46,
+      "placedAt": "2026-07-24T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-47",
+      "blueprintId": "pyramid",
+      "index": 47,
+      "placedAt": "2026-07-24T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-48",
+      "blueprintId": "pyramid",
+      "index": 48,
+      "placedAt": "2026-07-24T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-49",
+      "blueprintId": "pyramid",
+      "index": 49,
+      "placedAt": "2026-07-24T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-50",
+      "blueprintId": "pyramid",
+      "index": 50,
+      "placedAt": "2026-07-24T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-51",
+      "blueprintId": "pyramid",
+      "index": 51,
+      "placedAt": "2026-07-24T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-52",
+      "blueprintId": "pyramid",
+      "index": 52,
+      "placedAt": "2026-07-24T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-53",
+      "blueprintId": "pyramid",
+      "index": 53,
+      "placedAt": "2026-07-24T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-54",
+      "blueprintId": "pyramid",
+      "index": 54,
+      "placedAt": "2026-07-24T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-55",
+      "blueprintId": "pyramid",
+      "index": 55,
+      "placedAt": "2026-07-24T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-56",
+      "blueprintId": "pyramid",
+      "index": 56,
+      "placedAt": "2026-07-24T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-57",
+      "blueprintId": "pyramid",
+      "index": 57,
+      "placedAt": "2026-07-24T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-58",
+      "blueprintId": "pyramid",
+      "index": 58,
+      "placedAt": "2026-07-24T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-59",
+      "blueprintId": "pyramid",
+      "index": 59,
+      "placedAt": "2026-07-24T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-60",
+      "blueprintId": "pyramid",
+      "index": 60,
+      "placedAt": "2026-07-24T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-61",
+      "blueprintId": "pyramid",
+      "index": 61,
+      "placedAt": "2026-07-24T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-62",
+      "blueprintId": "pyramid",
+      "index": 62,
+      "placedAt": "2026-07-24T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-63",
+      "blueprintId": "pyramid",
+      "index": 63,
+      "placedAt": "2026-07-24T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-64",
+      "blueprintId": "pyramid",
+      "index": 64,
+      "placedAt": "2026-07-24T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-65",
+      "blueprintId": "pyramid",
+      "index": 65,
+      "placedAt": "2026-07-24T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-66",
+      "blueprintId": "pyramid",
+      "index": 66,
+      "placedAt": "2026-07-24T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-67",
+      "blueprintId": "pyramid",
+      "index": 67,
+      "placedAt": "2026-07-24T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-68",
+      "blueprintId": "pyramid",
+      "index": 68,
+      "placedAt": "2026-07-24T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-69",
+      "blueprintId": "pyramid",
+      "index": 69,
+      "placedAt": "2026-07-24T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-70",
+      "blueprintId": "pyramid",
+      "index": 70,
+      "placedAt": "2026-07-25T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-71",
+      "blueprintId": "pyramid",
+      "index": 71,
+      "placedAt": "2026-07-25T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-72",
+      "blueprintId": "pyramid",
+      "index": 72,
+      "placedAt": "2026-07-25T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-73",
+      "blueprintId": "pyramid",
+      "index": 73,
+      "placedAt": "2026-07-25T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-74",
+      "blueprintId": "pyramid",
+      "index": 74,
+      "placedAt": "2026-07-25T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-75",
+      "blueprintId": "pyramid",
+      "index": 75,
+      "placedAt": "2026-07-25T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-76",
+      "blueprintId": "pyramid",
+      "index": 76,
+      "placedAt": "2026-07-25T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-77",
+      "blueprintId": "pyramid",
+      "index": 77,
+      "placedAt": "2026-07-25T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-78",
+      "blueprintId": "pyramid",
+      "index": 78,
+      "placedAt": "2026-07-25T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-79",
+      "blueprintId": "pyramid",
+      "index": 79,
+      "placedAt": "2026-07-25T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-80",
+      "blueprintId": "pyramid",
+      "index": 80,
+      "placedAt": "2026-07-25T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-81",
+      "blueprintId": "pyramid",
+      "index": 81,
+      "placedAt": "2026-07-25T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-82",
+      "blueprintId": "pyramid",
+      "index": 82,
+      "placedAt": "2026-07-25T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-83",
+      "blueprintId": "pyramid",
+      "index": 83,
+      "placedAt": "2026-07-25T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-84",
+      "blueprintId": "pyramid",
+      "index": 84,
+      "placedAt": "2026-07-25T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-85",
+      "blueprintId": "pyramid",
+      "index": 85,
+      "placedAt": "2026-07-25T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-86",
+      "blueprintId": "pyramid",
+      "index": 86,
+      "placedAt": "2026-07-25T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-87",
+      "blueprintId": "pyramid",
+      "index": 87,
+      "placedAt": "2026-07-25T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-88",
+      "blueprintId": "pyramid",
+      "index": 88,
+      "placedAt": "2026-07-25T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-89",
+      "blueprintId": "pyramid",
+      "index": 89,
+      "placedAt": "2026-07-25T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-90",
+      "blueprintId": "pyramid",
+      "index": 90,
+      "placedAt": "2026-07-25T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-91",
+      "blueprintId": "pyramid",
+      "index": 91,
+      "placedAt": "2026-07-25T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-92",
+      "blueprintId": "pyramid",
+      "index": 92,
+      "placedAt": "2026-07-25T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-93",
+      "blueprintId": "pyramid",
+      "index": 93,
+      "placedAt": "2026-07-25T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-94",
+      "blueprintId": "pyramid",
+      "index": 94,
+      "placedAt": "2026-07-26T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-95",
+      "blueprintId": "pyramid",
+      "index": 95,
+      "placedAt": "2026-07-26T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-96",
+      "blueprintId": "pyramid",
+      "index": 96,
+      "placedAt": "2026-07-26T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-97",
+      "blueprintId": "pyramid",
+      "index": 97,
+      "placedAt": "2026-07-26T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-98",
+      "blueprintId": "pyramid",
+      "index": 98,
+      "placedAt": "2026-07-26T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-99",
+      "blueprintId": "pyramid",
+      "index": 99,
+      "placedAt": "2026-07-26T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-100",
+      "blueprintId": "pyramid",
+      "index": 100,
+      "placedAt": "2026-07-26T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-101",
+      "blueprintId": "pyramid",
+      "index": 101,
+      "placedAt": "2026-07-26T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-102",
+      "blueprintId": "pyramid",
+      "index": 102,
+      "placedAt": "2026-07-26T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-103",
+      "blueprintId": "pyramid",
+      "index": 103,
+      "placedAt": "2026-07-26T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-104",
+      "blueprintId": "pyramid",
+      "index": 104,
+      "placedAt": "2026-07-26T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-105",
+      "blueprintId": "pyramid",
+      "index": 105,
+      "placedAt": "2026-07-26T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-106",
+      "blueprintId": "pyramid",
+      "index": 106,
+      "placedAt": "2026-07-26T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-107",
+      "blueprintId": "pyramid",
+      "index": 107,
+      "placedAt": "2026-07-26T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-108",
+      "blueprintId": "pyramid",
+      "index": 108,
+      "placedAt": "2026-07-26T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-109",
+      "blueprintId": "pyramid",
+      "index": 109,
+      "placedAt": "2026-07-26T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-110",
+      "blueprintId": "pyramid",
+      "index": 110,
+      "placedAt": "2026-07-26T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-111",
+      "blueprintId": "pyramid",
+      "index": 111,
+      "placedAt": "2026-07-26T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-112",
+      "blueprintId": "pyramid",
+      "index": 112,
+      "placedAt": "2026-07-26T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-113",
+      "blueprintId": "pyramid",
+      "index": 113,
+      "placedAt": "2026-07-26T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-114",
+      "blueprintId": "pyramid",
+      "index": 114,
+      "placedAt": "2026-07-26T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-115",
+      "blueprintId": "pyramid",
+      "index": 115,
+      "placedAt": "2026-07-26T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-116",
+      "blueprintId": "pyramid",
+      "index": 116,
+      "placedAt": "2026-07-26T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-117",
+      "blueprintId": "pyramid",
+      "index": 117,
+      "placedAt": "2026-07-26T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-118",
+      "blueprintId": "pyramid",
+      "index": 118,
+      "placedAt": "2026-07-27T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-119",
+      "blueprintId": "pyramid",
+      "index": 119,
+      "placedAt": "2026-07-27T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-120",
+      "blueprintId": "pyramid",
+      "index": 120,
+      "placedAt": "2026-07-27T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-121",
+      "blueprintId": "pyramid",
+      "index": 121,
+      "placedAt": "2026-07-27T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-122",
+      "blueprintId": "pyramid",
+      "index": 122,
+      "placedAt": "2026-07-27T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-123",
+      "blueprintId": "pyramid",
+      "index": 123,
+      "placedAt": "2026-07-27T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-124",
+      "blueprintId": "pyramid",
+      "index": 124,
+      "placedAt": "2026-07-27T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-125",
+      "blueprintId": "pyramid",
+      "index": 125,
+      "placedAt": "2026-07-27T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-126",
+      "blueprintId": "pyramid",
+      "index": 126,
+      "placedAt": "2026-07-27T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-127",
+      "blueprintId": "pyramid",
+      "index": 127,
+      "placedAt": "2026-07-27T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-128",
+      "blueprintId": "pyramid",
+      "index": 128,
+      "placedAt": "2026-07-27T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-129",
+      "blueprintId": "pyramid",
+      "index": 129,
+      "placedAt": "2026-07-27T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-130",
+      "blueprintId": "pyramid",
+      "index": 130,
+      "placedAt": "2026-07-27T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-131",
+      "blueprintId": "pyramid",
+      "index": 131,
+      "placedAt": "2026-07-27T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-132",
+      "blueprintId": "pyramid",
+      "index": 132,
+      "placedAt": "2026-07-27T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-133",
+      "blueprintId": "pyramid",
+      "index": 133,
+      "placedAt": "2026-07-27T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-134",
+      "blueprintId": "pyramid",
+      "index": 134,
+      "placedAt": "2026-07-27T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-135",
+      "blueprintId": "pyramid",
+      "index": 135,
+      "placedAt": "2026-07-27T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-136",
+      "blueprintId": "pyramid",
+      "index": 136,
+      "placedAt": "2026-07-27T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-137",
+      "blueprintId": "pyramid",
+      "index": 137,
+      "placedAt": "2026-07-27T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-138",
+      "blueprintId": "pyramid",
+      "index": 138,
+      "placedAt": "2026-07-27T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-139",
+      "blueprintId": "pyramid",
+      "index": 139,
+      "placedAt": "2026-07-27T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-140",
+      "blueprintId": "pyramid",
+      "index": 140,
+      "placedAt": "2026-07-27T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-141",
+      "blueprintId": "pyramid",
+      "index": 141,
+      "placedAt": "2026-07-27T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-142",
+      "blueprintId": "pyramid",
+      "index": 142,
+      "placedAt": "2026-07-28T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-143",
+      "blueprintId": "pyramid",
+      "index": 143,
+      "placedAt": "2026-07-28T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-144",
+      "blueprintId": "pyramid",
+      "index": 144,
+      "placedAt": "2026-07-28T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-145",
+      "blueprintId": "pyramid",
+      "index": 145,
+      "placedAt": "2026-07-28T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-146",
+      "blueprintId": "pyramid",
+      "index": 146,
+      "placedAt": "2026-07-28T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-147",
+      "blueprintId": "pyramid",
+      "index": 147,
+      "placedAt": "2026-07-28T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-148",
+      "blueprintId": "pyramid",
+      "index": 148,
+      "placedAt": "2026-07-28T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-149",
+      "blueprintId": "pyramid",
+      "index": 149,
+      "placedAt": "2026-07-28T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-150",
+      "blueprintId": "pyramid",
+      "index": 150,
+      "placedAt": "2026-07-28T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-151",
+      "blueprintId": "pyramid",
+      "index": 151,
+      "placedAt": "2026-07-28T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-152",
+      "blueprintId": "pyramid",
+      "index": 152,
+      "placedAt": "2026-07-28T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-153",
+      "blueprintId": "pyramid",
+      "index": 153,
+      "placedAt": "2026-07-28T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-154",
+      "blueprintId": "pyramid",
+      "index": 154,
+      "placedAt": "2026-07-28T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-155",
+      "blueprintId": "pyramid",
+      "index": 155,
+      "placedAt": "2026-07-28T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-156",
+      "blueprintId": "pyramid",
+      "index": 156,
+      "placedAt": "2026-07-28T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-157",
+      "blueprintId": "pyramid",
+      "index": 157,
+      "placedAt": "2026-07-28T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-158",
+      "blueprintId": "pyramid",
+      "index": 158,
+      "placedAt": "2026-07-28T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-159",
+      "blueprintId": "pyramid",
+      "index": 159,
+      "placedAt": "2026-07-28T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-160",
+      "blueprintId": "pyramid",
+      "index": 160,
+      "placedAt": "2026-07-28T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-161",
+      "blueprintId": "pyramid",
+      "index": 161,
+      "placedAt": "2026-07-28T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-162",
+      "blueprintId": "pyramid",
+      "index": 162,
+      "placedAt": "2026-07-28T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-163",
+      "blueprintId": "pyramid",
+      "index": 163,
+      "placedAt": "2026-07-28T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "pyramid-164",
+      "blueprintId": "pyramid",
+      "index": 164,
+      "placedAt": "2026-07-28T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-0",
+      "blueprintId": "robot",
+      "index": 0,
+      "placedAt": "2026-07-28T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-1",
+      "blueprintId": "robot",
+      "index": 1,
+      "placedAt": "2026-07-29T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-2",
+      "blueprintId": "robot",
+      "index": 2,
+      "placedAt": "2026-07-29T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-3",
+      "blueprintId": "robot",
+      "index": 3,
+      "placedAt": "2026-07-29T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-4",
+      "blueprintId": "robot",
+      "index": 4,
+      "placedAt": "2026-07-29T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-5",
+      "blueprintId": "robot",
+      "index": 5,
+      "placedAt": "2026-07-29T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-6",
+      "blueprintId": "robot",
+      "index": 6,
+      "placedAt": "2026-07-29T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-7",
+      "blueprintId": "robot",
+      "index": 7,
+      "placedAt": "2026-07-29T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-8",
+      "blueprintId": "robot",
+      "index": 8,
+      "placedAt": "2026-07-29T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-9",
+      "blueprintId": "robot",
+      "index": 9,
+      "placedAt": "2026-07-29T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-10",
+      "blueprintId": "robot",
+      "index": 10,
+      "placedAt": "2026-07-29T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-11",
+      "blueprintId": "robot",
+      "index": 11,
+      "placedAt": "2026-07-29T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-12",
+      "blueprintId": "robot",
+      "index": 12,
+      "placedAt": "2026-07-29T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-13",
+      "blueprintId": "robot",
+      "index": 13,
+      "placedAt": "2026-07-29T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-14",
+      "blueprintId": "robot",
+      "index": 14,
+      "placedAt": "2026-07-29T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-15",
+      "blueprintId": "robot",
+      "index": 15,
+      "placedAt": "2026-07-29T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-16",
+      "blueprintId": "robot",
+      "index": 16,
+      "placedAt": "2026-07-29T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-17",
+      "blueprintId": "robot",
+      "index": 17,
+      "placedAt": "2026-07-29T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-18",
+      "blueprintId": "robot",
+      "index": 18,
+      "placedAt": "2026-07-29T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-19",
+      "blueprintId": "robot",
+      "index": 19,
+      "placedAt": "2026-07-29T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-20",
+      "blueprintId": "robot",
+      "index": 20,
+      "placedAt": "2026-07-29T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-21",
+      "blueprintId": "robot",
+      "index": 21,
+      "placedAt": "2026-07-29T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-22",
+      "blueprintId": "robot",
+      "index": 22,
+      "placedAt": "2026-07-29T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-23",
+      "blueprintId": "robot",
+      "index": 23,
+      "placedAt": "2026-07-29T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-24",
+      "blueprintId": "robot",
+      "index": 24,
+      "placedAt": "2026-07-29T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-25",
+      "blueprintId": "robot",
+      "index": 25,
+      "placedAt": "2026-07-30T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-26",
+      "blueprintId": "robot",
+      "index": 26,
+      "placedAt": "2026-07-30T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-27",
+      "blueprintId": "robot",
+      "index": 27,
+      "placedAt": "2026-07-30T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-28",
+      "blueprintId": "robot",
+      "index": 28,
+      "placedAt": "2026-07-30T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-29",
+      "blueprintId": "robot",
+      "index": 29,
+      "placedAt": "2026-07-30T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-30",
+      "blueprintId": "robot",
+      "index": 30,
+      "placedAt": "2026-07-30T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-31",
+      "blueprintId": "robot",
+      "index": 31,
+      "placedAt": "2026-07-30T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-32",
+      "blueprintId": "robot",
+      "index": 32,
+      "placedAt": "2026-07-30T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-33",
+      "blueprintId": "robot",
+      "index": 33,
+      "placedAt": "2026-07-30T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-34",
+      "blueprintId": "robot",
+      "index": 34,
+      "placedAt": "2026-07-30T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-35",
+      "blueprintId": "robot",
+      "index": 35,
+      "placedAt": "2026-07-30T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-36",
+      "blueprintId": "robot",
+      "index": 36,
+      "placedAt": "2026-07-30T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-37",
+      "blueprintId": "robot",
+      "index": 37,
+      "placedAt": "2026-07-30T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-38",
+      "blueprintId": "robot",
+      "index": 38,
+      "placedAt": "2026-07-30T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-39",
+      "blueprintId": "robot",
+      "index": 39,
+      "placedAt": "2026-07-30T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-40",
+      "blueprintId": "robot",
+      "index": 40,
+      "placedAt": "2026-07-30T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-41",
+      "blueprintId": "robot",
+      "index": 41,
+      "placedAt": "2026-07-30T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-42",
+      "blueprintId": "robot",
+      "index": 42,
+      "placedAt": "2026-07-30T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-43",
+      "blueprintId": "robot",
+      "index": 43,
+      "placedAt": "2026-07-30T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-44",
+      "blueprintId": "robot",
+      "index": 44,
+      "placedAt": "2026-07-30T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-45",
+      "blueprintId": "robot",
+      "index": 45,
+      "placedAt": "2026-07-30T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-46",
+      "blueprintId": "robot",
+      "index": 46,
+      "placedAt": "2026-07-30T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-47",
+      "blueprintId": "robot",
+      "index": 47,
+      "placedAt": "2026-07-30T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-48",
+      "blueprintId": "robot",
+      "index": 48,
+      "placedAt": "2026-07-30T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-49",
+      "blueprintId": "robot",
+      "index": 49,
+      "placedAt": "2026-07-31T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-50",
+      "blueprintId": "robot",
+      "index": 50,
+      "placedAt": "2026-07-31T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-51",
+      "blueprintId": "robot",
+      "index": 51,
+      "placedAt": "2026-07-31T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-52",
+      "blueprintId": "robot",
+      "index": 52,
+      "placedAt": "2026-07-31T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-53",
+      "blueprintId": "robot",
+      "index": 53,
+      "placedAt": "2026-07-31T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-54",
+      "blueprintId": "robot",
+      "index": 54,
+      "placedAt": "2026-07-31T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-55",
+      "blueprintId": "robot",
+      "index": 55,
+      "placedAt": "2026-07-31T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-56",
+      "blueprintId": "robot",
+      "index": 56,
+      "placedAt": "2026-07-31T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-57",
+      "blueprintId": "robot",
+      "index": 57,
+      "placedAt": "2026-07-31T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-58",
+      "blueprintId": "robot",
+      "index": 58,
+      "placedAt": "2026-07-31T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-59",
+      "blueprintId": "robot",
+      "index": 59,
+      "placedAt": "2026-07-31T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-60",
+      "blueprintId": "robot",
+      "index": 60,
+      "placedAt": "2026-07-31T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-61",
+      "blueprintId": "robot",
+      "index": 61,
+      "placedAt": "2026-07-31T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-62",
+      "blueprintId": "robot",
+      "index": 62,
+      "placedAt": "2026-07-31T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-63",
+      "blueprintId": "robot",
+      "index": 63,
+      "placedAt": "2026-07-31T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-64",
+      "blueprintId": "robot",
+      "index": 64,
+      "placedAt": "2026-07-31T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-65",
+      "blueprintId": "robot",
+      "index": 65,
+      "placedAt": "2026-07-31T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-66",
+      "blueprintId": "robot",
+      "index": 66,
+      "placedAt": "2026-07-31T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-67",
+      "blueprintId": "robot",
+      "index": 67,
+      "placedAt": "2026-07-31T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-68",
+      "blueprintId": "robot",
+      "index": 68,
+      "placedAt": "2026-07-31T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-69",
+      "blueprintId": "robot",
+      "index": 69,
+      "placedAt": "2026-07-31T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-70",
+      "blueprintId": "robot",
+      "index": 70,
+      "placedAt": "2026-07-31T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-71",
+      "blueprintId": "robot",
+      "index": 71,
+      "placedAt": "2026-07-31T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-72",
+      "blueprintId": "robot",
+      "index": 72,
+      "placedAt": "2026-07-31T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-73",
+      "blueprintId": "robot",
+      "index": 73,
+      "placedAt": "2026-08-01T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-74",
+      "blueprintId": "robot",
+      "index": 74,
+      "placedAt": "2026-08-01T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-75",
+      "blueprintId": "robot",
+      "index": 75,
+      "placedAt": "2026-08-01T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-76",
+      "blueprintId": "robot",
+      "index": 76,
+      "placedAt": "2026-08-01T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-77",
+      "blueprintId": "robot",
+      "index": 77,
+      "placedAt": "2026-08-01T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-78",
+      "blueprintId": "robot",
+      "index": 78,
+      "placedAt": "2026-08-01T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-79",
+      "blueprintId": "robot",
+      "index": 79,
+      "placedAt": "2026-08-01T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-80",
+      "blueprintId": "robot",
+      "index": 80,
+      "placedAt": "2026-08-01T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-81",
+      "blueprintId": "robot",
+      "index": 81,
+      "placedAt": "2026-08-01T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-82",
+      "blueprintId": "robot",
+      "index": 82,
+      "placedAt": "2026-08-01T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-83",
+      "blueprintId": "robot",
+      "index": 83,
+      "placedAt": "2026-08-01T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-84",
+      "blueprintId": "robot",
+      "index": 84,
+      "placedAt": "2026-08-01T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-85",
+      "blueprintId": "robot",
+      "index": 85,
+      "placedAt": "2026-08-01T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-86",
+      "blueprintId": "robot",
+      "index": 86,
+      "placedAt": "2026-08-01T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-87",
+      "blueprintId": "robot",
+      "index": 87,
+      "placedAt": "2026-08-01T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-88",
+      "blueprintId": "robot",
+      "index": 88,
+      "placedAt": "2026-08-01T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-89",
+      "blueprintId": "robot",
+      "index": 89,
+      "placedAt": "2026-08-01T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-90",
+      "blueprintId": "robot",
+      "index": 90,
+      "placedAt": "2026-08-01T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-91",
+      "blueprintId": "robot",
+      "index": 91,
+      "placedAt": "2026-08-01T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-92",
+      "blueprintId": "robot",
+      "index": 92,
+      "placedAt": "2026-08-01T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-93",
+      "blueprintId": "robot",
+      "index": 93,
+      "placedAt": "2026-08-01T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-94",
+      "blueprintId": "robot",
+      "index": 94,
+      "placedAt": "2026-08-01T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-95",
+      "blueprintId": "robot",
+      "index": 95,
+      "placedAt": "2026-08-01T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-96",
+      "blueprintId": "robot",
+      "index": 96,
+      "placedAt": "2026-08-01T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-97",
+      "blueprintId": "robot",
+      "index": 97,
+      "placedAt": "2026-08-02T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-98",
+      "blueprintId": "robot",
+      "index": 98,
+      "placedAt": "2026-08-02T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-99",
+      "blueprintId": "robot",
+      "index": 99,
+      "placedAt": "2026-08-02T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-100",
+      "blueprintId": "robot",
+      "index": 100,
+      "placedAt": "2026-08-02T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-101",
+      "blueprintId": "robot",
+      "index": 101,
+      "placedAt": "2026-08-02T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-102",
+      "blueprintId": "robot",
+      "index": 102,
+      "placedAt": "2026-08-02T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-103",
+      "blueprintId": "robot",
+      "index": 103,
+      "placedAt": "2026-08-02T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-104",
+      "blueprintId": "robot",
+      "index": 104,
+      "placedAt": "2026-08-02T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-105",
+      "blueprintId": "robot",
+      "index": 105,
+      "placedAt": "2026-08-02T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-106",
+      "blueprintId": "robot",
+      "index": 106,
+      "placedAt": "2026-08-02T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-107",
+      "blueprintId": "robot",
+      "index": 107,
+      "placedAt": "2026-08-02T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-108",
+      "blueprintId": "robot",
+      "index": 108,
+      "placedAt": "2026-08-02T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-109",
+      "blueprintId": "robot",
+      "index": 109,
+      "placedAt": "2026-08-02T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-110",
+      "blueprintId": "robot",
+      "index": 110,
+      "placedAt": "2026-08-02T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-111",
+      "blueprintId": "robot",
+      "index": 111,
+      "placedAt": "2026-08-02T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-112",
+      "blueprintId": "robot",
+      "index": 112,
+      "placedAt": "2026-08-02T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-113",
+      "blueprintId": "robot",
+      "index": 113,
+      "placedAt": "2026-08-02T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-114",
+      "blueprintId": "robot",
+      "index": 114,
+      "placedAt": "2026-08-02T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-115",
+      "blueprintId": "robot",
+      "index": 115,
+      "placedAt": "2026-08-02T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-116",
+      "blueprintId": "robot",
+      "index": 116,
+      "placedAt": "2026-08-02T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-117",
+      "blueprintId": "robot",
+      "index": 117,
+      "placedAt": "2026-08-02T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-118",
+      "blueprintId": "robot",
+      "index": 118,
+      "placedAt": "2026-08-02T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-119",
+      "blueprintId": "robot",
+      "index": 119,
+      "placedAt": "2026-08-02T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-120",
+      "blueprintId": "robot",
+      "index": 120,
+      "placedAt": "2026-08-02T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-121",
+      "blueprintId": "robot",
+      "index": 121,
+      "placedAt": "2026-08-03T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-122",
+      "blueprintId": "robot",
+      "index": 122,
+      "placedAt": "2026-08-03T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-123",
+      "blueprintId": "robot",
+      "index": 123,
+      "placedAt": "2026-08-03T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-124",
+      "blueprintId": "robot",
+      "index": 124,
+      "placedAt": "2026-08-03T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-125",
+      "blueprintId": "robot",
+      "index": 125,
+      "placedAt": "2026-08-03T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-126",
+      "blueprintId": "robot",
+      "index": 126,
+      "placedAt": "2026-08-03T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-127",
+      "blueprintId": "robot",
+      "index": 127,
+      "placedAt": "2026-08-03T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-128",
+      "blueprintId": "robot",
+      "index": 128,
+      "placedAt": "2026-08-03T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-129",
+      "blueprintId": "robot",
+      "index": 129,
+      "placedAt": "2026-08-03T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-130",
+      "blueprintId": "robot",
+      "index": 130,
+      "placedAt": "2026-08-03T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-131",
+      "blueprintId": "robot",
+      "index": 131,
+      "placedAt": "2026-08-03T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-132",
+      "blueprintId": "robot",
+      "index": 132,
+      "placedAt": "2026-08-03T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-133",
+      "blueprintId": "robot",
+      "index": 133,
+      "placedAt": "2026-08-03T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-134",
+      "blueprintId": "robot",
+      "index": 134,
+      "placedAt": "2026-08-03T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-135",
+      "blueprintId": "robot",
+      "index": 135,
+      "placedAt": "2026-08-03T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-136",
+      "blueprintId": "robot",
+      "index": 136,
+      "placedAt": "2026-08-03T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-137",
+      "blueprintId": "robot",
+      "index": 137,
+      "placedAt": "2026-08-03T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-138",
+      "blueprintId": "robot",
+      "index": 138,
+      "placedAt": "2026-08-03T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-139",
+      "blueprintId": "robot",
+      "index": 139,
+      "placedAt": "2026-08-03T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-140",
+      "blueprintId": "robot",
+      "index": 140,
+      "placedAt": "2026-08-03T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-141",
+      "blueprintId": "robot",
+      "index": 141,
+      "placedAt": "2026-08-03T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-142",
+      "blueprintId": "robot",
+      "index": 142,
+      "placedAt": "2026-08-03T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-143",
+      "blueprintId": "robot",
+      "index": 143,
+      "placedAt": "2026-08-03T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-144",
+      "blueprintId": "robot",
+      "index": 144,
+      "placedAt": "2026-08-03T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-145",
+      "blueprintId": "robot",
+      "index": 145,
+      "placedAt": "2026-08-04T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-146",
+      "blueprintId": "robot",
+      "index": 146,
+      "placedAt": "2026-08-04T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-147",
+      "blueprintId": "robot",
+      "index": 147,
+      "placedAt": "2026-08-04T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-148",
+      "blueprintId": "robot",
+      "index": 148,
+      "placedAt": "2026-08-04T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-149",
+      "blueprintId": "robot",
+      "index": 149,
+      "placedAt": "2026-08-04T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-150",
+      "blueprintId": "robot",
+      "index": 150,
+      "placedAt": "2026-08-04T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-151",
+      "blueprintId": "robot",
+      "index": 151,
+      "placedAt": "2026-08-04T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-152",
+      "blueprintId": "robot",
+      "index": 152,
+      "placedAt": "2026-08-04T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-153",
+      "blueprintId": "robot",
+      "index": 153,
+      "placedAt": "2026-08-04T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-154",
+      "blueprintId": "robot",
+      "index": 154,
+      "placedAt": "2026-08-04T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-155",
+      "blueprintId": "robot",
+      "index": 155,
+      "placedAt": "2026-08-04T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-156",
+      "blueprintId": "robot",
+      "index": 156,
+      "placedAt": "2026-08-04T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-157",
+      "blueprintId": "robot",
+      "index": 157,
+      "placedAt": "2026-08-04T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-158",
+      "blueprintId": "robot",
+      "index": 158,
+      "placedAt": "2026-08-04T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-159",
+      "blueprintId": "robot",
+      "index": 159,
+      "placedAt": "2026-08-04T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-160",
+      "blueprintId": "robot",
+      "index": 160,
+      "placedAt": "2026-08-04T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-161",
+      "blueprintId": "robot",
+      "index": 161,
+      "placedAt": "2026-08-04T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-162",
+      "blueprintId": "robot",
+      "index": 162,
+      "placedAt": "2026-08-04T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-163",
+      "blueprintId": "robot",
+      "index": 163,
+      "placedAt": "2026-08-04T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "robot-164",
+      "blueprintId": "robot",
+      "index": 164,
+      "placedAt": "2026-08-04T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-0",
+      "blueprintId": "monument",
+      "index": 0,
+      "placedAt": "2026-08-04T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-1",
+      "blueprintId": "monument",
+      "index": 1,
+      "placedAt": "2026-08-04T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-2",
+      "blueprintId": "monument",
+      "index": 2,
+      "placedAt": "2026-08-04T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-3",
+      "blueprintId": "monument",
+      "index": 3,
+      "placedAt": "2026-08-04T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-4",
+      "blueprintId": "monument",
+      "index": 4,
+      "placedAt": "2026-08-05T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-5",
+      "blueprintId": "monument",
+      "index": 5,
+      "placedAt": "2026-08-05T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-6",
+      "blueprintId": "monument",
+      "index": 6,
+      "placedAt": "2026-08-05T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-7",
+      "blueprintId": "monument",
+      "index": 7,
+      "placedAt": "2026-08-05T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-8",
+      "blueprintId": "monument",
+      "index": 8,
+      "placedAt": "2026-08-05T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-9",
+      "blueprintId": "monument",
+      "index": 9,
+      "placedAt": "2026-08-05T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-10",
+      "blueprintId": "monument",
+      "index": 10,
+      "placedAt": "2026-08-05T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-11",
+      "blueprintId": "monument",
+      "index": 11,
+      "placedAt": "2026-08-05T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-12",
+      "blueprintId": "monument",
+      "index": 12,
+      "placedAt": "2026-08-05T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-13",
+      "blueprintId": "monument",
+      "index": 13,
+      "placedAt": "2026-08-05T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-14",
+      "blueprintId": "monument",
+      "index": 14,
+      "placedAt": "2026-08-05T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-15",
+      "blueprintId": "monument",
+      "index": 15,
+      "placedAt": "2026-08-05T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-16",
+      "blueprintId": "monument",
+      "index": 16,
+      "placedAt": "2026-08-05T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-17",
+      "blueprintId": "monument",
+      "index": 17,
+      "placedAt": "2026-08-05T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-18",
+      "blueprintId": "monument",
+      "index": 18,
+      "placedAt": "2026-08-05T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-19",
+      "blueprintId": "monument",
+      "index": 19,
+      "placedAt": "2026-08-05T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-20",
+      "blueprintId": "monument",
+      "index": 20,
+      "placedAt": "2026-08-05T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-21",
+      "blueprintId": "monument",
+      "index": 21,
+      "placedAt": "2026-08-05T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-22",
+      "blueprintId": "monument",
+      "index": 22,
+      "placedAt": "2026-08-05T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-23",
+      "blueprintId": "monument",
+      "index": 23,
+      "placedAt": "2026-08-05T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-24",
+      "blueprintId": "monument",
+      "index": 24,
+      "placedAt": "2026-08-05T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-25",
+      "blueprintId": "monument",
+      "index": 25,
+      "placedAt": "2026-08-05T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-26",
+      "blueprintId": "monument",
+      "index": 26,
+      "placedAt": "2026-08-05T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-27",
+      "blueprintId": "monument",
+      "index": 27,
+      "placedAt": "2026-08-05T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-28",
+      "blueprintId": "monument",
+      "index": 28,
+      "placedAt": "2026-08-06T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-29",
+      "blueprintId": "monument",
+      "index": 29,
+      "placedAt": "2026-08-06T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-30",
+      "blueprintId": "monument",
+      "index": 30,
+      "placedAt": "2026-08-06T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-31",
+      "blueprintId": "monument",
+      "index": 31,
+      "placedAt": "2026-08-06T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-32",
+      "blueprintId": "monument",
+      "index": 32,
+      "placedAt": "2026-08-06T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-33",
+      "blueprintId": "monument",
+      "index": 33,
+      "placedAt": "2026-08-06T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-34",
+      "blueprintId": "monument",
+      "index": 34,
+      "placedAt": "2026-08-06T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-35",
+      "blueprintId": "monument",
+      "index": 35,
+      "placedAt": "2026-08-06T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-36",
+      "blueprintId": "monument",
+      "index": 36,
+      "placedAt": "2026-08-06T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-37",
+      "blueprintId": "monument",
+      "index": 37,
+      "placedAt": "2026-08-06T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-38",
+      "blueprintId": "monument",
+      "index": 38,
+      "placedAt": "2026-08-06T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-39",
+      "blueprintId": "monument",
+      "index": 39,
+      "placedAt": "2026-08-06T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-40",
+      "blueprintId": "monument",
+      "index": 40,
+      "placedAt": "2026-08-06T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-41",
+      "blueprintId": "monument",
+      "index": 41,
+      "placedAt": "2026-08-06T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-42",
+      "blueprintId": "monument",
+      "index": 42,
+      "placedAt": "2026-08-06T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-43",
+      "blueprintId": "monument",
+      "index": 43,
+      "placedAt": "2026-08-06T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-44",
+      "blueprintId": "monument",
+      "index": 44,
+      "placedAt": "2026-08-06T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-45",
+      "blueprintId": "monument",
+      "index": 45,
+      "placedAt": "2026-08-06T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-46",
+      "blueprintId": "monument",
+      "index": 46,
+      "placedAt": "2026-08-06T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-47",
+      "blueprintId": "monument",
+      "index": 47,
+      "placedAt": "2026-08-06T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-48",
+      "blueprintId": "monument",
+      "index": 48,
+      "placedAt": "2026-08-06T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-49",
+      "blueprintId": "monument",
+      "index": 49,
+      "placedAt": "2026-08-06T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-50",
+      "blueprintId": "monument",
+      "index": 50,
+      "placedAt": "2026-08-06T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-51",
+      "blueprintId": "monument",
+      "index": 51,
+      "placedAt": "2026-08-06T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-52",
+      "blueprintId": "monument",
+      "index": 52,
+      "placedAt": "2026-08-07T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-53",
+      "blueprintId": "monument",
+      "index": 53,
+      "placedAt": "2026-08-07T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-54",
+      "blueprintId": "monument",
+      "index": 54,
+      "placedAt": "2026-08-07T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-55",
+      "blueprintId": "monument",
+      "index": 55,
+      "placedAt": "2026-08-07T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-56",
+      "blueprintId": "monument",
+      "index": 56,
+      "placedAt": "2026-08-07T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-57",
+      "blueprintId": "monument",
+      "index": 57,
+      "placedAt": "2026-08-07T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-58",
+      "blueprintId": "monument",
+      "index": 58,
+      "placedAt": "2026-08-07T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-59",
+      "blueprintId": "monument",
+      "index": 59,
+      "placedAt": "2026-08-07T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-60",
+      "blueprintId": "monument",
+      "index": 60,
+      "placedAt": "2026-08-07T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-61",
+      "blueprintId": "monument",
+      "index": 61,
+      "placedAt": "2026-08-07T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-62",
+      "blueprintId": "monument",
+      "index": 62,
+      "placedAt": "2026-08-07T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-63",
+      "blueprintId": "monument",
+      "index": 63,
+      "placedAt": "2026-08-07T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-64",
+      "blueprintId": "monument",
+      "index": 64,
+      "placedAt": "2026-08-07T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-65",
+      "blueprintId": "monument",
+      "index": 65,
+      "placedAt": "2026-08-07T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-66",
+      "blueprintId": "monument",
+      "index": 66,
+      "placedAt": "2026-08-07T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-67",
+      "blueprintId": "monument",
+      "index": 67,
+      "placedAt": "2026-08-07T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-68",
+      "blueprintId": "monument",
+      "index": 68,
+      "placedAt": "2026-08-07T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-69",
+      "blueprintId": "monument",
+      "index": 69,
+      "placedAt": "2026-08-07T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-70",
+      "blueprintId": "monument",
+      "index": 70,
+      "placedAt": "2026-08-07T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-71",
+      "blueprintId": "monument",
+      "index": 71,
+      "placedAt": "2026-08-07T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-72",
+      "blueprintId": "monument",
+      "index": 72,
+      "placedAt": "2026-08-07T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-73",
+      "blueprintId": "monument",
+      "index": 73,
+      "placedAt": "2026-08-07T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-74",
+      "blueprintId": "monument",
+      "index": 74,
+      "placedAt": "2026-08-07T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-75",
+      "blueprintId": "monument",
+      "index": 75,
+      "placedAt": "2026-08-07T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-76",
+      "blueprintId": "monument",
+      "index": 76,
+      "placedAt": "2026-08-08T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-77",
+      "blueprintId": "monument",
+      "index": 77,
+      "placedAt": "2026-08-08T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-78",
+      "blueprintId": "monument",
+      "index": 78,
+      "placedAt": "2026-08-08T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-79",
+      "blueprintId": "monument",
+      "index": 79,
+      "placedAt": "2026-08-08T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-80",
+      "blueprintId": "monument",
+      "index": 80,
+      "placedAt": "2026-08-08T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-81",
+      "blueprintId": "monument",
+      "index": 81,
+      "placedAt": "2026-08-08T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-82",
+      "blueprintId": "monument",
+      "index": 82,
+      "placedAt": "2026-08-08T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-83",
+      "blueprintId": "monument",
+      "index": 83,
+      "placedAt": "2026-08-08T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-84",
+      "blueprintId": "monument",
+      "index": 84,
+      "placedAt": "2026-08-08T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-85",
+      "blueprintId": "monument",
+      "index": 85,
+      "placedAt": "2026-08-08T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-86",
+      "blueprintId": "monument",
+      "index": 86,
+      "placedAt": "2026-08-08T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-87",
+      "blueprintId": "monument",
+      "index": 87,
+      "placedAt": "2026-08-08T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-88",
+      "blueprintId": "monument",
+      "index": 88,
+      "placedAt": "2026-08-08T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-89",
+      "blueprintId": "monument",
+      "index": 89,
+      "placedAt": "2026-08-08T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-90",
+      "blueprintId": "monument",
+      "index": 90,
+      "placedAt": "2026-08-08T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-91",
+      "blueprintId": "monument",
+      "index": 91,
+      "placedAt": "2026-08-08T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-92",
+      "blueprintId": "monument",
+      "index": 92,
+      "placedAt": "2026-08-08T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-93",
+      "blueprintId": "monument",
+      "index": 93,
+      "placedAt": "2026-08-08T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-94",
+      "blueprintId": "monument",
+      "index": 94,
+      "placedAt": "2026-08-08T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-95",
+      "blueprintId": "monument",
+      "index": 95,
+      "placedAt": "2026-08-08T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-96",
+      "blueprintId": "monument",
+      "index": 96,
+      "placedAt": "2026-08-08T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-97",
+      "blueprintId": "monument",
+      "index": 97,
+      "placedAt": "2026-08-08T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-98",
+      "blueprintId": "monument",
+      "index": 98,
+      "placedAt": "2026-08-08T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-99",
+      "blueprintId": "monument",
+      "index": 99,
+      "placedAt": "2026-08-08T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-100",
+      "blueprintId": "monument",
+      "index": 100,
+      "placedAt": "2026-08-09T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-101",
+      "blueprintId": "monument",
+      "index": 101,
+      "placedAt": "2026-08-09T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-102",
+      "blueprintId": "monument",
+      "index": 102,
+      "placedAt": "2026-08-09T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-103",
+      "blueprintId": "monument",
+      "index": 103,
+      "placedAt": "2026-08-09T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-104",
+      "blueprintId": "monument",
+      "index": 104,
+      "placedAt": "2026-08-09T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-105",
+      "blueprintId": "monument",
+      "index": 105,
+      "placedAt": "2026-08-09T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-106",
+      "blueprintId": "monument",
+      "index": 106,
+      "placedAt": "2026-08-09T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-107",
+      "blueprintId": "monument",
+      "index": 107,
+      "placedAt": "2026-08-09T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-108",
+      "blueprintId": "monument",
+      "index": 108,
+      "placedAt": "2026-08-09T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-109",
+      "blueprintId": "monument",
+      "index": 109,
+      "placedAt": "2026-08-09T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-110",
+      "blueprintId": "monument",
+      "index": 110,
+      "placedAt": "2026-08-09T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-111",
+      "blueprintId": "monument",
+      "index": 111,
+      "placedAt": "2026-08-09T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-112",
+      "blueprintId": "monument",
+      "index": 112,
+      "placedAt": "2026-08-09T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-113",
+      "blueprintId": "monument",
+      "index": 113,
+      "placedAt": "2026-08-09T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-114",
+      "blueprintId": "monument",
+      "index": 114,
+      "placedAt": "2026-08-09T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-115",
+      "blueprintId": "monument",
+      "index": 115,
+      "placedAt": "2026-08-09T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-116",
+      "blueprintId": "monument",
+      "index": 116,
+      "placedAt": "2026-08-09T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-117",
+      "blueprintId": "monument",
+      "index": 117,
+      "placedAt": "2026-08-09T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-118",
+      "blueprintId": "monument",
+      "index": 118,
+      "placedAt": "2026-08-09T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-119",
+      "blueprintId": "monument",
+      "index": 119,
+      "placedAt": "2026-08-09T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-120",
+      "blueprintId": "monument",
+      "index": 120,
+      "placedAt": "2026-08-09T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-121",
+      "blueprintId": "monument",
+      "index": 121,
+      "placedAt": "2026-08-09T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-122",
+      "blueprintId": "monument",
+      "index": 122,
+      "placedAt": "2026-08-09T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-123",
+      "blueprintId": "monument",
+      "index": 123,
+      "placedAt": "2026-08-09T23:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-124",
+      "blueprintId": "monument",
+      "index": 124,
+      "placedAt": "2026-08-10T00:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-125",
+      "blueprintId": "monument",
+      "index": 125,
+      "placedAt": "2026-08-10T01:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-126",
+      "blueprintId": "monument",
+      "index": 126,
+      "placedAt": "2026-08-10T02:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-127",
+      "blueprintId": "monument",
+      "index": 127,
+      "placedAt": "2026-08-10T03:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-128",
+      "blueprintId": "monument",
+      "index": 128,
+      "placedAt": "2026-08-10T04:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-129",
+      "blueprintId": "monument",
+      "index": 129,
+      "placedAt": "2026-08-10T05:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-130",
+      "blueprintId": "monument",
+      "index": 130,
+      "placedAt": "2026-08-10T06:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-131",
+      "blueprintId": "monument",
+      "index": 131,
+      "placedAt": "2026-08-10T07:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-132",
+      "blueprintId": "monument",
+      "index": 132,
+      "placedAt": "2026-08-10T08:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-133",
+      "blueprintId": "monument",
+      "index": 133,
+      "placedAt": "2026-08-10T09:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-134",
+      "blueprintId": "monument",
+      "index": 134,
+      "placedAt": "2026-08-10T10:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-135",
+      "blueprintId": "monument",
+      "index": 135,
+      "placedAt": "2026-08-10T11:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-136",
+      "blueprintId": "monument",
+      "index": 136,
+      "placedAt": "2026-08-10T12:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-137",
+      "blueprintId": "monument",
+      "index": 137,
+      "placedAt": "2026-08-10T13:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-138",
+      "blueprintId": "monument",
+      "index": 138,
+      "placedAt": "2026-08-10T14:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-139",
+      "blueprintId": "monument",
+      "index": 139,
+      "placedAt": "2026-08-10T15:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-140",
+      "blueprintId": "monument",
+      "index": 140,
+      "placedAt": "2026-08-10T16:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-141",
+      "blueprintId": "monument",
+      "index": 141,
+      "placedAt": "2026-08-10T17:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-142",
+      "blueprintId": "monument",
+      "index": 142,
+      "placedAt": "2026-08-10T18:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-143",
+      "blueprintId": "monument",
+      "index": 143,
+      "placedAt": "2026-08-10T19:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-144",
+      "blueprintId": "monument",
+      "index": 144,
+      "placedAt": "2026-08-10T20:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-145",
+      "blueprintId": "monument",
+      "index": 145,
+      "placedAt": "2026-08-10T21:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    },
+    {
+      "id": "monument-146",
+      "blueprintId": "monument",
+      "index": 146,
+      "placedAt": "2026-08-10T22:00:00.000Z",
+      "fromHabitId": "__day__",
+      "bonus": false
+    }
+  ],
+  "activeBlueprintId": "castle",
+  "completedBlueprintIds": [
+    "castle",
+    "factory",
+    "lighthouse",
+    "pyramid",
+    "robot",
+    "monument"
+  ],
+  "settings": {
+    "theme": "light"
+  },
+  "dayClaims": []
+}

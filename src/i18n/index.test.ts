@@ -61,18 +61,12 @@ describe('i18n system', () => {
     }
   })
 
-  it('appStore setLanguage updates settings and document element lang', () => {
+  it('appStore setLanguage updates settings (DOM sync lives in App layer)', () => {
     const store = useAppStore.getState()
     store.setLanguage('en')
     expect(useAppStore.getState().settings.language).toBe('en')
-    if (typeof document !== 'undefined') {
-      expect(document.documentElement.lang).toBe('en')
-    }
 
     store.setLanguage('zh')
     expect(useAppStore.getState().settings.language).toBe('zh')
-    if (typeof document !== 'undefined') {
-      expect(document.documentElement.lang).toBe('zh')
-    }
   })
 })

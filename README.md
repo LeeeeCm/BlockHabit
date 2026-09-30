@@ -46,3 +46,5 @@ npm run tauri build  # 出安装包 src-tauri/target/release/bundle/
 
 - 规格：`docs/superpowers/specs/2026-08-22-blockhabit-design.md`
 - 实施计划：`docs/superpowers/plans/2026-08-22-blockhabit.md`
+- 积木立体渲染：`docs/superpowers/specs/2026-08-23-block-rendering-design.md`
+- 完整优化方案：`docs/superpowers/specs/2026-09-30-blockhabit-optimization-design.md`

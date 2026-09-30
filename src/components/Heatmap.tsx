@@ -73,21 +73,28 @@ export function Heatmap({ habits, checkIns, weeks = 13, habitId, cell, onDayClic
             <div style={{ height: 16, fontSize: 10.5, color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
               {col.month}
             </div>
-            {col.days.map((d) => (
-              <div
-                key={d.key}
-                onClick={() => onDayClick?.(d.key)}
-                title={`${d.key}${d.ratio >= 0 ? (habitId ? (d.ratio >= 1 ? ` · ${t.stats.heatmapDone}` : ` · ${t.stats.heatmapRepair}`) : ` · ${Math.round(d.ratio * 100)}%`) : ''}`}
-                style={{
-                  width: CELL,
-                  height: CELL,
-                  borderRadius: Math.max(4, Math.round(CELL * 0.28)),
-                  background: cellColor(d.ratio, d.future),
-                  border: d.future ? 'none' : '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
-                  cursor: !d.future && d.ratio < 1 && onDayClick ? 'pointer' : 'default',
-                }}
-              />
-            ))}
+            {col.days.map((d) => {
+              const clickable = !d.future && d.ratio < 1 && Boolean(onDayClick)
+              return (
+                <button
+                  key={d.key}
+                  type="button"
+                  onClick={() => clickable && onDayClick?.(d.key)}
+                  disabled={!clickable}
+                  aria-label={`${d.key}${d.ratio >= 0 ? (habitId ? (d.ratio >= 1 ? ` · ${t.stats.heatmapDone}` : ` · ${t.stats.heatmapRepair}`) : ` · ${Math.round(d.ratio * 100)}%`) : ''}`}
+                  title={`${d.key}${d.ratio >= 0 ? (habitId ? (d.ratio >= 1 ? ` · ${t.stats.heatmapDone}` : ` · ${t.stats.heatmapRepair}`) : ` · ${Math.round(d.ratio * 100)}%`) : ''}`}
+                  style={{
+                    width: CELL,
+                    height: CELL,
+                    borderRadius: Math.max(4, Math.round(CELL * 0.28)),
+                    background: cellColor(d.ratio, d.future),
+                    border: d.future ? 'none' : '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
+                    cursor: clickable ? 'pointer' : 'default',
+                    padding: 0,
+                  }}
+                />
+              )
+            })}
           </div>
         ))}
       </div>
