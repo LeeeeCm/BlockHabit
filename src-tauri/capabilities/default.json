@@ -31,7 +31,10 @@
     "fs:allow-read-dir",
     {
       "identifier": "fs:scope",
-      "allow": [{ "path": "$APPDATA/blockhabit*" }]
+      "allow": [
+        { "path": "$APPDATA" },
+        { "path": "$APPDATA/blockhabit*" }
+      ]
     }
   ]
 }

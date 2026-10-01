@@ -70,6 +70,20 @@ function isValidBlockElement(b: unknown): boolean {
   return true
 }
 
+/** 宽容习惯谓词：与 isValidHabitElement 相同，但允许 custom days 为空（由钳制兜底） */
+function isValidHabitElementLenient(h: unknown): boolean {
+  if (!isRecord(h)) return false
+  if (typeof h.id !== 'string' || !h.id) return false
+  if (typeof h.name !== 'string') return false
+  if (!isParseableDate(h.createdAt)) return false
+  const f = h.frequency
+  if (!isRecord(f)) return false
+  if (f.type === 'daily') return true
+  if (f.type === 'weekly') return typeof f.times === 'number' && Number.isFinite(f.times) && f.times > 0
+  if (f.type === 'custom') return Array.isArray(f.days)
+  return false
+}
+
 function isValidDayClaimElement(c: unknown): boolean {
   return (
     isRecord(c) &&
@@ -127,18 +141,21 @@ export function sanitizeState(v: unknown): AppState | null {
   if (!isRecord(v.settings)) return null
   if (!Array.isArray(v.completedBlueprintIds)) return null
   const habits = Array.isArray(v.habits)
-    ? v.habits.filter(isValidHabitElement).map((h) => {
-        // custom 空 days 钳制为工作日（保留习惯，与 merge 侧语义一致）
-        const freq = (h as Record<string, unknown>).frequency as Record<string, unknown> | undefined
-        if (
-          freq &&
-          freq.type === 'custom' &&
-          (!Array.isArray(freq.days) || (freq.days as unknown[]).length === 0)
-        ) {
-          return { ...(h as Record<string, unknown>), frequency: { type: 'custom', days: [1, 2, 3, 4, 5] } }
-        }
-        return h
-      })
+    ? v.habits
+        .filter(isValidHabitElementLenient)
+        .map((h) => {
+          // custom 空 days 钳制为工作日（保留习惯，与 merge 侧语义一致）；
+          // 注意宽容谓词在前，否则空 days 在过滤阶段已被丢弃、钳制不可达
+          const freq = (h as Record<string, unknown>).frequency as Record<string, unknown> | undefined
+          if (
+            freq &&
+            freq.type === 'custom' &&
+            (!Array.isArray(freq.days) || (freq.days as unknown[]).length === 0)
+          ) {
+            return { ...(h as Record<string, unknown>), frequency: { type: 'custom', days: [1, 2, 3, 4, 5] } }
+          }
+          return h
+        })
     : []
   const checkIns = Array.isArray(v.checkIns) ? v.checkIns.filter(isValidCheckInElement) : []
   const builds = Array.isArray(v.builds) ? v.builds.filter(isValidBlockElement) : []

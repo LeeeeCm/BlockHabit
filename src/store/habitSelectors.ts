@@ -38,7 +38,8 @@ function checkInItemsEqual(a: CheckIn, b: CheckIn): boolean {
     Boolean(a.starred) === Boolean(b.starred) &&
     a.deletedAt === b.deletedAt &&
     a.placedBlockId === b.placedBlockId &&
-    a.blueprintId === b.blueprintId
+    a.blueprintId === b.blueprintId &&
+    a.at === b.at
   )
 }
 

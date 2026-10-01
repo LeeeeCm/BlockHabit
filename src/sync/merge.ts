@@ -59,7 +59,7 @@ function mergeHabits(localHabits: Habit[], remoteHabits: Habit[]): Habit[] {
     if (!existing) {
       habitMap.set(h.id, { ...clampHabit(h) })
     } else {
-      habitMap.set(h.id, isNewerHabit(h, existing) ? { ...h } : existing)
+      habitMap.set(h.id, isNewerHabit(h, existing) ? { ...clampHabit(h) } : existing)
     }
   }
   return Array.from(habitMap.values())

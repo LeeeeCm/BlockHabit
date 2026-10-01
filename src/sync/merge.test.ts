@@ -247,7 +247,7 @@ describe('mergeAppState facts merge (schema v2)', () => {
     expect(h2.pinned).toBe(true)
   })
 
-  it('filters out custom habits with empty days array during merge', () => {
+  it('clamps custom habits with empty days array during merge (kept as workdays)', () => {
     const validHabit: Habit = {
       id: 'h1',
       name: 'Valid Custom',

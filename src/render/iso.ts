@@ -408,7 +408,7 @@ export function getCubeSprite(
   dpr: number,
 ): CubeSprite | null {
   const colorPart = color ? color : `${p.top}_${p.left}_${p.right}`
-  const cacheKey = `${colorPart}_${type}_${noStuds}_${c.tileW}_${c.tileH}_${c.blockH}_${dpr}_${p.ink}_${p.accent}`
+  const cacheKey = `${colorPart}_${type}_${noStuds}_${c.tileW}_${c.tileH}_${c.blockH}_${dpr}_${p.ink}_${p.accent}_${p.top}_${p.left}_${p.right}`
   let sprite = spriteCache.get(cacheKey)
   if (sprite) return sprite
 

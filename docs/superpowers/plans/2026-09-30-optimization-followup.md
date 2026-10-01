@@ -2,7 +2,7 @@
 
 - 日期：2026-09-30
 - 前置：`2026-09-30-blockhabit-optimization-design.md`（本轮已完成的六批优化 + §7 已接受的取舍/延后项）
-- 基线：287/287 测试、`tsc --noEmit` 零错误、`vite build` 成功、`cargo check` 通过
+- 基线：317/317 测试、`tsc --noEmit` 零错误、`vite build` 成功、`cargo check` 通过
 - **硬约束：不改变现有视觉风格与审美**（纸白/墨黑主题、琥珀唯一点缀色、圆润乐高积木）
 
 ## P1 · 行为正确性收尾（小改动，先做）
@@ -42,12 +42,16 @@
 | 项 | 要点 |
 | --- | --- |
 | 自动更新 | `tauri-plugin-updater` + 签名清单 + `createUpdaterArtifacts` |
-| CSP | **✅ 2026-10-01 完成**：严格 csp（script 'self'、style+inline、connect-src https: 兼容 WebDAV）+ `devCsp: null` 保 HMR；**打包产物需手工实测**（手工验证清单） |
-| fs scope 最小化 | **✅ 2026-10-01 完成**：删 recursive 全量授权，改 7 个精确命令权限 + scope `$APPDATA/blockhabit*` |
+| CSP | **✅ 2026-10-01 完成并实测**：严格 csp（script 'self'、style+inline、connect-src https: 兼容 WebDAV、frame-ancestors 'none'）+ `devCsp: null` 保 HMR；release 产物启动 + PrintWindow 截窗验证完整渲染无白屏。注意：http:// 内网 NAS 的 WebDAV 端点会被 connect-src 拦截（有意收紧） |
+| fs scope 最小化 | **✅ 2026-10-01 完成并实测**：7 个精确命令权限 + scope `$APPDATA` + `$APPDATA/blockhabit*`（首版漏掉目录自身致 mkdir/readDir 被拒、保存恒失败——第二轮审查发现后已修，见下） |
 | 音量滑杆 | sound.ts 主 GainNode + `settings.volume` + 设置页滑杆（沿用现有 UI 语言） |
 | WebDAV 凭据 keyring | tauri-plugin-stronghold / 系统 keyring（依赖现有 error code 体系） |
 | 周起始日配置 | `settings.weekStart: 'mon'|'sun'` 贯通 dates.ts/weekCountFor/热图列头 |
 | 习惯硬删除同步语义 | deleteHabit 复活问题（§7.8）：要么软删墓碑，要么 UI 引导归档 |
+
+### fs scope 回归记录（2026-10-01 第二轮审查发现并修复）
+
+收紧为 `blockhabit*` 时漏掉了 `$APPDATA` 目录自身：`mkdir(appDataDir())` 与 `readDir(appDataDir())` 被 scope 拒绝 → 启动自动保存恒失败（saveError toast）+ 备份清理失效。修复：scope allow 追加 `{"path": "$APPDATA"}`（目录自身），文件仍限 `blockhabit*`。验证：重建产物后启动 4s 内 `blockhabit.json` mtime 刷新（启动即自动保存链路可达）。
 
 ### 延后项（2026-10-01 独立审查记录）
 
@@ -55,7 +59,7 @@
 
 - ShowcaseScene 拖拽热路径：静态排序列表缓存 + 拖拽时与被拖模型双有序线性归并（O(n) 替代每帧 O(n log n) 重建+排序）；静态底座（阴影/侧裙/托盘/网格）离屏层缓存，key = 视口/dpr/主题，拖拽与悬停期间恒命中
 - iso.ts 精灵缓存测试补齐 dpr 维度、palette 维度（主题切换互不污染）、512 上限 FIFO 淘汰三个用例
-- merge/sanitize 空 days custom 习惯：由"静默丢弃"改为"钳制为工作日保留"（坏档可修复；strict validateState 导入路径仍拒绝）
+- merge/sanitize 空 days custom 习惯：本地加载路径（sanitizeState）已打通——宽容谓词先过滤、再钳制为工作日保留（坏档自修复可达）；merge 侧插入与 LWW 覆盖分支均钳制（对称）。远程同步与用户导入保持严格拒绝（整档 incompatible 报错，不静默吞坏档）——有意取舍：静默钳制远端档案可能掩盖更大损坏
 - 生产 CSP 打包实测：`npm run tauri build` 产物启动 + PrintWindow 截窗验证，真实数据完整渲染、无白屏（dev 模式 devCsp=null 不校验 CSP，此为唯一有效验证路径）
 
 ## 手工验证清单（无自动化覆盖，改相关代码时必测）

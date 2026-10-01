@@ -10,7 +10,7 @@ vi.mock('../audio/sound', () => ({
   playCelebrationSound: vi.fn(),
 }))
 
-const mockTodayKey = vi.fn().mockReturnValue('2026-09-30')
+const mockTodayKey = vi.hoisted(() => vi.fn().mockReturnValue('2026-09-30'))
 vi.mock('../logic/useTodayKey', () => ({
   useTodayKey: () => mockTodayKey(),
 }))
