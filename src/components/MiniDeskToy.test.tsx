@@ -14,6 +14,11 @@ const mockTodayKey = vi.fn().mockReturnValue('2026-09-30')
 vi.mock('../logic/useTodayKey', () => ({
   useTodayKey: () => mockTodayKey(),
 }))
+// store 的 checkIn 也必须使用同一个 mock 天，否则打卡落真实今天、断言落 mock 天
+vi.mock('../logic/dates', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../logic/dates')>()
+  return { ...actual, todayKey: () => mockTodayKey() }
+})
 
 describe('MiniDeskToy component', () => {
   let container: HTMLDivElement

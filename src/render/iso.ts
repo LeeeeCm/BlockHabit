@@ -329,6 +329,8 @@ export interface DrawCubeOptions {
   hasNote?: boolean
   /** 星标铭文高光 */
   starred?: boolean
+  /** 精灵位图密度覆盖：导出画布等固定 2x 变换的上下文传 2（缺省取 devicePixelRatio） */
+  spriteScale?: number
 }
 
 /** 圆柱凸点：侧裙（左半/右半分侧向光）→ 顶面 → 左上高光弧 */
@@ -609,7 +611,7 @@ export function drawCube(
     ctx.closePath()
   }
 
-  const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1
+  const dpr = opts.spriteScale ?? (typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1)
   const sprite = getCubeSprite(opts.color, type, noStuds, c, p, dpr)
   if (sprite) {
     ctx.drawImage(
@@ -898,3 +900,4 @@ export function paletteFromDocument(doc: Document = document, enableAmbient = fa
   cachedPalette = enableAmbient ? applyAmbientLighting(basePalette, period) : basePalette
   return cachedPalette
 }
+

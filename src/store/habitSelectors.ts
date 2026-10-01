@@ -36,7 +36,9 @@ function checkInItemsEqual(a: CheckIn, b: CheckIn): boolean {
     a.note === b.note &&
     a.mood === b.mood &&
     Boolean(a.starred) === Boolean(b.starred) &&
-    a.deletedAt === b.deletedAt
+    a.deletedAt === b.deletedAt &&
+    a.placedBlockId === b.placedBlockId &&
+    a.blueprintId === b.blueprintId
   )
 }
 

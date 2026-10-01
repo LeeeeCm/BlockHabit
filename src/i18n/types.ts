@@ -78,6 +78,8 @@ export interface TranslationSchema {
       subtitlePending: string
       claimToast: string
       bonusHabitName: string
+      /** 打卡存在但习惯已被删除时的气泡名 */
+      deletedHabitName: string
       claimBtn: string
       claimed: string
     }

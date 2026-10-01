@@ -95,6 +95,7 @@ export const en: TranslationSchema = {
       subtitlePending: 'All habits completed. Claim your +1 daily bonus block',
       claimToast: 'Claimed daily milestone block!',
       bonusHabitName: 'Daily All-Clear',
+      deletedHabitName: 'Deleted habit',
       claimBtn: 'Claim Bonus',
       claimed: 'Claimed',
     },

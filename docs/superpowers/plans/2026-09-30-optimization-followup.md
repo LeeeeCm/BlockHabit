@@ -22,7 +22,7 @@
 
 1. **iso.ts 块精灵缓存**：按 `(color, type, dpr, tileW)` 预渲染单块到 OffscreenCanvas，`drawCube` 命中即 `drawImage`；AO 压痕/落地阴影/bonus 描边保持矢量叠加。主题切换清缓存。
 2. **BuildScene 每帧热路径**：排序后 cubes / indexAt / build→checkIn 映射移入 useMemo+ref，rAF 只读；排序仅数据变化时执行。
-3. **ShowcaseScene**：拖拽 pointermove 不再全量重建 allCubes；静态底座（托盘+网格）离屏缓存；draw 经 ref 读 placements。
+3. **ShowcaseScene**（2026-10-01 审查后标记部分完成）：`placementsRef` 化、监听稳定化、footprintMap 缓存已完成；「拖拽不全量重建 allCubes」与「静态底座离屏缓存」**延后**——拖拽必重建被拖模型，需按"仅重建被拖模型 + 复用其余缓存"设计并配视觉验证（移入下方延后项）。
 4. 前置：四主题 × bonus 块 × AO 的截图 diff 工具（可临时用 `?demo-castle` + 手工走查，或引 pixelmatch 脚本）。
 
 ## P4 · 列表渲染完整 memo 链路
@@ -42,12 +42,19 @@
 | 项 | 要点 |
 | --- | --- |
 | 自动更新 | `tauri-plugin-updater` + 签名清单 + `createUpdaterArtifacts` |
-| CSP | `default-src 'self'` + `frame-ancestors 'none'`；WebDAV 任意域名 → `connect-src https:` 取舍说明 |
-| fs scope 最小化 | 删 `fs:allow-appdata-*-recursive`，精确到 `blockhabit*.json`（含 backup/corrupt 后缀） |
+| CSP | **✅ 2026-10-01 完成**：严格 csp（script 'self'、style+inline、connect-src https: 兼容 WebDAV）+ `devCsp: null` 保 HMR；**打包产物需手工实测**（手工验证清单） |
+| fs scope 最小化 | **✅ 2026-10-01 完成**：删 recursive 全量授权，改 7 个精确命令权限 + scope `$APPDATA/blockhabit*` |
 | 音量滑杆 | sound.ts 主 GainNode + `settings.volume` + 设置页滑杆（沿用现有 UI 语言） |
 | WebDAV 凭据 keyring | tauri-plugin-stronghold / 系统 keyring（依赖现有 error code 体系） |
 | 周起始日配置 | `settings.weekStart: 'mon'|'sun'` 贯通 dates.ts/weekCountFor/热图列头 |
 | 习惯硬删除同步语义 | deleteHabit 复活问题（§7.8）：要么软删墓碑，要么 UI 引导归档 |
+
+### 延后项（2026-10-01 独立审查记录）
+
+- ShowcaseScene 拖拽热路径（仅重建被拖模型 + 复用其余模型缓存）与静态底座离屏层
+- iso.ts 精灵缓存测试补 dpr/palette/512 淘汰维度
+- merge 空 days 习惯的"静默删除"改为 rebuild 侧钳制修复（保留习惯而非丢弃）
+- 打包后实测生产 CSP（dev 模式 devCsp=null 不校验）
 
 ## 手工验证清单（无自动化覆盖，改相关代码时必测）
 

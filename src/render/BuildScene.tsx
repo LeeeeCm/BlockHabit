@@ -117,7 +117,13 @@ export function BuildScene({
   xrayMode = false,
   onAnimated,
 }: Props) {
-  const { lang, t } = useI18n()
+  const { t } = useI18n()
+  // 悬停气泡文案经 ref 承载：指针监听只注册一次，语言切换后仍取最新值
+  const bubbleLabelsRef = useRef({ bonusHabit: '', deletedHabit: '' })
+  bubbleLabelsRef.current = {
+    bonusHabit: t.today.fullCard.bonusHabitName,
+    deletedHabit: t.today.fullCard.deletedHabitName,
+  }
   const builds = useAppStore((s) => s.builds)
   const checkIns = useAppStore((s) => s.checkIns)
   const habits = useAppStore((s) => s.habits)
@@ -478,7 +484,8 @@ export function BuildScene({
               hoveredIndexRef.current = hit.i
               const meta = derivedRef.current.blockMetaByIndex.get(hit.i)
               const ci = meta?.ci
-              const habitName = meta?.habitName || (ci ? '习惯' : (meta?.pb?.bonus ? (lang === 'zh' ? '每日全勤大满贯' : 'Daily All-Clear') : '—'))
+              const labels = bubbleLabelsRef.current
+              const habitName = meta?.habitName || (ci ? labels.deletedHabit : meta?.pb?.bonus ? labels.bonusHabit : '—')
               setHoveredBlock({
                 index: hit.i,
                 x: state.startX - rect.left,
@@ -719,7 +726,8 @@ export function BuildScene({
           hoveredIndexRef.current = hit.i
           const meta = derivedRef.current.blockMetaByIndex.get(hit.i)
           const ci = meta?.ci
-          const habitName = meta?.habitName || (ci ? '习惯' : (meta?.pb?.bonus ? (lang === 'zh' ? '每日全勤大满贯' : 'Daily All-Clear') : '—'))
+          const labels = bubbleLabelsRef.current
+          const habitName = meta?.habitName || (ci ? labels.deletedHabit : meta?.pb?.bonus ? labels.bonusHabit : '—')
           setHoveredBlock({
             index: hit.i,
             x: e.clientX - rect.left,

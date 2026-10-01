@@ -196,6 +196,8 @@ export function MonthlyPosterModal({ onClose }: Props) {
         type: b.type,
         color: b.color,
         noStuds: aboveIdx !== undefined,
+        // 导出画布固定 2x 变换：精灵密度必须对齐，否则 1x 屏导出图块面模糊
+        spriteScale: 2,
       })
     }
     ctx.restore()

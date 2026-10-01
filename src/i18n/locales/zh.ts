@@ -80,6 +80,7 @@ export const zh: TranslationSchema = {
       subtitlePending: '所有在册习惯已全部打卡完成，可领取 1 块全勤奖励积木',
       claimToast: '已领取今日全勤奖励积木！',
       bonusHabitName: '每日全勤大满贯',
+      deletedHabitName: '已删除习惯',
       claimBtn: '领取全勤积木',
       claimed: '已领全勤',
     },

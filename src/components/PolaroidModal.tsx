@@ -163,6 +163,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         const aboveIdx = indexAt.get(`${b.x},${b.y},${b.z + 1}`)
         const { sx: px, sy: py } = worldToScreen(b.x, b.y, b.z, cfg)
         drawCube(ctx, px, py, cfg, palette, {
+          spriteScale: 2,
           type: b.type,
           color: b.color,
           noStuds: aboveIdx !== undefined,

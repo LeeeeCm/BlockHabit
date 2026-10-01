@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { HabitRow } from './HabitRow'
 import { useAppStore } from '../store/appStore'
 import { clearHabitSliceCache } from '../store/habitSelectors'
+import { todayKey } from '../logic/dates'
 import type { Habit } from '../types'
 
 describe('HabitRow memo & slice isolation', () => {
@@ -23,7 +24,8 @@ describe('HabitRow memo & slice isolation', () => {
     createdAt: '2026-09-01T00:00:00.000Z',
   }
 
-  const day = '2026-09-30'
+  // store 的 checkIn 使用真实 todayKey，测试的 day 必须一致（勿硬编码日期）
+  const day = todayKey()
   const stableOnCheck = vi.fn()
   const stableOnEdit = vi.fn()
 

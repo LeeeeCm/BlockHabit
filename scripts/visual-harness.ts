@@ -1,13 +1,13 @@
 /**
- * Visual regression check & verification tool for BlockHabit Canvas rendering.
+ * Visual verification harness generator for BlockHabit canvas rendering.
  *
- * Exercises:
- * 1. Four color themes: Light (paper), Dark (ink), Oat, Fog
- * 2. Regular blocks vs Bonus blocks vs Contact AO stacked blocks
- * 3. Compares geometry and color derivations
+ * Produces scripts/fixtures/visual-harness.html for MANUAL browser inspection:
+ * four themes × regular/bonus/AO-stacked blocks, plus a sanity check that
+ * palette derivation returns non-empty shading for every blueprint color.
+ * (It does NOT do automated pixel diffing; see followup plan P3 for that.)
  *
  * Usage:
- *   npx vite-node scripts/visual-diff.ts
+ *   npx vite-node scripts/visual-harness.ts
  */
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
