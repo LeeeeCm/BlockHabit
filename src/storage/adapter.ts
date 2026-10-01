@@ -285,6 +285,10 @@ export function normalizeState(s: AppState): AppState {
       enableGyroscope: Boolean(s.settings?.enableGyroscope),
       enableXRayInspection: Boolean(s.settings?.enableXRayInspection),
       soundMuted: s.settings?.soundMuted === true,
+      volume:
+        typeof s.settings?.volume === 'number' && Number.isFinite(s.settings.volume)
+          ? Math.max(0, Math.min(100, Math.round(s.settings.volume)))
+          : 100,
     },
     dayClaims: Array.isArray(s.dayClaims)
       ? (s.dayClaims as unknown[]).flatMap((c) => {

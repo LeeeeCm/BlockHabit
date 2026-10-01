@@ -267,6 +267,7 @@ export const zh: TranslationSchema = {
     shortcutsTitle: '快捷键说明',
     shortcutsDetail: '按键 1~4 切换页面 · Ctrl+N 新建习惯 · 退出键关闭弹窗',
     soundLabel: '积木拟真音效（纯程序化合成）',
+    volumeLabel: '主音量',
     soundOn: '开启',
     soundOff: '静音',
     autostartLabel: '开机自启（常驻托盘）',

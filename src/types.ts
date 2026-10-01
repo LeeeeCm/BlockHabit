@@ -141,6 +141,8 @@ export interface AppSettings {
   soundMaterial?: SoundMaterial
   /** 全局静音开关（重启保持） */
   soundMuted?: boolean
+  /** 主音量 0~100（默认 100，重启保持） */
+  volume?: number
   /** 移动端陀螺仪重力微视差 (默认关闭，遵循 Apple 减弱动态无障碍规范) */
   enableGyroscope?: boolean
   /** 积木透视考古探针模式 (透视幽灵蓝图 + 琥珀色随笔高亮) */

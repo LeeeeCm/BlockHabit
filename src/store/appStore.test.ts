@@ -42,6 +42,14 @@ describe('appStore checkIn & uncheckIn block economy', () => {
     expect(updated.checkIns[0].actualMinutes).toBe(18)
   })
 
+  it('updateSettings persists volume (0-100) into exportData', () => {
+    const store = useAppStore.getState()
+    store.updateSettings({ volume: 40 })
+    expect(JSON.parse(useAppStore.getState().exportData()).settings.volume).toBe(40)
+    store.updateSettings({ volume: 100 })
+    expect(JSON.parse(useAppStore.getState().exportData()).settings.volume).toBe(100)
+  })
+
   it('updateSettings persists soundMuted into exportData', () => {
     const store = useAppStore.getState()
     store.updateSettings({ soundMuted: true })

@@ -260,6 +260,7 @@ export interface TranslationSchema {
     shortcutsTitle: string
     shortcutsDetail: string
     soundLabel: string
+    volumeLabel: string
     soundOn: string
     soundOff: string
     autostartLabel: string

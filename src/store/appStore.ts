@@ -70,6 +70,7 @@ function defaultState(): AppState {
       enableEcoProps: true,
       soundMaterial: 'classic',
       soundMuted: false,
+      volume: 100,
       enableGyroscope: false,
       enableXRayInspection: false,
     },

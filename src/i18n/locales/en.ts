@@ -282,6 +282,7 @@ export const en: TranslationSchema = {
     },
     shortcutsDetail: '1~4 Switch Tabs · Ctrl/Cmd+N New Habit · Esc Close Dialog',
     soundLabel: 'Procedural Audio (Web Audio Synthesized)',
+    volumeLabel: 'Master volume',
     soundOn: 'Enabled',
     soundOff: 'Muted',
     autostartLabel: 'Launch on Startup (Resident Tray)',

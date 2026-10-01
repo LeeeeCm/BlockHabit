@@ -41,6 +41,32 @@ export function setSoundMuted(muted: boolean): void {
   soundMuted = muted
 }
 
+/** 主音量 0~100（settings.volume 持久化驱动；默认 100） */
+let masterVolume = 100
+let masterGainRef: { ctx: AudioContext; gain: GainNode } | null = null
+
+export function setVolume(volume: number): void {
+  masterVolume = Math.max(0, Math.min(100, Math.round(volume)))
+  if (masterGainRef && masterGainRef.ctx === audioCtx) {
+    masterGainRef.gain.gain.value = masterVolume / 100
+  }
+}
+
+export function getMasterVolume(): number {
+  return masterVolume
+}
+
+/** 所有音效统一经主音量节点输出（新建/复用与 ctx 生命周期绑定） */
+function getMasterGain(ctx: AudioContext): GainNode {
+  if (!masterGainRef || masterGainRef.ctx !== ctx) {
+    const gain = ctx.createGain()
+    gain.gain.value = masterVolume / 100
+    gain.connect(getMasterGain(ctx))
+    masterGainRef = { ctx, gain }
+  }
+  return masterGainRef.gain
+}
+
 /**
  * 积木咬合声（Snap / Click）：
  * 支持按物理材质（塑料/原木/晶体/合金）分别合成声学响应
@@ -69,7 +95,7 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
 
       osc.connect(filter)
       filter.connect(gain)
-      gain.connect(ctx.destination)
+      gain.connect(getMasterGain(ctx))
       osc.start(now)
       osc.stop(now + 0.06)
       break
@@ -89,7 +115,7 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
 
       osc1.connect(gain)
       osc2.connect(gain)
-      gain.connect(ctx.destination)
+      gain.connect(getMasterGain(ctx))
       osc1.start(now)
       osc2.start(now)
       osc1.stop(now + 0.045)
@@ -115,7 +141,7 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
       noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02)
       whiteNoise.connect(filter)
       filter.connect(noiseGain)
-      noiseGain.connect(ctx.destination)
+      noiseGain.connect(getMasterGain(ctx))
       whiteNoise.start(now)
 
       const osc = ctx.createOscillator()
@@ -126,7 +152,7 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
       oscGain.gain.setValueAtTime(0.16, now)
       oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03)
       osc.connect(oscGain)
-      oscGain.connect(ctx.destination)
+      oscGain.connect(getMasterGain(ctx))
       osc.start(now)
       osc.stop(now + 0.035)
       break
@@ -151,7 +177,7 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
 
       whiteNoise.connect(filter)
       filter.connect(noiseGain)
-      noiseGain.connect(ctx.destination)
+      noiseGain.connect(getMasterGain(ctx))
       whiteNoise.start(now)
 
       const osc = ctx.createOscillator()
@@ -164,7 +190,7 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
       oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03)
 
       osc.connect(oscGain)
-      oscGain.connect(ctx.destination)
+      oscGain.connect(getMasterGain(ctx))
 
       osc.start(now)
       osc.stop(now + 0.035)
@@ -192,7 +218,7 @@ export function playJellySound(): void {
   gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22)
 
   osc.connect(gain)
-  gain.connect(ctx.destination)
+  gain.connect(getMasterGain(ctx))
 
   osc.start(now)
   osc.stop(now + 0.24)
@@ -221,7 +247,7 @@ export function playCelebrationSound(): void {
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 1.2)
 
     osc.connect(gain)
-    gain.connect(ctx.destination)
+    gain.connect(getMasterGain(ctx))
 
     osc.start(startTime)
     osc.stop(startTime + 1.25)
@@ -262,9 +288,9 @@ export function playComboChime(comboIndex: number = 0): void {
   overtoneGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25)
 
   osc.connect(gain)
-  gain.connect(ctx.destination)
+  gain.connect(getMasterGain(ctx))
   overtone.connect(overtoneGain)
-  overtoneGain.connect(ctx.destination)
+  overtoneGain.connect(getMasterGain(ctx))
 
   osc.start(now)
   osc.stop(now + 0.4)

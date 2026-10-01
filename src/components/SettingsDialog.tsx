@@ -32,6 +32,7 @@ export function SettingsDialog({ onClose }: Props) {
   const completed = useAppStore((s) => s.completedBlueprintIds)
   const repairBricks = useAppStore((s) => s.repairBricks ?? 0)
   const muted = settings.soundMuted === true
+  const volume = typeof settings.volume === 'number' ? settings.volume : 100
   const [msg, setMsg] = useState<string | null>(null)
   /** 通过深度校验、待用户确认后覆盖导入的存档 */
   const [importCandidate, setImportCandidate] = useState<AppState | null>(null)
@@ -203,6 +204,20 @@ export function SettingsDialog({ onClose }: Props) {
                 >
                   {t.settings.soundOff}
                 </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, opacity: muted ? 0.4 : 1 }}>
+                <span style={{ fontSize: 11, color: 'var(--ink-2)', flexShrink: 0 }}>{t.settings.volumeLabel}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={volume}
+                  disabled={muted}
+                  onChange={(e) => updateSettings({ volume: Number(e.target.value) })}
+                  style={{ flex: 1, accentColor: 'var(--accent)' }}
+                />
+                <span style={{ fontSize: 11, color: 'var(--ink-2)', width: 32, textAlign: 'right', flexShrink: 0 }}>{volume}</span>
               </div>
             </div>
           </div>

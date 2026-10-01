@@ -44,7 +44,7 @@
 | 自动更新 | `tauri-plugin-updater` + 签名清单 + `createUpdaterArtifacts` |
 | CSP | **✅ 2026-10-01 完成并实测**：严格 csp（script 'self'、style+inline、connect-src https: 兼容 WebDAV、frame-ancestors 'none'）+ `devCsp: null` 保 HMR；release 产物启动 + PrintWindow 截窗验证完整渲染无白屏。注意：http:// 内网 NAS 的 WebDAV 端点会被 connect-src 拦截（有意收紧） |
 | fs scope 最小化 | **✅ 2026-10-01 完成并实测**：7 个精确命令权限 + scope `$APPDATA` + `$APPDATA/blockhabit*`（首版漏掉目录自身致 mkdir/readDir 被拒、保存恒失败——第二轮审查发现后已修，见下） |
-| 音量滑杆 | sound.ts 主 GainNode + `settings.volume` + 设置页滑杆（沿用现有 UI 语言） |
+| 音量滑杆 | **✅ 2026-10-01 完成**：sound.ts 主 GainNode（全部音效经主音量节点输出）+ `settings.volume` 持久化 + 设置页滑杆（CDP 实测 40→存档→100 还原） |
 | WebDAV 凭据 keyring | tauri-plugin-stronghold / 系统 keyring（依赖现有 error code 体系） |
 | 周起始日配置 | `settings.weekStart: 'mon'|'sun'` 贯通 dates.ts/weekCountFor/热图列头 |
 | 习惯硬删除同步语义 | deleteHabit 复活问题（§7.8）：要么软删墓碑，要么 UI 引导归档 |
@@ -62,7 +62,17 @@
 - merge/sanitize 空 days custom 习惯：本地加载路径（sanitizeState）已打通——宽容谓词先过滤、再钳制为工作日保留（坏档自修复可达）；merge 侧插入与 LWW 覆盖分支均钳制（对称）。远程同步与用户导入保持严格拒绝（整档 incompatible 报错，不静默吞坏档）——有意取舍：静默钳制远端档案可能掩盖更大损坏
 - 生产 CSP 打包实测：`npm run tauri build` 产物启动 + PrintWindow 截窗验证，真实数据完整渲染、无白屏（dev 模式 devCsp=null 不校验 CSP，此为唯一有效验证路径）
 
-## 手工验证清单（无自动化覆盖，改相关代码时必测）
+## 验证清单（2026-10-01 起大部分已自动化，剩余项标注）
+
+- **✅ 双设备 WebDAV 端到端**：`src/sync/webdav.e2e.test.ts`（真实本地 HTTP 服务器模拟 WebDAV 语义）——首次同步 / A 撤销→B 合并不复活（往返验证）/ 并发推送 412 → 重拉重并收敛（无 lost update）。
+- **✅ 打卡立即落盘 + 撤销墓碑**：CDP 驱动真实应用实测（真实存档，打卡 mtime 即时刷新、撤销墓碑写入）。
+- **✅ 迷你摆件进出**：CDP 实测——进入 260×380、退出还原 1116×769（截图 `.tmp-shots/03-mini-widget.png`）。
+- **✅ 触屏笔记本判定**：`platform.test.ts` 粗/细指针两用例（自动化）。
+- **✅ 四主题走查**：CDP 截图 build/showcase/stats × light/dark/oat/fog 共 12 张（`.tmp-shots/`），目视核验通过（暗色精灵渲染、雾灰热图、真实数据）。
+- **✅ 生产 CSP**：release 产物 PrintWindow 截窗验证（见 P6）。
+- **⬜ 托盘退出握手**：需真实托盘交互（Rust 侧握手逻辑静态审查通过；前端 flush 已由打卡立即落盘覆盖）。
+- **⬜ 双开 exe 聚焦**：需手动双击验证（single-instance 插件为官方能力，低风险）。
+- **⬜ 125%/150% 缩放屏**：需多显示器环境。
 
 - 双设备 WebDAV 端到端：A 撤销 → 同步 → B 不复活；双端同时推 → 412 重试收敛。
 - 托盘退出：退出后 `blockhabit.json` 含最后打卡；双开 exe 聚焦已有窗口。

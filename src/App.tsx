@@ -4,7 +4,7 @@ import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window'
 import { listen } from '@tauri-apps/api/event'
 import { initPersistence, useAppStore, forceFlush } from './store/appStore'
 import { pickAdapter } from './storage'
-import { setSoundMuted } from './audio/sound'
+import { setSoundMuted, setVolume } from './audio/sound'
 import { getBlueprint } from './logic/blueprints'
 import { useTimerStore } from './store/timerStore'
 import { getBlueprintName, useI18n } from './i18n'
@@ -259,6 +259,10 @@ export default function App() {
   useEffect(() => {
     setSoundMuted(soundMutedSetting === true)
   }, [soundMutedSetting])
+  const volumeSetting = useAppStore((s) => s.settings.volume)
+  useEffect(() => {
+    setVolume(typeof volumeSetting === 'number' ? volumeSetting : 100)
+  }, [volumeSetting])
 
   // 主题/语言副作用：store 只存状态，DOM 与跨窗口事件由这里驱动
   const themeSetting = useAppStore((s) => s.settings.theme)
