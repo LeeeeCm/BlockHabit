@@ -7,6 +7,7 @@ import {
   traceIsoGroundPath,
   worldToScreen,
   type IsoCornerRadii,
+  type IsoPalette,
 } from './iso'
 import {
   canPlaceModel,
@@ -31,6 +32,23 @@ interface Props {
   blueprintsMap: Record<string, Blueprint>
   onUpdatePlacement: (blueprintId: string, gridX: number, gridY: number) => boolean
   onSelectModel?: (blueprintId: string) => void
+}
+
+interface RenderCube {
+  worldX: number
+  worldY: number
+  worldZ: number
+  block: Blueprint['blocks'][0]
+  blueprintId: string
+  isDragging: boolean
+}
+
+/** Painter's 遮挡比较器：先按 (x+y) 深度，再按 z 高度 */
+function compareCubes(a: RenderCube, b: RenderCube): number {
+  const da = a.worldX + a.worldY
+  const db = b.worldX + b.worldY
+  if (da !== db) return da - db
+  return a.worldZ - b.worldZ
 }
 
 interface DragState {
@@ -134,6 +152,94 @@ export function ShowcaseScene({
     }
     return map
   }, [blueprintsMap])
+  // 3. 静态排序列表：所有模型按当前落位展开并排好序；拖拽时仅与"被拖模型"双有序归并，
+  //    不再每帧全量重建 + 全量排序（ref 承载保持 draw 引用稳定，不触发监听重绑）
+  const sortedStaticCubes = useMemo(() => {
+    const cubes: RenderCube[] = []
+    for (const p of placements) {
+      const bp = blueprintsMap[p.blueprintId]
+      if (!bp) continue
+      const fp = footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks)
+      for (const b of bp.blocks) {
+        cubes.push({
+          worldX: p.gridX + (b.x - fp.minX),
+          worldY: p.gridY + (b.y - fp.minY),
+          worldZ: b.z,
+          block: b,
+          blueprintId: p.blueprintId,
+          isDragging: false,
+        })
+      }
+    }
+    cubes.sort(compareCubes)
+    return cubes
+  }, [placements, blueprintsMap, footprintMap])
+  const sortedStaticCubesRef = useRef(sortedStaticCubes)
+  sortedStaticCubesRef.current = sortedStaticCubes
+
+  // 4. 静态底座离屏层缓存：视口/dpr/主题任一变化才重绘（拖拽与悬停期间恒命中）
+  const baseCacheRef = useRef<{ canvas: HTMLCanvasElement; key: string } | null>(null)
+
+  const renderBase = useCallback(
+    (bctx: CanvasRenderingContext2D, palette: IsoPalette) => {
+      const { topPts, botPts, skirtPts } = baseGeometry
+      // 底层环境光柔和阴影
+      bctx.save()
+      bctx.beginPath()
+      botPts.forEach((pt, i) => (i === 0 ? bctx.moveTo(pt.sx, pt.sy + 6) : bctx.lineTo(pt.sx, pt.sy + 6)))
+      bctx.closePath()
+      bctx.fillStyle = 'rgba(0, 0, 0, 0.04)'
+      bctx.fill()
+      bctx.restore()
+
+      // 朝向观众的 3D 侧面厚度（光滑连续曲面，绝无任何外溢线条）
+      if (skirtPts.length > 0) {
+        bctx.save()
+        bctx.beginPath()
+        skirtPts.forEach((pt, i) => (i === 0 ? bctx.moveTo(pt.sx, pt.sy) : bctx.lineTo(pt.sx, pt.sy)))
+        bctx.closePath()
+        bctx.fillStyle = '#f1f5f9'
+        bctx.fill()
+        bctx.strokeStyle = palette.ink
+        bctx.lineWidth = 1.5
+        bctx.lineJoin = 'round'
+        bctx.stroke()
+        bctx.restore()
+      }
+
+      // 展台顶面（纯白主体色 + 黑色外轮廓线）与顶面内部对齐网格
+      bctx.save()
+      bctx.beginPath()
+      topPts.forEach((pt, i) => (i === 0 ? bctx.moveTo(pt.sx, pt.sy) : bctx.lineTo(pt.sx, pt.sy)))
+      bctx.closePath()
+      bctx.fillStyle = '#ffffff'
+      bctx.fill()
+      bctx.strokeStyle = palette.ink
+      bctx.lineWidth = 1.5
+      bctx.lineJoin = 'round'
+      bctx.stroke()
+
+      bctx.clip()
+      bctx.beginPath()
+      for (let i = 1; i < G; i++) {
+        const a = worldToScreen(i, 0, 0, cfg)
+        const b = worldToScreen(i, G, 0, cfg)
+        bctx.moveTo(a.sx, a.sy + cfg.tileH / 2)
+        bctx.lineTo(b.sx, b.sy + cfg.tileH / 2)
+
+        const c = worldToScreen(0, i, 0, cfg)
+        const d = worldToScreen(G, i, 0, cfg)
+        bctx.moveTo(c.sx, c.sy + cfg.tileH / 2)
+        bctx.lineTo(d.sx, d.sy + cfg.tileH / 2)
+      }
+      bctx.strokeStyle = 'rgba(10, 10, 10, 0.08)'
+      bctx.lineWidth = 0.8
+      bctx.stroke()
+      bctx.restore()
+    },
+    [baseGeometry, cfg, G],
+  )
+
   const draw = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -150,64 +256,30 @@ export function ShowcaseScene({
     const palette = paletteFromDocument(undefined, ambient)
     const view = viewRef.current
     const gyro = gyroEnabled ? gyroOffsetRef.current : { x: 0, y: 0 }
+
+    // 1. 静态底座离屏层：拖拽/悬停/陀螺仪静止期间恒命中，仅视口、dpr、主题变化时重绘
+    const baseKey = `${w}x${h}|${dpr}|${view.scale}|${view.panX}|${view.panY}|${gyro.x}|${gyro.y}|${ambient}|${palette.ink}`
+    let base = baseCacheRef.current
+    if (!base || base.key !== baseKey) {
+      const off = document.createElement('canvas')
+      off.width = Math.max(1, Math.round(w * dpr))
+      off.height = Math.max(1, Math.round(h * dpr))
+      const octx = off.getContext('2d')
+      if (octx) {
+        octx.setTransform(dpr, 0, 0, dpr, 0, 0)
+        octx.translate(view.panX + gyro.x, view.panY + gyro.y)
+        octx.scale(view.scale, view.scale)
+        renderBase(octx, palette)
+        base = { canvas: off, key: baseKey }
+        baseCacheRef.current = base
+      }
+    }
+    if (base) {
+      ctx.drawImage(base.canvas, 0, 0, w, h)
+    }
     ctx.translate(view.panX + gyro.x, view.panY + gyro.y)
     ctx.scale(view.scale, view.scale)
-    // 1. 展台底座（透视圆角实体托盘：底角最大平缓 > 左右对称第二大 > 顶角紧凑自然）
-    const { topPts, botPts, skirtPts } = baseGeometry
-    // 底层环境光柔和阴影
-    ctx.save()
-    ctx.beginPath()
-    botPts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.sx, p.sy + 6) : ctx.lineTo(p.sx, p.sy + 6)))
-    ctx.closePath()
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'
-    ctx.fill()
-    ctx.restore()
 
-    // 朝向观众的 3D 侧面厚度（光滑连续曲面，绝无任何外溢线条）
-    if (skirtPts.length > 0) {
-      ctx.save()
-      ctx.beginPath()
-      skirtPts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.sx, p.sy) : ctx.lineTo(p.sx, p.sy)))
-      ctx.closePath()
-      ctx.fillStyle = '#f1f5f9'
-      ctx.fill()
-      ctx.strokeStyle = palette.ink
-      ctx.lineWidth = 1.5
-      ctx.lineJoin = 'round'
-      ctx.stroke()
-      ctx.restore()
-    }
-
-    // 展台顶面（纯白主体色 + 黑色外轮廓线）
-    ctx.save()
-    ctx.beginPath()
-    topPts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.sx, p.sy) : ctx.lineTo(p.sx, p.sy)))
-    ctx.closePath()
-    ctx.fillStyle = '#ffffff'
-    ctx.fill()
-    ctx.strokeStyle = palette.ink
-    ctx.lineWidth = 1.5
-    ctx.lineJoin = 'round'
-    ctx.stroke()
-
-    // 裁剪在顶面内部绘制微弱对齐网格线
-    ctx.clip()
-    ctx.beginPath()
-    for (let i = 1; i < G; i++) {
-      const a = worldToScreen(i, 0, 0, cfg)
-      const b = worldToScreen(i, G, 0, cfg)
-      ctx.moveTo(a.sx, a.sy + cfg.tileH / 2)
-      ctx.lineTo(b.sx, b.sy + cfg.tileH / 2)
-
-      const c = worldToScreen(0, i, 0, cfg)
-      const d = worldToScreen(G, i, 0, cfg)
-      ctx.moveTo(c.sx, c.sy + cfg.tileH / 2)
-      ctx.lineTo(d.sx, d.sy + cfg.tileH / 2)
-    }
-    ctx.strokeStyle = 'rgba(10, 10, 10, 0.08)'
-    ctx.lineWidth = 0.8
-    ctx.stroke()
-    ctx.restore()
     // 3. 拖拽时地基磁吸 / 碰撞警告脚印
     const drag = dragRef.current
     if (drag) {
@@ -247,50 +319,57 @@ export function ShowcaseScene({
       }
     }
 
-    // 4. 全局所有模型的积木混合深度排序（解决跨建筑相互遮挡）
-    interface RenderCube {
-      worldX: number
-      worldY: number
-      worldZ: number
-      block: Blueprint['blocks'][0]
-      blueprintId: string
-      isDragging: boolean
-    }
-
-    const allCubes: RenderCube[] = []
-    const curPlacements = placementsRef.current
-    for (const p of curPlacements) {
-      const bp = blueprintsMap[p.blueprintId]
-      if (!bp) continue
-      const isDragging = drag?.blueprintId === p.blueprintId
-      const gx = isDragging ? drag.currentGx : p.gridX
-      const gy = isDragging ? drag.currentGy : p.gridY
-
-      const fp = footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks)
-      for (const b of bp.blocks) {
-        const wx = gx + (b.x - fp.minX)
-        const wy = gy + (b.y - fp.minY)
-        allCubes.push({
-          worldX: wx,
-          worldY: wy,
-          worldZ: b.z,
-          block: b,
-          blueprintId: p.blueprintId,
-          isDragging,
-        })
+    // 4. 模型绘制：无拖拽直接复用静态排序列表（零重建）；拖拽时剔除被拖模型后
+    //    与被拖模型的有序列表做线性归并（O(n) 替代每帧 O(n log n) 重建+排序）
+    const staticCubes = sortedStaticCubesRef.current
+    let drawList: RenderCube[]
+    if (!drag) {
+      drawList = staticCubes
+    } else {
+      const bp = blueprintsMap[drag.blueprintId]
+      const fp = bp ? footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks) : null
+      const dragCubes: RenderCube[] = []
+      if (bp && fp) {
+        for (const b of bp.blocks) {
+          dragCubes.push({
+            worldX: drag.currentGx + (b.x - fp.minX),
+            worldY: drag.currentGy + (b.y - fp.minY),
+            worldZ: b.z,
+            block: b,
+            blueprintId: drag.blueprintId,
+            isDragging: true,
+          })
+        }
+        dragCubes.sort(compareCubes)
       }
+      const merged: RenderCube[] = []
+      let i = 0
+      let j = 0
+      while (i < staticCubes.length && j < dragCubes.length) {
+        const s = staticCubes[i]
+        if (s.blueprintId === drag.blueprintId) {
+          i++
+          continue
+        }
+        const d = dragCubes[j]
+        if (compareCubes(s, d) <= 0) {
+          merged.push(s)
+          i++
+        } else {
+          merged.push(d)
+          j++
+        }
+      }
+      while (i < staticCubes.length) {
+        const s = staticCubes[i++]
+        if (s.blueprintId !== drag.blueprintId) merged.push(s)
+      }
+      while (j < dragCubes.length) merged.push(dragCubes[j++])
+      drawList = merged
     }
-
-    // Painter's 遮挡排序
-    allCubes.sort((m, n) => {
-      const a = m.worldX + m.worldY
-      const c = n.worldX + n.worldY
-      if (a !== c) return a - c
-      return m.worldZ - n.worldZ
-    })
 
     // 绘制所有积木
-    for (const { worldX, worldY, worldZ, block, blueprintId, isDragging } of allCubes) {
+    for (const { worldX, worldY, worldZ, block, blueprintId, isDragging } of drawList) {
       const { sx: px, sy: py } = worldToScreen(worldX, worldY, worldZ, cfg)
       const isHovered = hoveredIdRef.current === blueprintId && !drag
       drawCube(ctx, px, py + cfg.tileH / 2, cfg, palette, {
@@ -300,7 +379,7 @@ export function ShowcaseScene({
         ghost: isDragging && !drag?.isValid,
       })
     }
-  }, [blueprintsMap, cfg, G, baseGeometry, footprintMap])
+  }, [blueprintsMap, cfg, G, footprintMap, renderBase])
 
   // 当外部 placements 数据变更时（例如自动排列或 store 同步），触发即时画布重绘
   useEffect(() => {

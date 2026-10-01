@@ -51,10 +51,12 @@
 
 ### 延后项（2026-10-01 独立审查记录）
 
-- ShowcaseScene 拖拽热路径（仅重建被拖模型 + 复用其余模型缓存）与静态底座离屏层
-- iso.ts 精灵缓存测试补 dpr/palette/512 淘汰维度
-- merge 空 days 习惯的"静默删除"改为 rebuild 侧钳制修复（保留习惯而非丢弃）
-- 打包后实测生产 CSP（dev 模式 devCsp=null 不校验）
+**✅ 2026-10-01 全部完成：**
+
+- ShowcaseScene 拖拽热路径：静态排序列表缓存 + 拖拽时与被拖模型双有序线性归并（O(n) 替代每帧 O(n log n) 重建+排序）；静态底座（阴影/侧裙/托盘/网格）离屏层缓存，key = 视口/dpr/主题，拖拽与悬停期间恒命中
+- iso.ts 精灵缓存测试补齐 dpr 维度、palette 维度（主题切换互不污染）、512 上限 FIFO 淘汰三个用例
+- merge/sanitize 空 days custom 习惯：由"静默丢弃"改为"钳制为工作日保留"（坏档可修复；strict validateState 导入路径仍拒绝）
+- 生产 CSP 打包实测：`npm run tauri build` 产物启动 + PrintWindow 截窗验证，真实数据完整渲染、无白屏（dev 模式 devCsp=null 不校验 CSP，此为唯一有效验证路径）
 
 ## 手工验证清单（无自动化覆盖，改相关代码时必测）
 

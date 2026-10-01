@@ -30,26 +30,34 @@ function isNewerHabit(local: Habit, remote: Habit): boolean {
  * Merges habits by id with updatedAt LWW (newest edit wins, including archive/restore/pin).
  * Habits without updatedAt (legacy archives) fall back to local-priority spread.
  */
-function isValidHabit(h: Habit): boolean {
-  if (!h || !h.id) return false
-  if (h.frequency?.type === 'custom') {
-    return Array.isArray(h.frequency.days) && h.frequency.days.length > 0
+/**
+ * custom 习惯 days 为空时钳制为工作日并保留习惯（而非静默丢弃）：
+ * 坏档通常源于旧版本客户端或中断写入，同步应是"尽力修复"而非"无声消失"。
+ */
+function clampHabit(h: Habit): Habit {
+  if (!h || !h.id) return h
+  if (
+    h.frequency?.type === 'custom' &&
+    (!Array.isArray(h.frequency.days) || h.frequency.days.length === 0)
+  ) {
+    return { ...h, frequency: { type: 'custom', days: [1, 2, 3, 4, 5] } }
   }
-  return true
+  return h
 }
 
 function mergeHabits(localHabits: Habit[], remoteHabits: Habit[]): Habit[] {
   const habitMap = new Map<string, Habit>()
   for (const h of remoteHabits || []) {
-    if (isValidHabit(h)) {
-      habitMap.set(h.id, { ...h })
+    if (h && h.id) {
+      // 不再用 isValidHabit 静默丢弃：空 days 由 clampHabit 钳制修复
+      habitMap.set(h.id, { ...clampHabit(h) })
     }
   }
   for (const h of localHabits || []) {
-    if (!isValidHabit(h)) continue
+    if (!h || !h.id) continue
     const existing = habitMap.get(h.id)
     if (!existing) {
-      habitMap.set(h.id, { ...h })
+      habitMap.set(h.id, { ...clampHabit(h) })
     } else {
       habitMap.set(h.id, isNewerHabit(h, existing) ? { ...h } : existing)
     }

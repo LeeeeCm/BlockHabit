@@ -126,7 +126,20 @@ export function sanitizeState(v: unknown): AppState | null {
   if (typeof v.activeBlueprintId !== 'string' || !v.activeBlueprintId) return null
   if (!isRecord(v.settings)) return null
   if (!Array.isArray(v.completedBlueprintIds)) return null
-  const habits = Array.isArray(v.habits) ? v.habits.filter(isValidHabitElement) : []
+  const habits = Array.isArray(v.habits)
+    ? v.habits.filter(isValidHabitElement).map((h) => {
+        // custom 空 days 钳制为工作日（保留习惯，与 merge 侧语义一致）
+        const freq = (h as Record<string, unknown>).frequency as Record<string, unknown> | undefined
+        if (
+          freq &&
+          freq.type === 'custom' &&
+          (!Array.isArray(freq.days) || (freq.days as unknown[]).length === 0)
+        ) {
+          return { ...(h as Record<string, unknown>), frequency: { type: 'custom', days: [1, 2, 3, 4, 5] } }
+        }
+        return h
+      })
+    : []
   const checkIns = Array.isArray(v.checkIns) ? v.checkIns.filter(isValidCheckInElement) : []
   const builds = Array.isArray(v.builds) ? v.builds.filter(isValidBlockElement) : []
   return normalizeState({ ...(v as object), habits, checkIns, builds } as AppState)

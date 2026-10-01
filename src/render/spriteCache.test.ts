@@ -101,6 +101,47 @@ describe('iso block sprite cache', () => {
     expect(s2).not.toBe(s1)
   })
 
+  it('treats dpr as a distinct cache dimension (2x bitmap for 2x sprites)', () => {
+    const c: IsoConfig = DEFAULT_ISO_CONFIG
+    const s1 = getCubeSprite('#3b82f6', 'basic', false, c, mockPalette, 1)
+    const s1Again = getCubeSprite('#3b82f6', 'basic', false, c, mockPalette, 1)
+    const s2 = getCubeSprite('#3b82f6', 'basic', false, c, mockPalette, 2)
+    expect(s1Again).toBe(s1)
+    expect(s2).not.toBe(s1)
+    // 位图密度随 dpr 翻倍（CSS 逻辑尺寸不变）
+    expect(s2!.canvas.width).toBeCloseTo((s1!.canvas.width) * 2)
+  })
+
+  it('treats palette as a distinct cache dimension (theme switch does not cross-contaminate)', () => {
+    const c: IsoConfig = DEFAULT_ISO_CONFIG
+    const light = getCubeSprite('#3b82f6', 'basic', false, c, mockPalette, 2)
+    const darkPalette: IsoPalette = {
+      ...mockPalette,
+      top: '#27272a',
+      left: '#3f3f46',
+      right: '#18181b',
+      ink: '#fafafa',
+    }
+    const dark = getCubeSprite('#3b82f6', 'basic', false, c, darkPalette, 2)
+    expect(dark).not.toBe(light)
+    // 两种 palette 的缓存并存，互不失效
+    expect(getCubeSprite('#3b82f6', 'basic', false, c, mockPalette, 2)).toBe(light)
+  })
+
+  it('evicts the oldest entry beyond the 512 cap (FIFO)', () => {
+    const c: IsoConfig = DEFAULT_ISO_CONFIG
+    const first = getCubeSprite('#evict-000', 'basic', false, c, mockPalette, 2)
+    // 灌入 512 个新 key：总插入 513 次，最早条目（#evict-000）被淘汰
+    for (let i = 0; i < 512; i++) {
+      getCubeSprite(`#evict-${i}`, 'basic', false, c, mockPalette, 2)
+    }
+    const firstAgain = getCubeSprite('#evict-000', 'basic', false, c, mockPalette, 2)
+    expect(firstAgain).not.toBe(first)
+    // 最近条目仍在缓存（命中不重新生成）
+    const last = getCubeSprite('#evict-511', 'basic', false, c, mockPalette, 2)
+    expect(getCubeSprite('#evict-511', 'basic', false, c, mockPalette, 2)).toBe(last)
+  })
+
   it('drawCube invokes drawImage when sprite is cached', () => {
     const drawImageSpy = vi.fn()
     const mockCtx = {

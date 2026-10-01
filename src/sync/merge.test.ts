@@ -272,8 +272,14 @@ describe('mergeAppState facts merge (schema v2)', () => {
       createMockState({ habits: [emptyCustomRemote] }),
     )
 
-    expect(merged.habits.length).toBe(1)
-    expect(merged.habits[0].id).toBe('h1')
+    // 空 days 的 custom 习惯被钳制保留（工作日），而非静默消失
+    expect(merged.habits.length).toBe(3)
+    const clampedLocal = merged.habits.find((h) => h.id === 'h_empty_local')!
+    expect(clampedLocal.name).toBe('Empty Local')
+    expect(clampedLocal.frequency).toEqual({ type: 'custom', days: [1, 2, 3, 4, 5] })
+    const clampedRemote = merged.habits.find((h) => h.id === 'h_empty_remote')!
+    expect(clampedRemote.frequency).toEqual({ type: 'custom', days: [1, 2, 3, 4, 5] })
+    expect(merged.habits.find((h) => h.id === 'h1')).toBeDefined()
   })
 
   it('merges dayClaims by date with claimedAt/deletedAt LWW', () => {
