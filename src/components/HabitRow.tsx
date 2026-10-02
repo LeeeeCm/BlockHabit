@@ -30,6 +30,8 @@ interface Props {
   onEdit?: (habit: Habit) => void
   /** 随笔镌刻保存成功后的回调（宿主页用于弹 toast） */
   onNoteSaved?: () => void
+  /** 昨日休整、今日打卡已接续（韧性保护生效，卡片展示反馈） */
+  resilienceProtected?: boolean
 }
 
 
@@ -62,6 +64,7 @@ export const HabitRow = memo(function HabitRow({
   onCheck,
   onEdit,
   onNoteSaved,
+  resilienceProtected,
 }: Props) {
   const { isMobile } = usePlatform()
   const { t } = useI18n()
@@ -141,6 +144,7 @@ export const HabitRow = memo(function HabitRow({
     habit.category ? `#${habit.category}` : '',
     freqLabel,
     inRestPeriod && !done ? t.today.inRestPeriod : '',
+    resilienceProtected ? t.today.resilienceContinuation : '',
     habit.period && habit.period !== 'any' ? t.today.periods[habit.period] : '',
     isFocus
       ? t.today.targetMinutes(habit.targetMinutes ?? 25)

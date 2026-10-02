@@ -4,13 +4,15 @@ import {
   DEFAULT_ISO_CONFIG,
   STUD_H,
   drawCube,
-  drawGroundBounds,
   followResize,
   isPointInsideCube,
   paletteFromDocument,
   rotateCoord,
   worldToScreen,
 } from './iso'
+import { drawGroundBase, drawEcoProps } from './iso'
+import { currentStreakWithResilience } from '../logic/streak'
+import { ecoStageFor } from '../logic/eco'
 import { useAppStore } from '../store/appStore'
 import { useI18n } from '../i18n'
 import {
@@ -127,6 +129,18 @@ export function BuildScene({
   const builds = useAppStore((s) => s.builds)
   const checkIns = useAppStore((s) => s.checkIns)
   const habits = useAppStore((s) => s.habits)
+  const enableEcoProps = useAppStore((s) => s.settings.enableEcoProps !== false)
+  // 微生态彩蛋阶段：所有在册习惯的最大连胜（含韧性接续），映射 0-4 阶段
+  const ecoStage = useMemo(() => {
+    if (!enableEcoProps) return 0
+    const today = new Date()
+    let maxStreak = 0
+    for (const h of habits) {
+      if (h.archivedAt) continue
+      maxStreak = Math.max(maxStreak, currentStreakWithResilience(h, checkIns, today, true).streak)
+    }
+    return ecoStageFor(maxStreak)
+  }, [habits, checkIns, enableEcoProps])
 
   // 1. 蓝图几何包围盒与中心点（纯蓝图静态，不随帧刷新）
   const { cx, cy } = useMemo(() => {
@@ -215,10 +229,12 @@ export function BuildScene({
   const rafRef = useRef<number | null>(null)
   const enableAmbient = useAppStore((s) => s.settings.enableAmbientLighting !== false)
   const enableGyroscope = useAppStore((s) => Boolean(s.settings.enableGyroscope))
-  const enableEcoProps = useAppStore((s) => s.settings.enableEcoProps !== false)
   const gyroOffsetRef = useRef({ x: 0, y: 0 })
-  const stateRef = useRef({ blueprint, placedCount, animateIndex, rotation, enableAmbient, enableGyroscope, enableEcoProps, xrayMode })
-  stateRef.current = { blueprint, placedCount, animateIndex, rotation, enableAmbient, enableGyroscope, enableEcoProps, xrayMode }
+  const stateRef = useRef({ blueprint, placedCount, animateIndex, rotation, enableAmbient, enableGyroscope, ecoStage, xrayMode })
+  stateRef.current = { blueprint, placedCount, animateIndex, rotation, enableAmbient, enableGyroscope, ecoStage, xrayMode }
+  // 动画/重绘 effect 经 ref 调用 draw：调用方（BlockDropModal）的 onAnimated 回调身份
+  // 变化不再重建 draw、不再重置动画计时（修复掉落动画播两遍）
+  const drawRef = useRef<() => void>(() => {})
   const draw = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -239,7 +255,7 @@ export function BuildScene({
     cubesRef.current = cubes
 
     const cfg = DEFAULT_ISO_CONFIG
-    drawGroundBounds(ctx, bp.blocks, cfg, palette, rot, cx, cy, stateRef.current.enableEcoProps)
+    drawGroundBase(ctx, bp.blocks, cfg, palette, rot, cx, cy)
 
     const now = performance.now()
     const anim = animRef.current
@@ -322,6 +338,9 @@ export function BuildScene({
       }
     }
 
+    // 植被层：在积木之后绘制（前景），随连胜阶段生长的积木风迷你植被
+    drawEcoProps(ctx, bp.blocks, cfg, palette, rot, cx, cy, stateRef.current.ecoStage)
+
     if (cascade) {
       cascadeRunning = cascadeRunning || now - cascade.start < cascade.total
     }
@@ -343,14 +362,19 @@ export function BuildScene({
     } else if (anim) {
       animRef.current = null
       draw()
-      onAnimated?.()
+      onAnimatedRef.current?.()
     } else if (cascadeRunning) {
       scheduleNextFrame()
     } else if (cascade) {
       cascadeRef.current = null
       draw()
     }
-  }, [onAnimated])
+  }, [])
+  drawRef.current = draw
+
+  // onAnimated 同样经 ref 承载，保持 draw 引用稳定（监听器不随弹窗渲染重绑）
+  const onAnimatedRef = useRef(onAnimated)
+  onAnimatedRef.current = onAnimated
 
   const touchStateRef = useRef<TouchGestureState | null>(null)
 
@@ -647,6 +671,7 @@ export function BuildScene({
   }, [draw])
 
   // 状态变化重绘：新块 → 慢落果冻；每次进入建造页 → 逐层级联
+  // （依赖不含 draw/onAnimated：弹窗打字、微状态切换不会重置动画计时）
   useEffect(() => {
     if (animateIndex != null && animateIndex === placedCount - 1 && placedCount > 0) {
       cascadeRef.current = null
@@ -654,18 +679,18 @@ export function BuildScene({
     } else if (placedCount > 0 && !animRef.current) {
       cascadeRef.current = planCascade(stateRef.current.blueprint.blocks, placedCount)
     }
-    draw()
-  }, [placedCount, animateIndex, draw])
+    drawRef.current()
+  }, [placedCount, animateIndex])
 
   // 视角旋转仅触发重绘，不重播级联掉落动画
   useEffect(() => {
-    draw()
-  }, [rotation, draw])
+    drawRef.current()
+  }, [rotation])
   // 环境光照与重力视差偏好切换时触发重绘
   // 环境光照、重力视差与微生态彩蛋偏好切换时触发重绘
   useEffect(() => {
-    draw()
-  }, [enableAmbient, enableGyroscope, enableEcoProps, xrayMode, draw])
+    drawRef.current()
+  }, [enableAmbient, enableGyroscope, ecoStage, xrayMode])
 
   // 交互：拖拽平移 / 滚轮缩放
   useEffect(() => {

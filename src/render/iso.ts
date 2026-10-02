@@ -755,16 +755,12 @@ function decorate(
   }
 }
 
-/** 建造范围框：模型在底层地面上的等距投影——躺在地面平面（z=0 块底面平面）上的圆角菱形 */
-export function drawGroundBounds(
-  ctx: CanvasRenderingContext2D,
+/** 底座包围盒：模型在地面上的等距投影范围（含 margin 环带） */
+function groundBoundsOf(
   blocks: Array<{ x: number; y: number }>,
-  c: IsoConfig,
-  p: IsoPalette,
   rot: number = 0,
   cx: number = 0,
   cy: number = 0,
-  enableEcoProps = false,
 ) {
   // 全部楼层块的 x/y 包围盒（块坐标为格中心，外扩半格即水平占地范围；
   // 凸点水平投影位于格中心、半径小于半格宽，天然被包含）
@@ -784,6 +780,20 @@ export function drawGroundBounds(
   const x1 = maxX + 0.5 + margin
   const y0 = minY - 0.5 - margin
   const y1 = maxY + 0.5 + margin
+  return { x0, x1, y0, y1 }
+}
+
+/** 底座层：虚线范围框 + 柔和填充（主体积木之下绘制） */
+export function drawGroundBase(
+  ctx: CanvasRenderingContext2D,
+  blocks: Array<{ x: number; y: number }>,
+  c: IsoConfig,
+  p: IsoPalette,
+  rot: number = 0,
+  cx: number = 0,
+  cy: number = 0,
+) {
+  const { x0, x1, y0, y1 } = groundBoundsOf(blocks, rot, cx, cy)
 
   // 视角透视圆角阶梯：底角平缓舒展 (0.95) > 左右对称适中 (0.70) > 远端顶角紧凑自然 (0.50)
   const radii: IsoCornerRadii = {
@@ -803,31 +813,71 @@ export function drawGroundBounds(
   ctx.lineWidth = 1.4
   ctx.stroke()
   ctx.restore()
+}
 
-  // 连胜微生态彩蛋：在底座边缘自然生长微缩鹅卵石与小草芽
-  if (enableEcoProps && blocks.length >= 2) {
-    ctx.save()
-    // 1. 微型鹅卵石点缀 (Pebbles)
-    const p1 = worldToScreen(x0 + 0.35, y1 - 0.45, 0, c)
-    const p2 = worldToScreen(x0 + 0.65, y1 - 0.3, 0, c)
-    ctx.fillStyle = p.left
-    ctx.beginPath()
-    ctx.ellipse(p1.sx, p1.sy, 3.2, 1.8, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.beginPath()
-    ctx.ellipse(p2.sx, p2.sy, 2.4, 1.4, 0, 0, Math.PI * 2)
-    ctx.fill()
+/** 植被层：连胜微生态彩蛋——底座 margin 环带（积木脚印之外）随连胜阶段生长的积木风迷你植被
+ *  （阶段 1 萌芽 ≥1 天 / 2 积木小径 ≥7 天 / 3 积木树 ≥21 天 / 4 积木花园 ≥100 天）
+ *  在主体积木之后绘制（前景层），避免被积木精灵覆盖。 */
+export function drawEcoProps(
+  ctx: CanvasRenderingContext2D,
+  blocks: Array<{ x: number; y: number }>,
+  c: IsoConfig,
+  p: IsoPalette,
+  rot: number = 0,
+  cx: number = 0,
+  cy: number = 0,
+  ecoStage = 0,
+) {
+  if (ecoStage < 1 || blocks.length < 2) return
+  const { x0, x1, y0, y1 } = groundBoundsOf(blocks, rot, cx, cy)
+  const mini: IsoConfig = { ...c, tileW: 16, tileH: 8, blockH: 7 }
+  const flora: IsoPalette = {
+    ...p,
+    top: '#8fce8f',
+    left: '#57a457',
+    right: '#2f7d3a',
+    ink: 'rgba(24, 58, 32, 0.55)',
+  }
+  const stone: IsoPalette = { ...flora, top: '#d6d3d1', left: '#a8a29e', right: '#78716c', ink: 'rgba(60,55,50,0.4)' }
+  const bloom: IsoPalette = { ...flora, top: '#f5b301', left: '#d99e00', right: '#b58500' }
+  const put = (wx: number, wy: number, pal: IsoPalette, stack = 1) => {
+    const { sx, sy } = worldToScreen(wx, wy, 0, c)
+    for (let k = 0; k < stack; k++) {
+      drawCube(ctx, sx, sy + c.tileH / 2 - k * mini.blockH, mini, pal, { noStuds: true })
+    }
+  }
+  const midX = (x0 + x1) / 2
+  const midY = (y0 + y1) / 2
+  // 植被固定在钻石四角与四边（margin 环带内，恒在积木脚印之外）
+  const vLeft = { x: x0 + 0.45, y: midY }
+  const vRight = { x: x1 - 0.45, y: midY }
+  const vBack = { x: midX, y: y0 + 0.45 }
+  const vFront = { x: midX, y: y1 - 0.45 }
 
-    // 2. 微型小萌芽 (Flora Sprout)
-    const sp = worldToScreen(x1 - 0.4, y0 + 0.4, 0, c)
-    ctx.fillStyle = '#22c55e'
-    ctx.beginPath()
-    ctx.ellipse(sp.sx - 2, sp.sy - 1, 2.5, 1.3, -0.4, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.beginPath()
-    ctx.ellipse(sp.sx + 2, sp.sy - 1, 2.5, 1.3, 0.4, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.restore()
+  // 阶段 1 萌芽：四角绿色小积木灌木
+  put(vLeft.x, vLeft.y, flora)
+  put(vRight.x, vRight.y, flora)
+  put(vBack.x, vBack.y, flora)
+  put(vFront.x, vFront.y, flora)
+  if (ecoStage >= 2) {
+    // 阶段 2 积木小径：左缘纵向的石/绿交替小径
+    for (let i = 0; i <= 4; i++) {
+      put(vLeft.x, midY + (i - 2) * 0.42, i % 2 ? flora : stone)
+    }
+  }
+  if (ecoStage >= 3) {
+    // 阶段 3 积木树：石色树干 + 双层绿冠（左/前角灌木长成树）
+    put(vLeft.x, vLeft.y, stone)
+    put(vLeft.x, vLeft.y, flora, 2)
+    put(vFront.x, vFront.y, stone)
+    put(vFront.x, vFront.y, flora, 2)
+  }
+  if (ecoStage >= 4) {
+    // 阶段 4 积木花园：右/后角点缀色花砖 + 树冠
+    put(vRight.x, vRight.y, bloom)
+    put(vRight.x, vRight.y, flora, 2)
+    put(vBack.x, vBack.y, bloom)
+    put(vBack.x, vBack.y, flora, 2)
   }
 }
 export type TimePeriod = 'dawn' | 'noon' | 'dusk' | 'night'
@@ -843,29 +893,30 @@ export function getTimePeriod(hour = new Date().getHours()): TimePeriod {
 function applyAmbientLighting(p: IsoPalette, period: TimePeriod): IsoPalette {
   switch (period) {
     case 'dawn':
-      // 晨曦：微暖金光，顶面与受光面泛起柔和晨光
+      // 晨曦：明显暖金晨光，顶面提亮、背光面微沉
       return {
         ...p,
-        top: adjustLightness(p.top, 1.04),
-        left: adjustLightness(p.left, 1.02),
-        right: adjustLightness(p.right, 0.96),
+        top: adjustLightness(p.top, 1.14),
+        left: adjustLightness(p.left, 1.08),
+        right: adjustLightness(p.right, 0.9),
       }
     case 'dusk':
-      // 黄昏：日落暖橘光影，暗面加深，顶面微金
+      // 黄昏：日落暖橘，暗面明显加深、顶面留金
       return {
         ...p,
-        top: adjustLightness(p.top, 1.03),
-        left: adjustLightness(p.left, 0.95),
-        right: adjustLightness(p.right, 0.90),
+        top: adjustLightness(p.top, 1.1),
+        left: adjustLightness(p.left, 0.84),
+        right: adjustLightness(p.right, 0.68),
+        ghost: adjustLightness(p.ghost, 0.9),
       }
     case 'night':
-      // 夜幕：微缩夜灯质感，顶面保留台灯聚光，侧暗面更沉稳
+      // 夜幕：夜灯质感，块身整体沉稳变暗、顶面保留聚光
       return {
         ...p,
-        top: adjustLightness(p.top, 0.98),
-        left: adjustLightness(p.left, 0.88),
-        right: adjustLightness(p.right, 0.82),
-        ghost: adjustLightness(p.ghost, 0.9),
+        top: adjustLightness(p.top, 0.9),
+        left: adjustLightness(p.left, 0.68),
+        right: adjustLightness(p.right, 0.55),
+        ghost: adjustLightness(p.ghost, 0.75),
       }
     case 'noon':
     default:

@@ -4,7 +4,7 @@ import App from './App'
 import { TrayMenu } from './components/TrayMenu'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { initSmoothScroll } from './platform/smoothScroll'
-import { applyDemoCastleState, markDemoMode } from './store/appStore'
+import { applyDemoCastleState, markDemoMode, useAppStore } from './store/appStore'
 import '@fontsource/rubik/400.css'
 import '@fontsource/rubik/500.css'
 import '@fontsource/rubik/600.css'
@@ -31,6 +31,11 @@ if (isTrayMenu) {
 if (typeof location !== 'undefined' && new URLSearchParams(location.search).has('demo-castle')) {
   markDemoMode()
   applyDemoCastleState()
+}
+
+// dev 调试钩子：CDP/控制台可直接检查应用正在使用的同一 store 实例
+if (import.meta.env.DEV) {
+  ;(window as unknown as Record<string, unknown>).__blockhabitStore = useAppStore
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

@@ -4,7 +4,7 @@ import { getBlueprint } from '../logic/blueprints'
 import {
   DEFAULT_ISO_CONFIG,
   drawCube,
-  drawGroundBounds,
+  drawGroundBase,
   paletteFromDocument,
   STUD_H,
   worldToScreen,
@@ -174,7 +174,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
     ctx.translate(panX, panY)
     ctx.scale(scale, scale)
 
-    drawGroundBounds(ctx, blueprint.blocks, cfg, palette, 0, cx, cy)
+    drawGroundBase(ctx, blueprint.blocks, cfg, palette, 0, cx, cy)
 
     const visibleBlocks = isComplete ? blueprint.blocks : blueprint.blocks.slice(0, placedCount)
     const cubes = visibleBlocks

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { currentStreak, bestStreak } from './streak'
+import { currentStreak, bestStreak, currentStreakWithResilience } from './streak'
 import type { Habit, CheckIn } from '../types'
 
 const daily: Habit = {
@@ -127,5 +127,64 @@ describe('bestStreak', () => {
     ]
     // 8-17周 met, 8-10周 met, 7-27周 只有1次未达标 → best=2
     expect(bestStreak(weekly2, cs)).toBe(2)
+  })
+})
+
+
+describe('温和抗断韧性（Gentle Decay）', () => {
+  // 2026-10-01 周四；custom 周一/三/五
+  const thursday = new Date(2026, 9, 1, 12, 0, 0)
+
+  const ci = (id: string, date: string): CheckIn => ({
+    id,
+    habitId: 'x',
+    date,
+    at: `${date}T12:00:00.000Z`,
+  })
+
+  it('custom habit: yesterday missed (due day) and today checked → continuation protected', () => {
+    const custom = { ...customMWF, id: 'x' }
+    // 周一 09-28 与 周五 09-25 已打卡；昨天周三 09-30 应执行但未打卡；今日周四已打卡
+    const checkIns = [ci('c1', '2026-09-28'), ci('c2', '2026-09-25'), ci('c3', '2026-10-01')]
+    const status = currentStreakWithResilience(
+      custom,
+      checkIns.map((c) => ({ ...c, habitId: 'x' })),
+      thursday,
+      true,
+    )
+    expect(status.streak).toBe(3) // 接续周一的连胜（周五→周一→今日=3）
+    expect(status.protectedContinuation).toBe(true)
+  })
+
+  it('custom habit: yesterday was a rest day → no protection needed', () => {
+    const custom = { ...customMWF, id: 'x' }
+    // 昨天周三应执行已打卡、今日周四打卡 → 正常连胜，不触发保护标记
+    const checkIns = [
+      ci('c1', '2026-09-30'),
+      ci('c2', '2026-09-28'),
+    ].map((c) => ({ ...c, habitId: 'x' }))
+    const status = currentStreakWithResilience(custom, checkIns, thursday, true)
+    expect(status.streak).toBe(2)
+    expect(status.protectedContinuation).toBeUndefined()
+  })
+
+  it('daily habit: today checked after yesterday rest → protectedContinuation flagged', () => {
+    const d = { ...daily, id: 'x' }
+    const checkIns = [
+      ci('c1', '2026-09-28'),
+      ci('c2', '2026-09-27'),
+      ci('c3', '2026-09-26'),
+      ci('c4', '2026-10-01'),
+    ].map((c) => ({ ...c, habitId: 'x' }))
+    // 昨日 09-30 未打卡、前日 09-29 也未打卡 → doneDayBefore=false → 不满足保护条件
+    const status = currentStreakWithResilience(d, checkIns, thursday, true)
+    expect(status.protectedContinuation).toBeUndefined()
+    expect(status.streak).toBe(1)
+
+    // 前日 09-29 有打卡 → 保护接续
+    const protectedCheckIns = [...checkIns, ci('c5', '2026-09-29')].map((c) => ({ ...c, habitId: 'x' }))
+    const status2 = currentStreakWithResilience(d, protectedCheckIns, thursday, true)
+    expect(status2.streak).toBe(5) // 前日 4 天连胜 + 今日接续
+    expect(status2.protectedContinuation).toBe(true)
   })
 })

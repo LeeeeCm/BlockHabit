@@ -77,6 +77,8 @@ export interface StreakStatus {
   /** 是否处于温和休整期 (允许今日打卡接续) */
   inRestPeriod: boolean
   missedDays: number
+  /** 昨日休整、今日打卡已接续：UI 可展示"连胜保护"反馈 */
+  protectedContinuation?: boolean
 }
 
 /**
@@ -98,19 +100,21 @@ export function currentStreakWithResilience(
     return { streak: 0, inRestPeriod: false, missedDays: 0 }
   }
 
-  if (habit.frequency.type === 'daily') {
+  {
+    // 按"昨日是否应执行日"判定（daily 恒为应执行；custom 休息日不算遗漏）
     const todayStr = dateKey(today)
     const dYesterday = addDays(new Date(today), -1)
     const dDayBefore = addDays(new Date(today), -2)
     const doneToday = days.has(todayStr)
-    const missedYesterday = !days.has(dateKey(dYesterday))
-    const doneDayBefore = days.has(dateKey(dDayBefore))
+    const missedYesterday = isHabitDueOnDay(habit, dateKey(dYesterday)) && !days.has(dateKey(dYesterday))
+    const dueDayBefore = isHabitDueOnDay(habit, dateKey(dDayBefore))
+    const doneDayBefore = !dueDayBefore || days.has(dateKey(dDayBefore))
 
-    // 场景 A: 今日已打卡，昨日休整，前天有打卡 -> 成功接续连胜 pastStreak + 1
+    // 场景 A: 今日已打卡，昨日休整，前天有打卡 -> 成功接续连胜 pastStreak + 1（可见的韧性保护）
     if (doneToday && missedYesterday && doneDayBefore) {
       const pastStreak = currentStreak(habit, checkIns, dDayBefore)
       if (pastStreak > 0) {
-        return { streak: pastStreak + 1, inRestPeriod: false, missedDays: 0 }
+        return { streak: pastStreak + 1, inRestPeriod: false, missedDays: 0, protectedContinuation: true }
       }
     }
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
+import { getTimePeriod } from '../render/iso'
 import { blueprintOrder, blueprints, getBlueprint } from '../logic/blueprints'
 import { getBlueprintName, useI18n } from '../i18n'
 import { BuildScene } from '../render/BuildScene'
@@ -26,6 +27,8 @@ export default function Build() {
   const foundationNote = useAppStore((s) => s.foundationNotes?.[blueprint.id])
   const [rotation, setRotation] = useState(0)
   const [xrayMode, setXrayMode] = useState(false)
+  const enableAmbientLighting = useAppStore((s) => s.settings.enableAmbientLighting !== false)
+  const period = getTimePeriod()
   useEffect(() => {
     setCeremonyShown(
       builds.filter((b) => b.blueprintId === activeBlueprintId).length >=
@@ -94,6 +97,16 @@ export default function Build() {
               </span>
             </button>
           </>
+        )}
+        {enableAmbientLighting && (
+          <span
+            className="btn ghost"
+            style={{ padding: '7px 12px', fontSize: 13, borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'default' }}
+            title={t.build.ambientHint}
+          >
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
+            {period === 'dawn' ? t.build.ambientDawn : period === 'dusk' ? t.build.ambientDusk : period === 'night' ? t.build.ambientNight : t.build.ambientNoon}
+          </span>
         )}
         <button
           className={`btn ${xrayMode ? 'primary' : 'ghost'}`}

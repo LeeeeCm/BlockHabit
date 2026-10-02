@@ -420,6 +420,7 @@ export default function Today({ onCelebrate }: Props) {
                       done={checkIns.some((c) => !c.deletedAt && c.habitId === h.id && c.date === day)}
                       streak={streakInfo.streak}
                       inRestPeriod={streakInfo.inRestPeriod}
+                      resilienceProtected={streakInfo.protectedContinuation === true}
                       onCheck={handleHabitCheck}
                       onNoteSaved={handleNoteSaved}
                       onEdit={handleEdit}

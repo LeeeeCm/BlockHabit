@@ -4,7 +4,7 @@ import { useAppStore } from '../store/appStore'
 import {
   DEFAULT_ISO_CONFIG,
   drawCube,
-  drawGroundBounds,
+  drawGroundBase,
   STUD_H,
   worldToScreen,
 } from '../render/iso'
@@ -145,7 +145,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       ctx.translate(panX, panY)
       ctx.scale(scale, scale)
 
-      drawGroundBounds(ctx, blueprint.blocks, cfg, palette, 0, cx, cy)
+      drawGroundBase(ctx, blueprint.blocks, cfg, palette, 0, cx, cy)
 
       const cubes = blueprint.blocks
         .map((b, i) => ({ b, i }))

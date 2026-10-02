@@ -55,6 +55,7 @@ export interface TranslationSchema {
       evening: string
     }
     restDay: string
+    resilienceContinuation: string
     weekMissed: string
     freqDaily: string
     freqWeekdays: string
@@ -112,6 +113,11 @@ export interface TranslationSchema {
     ceremonySubtitle: (total: number) => string
     dedication: string
     dedicate: string
+    ambientDawn: string
+    ambientNoon: string
+    ambientDusk: string
+    ambientNight: string
+    ambientHint: string
     xray: {
       toggleTooltip: string
       btn: string
