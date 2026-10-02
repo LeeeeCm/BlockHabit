@@ -611,7 +611,15 @@ export function drawCube(
     ctx.closePath()
   }
 
-  const dpr = opts.spriteScale ?? (typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1)
+  // 精灵密度跟随 ctx 真实变换尺度（dpr × view.scale，量化 0.25 步长防缓存抖动）：
+  // view.scale > 1 时按更高密度重烘焙，避免放大模糊
+  const t = typeof ctx.getTransform === 'function' ? ctx.getTransform() : null
+  const transformScale = t && typeof t.a === 'number' && t.a > 0
+    ? t.a
+    : typeof window !== 'undefined'
+      ? Math.min(window.devicePixelRatio || 1, 2)
+      : 1
+  const dpr = opts.spriteScale ?? Math.max(1, Math.min(4, Math.round(transformScale * 4) / 4))
   const sprite = getCubeSprite(opts.color, type, noStuds, c, p, dpr)
   if (sprite) {
     ctx.drawImage(
@@ -827,6 +835,7 @@ export function drawEcoProps(
   cx: number = 0,
   cy: number = 0,
   ecoStage = 0,
+  layer: 'back' | 'front' = 'front',
 ) {
   if (ecoStage < 1 || blocks.length < 2) return
   const { x0, x1, y0, y1 } = groundBoundsOf(blocks, rot, cx, cy)
@@ -848,36 +857,49 @@ export function drawEcoProps(
   }
   const midX = (x0 + x1) / 2
   const midY = (y0 + y1) / 2
-  // 植被固定在钻石四角与四边（margin 环带内，恒在积木脚印之外）
-  const vLeft = { x: x0 + 0.45, y: midY }
-  const vRight = { x: x1 - 0.45, y: midY }
-  const vBack = { x: midX, y: y0 + 0.45 }
-  const vFront = { x: midX, y: y1 - 0.45 }
-
-  // 阶段 1 萌芽：四角绿色小积木灌木
-  put(vLeft.x, vLeft.y, flora)
-  put(vRight.x, vRight.y, flora)
-  put(vBack.x, vBack.y, flora)
-  put(vFront.x, vFront.y, flora)
-  if (ecoStage >= 2) {
-    // 阶段 2 积木小径：左缘纵向的石/绿交替小径
-    for (let i = 0; i <= 4; i++) {
-      put(vLeft.x, midY + (i - 2) * 0.42, i % 2 ? flora : stone)
+  // 植被固定在 margin 环带内（距最近积木中心 ≥1.4 格位 > 精灵视觉范围 ±1.0）：
+  // back 层 = 左/右侧顶点（在积木之前绘制，被建筑自然遮挡、只在侧面探出）；
+  // front 层 = 前部顶点与两翼（在积木之后绘制，站在建筑前面完全可见）。
+  if (layer === 'back') {
+    const vLeft = { x: x0 + 0.1, y: midY }
+    const vRight = { x: x1 - 0.1, y: midY }
+    if (ecoStage >= 1) {
+      put(vLeft.x, vLeft.y, flora)
+      put(vRight.x, vRight.y, flora)
     }
+    if (ecoStage >= 3) {
+      // 阶段 3：两侧灌木长成树（石色树干 + 双层绿冠）
+      put(vLeft.x, vLeft.y, flora, 2)
+      put(vRight.x, vRight.y, flora, 2)
+    }
+    return
+  }
+
+  // front 层
+  const vFront = { x: midX, y: y1 - 0.1 }
+  const flankL = { x: x0 + (midX - x0) * 0.72, y: midY + (y1 - midY) * 0.72 }
+  const flankR = { x: x1 - (x1 - midX) * 0.72, y: midY + (y1 - midY) * 0.72 }
+  if (ecoStage >= 1) {
+    put(vFront.x, vFront.y, flora)
+  }
+  if (ecoStage >= 2) {
+    // 阶段 2：两翼各一株灌木 + 一块石
+    put(flankL.x, flankL.y, flora)
+    put(flankL.x + 0.42, flankL.y + 0.28, stone)
+    put(flankR.x, flankR.y, flora)
+    put(flankR.x - 0.42, flankR.y + 0.28, stone)
   }
   if (ecoStage >= 3) {
-    // 阶段 3 积木树：石色树干 + 双层绿冠（左/前角灌木长成树）
-    put(vLeft.x, vLeft.y, stone)
-    put(vLeft.x, vLeft.y, flora, 2)
+    // 阶段 3：前部灌木长成树（石色树干 + 双层绿冠）
     put(vFront.x, vFront.y, stone)
     put(vFront.x, vFront.y, flora, 2)
   }
   if (ecoStage >= 4) {
-    // 阶段 4 积木花园：右/后角点缀色花砖 + 树冠
-    put(vRight.x, vRight.y, bloom)
-    put(vRight.x, vRight.y, flora, 2)
-    put(vBack.x, vBack.y, bloom)
-    put(vBack.x, vBack.y, flora, 2)
+    // 阶段 4 积木花园：两翼点缀色花砖 + 树冠
+    put(flankL.x, flankL.y, bloom)
+    put(flankL.x, flankL.y, flora, 2)
+    put(flankR.x, flankR.y, bloom)
+    put(flankR.x, flankR.y, flora, 2)
   }
 }
 export type TimePeriod = 'dawn' | 'noon' | 'dusk' | 'night'

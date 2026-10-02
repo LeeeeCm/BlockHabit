@@ -309,7 +309,8 @@ export function ShowcaseScene({
           x: p.gridX + (b.x - fp.minX),
           y: p.gridY + (b.y - fp.minY),
         }))
-        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current)
+        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'back')
+        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'front')
       }
     }
 

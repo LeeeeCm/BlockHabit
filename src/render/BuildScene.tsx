@@ -256,9 +256,8 @@ export function BuildScene({
 
     const cfg = DEFAULT_ISO_CONFIG
     drawGroundBase(ctx, bp.blocks, cfg, palette, rot, cx, cy)
-    // 植被层：紧随底座、主体积木之前绘制（正确深度：树在建筑后面/旁边，
-    // 且位置在 margin 环带内，积木精灵不会覆盖它们）
-    drawEcoProps(ctx, bp.blocks, cfg, palette, rot, cx, cy, stateRef.current.ecoStage)
+    // 植被 back 层：左/右侧灌木（积木之前绘制，被建筑自然遮挡、只在侧面探出）
+    drawEcoProps(ctx, bp.blocks, cfg, palette, rot, cx, cy, stateRef.current.ecoStage, 'back')
 
     const now = performance.now()
     const anim = animRef.current
@@ -340,6 +339,9 @@ export function BuildScene({
         drawCube(ctx, px, restSy - zOff * cfg.blockH, cfg, palette, faceOpts)
       }
     }
+
+    // 植被 front 层：前部灌木/树（积木之后绘制，站在建筑前面完全可见）
+    drawEcoProps(ctx, bp.blocks, cfg, palette, rot, cx, cy, stateRef.current.ecoStage, 'front')
 
     if (cascade) {
       cascadeRunning = cascadeRunning || now - cascade.start < cascade.total
