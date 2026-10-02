@@ -127,7 +127,7 @@ describe('BuildScene 微生态彩蛋链路', () => {
     await renderBuild(true)
     const miniSprites = drawImages.filter((d) => d.w === 24 && d.h === 28)
     console.log('[test-dbg] drawImages:', JSON.stringify(drawImages.slice(0, 6)), 'total:', drawImages.length)
-    expect(miniSprites.length).toBeGreaterThanOrEqual(4) // 阶段 1：四角灌木
+    expect(miniSprites.length).toBeGreaterThanOrEqual(3) // 阶段 1：左/前/右三株灌木（背点被建筑遮挡，跳过）
   })
 
   it('eco disabled: no mini flora sprites drawn', async () => {

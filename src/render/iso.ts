@@ -775,7 +775,7 @@ function groundBoundsOf(
     minY = Math.min(minY, ry)
     maxY = Math.max(maxY, ry)
   }
-  const margin = 0.55
+  const margin = 1.0
   const x0 = minX - 0.5 - margin
   const x1 = maxX + 0.5 + margin
   const y0 = minY - 0.5 - margin
