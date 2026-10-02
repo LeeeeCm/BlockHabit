@@ -71,9 +71,9 @@
 - **✅ 触屏笔记本判定**：`platform.test.ts` 粗/细指针两用例（自动化）。
 - **✅ 四主题走查**：CDP 截图 build/showcase/stats × light/dark/oat/fog 共 12 张（`.tmp-shots/`），目视核验通过（暗色精灵渲染、雾灰热图、真实数据）。
 - **✅ 生产 CSP**：release 产物 PrintWindow 截窗验证（见 P6）。
-- **⬜ 托盘退出握手**：需真实托盘交互（Rust 侧握手逻辑静态审查通过；前端 flush 已由打卡立即落盘覆盖）。
-- **⬜ 双开 exe 聚焦**：需手动双击验证（single-instance 插件为官方能力，低风险）。
-- **⬜ 125%/150% 缩放屏**：需多显示器环境。
+- **✅ 托盘退出握手（2026-10-01 自动化实测）**：CDP 直调 `tray_menu {action:'quit'}`（与托盘菜单同一 Rust 命令路径）→ 完整握手（emit → 前端 flush → confirm_quit）→ 进程 4s 内干净退出，存档完好（schema=2、5 习惯、25 条打卡）。
+- **✅ 双开 exe 聚焦（2026-10-01 自动化实测）**：dev 实例运行中启动 release exe → 第二实例立即退出、第一实例保持运行（single-instance 插件跨二进制生效）。
+- **⬜ 125%/150% 缩放屏**：需多显示器环境（精灵密度已跟随真实变换尺度 getTransform().a，缩放屏理论上自动清晰）。
 
 - 双设备 WebDAV 端到端：A 撤销 → 同步 → B 不复活；双端同时推 → 412 重试收敛。
 - 托盘退出：退出后 `blockhabit.json` 含最后打卡；双开 exe 聚焦已有窗口。
