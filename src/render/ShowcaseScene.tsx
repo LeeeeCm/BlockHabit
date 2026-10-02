@@ -16,6 +16,9 @@ import {
   screenToGroundIso,
   SHOWCASE_GRID_SIZE,
 } from '../logic/showcase'
+import { drawEcoProps } from './iso'
+import { ecoStageFor } from '../logic/eco'
+import { currentStreakWithResilience } from '../logic/streak'
 import { playSnapSound } from '../audio/sound'
 import {
   calculatePinchDistance,
@@ -79,6 +82,22 @@ export function ShowcaseScene({
   const hoveredIdRef = useRef<string | null>(null)
   const enableAmbient = useAppStore((s) => s.settings.enableAmbientLighting !== false)
   const enableGyroscope = useAppStore((s) => Boolean(s.settings.enableGyroscope))
+  const habits = useAppStore((s) => s.habits)
+  const checkIns = useAppStore((s) => s.checkIns)
+  const enableEcoProps = useAppStore((s) => s.settings.enableEcoProps !== false)
+  // 微生态彩蛋阶段：所有在册习惯的最大连胜（与建造页同一口径）
+  const ecoStage = useMemo(() => {
+    if (!enableEcoProps) return 0
+    const today = new Date()
+    let maxStreak = 0
+    for (const h of habits) {
+      if (h.archivedAt) continue
+      maxStreak = Math.max(maxStreak, currentStreakWithResilience(h, checkIns, today, true).streak)
+    }
+    return ecoStageFor(maxStreak)
+  }, [habits, checkIns, enableEcoProps])
+  const ecoStageRef = useRef(ecoStage)
+  ecoStageRef.current = ecoStage
   const gyroOffsetRef = useRef({ x: 0, y: 0 })
   const settingsRef = useRef({ enableAmbient, enableGyroscope })
   settingsRef.current = { enableAmbient, enableGyroscope }
@@ -279,6 +298,20 @@ export function ShowcaseScene({
     }
     ctx.translate(view.panX + gyro.x, view.panY + gyro.y)
     ctx.scale(view.scale, view.scale)
+
+    // 2.5 微生态植被：每个落位模型的 margin 环带内（积木之前绘制，正确深度）
+    if (ecoStageRef.current >= 1) {
+      for (const p of placementsRef.current) {
+        const bp = blueprintsMap[p.blueprintId]
+        if (!bp) continue
+        const fp = footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks)
+        const offsetBlocks = bp.blocks.map((b) => ({
+          x: p.gridX + (b.x - fp.minX),
+          y: p.gridY + (b.y - fp.minY),
+        }))
+        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current)
+      }
+    }
 
     // 3. 拖拽时地基磁吸 / 碰撞警告脚印
     const drag = dragRef.current
