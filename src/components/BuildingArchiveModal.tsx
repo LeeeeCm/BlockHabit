@@ -4,8 +4,9 @@ import { useAppStore } from '../store/appStore'
 import { getBlueprint } from '../logic/blueprints'
 import { buildBuildingArchive, type BuildingArchiveState } from '../logic/buildingArchive'
 import { getBlueprintName, useI18n } from '../i18n'
-import { triggerHaptic } from '../platform'
+import { triggerHaptic, usePlatform } from '../platform'
 import { useDialogA11y } from './useDialogA11y'
+import { BottomSheet } from './BottomSheet'
 import { IconClose, IconEdit, IconMood, IconNote, IconStar } from './Icons'
 import { PolaroidModal } from './PolaroidModal'
 import {
@@ -29,6 +30,9 @@ interface Props {
  */
 export function BuildingArchiveModal({ blueprintId, onClose }: Props) {
   const { lang, t } = useI18n()
+  // 移动端用 BottomSheet（与 ConfirmDialog / HabitDialog / SettingsDialog 同一分支范式）；
+  // 桌面端保持原 overlay/dialog 行为不变。
+  const { isMobile } = usePlatform()
   const habits = useAppStore((s) => s.habits)
   const checkIns = useAppStore((s) => s.checkIns)
   const builds = useAppStore((s) => s.builds)
@@ -52,7 +56,13 @@ export function BuildingArchiveModal({ blueprintId, onClose }: Props) {
   const [polaroidOpen, setPolaroidOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const stageRef = useRef<HTMLCanvasElement>(null)
-  const { ref: dialogRef } = useDialogA11y({ open: true, onClose, enabled: !polaroidOpen })
+  // 桌面端：Esc / 焦点圈闭由 useDialogA11y 负责；移动端交给 BottomSheet 自身（Esc）与
+  // 抽屉手势；嵌套拍立得打开时两边都让位，由 PolaroidModal 的 useDialogA11y 接管。
+  const { ref: dialogRef } = useDialogA11y({
+    open: true,
+    onClose,
+    enabled: !isMobile && !polaroidOpen,
+  })
 
   // 铭言保存后 / 外部变更时同步草稿（编辑中不覆盖用户输入）
   useEffect(() => {
@@ -110,44 +120,16 @@ export function BuildingArchiveModal({ blueprintId, onClose }: Props) {
     { label: a.metrics.bonusBlocks, value: String(archive.bonusBlocks) },
   ]
 
-  return (
+  const titleContent = (
     <>
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="building-archive-title"
-        tabIndex={-1}
-        className="overlay"
-        onMouseDown={(e) => e.target === e.currentTarget && onClose()}
-        style={{ zIndex: 115 }}
-      >
-        <div
-          className="dialog"
-          onMouseDown={(e) => e.stopPropagation()}
-          style={{ width: 720, maxWidth: '94vw', maxHeight: '92vh' }}
-        >
-          <div className="dialog-header">
-            <h3
-              id="building-archive-title"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}
-            >
-              <IconNote size={18} style={{ flexShrink: 0 }} />
-              <span>{a.title}</span>
-            </h3>
-            <button
-              className="icon-btn"
-              onClick={() => {
-                triggerHaptic('light')
-                onClose()
-              }}
-              title={t.common.close}
-            >
-              <IconClose size={18} />
-            </button>
-          </div>
+      <IconNote size={18} style={{ flexShrink: 0 }} />
+      <span>{a.title}</span>
+    </>
+  )
 
-          <div className="dialog-body">
+  // 桌面 / 移动共用同一份主体与底栏；只有外壳不同（overlay+dialog ↔ BottomSheet）。
+  const bodyContent = (
+    <>
             {!archive.completed ? (
               <div style={{ textAlign: 'center', padding: '40px 12px' }}>
                 <div style={{ fontSize: 'var(--fs-title)', fontWeight: 700, marginBottom: 8 }}>
@@ -197,6 +179,7 @@ export function BuildingArchiveModal({ blueprintId, onClose }: Props) {
                 {/* 等距大图 */}
                 <canvas
                   ref={stageRef}
+                  data-testid="archive-stage"
                   role="img"
                   aria-label={blueprintName + ' · ' + a.completedAt(archive.completedAt ?? '')}
                   style={{
@@ -437,35 +420,112 @@ export function BuildingArchiveModal({ blueprintId, onClose }: Props) {
                 </div>
               </>
             )}
-          </div>
+    </>
+  )
 
-          <div className="dialog-footer">
-            {archive.completed && (
-              <>
-                <button
-                  className="btn ghost"
-                  onClick={() => {
-                    triggerHaptic('light')
-                    setPolaroidOpen(true)
-                  }}
-                >
-                  {a.polaroid}
-                </button>
-                <button className="btn primary" disabled={saving} onClick={() => void handleSavePng()}>
-                  {a.savePng}
-                </button>
-              </>
-            )}
-            <button className="btn ghost" onClick={onClose}>
-              {a.close}
+  const footerActions = (
+    <>
+      {archive.completed && (
+        <>
+          <button
+            className="btn ghost"
+            onClick={() => {
+              triggerHaptic('light')
+              setPolaroidOpen(true)
+            }}
+          >
+            {a.polaroid}
+          </button>
+          <button className="btn primary" disabled={saving} onClick={() => void handleSavePng()}>
+            {a.savePng}
+          </button>
+        </>
+      )}
+      <button className="btn ghost" onClick={onClose}>
+        {a.close}
+      </button>
+    </>
+  )
+
+  // 移动端底栏：沿用 .dialog-footer 的按钮排布，去掉外壳边框/内边距（BottomSheet footer 自带）。
+  const mobileFooter = (
+    <div className="dialog-footer" style={{ borderTop: 'none', padding: 0 }}>
+      {footerActions}
+    </div>
+  )
+
+  // 移动端嵌套拍立得：BottomSheet 根 z-index 1000 高于 PolaroidModal overlay 的 120，
+  // 直接嵌套会被抽屉盖住。用零尺寸 stacking wrapper（position:relative + zIndex:1001）
+  // 把拍立得抬到抽屉之上；不改 PolaroidModal 自身（B2 文件），也不改任何视觉样式。
+  const polaroidLayer = polaroidOpen ? (
+    <div style={isMobile ? { position: 'relative', zIndex: 1001 } : undefined}>
+      <PolaroidModal blueprint={blueprint} onClose={() => setPolaroidOpen(false)} />
+    </div>
+  ) : null
+
+  if (isMobile) {
+    return (
+      <>
+        <BottomSheet
+          open={true}
+          onClose={onClose}
+          title={titleContent}
+          footer={mobileFooter}
+          escEnabled={!polaroidOpen}
+        >
+          {bodyContent}
+          {toast && <div className="toast">{toast}</div>}
+        </BottomSheet>
+        {polaroidLayer}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="building-archive-title"
+        tabIndex={-1}
+        className="overlay"
+        onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+        style={{ zIndex: 115 }}
+      >
+        <div
+          className="dialog"
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{ width: 720, maxWidth: '94vw', maxHeight: '92vh' }}
+        >
+          <div className="dialog-header">
+            <h3
+              id="building-archive-title"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}
+            >
+              {titleContent}
+            </h3>
+            <button
+              className="icon-btn"
+              onClick={() => {
+                triggerHaptic('light')
+                onClose()
+              }}
+              title={t.common.close}
+            >
+              <IconClose size={18} />
             </button>
           </div>
+
+          <div className="dialog-body">{bodyContent}</div>
+
+          <div className="dialog-footer">{footerActions}</div>
 
           {toast && <div className="toast">{toast}</div>}
         </div>
       </div>
 
-      {polaroidOpen && <PolaroidModal blueprint={blueprint} onClose={() => setPolaroidOpen(false)} />}
+      {polaroidLayer}
     </>
   )
 }

@@ -131,11 +131,14 @@ function capitalOf(blueprintId: string): number | null {
   return blueprint ? blueprint.blocks.length : null
 }
 
-/** 该蓝图落成时间戳（ms）：块数达容量时取 max(placedAt)；未落成/时间戳非法 → null */
-function completionMsOf(state: BuildingArchiveState, blueprintId: string): number | null {
+/**
+ * 该蓝图落成时间戳（ms）：块数达容量时取 max(placedAt)；未落成/时间戳非法 → null。
+ * 只依赖 builds 切片，供 completionDateOf / completionDateOfBuilds 共用，避免两处口径漂移。
+ */
+function completionMsOfBuilds(builds: PlacedBlock[], blueprintId: string): number | null {
   const capacity = capitalOf(blueprintId)
   if (capacity === null) return null
-  const blocks = liveBlocksOf(state, blueprintId)
+  const blocks = builds.filter((b) => b.blueprintId === blueprintId && !b.deletedAt)
   if (blocks.length < capacity) return null
   let max = -Infinity
   for (const block of blocks) {
@@ -145,6 +148,10 @@ function completionMsOf(state: BuildingArchiveState, blueprintId: string): numbe
   return max === -Infinity ? null : max
 }
 
+function completionMsOf(state: BuildingArchiveState, blueprintId: string): number | null {
+  return completionMsOfBuilds(state.builds, blueprintId)
+}
+
 /**
  * 该蓝图的落成日（本地日期键）。
  * 与 A2 的 logic/yearbook.ts completionDateOf 同口径（本模块只需 AppState 切片，因此单独实现；
@@ -152,6 +159,19 @@ function completionMsOf(state: BuildingArchiveState, blueprintId: string): numbe
  */
 export function completionDateOf(state: BuildingArchiveState, blueprintId: string): string | null {
   const ms = completionMsOf(state, blueprintId)
+  return ms === null ? null : dateKey(new Date(ms))
+}
+
+/**
+ * 该蓝图的落成日（本地日期键），只依赖 builds 切片（拍立得等调用方没有完整 AppState）。
+ * 口径与 completionDateOf / yearbook.completionDateOf 完全一致：块数达蓝图容量 → max(placedAt)
+ * 的本地日期；未落成 / 未知蓝图 / 时间戳全部损坏 → null（不伪造日期，展示层回退「不可考」）。
+ */
+export function completionDateOfBuilds(
+  builds: PlacedBlock[],
+  blueprintId: string,
+): string | null {
+  const ms = completionMsOfBuilds(builds, blueprintId)
   return ms === null ? null : dateKey(new Date(ms))
 }
 

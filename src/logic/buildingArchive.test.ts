@@ -5,6 +5,7 @@ import {
   blockMetaIndex,
   buildBuildingArchive,
   completionDateOf,
+  completionDateOfBuilds,
   listArchiveBuildings,
   type BuildingArchiveState,
 } from './buildingArchive'
@@ -347,6 +348,72 @@ describe('第 N 座与建筑清单', () => {
     expect(buildBuildingArchive(state, 'plant').ordinal).toBe(1)
     expect(buildBuildingArchive(state, 'coffee').ordinal).toBeNull()
     expect(listArchiveBuildings(state)).toEqual(['plant'])
+  })
+})
+
+describe('拍立得落成日口径（completionDateOfBuilds）', () => {
+  it('只依赖 builds 切片，与 completionDateOf 同口径（块数达容量 → max(placedAt) 本地日期）', () => {
+    const builds = makeBlocks('coffee', ['2026-01-02', '2026-02-03'])
+    expect(completionDateOfBuilds(builds, 'coffee')).toBe(
+      completionDateOf(makeState({ builds }), 'coffee'),
+    )
+    expect(completionDateOfBuilds(builds, 'coffee')).toBe('2026-02-03')
+  })
+
+  it('未落成（块数不足）/ 未知蓝图 / 空 builds → null，不伪造日期', () => {
+    const partial = makeBlocks('plant', ['2026-03-01']).slice(0, 3)
+    expect(completionDateOfBuilds(partial, 'plant')).toBeNull()
+    expect(completionDateOfBuilds([], 'plant')).toBeNull()
+    expect(completionDateOfBuilds(makeBlocks('plant', ['2026-03-01']), 'unknown-bp')).toBeNull()
+  })
+
+  it('墓碑积木既不计入容量、也不参与 max(placedAt)（撤销后不把落成日推后）', () => {
+    const blocks = makeBlocks('plant', ['2026-03-01'])
+    blocks.push({
+      id: 'dead-block',
+      blueprintId: 'plant',
+      index: 0,
+      placedAt: atLocal('2026-04-01'),
+      fromHabitId: 'h1',
+      bonus: false,
+      deletedAt: atLocal('2026-04-02'),
+    })
+    expect(completionDateOfBuilds(blocks, 'plant')).toBe('2026-03-01')
+
+    // 唯一一块被撤销 → 块数不足，未落成
+    const oneDeleted = makeBlocks('plant', ['2026-03-01'])
+    oneDeleted[5] = { ...oneDeleted[5], deletedAt: atLocal('2026-03-02') }
+    expect(completionDateOfBuilds(oneDeleted, 'plant')).toBeNull()
+  })
+
+  it('时间戳损坏：全部非法 → null；部分非法 → 只取有效值的 max', () => {
+    const overAll: Record<number, Partial<PlacedBlock>> = {}
+    blueprints.plant.blocks.forEach((_, index) => {
+      overAll[index] = { placedAt: 'not-a-date' }
+    })
+    expect(completionDateOfBuilds(makeBlocks('plant', ['2026-03-01'], overAll), 'plant')).toBeNull()
+
+    const mixed = makeBlocks('plant', ['2026-03-01'], { 5: { placedAt: 'not-a-date' } })
+    expect(completionDateOfBuilds(mixed, 'plant')).toBe('2026-03-01')
+  })
+
+  it('落成日取本地日期键而不是 UTC 日期（placedAt 是 ISO UTC）', () => {
+    const iso = atLocal('2026-03-12', 1)
+    const blocks = blueprints.plant.blocks.map((_, index) => ({
+      id: 'local-' + index,
+      blueprintId: 'plant',
+      index,
+      placedAt: iso,
+      fromHabitId: 'h1',
+      bonus: false,
+    }))
+    const d = new Date(iso)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const expected = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
+    const actual = completionDateOfBuilds(blocks, 'plant')
+    expect(actual).toBe(expected)
+    // 东半球时区下 UTC 日期会早一天：确认没有走 toISOString().slice(0,10) 的旧口径
+    if (d.getTimezoneOffset() < 0) expect(actual).not.toBe(iso.slice(0, 10))
   })
 })
 

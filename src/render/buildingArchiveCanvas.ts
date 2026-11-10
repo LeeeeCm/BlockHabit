@@ -349,6 +349,8 @@ function drawRule(ctx: CanvasRenderingContext2D, x1: number, x2: number, y: numb
 /** 离屏渲染档案卡（保存 PNG / 未来档案包复用） */
 export async function renderArchiveCardCanvas(input: ArchiveCardInput): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
+  // 自动化断言用标记（无视觉变化）：确认档案卡画布确实生成/尺寸正确。
+  canvas.dataset.testid = 'archive-card-canvas'
   await drawArchiveCard(canvas, input)
   return canvas
 }
