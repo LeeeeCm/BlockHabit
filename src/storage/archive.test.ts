@@ -1,12 +1,14 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
 import type { AppState, PlacedBlock } from '../types'
 import { blueprints } from '../logic/blueprints'
+import { CONTENT_VERSION } from '../logic/blueprints/manifest'
 import { getTranslation } from '../i18n'
 import { prepareImport } from './adapter'
 import { serializeState } from '../store/serializeState'
 import {
   ARCHIVE_CONTENT_VERSION,
   ARCHIVE_FOLDER_PREFIX,
+  ARCHIVE_FORMAT_VERSION,
   ARCHIVE_TMP_PREFIX,
   archiveFolderName,
   archiveStamp,
@@ -20,6 +22,7 @@ import {
   dosDateTime,
   downloadBlobFile,
   isArchiveExporting,
+  parseArchiveManifest,
   runArchiveExport,
   sha256Hex,
   sha256HexPure,
@@ -430,7 +433,8 @@ describe('buildArchivePackage', () => {
     const result = await buildPackage()
     if (!result.ok) throw new Error('package failed')
     const { package: pkg } = result
-    expect(pkg.manifest.contentVersion).toBe(ARCHIVE_CONTENT_VERSION)
+    expect(pkg.manifest.archiveFormatVersion).toBe(ARCHIVE_FORMAT_VERSION)
+    expect(pkg.manifest.appContentVersion).toBe(CONTENT_VERSION)
     expect(pkg.manifest.schemaVersion).toBe(2)
     expect(pkg.manifest.exportedAt).toBe('2026-11-10T12:00:00.000Z')
     expect(pkg.manifest.platform).toBe('desktop')
@@ -461,6 +465,9 @@ describe('buildArchivePackage', () => {
     expect(readme).toContain('WebDAV')
     expect(readme).toContain('How to restore')
     expect(readme).toContain('0.2.0')
+    expect(readme).toContain(`archiveFormatVersion: ${ARCHIVE_FORMAT_VERSION}`)
+    expect(readme).toContain(`appContentVersion: ${CONTENT_VERSION}`)
+    expect(readme).toContain('与存档里的 `contentVersion` 无关')
     const buildingsReadme = utf8Decode(
       result.package.files.find((file) => file.path === 'buildings/README.md')!.bytes,
     )
@@ -530,6 +537,103 @@ describe('buildArchivePackage', () => {
       secrets: ['hunter2'],
     })
     expect(leaked).toEqual({ ok: false, error: 'credentials' })
+  })
+})
+
+/* ---------------- manifest 版本语义 / 旧档兼容 ---------------- */
+
+describe('manifest 版本语义（archiveFormatVersion / appContentVersion）', () => {
+  async function buildManifestPackage() {
+    const { state, stateJson } = archiveState({ builds: plantBlocks() })
+    const result = await buildArchivePackage({
+      state,
+      stateJson,
+      appVersion: '0.2.0',
+      platform: 'desktop',
+      lang: 'zh',
+      buildings: [{ blueprintId: 'plant', png: FAKE_PNG }],
+      exportedAt: new Date(Date.UTC(2026, 10, 10, 12, 0, 0)),
+    })
+    if (!result.ok) throw new Error('package failed')
+    const manifestFile = result.package.files.find((file) => file.path === 'manifest.json')!
+    return { pkg: result.package, raw: JSON.parse(utf8Decode(manifestFile.bytes)) as Record<string, unknown> }
+  }
+
+  it('新 manifest 写 archiveFormatVersion + appContentVersion，不再写旧 contentVersion 字段', async () => {
+    const { pkg, raw } = await buildManifestPackage()
+    expect(raw.archiveFormatVersion).toBe(ARCHIVE_FORMAT_VERSION)
+    expect(raw.appContentVersion).toBe(CONTENT_VERSION)
+    expect(raw).not.toHaveProperty('contentVersion')
+    // 两个版本号语义独立：格式版本保持 1，内容版本随内置蓝图包 +1
+    expect(ARCHIVE_FORMAT_VERSION).toBe(1)
+    expect(CONTENT_VERSION).toBeGreaterThanOrEqual(2)
+    expect(pkg.manifest.archiveFormatVersion).toBe(ARCHIVE_FORMAT_VERSION)
+    expect(pkg.manifest.appContentVersion).toBe(CONTENT_VERSION)
+  })
+
+  it('旧 manifest（只有旧字段 contentVersion）仍可解析：回退为 archiveFormatVersion', () => {
+    const legacy = {
+      appVersion: '0.2.0',
+      schemaVersion: 2,
+      contentVersion: 1,
+      exportedAt: '2026-11-10T12:00:00.000Z',
+      platform: 'desktop',
+      files: [{ path: 'README.md', bytes: 12, sha256: 'a'.repeat(64) }],
+    }
+    const parsed = parseArchiveManifest(legacy)
+    expect(parsed).toEqual({
+      appVersion: '0.2.0',
+      schemaVersion: 2,
+      archiveFormatVersion: 1,
+      appContentVersion: CONTENT_VERSION,
+      exportedAt: '2026-11-10T12:00:00.000Z',
+      platform: 'desktop',
+      files: [{ path: 'README.md', bytes: 12, sha256: 'a'.repeat(64) }],
+    })
+  })
+
+  it('新 manifest 可 round-trip 解析，文件清单与 checksums 一致', async () => {
+    const { pkg, raw } = await buildManifestPackage()
+    const parsed = parseArchiveManifest(raw)
+    expect(parsed).not.toBeNull()
+    expect(parsed!.files).toEqual(pkg.manifest.files)
+    expect(parsed!.archiveFormatVersion).toBe(ARCHIVE_FORMAT_VERSION)
+    expect(parsed!.appContentVersion).toBe(CONTENT_VERSION)
+    expect(parsed!.exportedAt).toBe(pkg.manifest.exportedAt)
+  })
+
+  it('非法 / 缺字段 / 未知 platform 的 manifest 返回 null', () => {
+    expect(parseArchiveManifest(null)).toBeNull()
+    expect(parseArchiveManifest({})).toBeNull()
+    expect(
+      parseArchiveManifest({ appVersion: '0.2.0', schemaVersion: 2, exportedAt: 'x', platform: 'web', files: [] }),
+    ).toBeNull()
+    expect(
+      parseArchiveManifest({
+        appVersion: '0.2.0',
+        schemaVersion: 2,
+        exportedAt: 'x',
+        platform: 'desktop',
+        files: [{ path: 'README.md', bytes: 1, sha256: 'not-a-sha' }],
+      }),
+    ).toBeNull()
+  })
+
+  it('未来格式版本原样解析（由调用方决定兼容策略），不静默改写成当前版本', () => {
+    const parsed = parseArchiveManifest({
+      appVersion: '0.3.0',
+      schemaVersion: 2,
+      archiveFormatVersion: ARCHIVE_FORMAT_VERSION + 1,
+      appContentVersion: CONTENT_VERSION,
+      exportedAt: '2026-11-11T00:00:00.000Z',
+      platform: 'browser',
+      files: [],
+    })
+    expect(parsed?.archiveFormatVersion).toBe(ARCHIVE_FORMAT_VERSION + 1)
+  })
+
+  it('ARCHIVE_CONTENT_VERSION 仅为旧名别名（= ARCHIVE_FORMAT_VERSION）', () => {
+    expect(ARCHIVE_CONTENT_VERSION).toBe(ARCHIVE_FORMAT_VERSION)
   })
 })
 
@@ -654,7 +758,8 @@ describe('runArchiveExport（浏览器 ZIP）', () => {
     expect(prepareImport(JSON.parse(utf8Decode(stateBytes)))).not.toBeNull()
     const manifestEntry = parsed.entries.find((entry) => entry.path === 'manifest.json')
     const manifest = JSON.parse(utf8Decode(await entryBytes(manifestEntry!)))
-    expect(manifest.contentVersion).toBe(ARCHIVE_CONTENT_VERSION)
+    expect(manifest.archiveFormatVersion).toBe(ARCHIVE_FORMAT_VERSION)
+    expect(manifest.appContentVersion).toBe(CONTENT_VERSION)
     expect(manifest.platform).toBe('browser')
     expect(result.bytes).toBe(result.zip.length)
   })

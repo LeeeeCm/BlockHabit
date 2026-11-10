@@ -1,13 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTransient } from '../platform/useTransient'
 import type { ReactNode } from 'react'
 import { useAppStore } from '../store/appStore'
 import { useI18n } from '../i18n'
 import { prepareImport } from '../storage/adapter'
-import { exportDiagnosticsPackage } from '../platform/diagnostics'
 import { resetGuideTips } from '../platform/guideTips'
 import { ensureNotifyPermission } from '../platform/notify'
-import { createBackup, listBackups, openDataDir, readBackup, type BackupEntry } from '../storage/backups'
 import { pickAdapter } from '../storage'
 import type { AppState } from '../types'
 import { IconClose, IconKeyboard, IconRepair } from './Icons'
@@ -16,37 +14,12 @@ import { BottomSheet } from './BottomSheet'
 import { ConfirmDialog } from './ConfirmDialog'
 import { useDialogA11y } from './useDialogA11y'
 import { useSync } from '../sync/useSync'
-import { ArchiveExportPanel } from './ArchiveExportPanel'
-import { PROVIDER_ORDER, PROVIDER_PRESETS, buildEndpoint, normalizeServerBase, type ProviderId } from '../sync/providers'
-import {
-  createFetchTransport,
-  runWebDavDiagnosis,
-  sanitizeDiagnosticDetail,
-  type DiagnoseResult,
-  type DiagnoseStage,
-} from '../sync/diagnose'
-import { httpFetch, isTauriRuntime } from '../platform/http'
+import { WebdavPanel } from './WebdavPanel'
+import { ArchiveBackupsPanel, ArchiveDataPanel, DiagnosticsExportPanel } from './ArchiveDataPanel'
+import { AboutPanel } from './AboutPanel'
 import { MINI_SIZE_ORDER } from '../platform/miniWindow'
 const inTauri =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-/** 从已有 endpoint 推断服务商（仅用于设置页首次展开时的预设高亮） */
-function detectProvider(endpoint: string): ProviderId {
-  if (endpoint.includes('jianguoyun.com')) return 'jianguoyun'
-  if (endpoint.includes('/remote.php/dav/')) return 'nextcloud'
-  if (endpoint.includes('/home/BlockHabit')) return 'synology'
-  return 'generic'
-}
-
-/** 预设切换时从 endpoint 反推 base，避免把 /remote.php/dav/... 再拼一次 */
-function baseFromEndpoint(endpoint: string): string {
-  let value = endpoint.trim()
-  for (const marker of ['/remote.php/dav/', '/home/BlockHabit', '/dav/BlockHabit']) {
-    const index = value.indexOf(marker)
-    if (index > 0) value = value.slice(0, index)
-  }
-  return normalizeServerBase(value)
-}
 
 interface Props {
   onClose: () => void
@@ -121,9 +94,7 @@ export function SettingsDialog({ onClose }: Props) {
   const theme = settings.theme
   const setTheme = useAppStore((s) => s.setTheme)
   const setLanguage = useAppStore((s) => s.setLanguage)
-  const exportData = useAppStore((s) => s.exportData)
   const importData = useAppStore((s) => s.importData)
-  const fileRef = useRef<HTMLInputElement>(null)
   const habits = useAppStore((s) => s.habits)
   const completed = useAppStore((s) => s.completedBlueprintIds)
   const repairBricks = useAppStore((s) => s.repairBricks ?? 0)
@@ -132,8 +103,6 @@ export function SettingsDialog({ onClose }: Props) {
   const [msg, showMsg] = useTransient<string>(2400)
   /** 通过深度校验、待用户确认后覆盖导入的存档 */
   const [importCandidate, setImportCandidate] = useState<AppState | null>(null)
-  /** F3：数据目录里的可恢复备份（桌面端才有） */
-  const [backups, setBackups] = useState<BackupEntry[]>([])
   const [autostart, setAutostart] = useState<boolean | null>(null)
   useEffect(() => {
     if (!inTauri) return
@@ -142,163 +111,9 @@ export function SettingsDialog({ onClose }: Props) {
       setAutostart(await isEnabled())
     })()
   }, [])
-  const {
-    config: syncConfig,
-    updateConfig: updateSyncConfig,
-    isSyncing,
-    status: syncStatus,
-    error: syncError,
-    lastSyncAt,
-    syncNow,
-    getLastError,
-  } = useSync()
-  const [endpoint, setEndpoint] = useState(syncConfig.endpoint)
-  const [username, setUsername] = useState(syncConfig.username)
-  const [password, setPassword] = useState(syncConfig.password)
-  const [providerId, setProviderId] = useState<ProviderId>(() => detectProvider(syncConfig.endpoint))
-  const [diagnosis, setDiagnosis] = useState<DiagnoseResult | null>(null)
-  const [diagnosing, setDiagnosing] = useState(false)
-
-  useEffect(() => {
-    setEndpoint(syncConfig.endpoint)
-    setUsername(syncConfig.username)
-    setPassword(syncConfig.password)
-  }, [syncConfig.endpoint, syncConfig.username, syncConfig.password])
-
-  /** 同步错误码 → 用户文案 */
-  function syncErrorText(code: string | null): string | null {
-    if (!code) return null
-    const map: Record<string, string> = {
-      'no-endpoint': t.settings.syncErrors.noEndpoint,
-      auth: t.settings.syncErrors.auth,
-      parse: t.settings.syncErrors.parse,
-      incompatible: t.settings.syncErrors.incompatible,
-      network: t.settings.syncErrors.network,
-      cors: t.settings.syncErrors.cors,
-      conflict: t.settings.syncErrors.conflict,
-      'no-collection': t.settings.syncErrors.noCollection,
-      http: t.settings.syncErrors.http,
-    }
-    return map[code] ?? t.settings.syncErrors.network
-  }
-
-  async function handleSync() {
-    const ok = await syncNow()
-    if (ok) {
-      showMsg(t.settings.webdav.syncSuccess, 3000)
-    } else {
-      showMsg(syncErrorText(getLastError()) ?? t.settings.webdav.syncFailed, 3000)
-    }
-  }
-
-  /** D-20261110-061：切换服务商预设，按当前 base/username 重建 endpoint */
-  function applyProvider(next: ProviderId) {
-    setProviderId(next)
-    setDiagnosis(null)
-    const preset = PROVIDER_PRESETS[next]
-    if (!preset.requiresServer) {
-      const nextEndpoint = buildEndpoint(next, '', username)
-      setEndpoint(nextEndpoint)
-      updateSyncConfig({ endpoint: nextEndpoint })
-      return
-    }
-    // 固定端点（如坚果云）切回需要自填服务器的预设：先清空，避免把旧 host 带过去
-    if (endpoint.includes('jianguoyun.com')) {
-      setEndpoint('')
-      updateSyncConfig({ endpoint: '' })
-      return
-    }
-    const base = next === 'generic' ? normalizeServerBase(endpoint) : baseFromEndpoint(endpoint)
-    if (!base) return
-    const nextEndpoint = buildEndpoint(next, base, username)
-    setEndpoint(nextEndpoint)
-    updateSyncConfig({ endpoint: nextEndpoint })
-  }
-
-  /** 分步连接自检：不触发同步合并，只做只读 + 临时文件读写删 */
-  async function runConnectionTest() {
-    if (!isTauriRuntime()) {
-      showMsg(t.settings.webdav.browserTestHint, 3000)
-      return
-    }
-    if (!endpoint.trim()) {
-      showMsg(t.settings.syncErrors.noEndpoint, 2400)
-      return
-    }
-    setDiagnosing(true)
-    setDiagnosis(null)
-    try {
-      const result = await runWebDavDiagnosis({
-        endpoint,
-        username,
-        password,
-        transport: createFetchTransport(httpFetch),
-      })
-      setDiagnosis(result)
-      showMsg(result.ok ? t.settings.webdav.testSuccess : t.settings.webdav.testFail, 3000)
-    } catch {
-      showMsg(t.settings.webdav.testFail, 2400)
-    } finally {
-      setDiagnosing(false)
-    }
-  }
-
-  function clearCredentials() {
-    setPassword('')
-    updateSyncConfig({ password: '' })
-    setDiagnosis(null)
-    showMsg(t.settings.webdav.clearCredentials, 2400)
-  }
-
-  function stageLabel(stage: DiagnoseStage): string {
-    switch (stage) {
-      case 'address':
-        return t.settings.webdav.stageAddress
-      case 'connection':
-        return t.settings.webdav.stageConnection
-      case 'auth':
-        return t.settings.webdav.stageAuth
-      case 'readwrite':
-        return t.settings.webdav.stageReadWrite
-      default:
-        return t.settings.webdav.stageCleanup
-    }
-  }
-
-  function diagnosisHint(code: string | undefined): string | null {
-    if (!code) return null
-    if (code === 'auth' || code === 'forbidden') return t.settings.webdav.diagnoseAuthHint
-    if (code === 'tls') return t.settings.webdav.diagnoseTlsHint
-    if (code === 'not-found') return t.settings.webdav.diagnoseDirHint
-    if (code === 'insecure-http') return t.settings.webdav.diagnoseHttpHint
-    if (code === 'unreachable' || code === 'timeout') return t.settings.syncErrors.network
-    if (code === 'quota' || code === 'method' || code === 'http') return t.settings.syncErrors.http
-    return null
-  }
-
-  async function copyDiagnosis() {
-    if (!diagnosis) return
-    const lines = [
-      `${t.settings.webdav.testButton}: ${diagnosis.ok ? t.settings.webdav.testSuccess : t.settings.webdav.testFail}`,
-      `endpoint: ${sanitizeDiagnosticDetail(endpoint, [password, username])}`,
-      ...diagnosis.stages.map((s) => `${s.stage}: ${s.ok ? 'ok' : s.code}${s.status ? ` (${s.status})` : ''}${s.detail ? ` ${s.detail}` : ''}`),
-    ]
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'))
-      showMsg(t.settings.webdav.copiedToast, 2400)
-    } catch {
-      showMsg(t.settings.webdav.testFail, 2400)
-    }
-  }
+  const sync = useSync()
   // 嵌套的导入确认弹窗打开时抑制本弹窗的 Esc/焦点管理
   const { ref: dialogRef } = useDialogA11y({ open: true, onClose, enabled: !importCandidate })
-
-  // 打开设置时拉取一次备份列表（仅桌面端有磁盘备份）
-  useEffect(() => {
-    if (!inTauri) return
-    void listBackups().then(setBackups)
-  }, [])
-
 
   async function toggleAutostart() {
     if (!inTauri) return
@@ -307,16 +122,6 @@ export function SettingsDialog({ onClose }: Props) {
     if (next) await enable()
     else await disable()
     setAutostart(next)
-  }
-
-  function doExport() {
-    const blob = new Blob([exportData()], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `blockhabit-backup-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
   }
 
   async function doImport(file: File) {
@@ -348,33 +153,6 @@ export function SettingsDialog({ onClose }: Props) {
     }
     const ok = importData(JSON.stringify(candidate))
     showMsg(ok ? t.settings.importSuccess : t.settings.importFail, 2400)
-  }
-
-                  /** 刷新备份列表（读目录失败时保持空列表，不打扰用户） */
-  async function refreshBackups(): Promise<void> {
-    setBackups(await listBackups())
-  }
-  async function doManualBackup(): Promise<void> {
-    const ok = await createBackup(JSON.parse(useAppStore.getState().exportData()))
-    showMsg(ok ? t.settings.backupCreated : t.settings.backupCreateFail, 0)
-    if (ok) await refreshBackups()
-  }
-  async function doExportDiagnostics(): Promise<void> {
-    const ok = await exportDiagnosticsPackage()
-    showMsg(ok ? t.settings.diagnosticsToast : t.settings.diagnosticsFailToast, 2400)
-  }
-
-  async function doOpenDataDir(): Promise<void> {
-    if (!(await openDataDir())) showMsg(t.settings.openDirFail, 2400)
-  }
-  /** 从备份恢复：读取并严格校验后，复用「导入确认」流程（覆盖前同样会自动留档） */
-  async function doRestoreBackup(name: string): Promise<void> {
-    const state = await readBackup(name)
-    if (!state) {
-      showMsg(t.settings.backupReadFail, 2400)
-      return
-    }
-    setImportCandidate(state)
   }
 
   const footerContent = (
@@ -812,22 +590,7 @@ export function SettingsDialog({ onClose }: Props) {
               </>
             )}
 
-            {/* F9 本地诊断包：崩溃日志 + 数据体量 + 帧率采样，纯本地生成 */}
-            <div className="field" style={{ marginBottom: 0 }}>
-              <label>{t.settings.diagnosticsLabel}</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <button
-                  className="btn ghost"
-                  style={{ padding: '7px 16px' }}
-                  onClick={() => void doExportDiagnostics()}
-                >
-                  {t.settings.diagnosticsExport}
-                </button>
-                <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', lineHeight: 1.5 }}>
-                  {t.settings.diagnosticsHint}
-                </span>
-              </div>
-            </div>
+            <DiagnosticsExportPanel onToast={showMsg} />
 
             {/* D-20261110-054 页面提示：清空已读，三页首访提示重新出现一次 */}
             <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
@@ -872,325 +635,24 @@ export function SettingsDialog({ onClose }: Props) {
 
           {/* 3. 数据备份 */}
           <Group title={t.settings.groupData} collapsible defaultOpen={false}>
-            <div className="field" style={{ marginBottom: 0 }}>
-              <label>{t.settings.dataLabel}</label>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button className="btn ghost" onClick={doExport} style={{ flex: 1, padding: '7px 0' }}>
-                  {t.settings.exportJson}
-                </button>
-                <button className="btn ghost" onClick={() => fileRef.current?.click()} style={{ flex: 1, padding: '7px 0' }}>
-                  {t.settings.importJson}
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="application/json,.json"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0]
-                    if (f) void doImport(f)
-                    e.target.value = ''
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* A4 一键档案包：文件夹（桌面）/ 单 ZIP（浏览器），可取消、失败清理 */}
-            <ArchiveExportPanel />
+            <ArchiveDataPanel onImportFile={doImport} />
           </Group>
 
           {/* 3.05 备份与恢复（桌面端）：可见、可恢复的本地备份 */}
           {inTauri && (
             <Group title={t.settings.backupsTitle} collapsible defaultOpen={false}>
-              <div className="field" style={{ marginBottom: 10 }}>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn ghost" onClick={() => void doManualBackup()} style={{ flex: 1, padding: '7px 0' }}>
-                    {t.settings.backupNow}
-                  </button>
-                  <button className="btn ghost" onClick={() => void doOpenDataDir()} style={{ flex: 1, padding: '7px 0' }}>
-                    {t.settings.openDataDir}
-                  </button>
-                </div>
-              </div>
-              <div className="field" style={{ marginBottom: 0 }}>
-                <label>{t.settings.restoreLabel}</label>
-                {backups.length === 0 ? (
-                  <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>{t.settings.backupsEmpty}</div>
-                ) : (
-                  <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {backups.map((b) => (
-                      <li
-                        key={b.name}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}
-                      >
-                        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {b.kind === 'corrupt'
-                            ? t.settings.backupKindCorrupt
-                            : b.timestamp
-                              ? new Date(b.timestamp).toLocaleString()
-                              : b.name}
-                          {b.size > 0 && b.kind !== 'corrupt' ? `  ·  ${Math.max(1, Math.round(b.size / 1024))} KB` : ''}
-                        </span>
-                        <span style={{ fontSize: 'var(--fs-caption)', padding: '1px 6px', borderRadius: 999, background: 'color-mix(in srgb, var(--ink) 7%, transparent)' }}>
-                          {b.kind === 'auto'
-                            ? t.settings.backupKindAuto
-                            : b.kind === 'manual'
-                              ? t.settings.backupKindManual
-                              : t.settings.backupKindCorrupt}
-                        </span>
-                        <button className="btn ghost" style={{ padding: '3px 10px', fontSize: 'var(--fs-small)' }} onClick={() => void doRestoreBackup(b.name)}>
-                          {t.settings.backupRestore}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+              <ArchiveBackupsPanel onToast={showMsg} onRestoreCandidate={setImportCandidate} />
             </Group>
           )}
 
           {/* 3.1 WebDAV 数据同步 */}
           <Group title={t.settings.webdav.groupTitle} collapsible>
-            {/* D-20261110-061：服务商预设 */}
-            <div className="field" style={{ marginBottom: 10 }}>
-              <label>{t.settings.webdav.providerLabel}</label>
-              <div className="seg">
-                {PROVIDER_ORDER.map((id) => {
-                  const label =
-                    id === 'nextcloud'
-                      ? t.settings.webdav.providerNextcloud
-                      : id === 'jianguoyun'
-                        ? t.settings.webdav.providerJianguoyun
-                        : id === 'synology'
-                          ? t.settings.webdav.providerSynology
-                          : t.settings.webdav.providerGeneric
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      className={providerId === id ? 'active' : ''}
-                      onClick={() => applyProvider(id)}
-                    >
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
-              {PROVIDER_PRESETS[providerId].requiresAppPassword && (
-                <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 4, lineHeight: 1.5 }}>
-                  {t.settings.webdav.appPasswordHint}
-                </div>
-              )}
-            </div>
+            <WebdavPanel sync={sync} onToast={showMsg} />
+          </Group>
 
-            <div className="field" style={{ marginBottom: 10 }}>
-              <label>{t.settings.webdav.serverUrl}</label>
-              <input
-                type="text"
-                placeholder="https://dav.example.com/sync/"
-                value={endpoint}
-                readOnly={!PROVIDER_PRESETS[providerId].requiresServer}
-                onChange={(e) => {
-                  setEndpoint(e.target.value)
-                  updateSyncConfig({ endpoint: e.target.value })
-                }}
-                disabled={isSyncing}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-              <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                <label>{t.settings.webdav.username}</label>
-                <input
-                  type="text"
-                  placeholder={t.settings.webdav.username}
-                  value={username}
-                  onChange={(e) => {
-                    setUsername(e.target.value)
-                    updateSyncConfig({ username: e.target.value })
-                  }}
-                  disabled={isSyncing}
-                />
-              </div>
-              <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                <label>{t.settings.webdav.password}</label>
-                <input
-                  type="password"
-                  placeholder={t.settings.webdav.passwordPlaceholder}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value)
-                    updateSyncConfig({ password: e.target.value })
-                  }}
-                  disabled={isSyncing}
-                  style={{
-                    border: '1.5px solid var(--line)',
-                    background: 'var(--bg)',
-                    padding: '9px 12px',
-                    borderRadius: 'var(--r-sm)',
-                    outline: 'none',
-                    width: '100%',
-                    color: 'var(--ink)',
-                  }}
-                />
-              </div>
-            </div>
-            {/* D-20261110-061：独立测试连接 + 分步结果（不触发同步合并） */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-              <button
-                className="btn ghost"
-                style={{ flex: 1, padding: '7px 0' }}
-                disabled={isSyncing || diagnosing || !endpoint.trim()}
-                onClick={() => void runConnectionTest()}
-              >
-                {diagnosing ? t.settings.webdav.testing : t.settings.webdav.testButton}
-              </button>
-              <button
-                className="btn ghost"
-                style={{ flex: 1, padding: '7px 0' }}
-                disabled={isSyncing || !password}
-                onClick={clearCredentials}
-              >
-                {t.settings.webdav.clearCredentials}
-              </button>
-            </div>
-
-            {diagnosis && (
-              <div
-                aria-live="polite"
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: 'var(--r-sm)',
-                  padding: '8px 10px',
-                  marginBottom: 10,
-                  background: 'var(--surface)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                    fontSize: 'var(--fs-small)',
-                    fontWeight: 600,
-                    color: diagnosis.ok ? 'var(--progress-green)' : 'var(--ink)',
-                  }}
-                >
-                  <span>{diagnosis.ok ? t.settings.webdav.testSuccess : t.settings.webdav.testFail}</span>
-                  <span style={{ color: 'var(--ink-2)', fontWeight: 400 }}>{Math.round(diagnosis.elapsedMs)} ms</span>
-                </div>
-                {diagnosis.stages.map((stage) => (
-                  <div
-                    key={stage.stage}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 6,
-                      marginTop: 4,
-                      fontSize: 'var(--fs-caption)',
-                      color: 'var(--ink-2)',
-                    }}
-                  >
-                    <span style={{ color: stage.ok ? 'var(--progress-green)' : 'var(--ink)', flexShrink: 0 }}>
-                      {stage.ok ? '✓' : '✕'}
-                    </span>
-                    <span style={{ flexShrink: 0, minWidth: 40 }}>{stageLabel(stage.stage)}</span>
-                    {!stage.ok && (
-                      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {stage.detail || stage.code}
-                      </span>
-                    )}
-                  </div>
-                ))}
-                {!diagnosis.ok &&
-                  (() => {
-                    const hint = diagnosisHint(diagnosis.stages.find((stage) => !stage.ok)?.code)
-                    return hint ? (
-                      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 6, lineHeight: 1.5 }}>
-                        {hint}
-                      </div>
-                    ) : null
-                  })()}
-                {!diagnosis.ok && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                    <button
-                      className="btn ghost"
-                      style={{ padding: '3px 10px', fontSize: 'var(--fs-caption)' }}
-                      onClick={() => void copyDiagnosis()}
-                    >
-                      {t.settings.webdav.copyError}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 自动同步开关与间隔：接线 useSync 既有的启动/定时同步逻辑 */}
-            <div className="field" style={{ marginBottom: 10 }}>
-              <label>{t.settings.webdav.autoSync}</label>
-              <div className="seg">
-                <button
-                  type="button"
-                  className={syncConfig.enabled ? 'active' : ''}
-                  disabled={isSyncing || !endpoint.trim()}
-                  onClick={() => updateSyncConfig({ enabled: true })}
-                >
-                  {t.settings.webdav.autoSyncOn}
-                </button>
-                <button
-                  type="button"
-                  className={!syncConfig.enabled ? 'active' : ''}
-                  disabled={isSyncing || !endpoint.trim()}
-                  onClick={() => updateSyncConfig({ enabled: false })}
-                >
-                  {t.settings.webdav.autoSyncOff}
-                </button>
-              </div>
-              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
-                {syncConfig.enabled
-                  ? t.settings.webdav.autoSyncHintOn
-                  : t.settings.webdav.autoSyncHintOff}
-              </div>
-              {syncConfig.enabled && (
-                <div className="seg" style={{ marginTop: 8 }}>
-                  {([15, 30, 60, 180] as const).map((mins) => (
-                    <button
-                      key={mins}
-                      type="button"
-                      className={(syncConfig.autoSyncIntervalMinutes ?? 30) === mins ? 'active' : ''}
-                      disabled={isSyncing}
-                      onClick={() => updateSyncConfig({ autoSyncIntervalMinutes: mins })}
-                    >
-                      {mins === 15
-                        ? t.settings.webdav.interval15m
-                        : mins === 30
-                          ? t.settings.webdav.interval30m
-                          : mins === 60
-                            ? t.settings.webdav.interval1h
-                            : t.settings.webdav.interval3h}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 4 }}>
-              <div style={{ fontSize: 'var(--fs-caption)', color: syncStatus === 'error' ? 'var(--danger)' : 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {isSyncing
-                  ? t.settings.webdav.syncing
-                  : syncError
-                    ? (syncErrorText(syncError) ?? syncError)
-                    : lastSyncAt
-                      ? `${t.settings.webdav.lastSync}${new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      : t.settings.webdav.notSynced}
-              </div>
-              <button
-                className="btn primary"
-                onClick={() => void handleSync()}
-                disabled={isSyncing || !endpoint.trim()}
-                style={{ padding: '6px 16px', fontSize: 'var(--fs-body)', flexShrink: 0 }}
-              >
-                {isSyncing ? t.settings.webdav.syncingBtn : t.settings.webdav.syncNowBtn}
-              </button>
-            </div>
+          {/* 3.2 内容路线 / 关于（C2：D-20261110-063 §3.5.5） */}
+          <Group title={t.settings.aboutTitle} collapsible defaultOpen={false}>
+            <AboutPanel />
           </Group>
 
           {/* 4. 自律资产统计与快捷键 */}

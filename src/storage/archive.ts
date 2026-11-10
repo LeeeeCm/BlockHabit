@@ -1,10 +1,19 @@
 import type { AppState, Language } from '../types'
 import { blueprints } from '../logic/blueprints'
+import { CONTENT_VERSION } from '../logic/blueprints/manifest'
 import { BLUEPRINT_CAPACITY } from '../logic/builds'
 import { dateKey } from '../logic/dates'
-import { getTranslation } from '../i18n'
 import { prepareImport, SCHEMA_VERSION } from './adapter'
 import { serializeState } from '../store/serializeState'
+import {
+  ARCHIVE_FORMAT_VERSION,
+  buildArchiveReadme,
+  buildBuildingsReadme,
+  type ArchiveBuilding,
+  type ArchiveManifest,
+  type ArchiveManifestFile,
+} from './archiveManifest'
+export * from './archiveManifest'
 
 /**
  * A4 一键档案包（D-20261110-062）：纯逻辑 + 双端导出编排。
@@ -20,8 +29,6 @@ import { serializeState } from '../store/serializeState'
 
 export const ARCHIVE_FOLDER_PREFIX = 'BlockHabit-Archive-'
 export const ARCHIVE_TMP_PREFIX = '.tmp-archive-'
-/** 档案包内容格式版本（与存档 schemaVersion 分开，便于未来演进） */
-export const ARCHIVE_CONTENT_VERSION = 1
 /** 建筑图逻辑尺寸（透明背景，物理 2×） */
 export const ARCHIVE_BUILDING_PX = 320
 
@@ -356,14 +363,6 @@ export function assertNoCredentials(text: string, secrets: Array<string | undefi
 
 /* ---------------- 已落成建筑 ---------------- */
 
-export interface ArchiveBuilding {
-  blueprintId: string
-  /** 本地日期键（落成日 = 该蓝图全部积木 placedAt 最大值转本地日期） */
-  completedAt: string
-  blocks: number
-  foundationNote?: string
-}
-
 /** 只导出「已落成」建筑：块数达到蓝图容量；未完成不产生误导性的已完成图 */
 export function completedBuildings(state: AppState): ArchiveBuilding[] {
   const out: ArchiveBuilding[] = []
@@ -398,22 +397,6 @@ export interface ArchiveSourceFile {
   bytes: Uint8Array
 }
 
-export interface ArchiveManifestFile {
-  path: string
-  bytes: number
-  sha256: string
-}
-
-export interface ArchiveManifest {
-  appVersion: string
-  schemaVersion: number
-  contentVersion: number
-  exportedAt: string
-  platform: 'desktop' | 'browser'
-  /** 文件清单（不含 manifest.json / checksums.txt 自身，避免自引用） */
-  files: ArchiveManifestFile[]
-}
-
 export interface ArchivePackageInput {
   state: AppState
   /** appStore.exportData() 的输出（与「导出数据」完全一致） */
@@ -442,94 +425,6 @@ export type ArchivePackageResult =
 
 function buildingFileName(index: number, blueprintId: string): string {
   return `buildings/${String(index + 1).padStart(2, '0')}-${blueprintId}.png`
-}
-
-function blueprintNames(blueprintId: string): { zh: string; en: string } {
-  const zh = getTranslation('zh').blueprints[blueprintId] || blueprintId
-  const en = getTranslation('en').blueprints[blueprintId] || blueprintId
-  return { zh, en }
-}
-
-/** 人读 README（双语小节；档案包可能被十年后的自己或别人打开） */
-export function buildArchiveReadme(input: {
-  appVersion: string
-  schemaVersion: number
-  contentVersion: number
-  exportedAt: string
-  files: ArchiveManifestFile[]
-  buildings: ArchiveBuilding[]
-}): string {
-  const lines: string[] = []
-  lines.push('# BlockHabit 完整档案包 / Complete Archive', '')
-  lines.push(`- appVersion: ${input.appVersion}`)
-  lines.push(`- schemaVersion: ${input.schemaVersion}`)
-  lines.push(`- contentVersion: ${input.contentVersion}`)
-  lines.push(`- exportedAt: ${input.exportedAt}`)
-  lines.push('', '## 这是什么 / What this is', '')
-  lines.push('这是 BlockHabit 本地数据的只读快照，不含任何账号信息，也不含 WebDAV 凭据；生成过程不上传、不联网。')
-  lines.push('This is a read-only snapshot of BlockHabit local data. No account information and no WebDAV credentials are included; nothing is uploaded.')
-  lines.push('', '## 包含什么 / What is inside', '')
-  lines.push('- `data/blockhabit-state.json` — 全部数据，可被应用「导入数据」直接读回 / all data, importable by the app')
-  lines.push('- `data/checksums.txt` — 每个文件的 SHA-256（外部可校验）/ SHA-256 per file (verifiable outside the app)')
-  lines.push('- `manifest.json` — 版本、导出时间与文件清单 / versions, export time and file list')
-  lines.push('- `buildings/*.png` — 已落成建筑的等距渲染图（透明背景 2×）/ isometric renders of completed buildings (transparent, 2×)')
-  lines.push('- `buildings/README.md` — 建筑名、落成日期与奠基石铭言 / building names, completion dates and foundation notes')
-  lines.push('')
-  lines.push(`建筑图数量 / Completed buildings: ${input.buildings.length}`)
-  lines.push('')
-  lines.push('## 如何恢复 / How to restore', '')
-  lines.push('1. 打开 BlockHabit → 设置 → 数据备份 → 导入数据，选择 `data/blockhabit-state.json`。')
-  lines.push('   Open BlockHabit → Settings → Data → Import data and choose `data/blockhabit-state.json`.')
-  lines.push('2. 请使用与导出时相同或更新版本的应用（manifest 里的 schemaVersion 可用于判断兼容性）。')
-  lines.push('   Use the same or a newer app version (see schemaVersion in manifest.json).')
-  lines.push('3. 建筑图与年鉴图只是人看的派生文件，不参与恢复。')
-  lines.push('   Building images are for human reading only; they are not part of the restore path.')
-  lines.push('')
-  lines.push('## 如何校验 / How to verify', '')
-  lines.push('在档案包目录内执行 / run inside the archive folder:')
-  lines.push('')
-  lines.push('```')
-  lines.push('sha256sum -c data/checksums.txt        # macOS / Linux')
-  lines.push('Get-FileHash <file> -Algorithm SHA256  # Windows PowerShell（逐文件对照 checksums.txt）')
-  lines.push('```')
-  lines.push('')
-  lines.push('校验和只能证明文件完整、未被改动，不能证明来源（档案包没有签名）。')
-  lines.push('Checksums prove integrity, not authenticity — the archive is not signed.')
-  lines.push('')
-  lines.push('## 隐私提醒 / Privacy', '')
-  lines.push('档案包含个人打卡与随笔，请自行保管；它没有加密，可以放进你自己的同步盘。')
-  lines.push('The archive contains personal check-ins and notes; keep it safe. It is not encrypted, and you may store it in your own sync folder.')
-  lines.push('', '## 文件清单 / File list', '')
-  for (const file of input.files) {
-    lines.push(`- ${file.path} (${file.bytes} bytes, sha256 ${file.sha256})`)
-  }
-  lines.push('')
-  return lines.join('\n')
-}
-
-/** 建筑年表 README（双语；供人对照 PNG 阅读） */
-export function buildBuildingsReadme(buildings: ArchiveBuilding[]): string {
-  const lines: string[] = ['# 已落成建筑 / Completed buildings', '']
-  if (buildings.length === 0) {
-    lines.push('这份档案包生成时还没有落成的建筑。')
-    lines.push('No buildings had been completed when this archive was created.')
-    lines.push('')
-    return lines.join('\n')
-  }
-  lines.push('| # | id | 名称 / Name | 落成日 / Completed | 铭言 / Foundation note |')
-  lines.push('| --- | --- | --- | --- | --- |')
-  buildings.forEach((building, index) => {
-    const names = blueprintNames(building.blueprintId)
-    const note = (building.foundationNote ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ')
-    lines.push(
-      `| ${index + 1} | ${building.blueprintId} | ${names.zh} / ${names.en} | ${building.completedAt} | ${note} |`,
-    )
-  })
-  lines.push('')
-  lines.push('图片为透明背景等距渲染（2×），只用于阅读，不参与数据恢复。')
-  lines.push('Images are transparent isometric renders (2×) for reading only; they are not used for data restore.')
-  lines.push('')
-  return lines.join('\n')
 }
 
 /** checksums.txt：`<sha256>  <relative path>`（与 sha256sum -c 兼容） */
@@ -585,7 +480,8 @@ export async function buildArchivePackage(input: ArchivePackageInput): Promise<A
   const provisionalReadme = buildArchiveReadme({
     appVersion: input.appVersion,
     schemaVersion,
-    contentVersion: ARCHIVE_CONTENT_VERSION,
+    archiveFormatVersion: ARCHIVE_FORMAT_VERSION,
+    appContentVersion: CONTENT_VERSION,
     exportedAt,
     files: manifestFiles,
     buildings: completed,
@@ -603,7 +499,8 @@ export async function buildArchivePackage(input: ArchivePackageInput): Promise<A
   const manifest: ArchiveManifest = {
     appVersion: input.appVersion,
     schemaVersion,
-    contentVersion: ARCHIVE_CONTENT_VERSION,
+    archiveFormatVersion: ARCHIVE_FORMAT_VERSION,
+    appContentVersion: CONTENT_VERSION,
     exportedAt,
     platform: input.platform,
     files: checksumFiles,
