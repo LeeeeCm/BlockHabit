@@ -1,14 +1,19 @@
 {
   "name": "blockhabit",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "test": "vitest run"
+    "test": "vitest run",
+    "design:check": "node scripts/design-ledger.mjs",
+    "design:fix": "node scripts/design-ledger.mjs --fix",
+    "format:check": "prettier --check .prettierrc.json vite.config.ts \"src/render/{isoColor,isoGeometry,isoCube,isoGround,sceneMotion,sceneCamera,showcaseLayout,framing}.ts\" \"src/logic/{blockHints,builds,repairBricks}.ts\" \"src/platform/{useTransient,http,diagnostics}.ts\" \"src/storage/backups.ts\" \"src/components/BrickInspectPopover.tsx\"",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@fontpkg/alimama-fang-yuan-ti-vf": "^1.0.5",
@@ -19,7 +24,9 @@
     "@fontsource/zcool-qingke-huangyou": "^5.3.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-autostart": "^2.5.1",
-    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-fs": "^2.7.1",
+    "@tauri-apps/plugin-http": "^2.8.3",
+    "@tauri-apps/plugin-notification": "^2.5.1",
     "@tauri-apps/plugin-opener": "^2",
     "misans": "^4.1.0",
     "react": "^19.1.0",
@@ -32,6 +39,7 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
     "jsdom": "^29.1.1",
+    "prettier": "^3.9.10",
     "sharp": "^0.35.3",
     "typescript": "~5.8.3",
     "vite": "^7.0.4",

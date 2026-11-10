@@ -1,6 +1,6 @@
 [package]
 name = "blockhabit"
-version = "0.1.0"
+version = "0.2.0"
 description = "BlockHabit - build your habits block by block"
 authors = ["LeeCM"]
 edition = "2021"
@@ -21,6 +21,10 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-plugin-opener = "2"
 tauri-plugin-fs = "2"
+# F4：只要「绕开 CORS 的 HTTP 客户端」。默认特性会带上 cookies/brotli/zstd/multipart 等，
+# WebDAV 用不到；只留 rustls-tls，安装包少增 1 MB 量级（见 D-20261110-048）。
+tauri-plugin-http = { version = "2.8.3", default-features = false, features = ["rustls-tls"] }
+tauri-plugin-notification = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }

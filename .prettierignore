@@ -1,0 +1,10 @@
+dist/
+node_modules/
+src-tauri/target/
+src-tauri/icons/
+design/
+docs/
+.tmp-verify/
+*.md
+package-lock.json
+src/locales/

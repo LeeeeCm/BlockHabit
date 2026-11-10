@@ -1,0 +1,609 @@
+{
+  "version": 1,
+  "note": "本文件由 scripts/design-ledger.mjs --fix 生成；手工修改后请立即运行 npm run design:check 校验。",
+  "records": [
+    {
+      "id": "D-20261110-001",
+      "date": "2026-11-10",
+      "title": "建立设计中枢：唯一入口、追加式记录、删除需人工审核",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-001-design-hub-bootstrap.md"
+    },
+    {
+      "id": "D-20261110-002",
+      "date": "2026-11-10",
+      "title": "设计基线抽取：四主题令牌 / 积木美术 / 界面表面 / 文案语气",
+      "status": "proposed",
+      "owner": "design-scribe",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-002-design-baseline-extraction.md"
+    },
+    {
+      "id": "D-20261110-003",
+      "date": "2026-11-10",
+      "title": "三路审计之一：工程与数据正确性（34 条，含 2 条 P0）",
+      "status": "proposed",
+      "owner": "audit-code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-003-audit-code.md"
+    },
+    {
+      "id": "D-20261110-004",
+      "date": "2026-11-10",
+      "title": "三路审计之二：视觉与体验（33 条，含浏览器实测证据）",
+      "status": "proposed",
+      "owner": "audit-ux",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-004-audit-ux.md"
+    },
+    {
+      "id": "D-20261110-005",
+      "date": "2026-11-10",
+      "title": "三路审计之三：产品与工程运营（22 条，含 1 条 P0、6 条 P1）",
+      "status": "proposed",
+      "owner": "audit-product",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-005-audit-product.md"
+    },
+    {
+      "id": "D-20261110-006",
+      "date": "2026-11-10",
+      "title": "全面优化方案：合并 89 条审计为 46 条，A–G 七批落地",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-006-optimization-plan.md"
+    },
+    {
+      "id": "D-20261110-007",
+      "date": "2026-11-10",
+      "title": "实施批次 A（数据安全三项 P0）与 B2（counter 刷块）：读档失败态、写盘串行化、蓝图外键校验",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-007-batch-a-data-safety.md"
+    },
+    {
+      "id": "D-20261110-008",
+      "date": "2026-11-10",
+      "title": "实施 A4（ErrorBoundary + 全局错误捕获 + 本地崩溃日志）、A5a（旧档导入可达）、A6（损坏档不静默清空）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-008-batch-a-resilience.md"
+    },
+    {
+      "id": "D-20261110-009",
+      "date": "2026-11-10",
+      "title": "实施 A5b/A7（撤销不丢历史块）、A8（投影容量钳制）、A9（删除习惯清理）、A12（补签不得早于创建日）+ F5 部分（CI 门禁）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-009-batch-a-projection-safety.md"
+    },
+    {
+      "id": "D-20261110-010",
+      "date": "2026-11-10",
+      "title": "实施 B1：连击里程碑奖励块全链路接回（数据层 → 投影层 → 渲染层 → 反馈层）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-010-b1-streak-bonus.md"
+    },
+    {
+      "id": "D-20261110-011",
+      "date": "2026-11-10",
+      "title": "实施 C1（减少动态偏好）、C2（键盘焦点环）、C8（消除启动主题闪变）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-011-c1-c2-c8.md"
+    },
+    {
+      "id": "D-20261110-012",
+      "date": "2026-11-10",
+      "title": "实施 C6（弹窗不再抢 autoFocus）、C7（十个弹窗补可访问名称）、C10（原生滑杆/下拉收口 + 标签）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-012-c6-c7-c10.md"
+    },
+    {
+      "id": "D-20261110-013",
+      "date": "2026-11-10",
+      "title": "实施 C5（热图 roving tabindex，tab 停留点从 N 降到 1）与 C9（HabitDialog 关闭前保护半填内容）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-013-c5-c9.md"
+    },
+    {
+      "id": "D-20261110-014",
+      "date": "2026-11-10",
+      "title": "实施 E1：字体瘦身 —— 移除从未加载的 MiSans 两个字重与 Rubik 四个无用子集（dist 9.80→5.42 MB，逐像素零回归）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-014-e1-font-slimming.md"
+    },
+    {
+      "id": "D-20261110-015",
+      "date": "2026-11-10",
+      "title": "实施 D10：建造页自适应取景（开荒期放大 1.5×，地基虚线仍完整可见）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-015-d10-camera-framing.md"
+    },
+    {
+      "id": "D-20261110-016",
+      "date": "2026-11-10",
+      "title": "实施 E2：展台热路径三处零分配化（复用离屏底座 / footprint 缓存 / 偏移积木预计算）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-016-e2-showcase-hotpath.md"
+    },
+    {
+      "id": "D-20261110-017",
+      "date": "2026-11-10",
+      "title": "实施 C4：环境光对比度地板（墨黑主题夜间积木右脸 1.03:1 → 不再低于标准光照）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-017-c4-ambient-contrast.md"
+    },
+    {
+      "id": "D-20261110-018",
+      "date": "2026-11-10",
+      "title": "实施 C3：彩色填充文字令牌与彩色文字令牌（WCAG AA 收口，14 处对比度不达标修复）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-018-c3-contrast-tokens.md"
+    },
+    {
+      "id": "D-20261110-019",
+      "date": "2026-11-10",
+      "title": "实施 A10：OS 关机/注销也走存档握手 + 迷你悬浮件关闭不再卡死尺寸",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-019-a10-exit-handshake.md"
+    },
+    {
+      "id": "D-20261110-020",
+      "date": "2026-11-10",
+      "title": "实施 E3：积木精灵缓存升级为 LRU + 字节预算（高 DPR 下内存封顶 24MB）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-020-e3-sprite-cache.md"
+    },
+    {
+      "id": "D-20261110-021",
+      "date": "2026-11-10",
+      "title": "实施 D5/D6/D8 清理批次：8 个死 i18n 键、Blueprint.name 死数据、9 条死 CSS、4 处兜底三元",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-021-d5-d6-d8-cleanups.md"
+    },
+    {
+      "id": "D-20261110-022",
+      "date": "2026-11-10",
+      "title": "实施 F3：数据主权 —— 应用内备份列表、一键恢复、打开数据目录",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-022-f3-data-sovereignty.md"
+    },
+    {
+      "id": "D-20261110-023",
+      "date": "2026-11-10",
+      "title": "实施 F1（上半）：首启三步引导 + 首块积木专属说明",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-023-f1-onboarding.md"
+    },
+    {
+      "id": "D-20261110-024",
+      "date": "2026-11-10",
+      "title": "实施 F11 文档校准 + F4 上半：WebDAV 跨域失败不再误报为「网络错误」",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-024-f11-docs-f4-cors.md"
+    },
+    {
+      "id": "D-20261110-025",
+      "date": "2026-11-10",
+      "title": "实施 D9：emoji 残留清零 + 背景模糊收敛为单一令牌（实测像素零变化）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-025-d9-emoji-blur.md"
+    },
+    {
+      "id": "D-20261110-026",
+      "date": "2026-11-10",
+      "title": "实施 D3：动效令牌收口（17 个时长 + 7 种缓动 → 7 档 + 4 档，裸值归零）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-026-d3-motion-tokens.md"
+    },
+    {
+      "id": "D-20261110-027",
+      "date": "2026-11-10",
+      "title": "实施 F8：修复积木宽口径（每月 2 块 + 连击 30 天奖励 + 补签窗口 30 天）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-027-f8-repair-bricks.md"
+    },
+    {
+      "id": "D-20261110-028",
+      "date": "2026-11-10",
+      "title": "实施 D7：字号阶梯收口（20 档 → 8 档语义令牌，全站裸字号归零）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-028-d7-type-scale.md"
+    },
+    {
+      "id": "D-20261110-029",
+      "date": "2026-11-10",
+      "title": "实施 D4：设置面板信息架构——可折叠分组，首屏只留外观/提醒（3.6 屏 → 2.7 屏）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-029-d4-settings-ia.md"
+    },
+    {
+      "id": "D-20261110-030",
+      "date": "2026-11-10",
+      "title": "实施 F9 本地诊断包（崩溃日志 + 数据体量 + 帧率采样）与 F7 提醒自启自检提示",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-030-f9-diagnostics-f7-autostart.md"
+    },
+    {
+      "id": "D-20261110-031",
+      "date": "2026-11-10",
+      "title": "实施 F1 下半：新建习惯表单选填项默认折叠（首屏 4 个控件）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-031-f1b-compact-form.md"
+    },
+    {
+      "id": "D-20261110-032",
+      "date": "2026-11-10",
+      "title": "实施 E4 第一步（颜色域拆分）+ F5 收尾（CHANGELOG）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-032-e4-iso-color-split-f5-changelog.md"
+    },
+    {
+      "id": "D-20261110-033",
+      "date": "2026-11-10",
+      "title": "实施 E4 第二、三步：iso.ts 拆分为 geometry/color/cube/ground 四模块（barrel 保接口）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-033-e4-iso-split-complete.md"
+    },
+    {
+      "id": "D-20261110-034",
+      "date": "2026-11-10",
+      "title": "实施 E4 收尾：ui.css 1218 行拆为五个按序入口（四页逐像素零差异）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-034-e4-uicss-split.md"
+    },
+    {
+      "id": "D-20261110-035",
+      "date": "2026-11-10",
+      "title": "实施 B3 热图灰阶化 + B4 全勤领取反馈修正（失败给原因、bonus 专属文案）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-035-b3-heatmap-b4-claim-feedback.md"
+    },
+    {
+      "id": "D-20261110-036",
+      "date": "2026-11-10",
+      "title": "实施 D5 遗留清理：瞬时提示统一走 useTransient（修掉「第二次提示被第一次提前清掉」）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-036-d5-transient-timers.md"
+    },
+    {
+      "id": "D-20261110-037",
+      "date": "2026-11-10",
+      "title": "自审计与审核摘要：逐条核验 36 条记录的关键声明，产出 REVIEW-QUEUE 与决策清单",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-037-self-audit-review-queue.md"
+    },
+    {
+      "id": "D-20261110-038",
+      "date": "2026-11-10",
+      "title": "实施 F2 上半：全蓝图落成后的显式完成态 + 打卡不产块时说明原因（不涉及内容策略）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-038-f2-endgame-messaging.md"
+    },
+    {
+      "id": "D-20261110-039",
+      "date": "2026-11-10",
+      "title": "端到端集成验证：完整 tauri build 通过，E1/E4 声明复核无回退",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-039-integration-build-verification.md"
+    },
+    {
+      "id": "D-20261110-040",
+      "date": "2026-11-10",
+      "title": "生产构建分包：主 chunk 497 kB → 296 kB，消除 500 kB 告警（无视觉变化）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-040-build-chunk-splitting.md"
+    },
+    {
+      "id": "D-20261110-041",
+      "date": "2026-11-10",
+      "title": "把「打卡无掉块」的原因判别抽为纯逻辑并补 5 例单测（F2 收尾）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-041-block-hint-pure-logic.md"
+    },
+    {
+      "id": "D-20261110-042",
+      "date": "2026-11-10",
+      "title": "测试覆盖体检：给积木投影（builds）与蓝图注册表补 18 例单测",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-042-test-coverage-audit.md"
+    },
+    {
+      "id": "D-20261110-043",
+      "date": "2026-11-10",
+      "title": "渲染数学底座补测（isoGeometry 18 例 / isoColor 18 例），并修掉 floorContrast 的契约漏洞",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-043-render-math-tests.md"
+    },
+    {
+      "id": "D-20261110-044",
+      "date": "2026-11-10",
+      "title": "实施 E5：BuildScene 906 → 786 行（拆出动画时间线 / 取景数学 / 读砖气泡），逐像素零差异",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-044-e5-buildscene-split.md"
+    },
+    {
+      "id": "D-20261110-045",
+      "date": "2026-11-10",
+      "title": "实施 E5 第二步：ShowcaseScene 890 → 796 行（纯几何派生拆出 + 12 例单测），逐像素零差异",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-045-e5-showcase-split.md"
+    },
+    {
+      "id": "D-20261110-046",
+      "date": "2026-11-10",
+      "title": "最终集成验证：E5/分包/测试补强后再出包，体积与分包指标全部达标",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-046-final-integration-verification.md"
+    },
+    {
+      "id": "D-20261110-047",
+      "date": "2026-11-10",
+      "title": "F5 收尾：CHANGELOG 与 46 条实施记录对齐；优化方案「不需决策」部分全部完成",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-047-f5-changelog-sync.md"
+    },
+    {
+      "id": "D-20261110-048",
+      "date": "2026-11-10",
+      "title": "六项待决事项按建议决议：F4 批依赖并落地原生 HTTP、D1 公理改写、D2 保留装饰色、LICENSE=MIT",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-048-decisions-and-f4-http.md"
+    },
+    {
+      "id": "D-20261110-049",
+      "date": "2026-11-10",
+      "title": "实施 B5：奖励块分两个视觉等级（连击单环 / 全勤双环），同一枚点缀色不新增色相",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-049-b5-bonus-tiers.md"
+    },
+    {
+      "id": "D-20261110-050",
+      "date": "2026-11-10",
+      "title": "F10 平台范围决议（移动端=实验）+ F5 收尾（Prettier 作用域化接入，ESLint 说明为何不接）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-050-platform-scope-and-prettier.md"
+    },
+    {
+      "id": "D-20261110-051",
+      "date": "2026-11-10",
+      "title": "优化方案收尾验收：46 条 + 6 项决策全部有结论，出包与门禁全绿",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-051-closure-acceptance.md"
+    },
+    {
+      "id": "D-20261110-052",
+      "date": "2026-11-10",
+      "title": "今日简报：打开即看到「今天要做什么 + 离落成还差几块 + 一键开始」",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-052-today-brief.md"
+    },
+    {
+      "id": "D-20261110-053",
+      "date": "2026-11-10",
+      "title": "习惯模板：空态提供 5 个一键起步选项，降低第一次创建的门槛",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-053-habit-templates.md"
+    },
+    {
+      "id": "D-20261110-054",
+      "date": "2026-11-10",
+      "title": "页面提示系统：首次进入三页各给一条可关闭的用法提示，并支持重看",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-054-guide-tips.md"
+    },
+    {
+      "id": "D-20261110-055",
+      "date": "2026-11-10",
+      "title": "晚间收尾提醒：首次打卡后自愿开启，只在还有未完成习惯时提醒一次",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-055-evening-nudge.md"
+    },
+    {
+      "id": "D-20261110-056",
+      "date": "2026-11-10",
+      "title": "启动流畅：水合完成前不渲染空态，重页面懒加载 + 空闲预取",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-056-startup-hydration-lazy.md"
+    },
+    {
+      "id": "D-20261110-057",
+      "date": "2026-11-10",
+      "title": "渲染层性能实测与零视觉回归优化（建造 / 展台热路径）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-057-render-perf.md"
+    },
+    {
+      "id": "D-20261110-058",
+      "date": "2026-11-10",
+      "title": "竞品格局与差异化策略：桌面陪伴型习惯应用，而不是又一个打卡清单",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261110-058-competitive-innovation.md"
+    },
+    {
+      "id": "D-20261110-059",
+      "date": "2026-11-10",
+      "title": "桌面摆件三档形态（口袋/标准/展台）+ 置顶开关",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261110-059-widget-tiers.md"
+    },
+    {
+      "id": "D-20261110-060",
+      "date": "2026-11-10",
+      "title": "落成年鉴：按年汇总的年度回顾与可保存作品",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261110-060-yearbook.md"
+    },
+    {
+      "id": "D-20261110-061",
+      "date": "2026-11-10",
+      "title": "WebDAV 服务商预设 + 分步连接自检",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261110-061-webdav-presets-diagnose.md"
+    },
+    {
+      "id": "D-20261110-062",
+      "date": "2026-11-10",
+      "title": "一键档案包：可读、可校验、可导入的本地档案馆",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261110-062-archive-pack.md"
+    },
+    {
+      "id": "D-20261110-063",
+      "date": "2026-11-10",
+      "title": "内容二期：免费扩展蓝图包与内容版本门",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261110-063-content-pack.md"
+    },
+    {
+      "id": "D-20261110-064",
+      "date": "2026-11-10",
+      "title": "桌面专注陪伴：摆件倒计时，到点确认落块，不监控",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261110-064-focus-companion.md"
+    },
+    {
+      "id": "D-20261110-065",
+      "date": "2026-11-10",
+      "title": "建筑即编年史：图鉴里的建筑档案卡",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261110-065-building-archive.md"
+    },
+    {
+      "id": "D-20261110-066",
+      "date": "2026-11-10",
+      "title": "创新路线图与优先级：三波次（每天看见 / 陪伴与带走 / 长期故事）",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261110-066-innovation-roadmap.md"
+    },
+    {
+      "id": "D-20261111-067",
+      "date": "2026-11-11",
+      "title": "蓝图色彩系统：18 座模型逐座配色与材质母题",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261111-067-blueprint-color-system.md"
+    }
+  ]
+}
