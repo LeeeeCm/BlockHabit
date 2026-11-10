@@ -322,6 +322,115 @@ describe('diagnose：WebDAV 分步连接自检', () => {
   })
 })
 
+describe('diagnose：用户取消（B1）', () => {
+  it('已预置取消：cancelled=true、五阶段补齐、不发起任何请求', async () => {
+    const { transport, calls } = makeTransport([response(207)])
+    const controller = new AbortController()
+    controller.abort()
+    const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport, signal: controller.signal })
+    expect(result.cancelled).toBe(true)
+    expect(result.ok).toBe(false)
+    expect(result.stages.map((stage) => stage.stage)).toEqual([...STAGES])
+    expect(result.stages[0]).toMatchObject({ stage: 'address', ok: false, code: 'cancelled' })
+    expect(result.stages.slice(1).every((stage) => stage.code === 'skipped')).toBe(true)
+    expect(calls).toHaveLength(0)
+  })
+
+  it('连接阶段取消：标记 cancelled，后续阶段 skipped，不误报超时', async () => {
+    const calls: RecordedCall[] = []
+    const transport: DiagnoseTransport = (url, init) => {
+      calls.push({ url, init })
+      return new Promise<DiagnoseResponse>((_resolve, reject) => {
+        const abort = () => reject(new DOMException('Aborted', 'AbortError'))
+        if (init.signal?.aborted) return abort()
+        init.signal?.addEventListener('abort', abort, { once: true })
+      })
+    }
+    const controller = new AbortController()
+    const pending = runWebDavDiagnosis({
+      ...BASE_OPTIONS,
+      transport,
+      signal: controller.signal,
+      timeoutMs: 5000,
+    })
+    const deadline = Date.now() + 1000
+    while (calls.length === 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 1))
+    controller.abort()
+    const result = await pending
+    expect(result.cancelled).toBe(true)
+    expect(result.stages[1]).toMatchObject({ stage: 'connection', ok: false, code: 'cancelled' })
+    expect(result.stages[2].code).toBe('skipped')
+    expect(result.stages[3].code).toBe('skipped')
+    expect(result.stages[4].code).toBe('skipped')
+    expect(result.ok).toBe(false)
+  })
+
+  it('读写阶段取消（GET 挂起）：仍尽力 DELETE 清理临时文件', async () => {
+    const calls: RecordedCall[] = []
+    const transport: DiagnoseTransport = (url, init) => {
+      calls.push({ url, init })
+      if (init.method === 'PROPFIND') return Promise.resolve(response(207))
+      if (init.method === 'PUT') return Promise.resolve(response(201))
+      if (init.method === 'GET') {
+        return new Promise<DiagnoseResponse>((_resolve, reject) => {
+          const abort = () => reject(new DOMException('Aborted', 'AbortError'))
+          if (init.signal?.aborted) return abort()
+          init.signal?.addEventListener('abort', abort, { once: true })
+        })
+      }
+      return Promise.resolve(response(204))
+    }
+    const controller = new AbortController()
+    const pending = runWebDavDiagnosis({
+      ...BASE_OPTIONS,
+      transport,
+      signal: controller.signal,
+      timeoutMs: 5000,
+    })
+    const deadline = Date.now() + 1000
+    while (!calls.some((call) => call.init.method === 'GET') && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 1))
+    }
+    controller.abort()
+    const result = await pending
+    expect(result.cancelled).toBe(true)
+    expect(result.stages[3]).toMatchObject({ stage: 'readwrite', ok: false, code: 'cancelled' })
+    expect(result.stages[4]).toMatchObject({ stage: 'cleanup', ok: true, code: 'ok', status: 204 })
+    const putCall = calls.find((call) => call.init.method === 'PUT')
+    const deleteCall = calls.find((call) => call.init.method === 'DELETE')
+    expect(putCall).toBeDefined()
+    expect(deleteCall).toBeDefined()
+    expect(deleteCall?.url).toBe(putCall?.url)
+  })
+
+  it('取消时清理失败不掩盖 cancelled，但 cleanup 如实失败', async () => {
+    const calls: RecordedCall[] = []
+    const transport: DiagnoseTransport = (url, init) => {
+      calls.push({ url, init })
+      if (init.method === 'PROPFIND') return Promise.resolve(response(207))
+      if (init.method === 'PUT') return Promise.resolve(response(201))
+      if (init.method === 'GET') {
+        return new Promise<DiagnoseResponse>((_resolve, reject) => {
+          const abort = () => reject(new DOMException('Aborted', 'AbortError'))
+          if (init.signal?.aborted) return abort()
+          init.signal?.addEventListener('abort', abort, { once: true })
+        })
+      }
+      return Promise.resolve(response(405))
+    }
+    const controller = new AbortController()
+    const pending = runWebDavDiagnosis({ ...BASE_OPTIONS, transport, signal: controller.signal, timeoutMs: 5000 })
+    const deadline = Date.now() + 1000
+    while (!calls.some((call) => call.init.method === 'GET') && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 1))
+    }
+    controller.abort()
+    const result = await pending
+    expect(result.cancelled).toBe(true)
+    expect(result.stages[4]).toMatchObject({ stage: 'cleanup', ok: false, code: 'method' })
+  })
+})
+
 describe('diagnose：工具函数', () => {
   it('DIAGNOSE_TIMEOUT_MS 默认为 10s；makeTempFileName 带固定后缀且默认唯一', () => {
     expect(DIAGNOSE_TIMEOUT_MS).toBe(10000)

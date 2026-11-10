@@ -60,7 +60,8 @@ describe('useSync hook', () => {
       lastSyncError: null,
     }
     saveWebDavConfig(sample)
-    expect(loadWebDavConfig()).toEqual(sample)
+    // B1：新字段 rememberPassword 缺省为 true（旧配置兼容）
+    expect(loadWebDavConfig()).toEqual({ ...sample, rememberPassword: true })
   })
 
   it('syncNow fails if endpoint is empty', async () => {

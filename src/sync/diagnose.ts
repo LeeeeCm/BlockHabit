@@ -36,6 +36,8 @@ export type DiagnoseCode =
   | 'http'
   | 'unknown'
   | 'skipped'
+  /** B1：用户主动取消自检 */
+  | 'cancelled'
 
 export interface DiagnoseStageResult {
   stage: DiagnoseStage
@@ -50,6 +52,8 @@ export interface DiagnoseStageResult {
 export interface DiagnoseResult {
   /** 只有五个阶段全部通过才为 true；skipped 不算失败 */
   ok: boolean
+  /** B1：用户主动取消（结果不完整；会尽力清理临时文件） */
+  cancelled?: boolean
   stages: DiagnoseStageResult[]
   elapsedMs: number
 }
@@ -78,6 +82,8 @@ export interface DiagnoseOptions {
   transport: DiagnoseTransport
   /** 单阶段超时，默认 DIAGNOSE_TIMEOUT_MS */
   timeoutMs?: number
+  /** B1：用户取消（AbortSignal）；取消后不再发起新阶段，并尽力清理已创建的临时文件 */
+  signal?: AbortSignal
 }
 
 /** 供 Lead 把 platform/http 的 httpFetch 直接包成 DiagnoseTransport */
@@ -87,6 +93,14 @@ class DiagnoseTimeoutError extends Error {
   constructor() {
     super('WebDAV diagnose request timed out')
     this.name = 'TimeoutError'
+  }
+}
+
+/** B1：外部取消信号触发的中止（与超时区分，用于把结果标成 cancelled 而不是 timeout） */
+export class DiagnoseCancelError extends Error {
+  constructor() {
+    super('WebDAV diagnose cancelled')
+    this.name = 'DiagnoseCancelError'
   }
 }
 
@@ -244,22 +258,35 @@ async function requestWithTimeout(
   url: string,
   init: DiagnoseRequestInit,
   timeoutMs: number,
+  signal?: AbortSignal,
 ): Promise<DiagnoseResponse> {
+  if (signal?.aborted) throw new DiagnoseCancelError()
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
   let timer: ReturnType<typeof setTimeout> | undefined
+  let cancelHandler: (() => void) | undefined
   const timeout = new Promise<never>((_resolve, reject) => {
     timer = setTimeout(() => {
       controller?.abort()
       reject(new DiagnoseTimeoutError())
     }, timeoutMs)
   })
+  const cancelled = new Promise<never>((_resolve, reject) => {
+    if (!signal) return
+    cancelHandler = () => {
+      controller?.abort()
+      reject(new DiagnoseCancelError())
+    }
+    signal.addEventListener('abort', cancelHandler, { once: true })
+  })
   try {
     return await Promise.race([
       transport(url, { ...init, signal: controller?.signal }),
       timeout,
+      cancelled,
     ])
   } finally {
     if (timer !== undefined) clearTimeout(timer)
+    if (signal && cancelHandler) signal.removeEventListener('abort', cancelHandler)
   }
 }
 
@@ -301,8 +328,10 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
   const startedAt = nowMs()
   const timeoutMs =
     typeof options.timeoutMs === 'number' && options.timeoutMs > 0 ? options.timeoutMs : DIAGNOSE_TIMEOUT_MS
+  const signal = options.signal
   const secrets: Array<string | undefined> = [options.password]
   const stages: DiagnoseStageResult[] = []
+  let cancelled = false
 
   const push = (stage: DiagnoseStage, outcome: StageOutcome): void => {
     const result: DiagnoseStageResult = { stage, ok: outcome.ok, code: outcome.code }
@@ -312,10 +341,31 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
   }
   const skip = (stage: DiagnoseStage): void => push(stage, { ok: true, code: 'skipped' })
   const finish = (): DiagnoseResult => ({
-    ok: stages.length === 5 && stages.every((stage) => stage.ok),
+    ok: !cancelled && stages.length === 5 && stages.every((stage) => stage.ok),
+    cancelled,
     stages,
     elapsedMs: Math.max(0, Math.round(nowMs() - startedAt)),
   })
+  const STAGE_ORDER: DiagnoseStage[] = ['address', 'connection', 'auth', 'readwrite', 'cleanup']
+  const skipAfter = (stage: DiagnoseStage): void => {
+    for (const later of STAGE_ORDER.slice(STAGE_ORDER.indexOf(stage) + 1)) skip(later)
+  }
+  const isCancelled = (err: unknown): boolean =>
+    err instanceof DiagnoseCancelError || Boolean(signal?.aborted)
+  const cancelAt = (stage: DiagnoseStage): DiagnoseResult => {
+    cancelled = true
+    push(stage, { ok: false, code: 'cancelled' })
+    skipAfter(stage)
+    return finish()
+  }
+  const cancelledBeforeStart = (): DiagnoseResult => {
+    cancelled = true
+    push('address', { ok: false, code: 'cancelled' })
+    skipAfter('address')
+    return finish()
+  }
+
+  if (signal?.aborted) return cancelledBeforeStart()
 
   // 1) 地址：规范化 + 协议检查（http 会被 Tauri CSP 拦掉，提前给出明确结论）
   const collectionUrl = normalizeCollectionUrl(options.endpoint)
@@ -325,10 +375,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       code: 'invalid-url',
       detail: sanitizeDiagnosticDetail(options.endpoint, secrets),
     })
-    skip('connection')
-    skip('auth')
-    skip('readwrite')
-    skip('cleanup')
+    skipAfter('address')
     return finish()
   }
   if (protocolOf(collectionUrl) === 'http:') {
@@ -337,10 +384,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       code: 'insecure-http',
       detail: sanitizeDiagnosticDetail(collectionUrl, secrets),
     })
-    skip('connection')
-    skip('auth')
-    skip('readwrite')
-    skip('cleanup')
+    skipAfter('address')
     return finish()
   }
   push('address', { ok: true, code: 'ok', detail: sanitizeDiagnosticDetail(collectionUrl, secrets) })
@@ -355,18 +399,18 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       collectionUrl,
       { method: 'PROPFIND', headers: { Depth: '0' } },
       timeoutMs,
+      signal,
     )
     push('connection', { ok: true, code: 'ok', status: response.status })
   } catch (err) {
+    if (isCancelled(err)) return cancelAt('connection')
     const classified = classifyTransportError(err)
     push('connection', {
       ok: false,
       code: classified.code,
       detail: sanitizeDiagnosticDetail(classified.detail, secrets),
     })
-    skip('auth')
-    skip('readwrite')
-    skip('cleanup')
+    skipAfter('connection')
     return finish()
   }
 
@@ -377,23 +421,23 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       collectionUrl,
       { method: 'PROPFIND', headers: { ...authHeaders, Depth: '0' } },
       timeoutMs,
+      signal,
     )
     const outcome = classifyHttpStatus(response.status)
     push('auth', outcome)
     if (!outcome.ok) {
-      skip('readwrite')
-      skip('cleanup')
+      skipAfter('auth')
       return finish()
     }
   } catch (err) {
+    if (isCancelled(err)) return cancelAt('auth')
     const classified = classifyTransportError(err)
     push('auth', {
       ok: false,
       code: classified.code,
       detail: sanitizeDiagnosticDetail(classified.detail, secrets),
     })
-    skip('readwrite')
-    skip('cleanup')
+    skipAfter('auth')
     return finish()
   }
 
@@ -401,8 +445,41 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
   const tempName = makeTempFileName()
   const tempUrl = encodeUrlPath(`${collectionUrl}${tempName}`)
   const payload = JSON.stringify({ blockhabit: 'diagnose', at: new Date().toISOString() })
+  let putAttempted = false
   let tempCreated = false
+
+  /**
+   * 清理临时文件（PUT 之后必定尝试）：
+   * - 不接收外部取消信号：用户取消后也要把可能已创建的临时文件尽力删掉；
+   * - 使用短超时，避免取消流程被慢服务器拖住。
+   */
+  const cleanupTempFile = async (useShortTimeout: boolean): Promise<void> => {
+    const cleanupTimeoutMs = useShortTimeout ? Math.min(timeoutMs, 5000) : timeoutMs
+    try {
+      const deleteResponse = await requestWithTimeout(
+        transport,
+        tempUrl,
+        { method: 'DELETE', headers: authHeaders },
+        cleanupTimeoutMs,
+      )
+      const outcome = classifyDeleteStatus(deleteResponse.status)
+      if (outcome.ok) {
+        push('cleanup', outcome)
+      } else {
+        push('cleanup', { ...outcome, detail: tempName })
+      }
+    } catch (err) {
+      const classified = classifyTransportError(err)
+      push('cleanup', {
+        ok: false,
+        code: classified.code,
+        detail: sanitizeDiagnosticDetail(`${classified.detail} ${tempName}`, secrets),
+      })
+    }
+  }
+
   try {
+    putAttempted = true
     const putResponse = await requestWithTimeout(
       transport,
       tempUrl,
@@ -412,6 +489,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
         body: payload,
       },
       timeoutMs,
+      signal,
     )
     const putOutcome = classifyHttpStatus(putResponse.status)
     if (!putOutcome.ok) {
@@ -426,6 +504,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       tempUrl,
       { method: 'GET', headers: authHeaders },
       timeoutMs,
+      signal,
     )
     const getOutcome = classifyHttpStatus(getResponse.status)
     if (!getOutcome.ok) {
@@ -436,6 +515,14 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       push('readwrite', { ok: true, code: 'ok', status: getResponse.status })
     }
   } catch (err) {
+    if (isCancelled(err)) {
+      cancelled = true
+      push('readwrite', { ok: false, code: 'cancelled' })
+      // 取消时 PUT 可能已成功但响应被中止：仍尽力清理，不让临时文件留在用户服务器上
+      if (putAttempted) await cleanupTempFile(true)
+      else skip('cleanup')
+      return finish()
+    }
     const classified = classifyTransportError(err)
     push('readwrite', {
       ok: false,
@@ -449,27 +536,6 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
     skip('cleanup')
     return finish()
   }
-  try {
-    const deleteResponse = await requestWithTimeout(
-      transport,
-      tempUrl,
-      { method: 'DELETE', headers: authHeaders },
-      timeoutMs,
-    )
-    const outcome = classifyDeleteStatus(deleteResponse.status)
-    if (outcome.ok) {
-      push('cleanup', outcome)
-    } else {
-      push('cleanup', { ...outcome, detail: tempName })
-    }
-  } catch (err) {
-    const classified = classifyTransportError(err)
-    push('cleanup', {
-      ok: false,
-      code: classified.code,
-      detail: sanitizeDiagnosticDetail(`${classified.detail} ${tempName}`, secrets),
-    })
-  }
-
+  await cleanupTempFile(false)
   return finish()
 }
