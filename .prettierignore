@@ -4,6 +4,7 @@ src-tauri/target/
 src-tauri/icons/
 design/
 docs/
+.tmp*/
 .tmp-verify/
 *.md
 package-lock.json

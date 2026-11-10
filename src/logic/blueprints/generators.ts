@@ -48,7 +48,7 @@ export function createBlueprintBuilder() {
   return { put, fill, build }
 }
 
-/** 灰岩城堡 v2：垛口城墙 + 高低塔楼 + 拱门（约 218 块 / 7 层） */
+/** 灰岩城堡 v2：垛口城墙 + 高低塔楼 + 拱门（190 块 / 7 层） */
 export function makeCastleBlueprint(): Blueprint {
   const b = createBlueprintBuilder()
   const C_WALL = '#94a3b8' // 灰岩石墙
@@ -152,7 +152,7 @@ export function makeFactoryBlueprint(): Blueprint {
   return b.build('factory', 5, 3)
 }
 
-/** 灯塔：宽底座 + 高塔 + 顶灯（约 122 块 / 10 层） */
+/** 灯塔：宽底座 + 高塔 + 顶灯（131 块 / 11 层） */
 export function makeLighthouseBlueprint(): Blueprint {
   const b = createBlueprintBuilder()
   const C_BASE = '#64748b' // 石砌基座
@@ -338,7 +338,7 @@ export function makeCameraBlueprint(): Blueprint {
   return b.build('camera', 1, 1)
 }
 
-/** 荷兰风车磨坊：石砌基座 + 原木塔身 + 红陶斜屋顶 + 稳固四翼风翼（82 块 / 8 层） */
+/** 荷兰风车磨坊：石砌基座 + 原木塔身 + 红陶斜屋顶 + 稳固四翼风翼（91 块 / 8 层） */
 export function makeWindmillBlueprint(): Blueprint {
   const b = createBlueprintBuilder()
   const C_STONE = '#94a3b8' // 石砌底座
@@ -371,7 +371,7 @@ export function makeWindmillBlueprint(): Blueprint {
   return b.build('windmill', 2, 2)
 }
 
-/** 林间木屋：户外露台 + 原木圆木墙身 + 砌石壁炉烟囱 + 坡屋顶（108 块 / 6 层） */
+/** 林间木屋：户外露台 + 原木圆木墙身 + 砌石壁炉烟囱 + 坡屋顶（116 块 / 6 层） */
 export function makeCabinBlueprint(): Blueprint {
   const b = createBlueprintBuilder()
   const C_DECK = '#a89f91' // 露台甲板
@@ -440,7 +440,7 @@ export function makeRocketBlueprint(): Blueprint {
   return b.build('rocket', 2, 2)
 }
 
-/** 林间树屋：三阶树桩 + 环绕露台 + 方木小屋 + 坡屋顶（115 块 / 9 层）
+/** 林间树屋：三阶树桩 + 环绕露台 + 方木小屋 + 坡屋顶（119 块 / 10 层）
  * 正面 = y 最大侧；露台由中央树桩支撑，其余同层相接（允许 1 格悬挑，不产生完全悬空块）。 */
 export function makeTreehouseBlueprint(): Blueprint {
   const b = createBlueprintBuilder()
@@ -558,7 +558,7 @@ export function makeClocktowerBlueprint(): Blueprint {
   return b.build('clocktower', 2, 2)
 }
 
-/** 石拱桥：两岸阶梯式桥台 + 悬挑拱肩 + 三格宽桥面 + 栏杆与端柱（99 块 / 6 层）
+/** 石拱桥：两岸阶梯式桥台 + 悬挑拱肩 + 三格宽桥面 + 栏杆与端柱（101 块 / 6 层）
  * 桥面沿 x 方向，宽 3 格（y0-2）；拱洞靠逐层内挑形成，每块至少同层相接（无完全悬空）。 */
 export function makeBridgeBlueprint(): Blueprint {
   const b = createBlueprintBuilder()

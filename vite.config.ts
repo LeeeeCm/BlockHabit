@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
+import { configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 // @ts-expect-error process is a nodejs global
@@ -10,7 +11,11 @@ export default defineConfig(async () => ({
   plugins: [react()],
 
   test: {
-    environment: 'jsdom'
+    environment: 'jsdom',
+    // 历轮验证脚本放在本地 .tmp-* 证据目录（已被 .gitignore 忽略），不是源码测试。
+    // Vitest 默认 include 会把它们扫进来（曾使 npm test 混入 2 个非源码文件），
+    // 这里在默认 exclude 之外整体排除本地临时目录，保证 npm test 只跑源码测试。
+    exclude: [...configDefaults.exclude, '**/.tmp-*/**']
   },
 
   // 生产构建的分包策略（D-20261110-040）：

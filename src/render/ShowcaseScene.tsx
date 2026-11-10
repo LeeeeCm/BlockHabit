@@ -59,7 +59,8 @@ interface DragState {
 
 /**
  * 展台沙盘（Showcase Island）：
- * 18×18 等距实体展台底座、多模型全局遮挡排序渲染、AABB 碰撞磁吸检测与无碰撞自由拖拽。
+ * SHOWCASE_GRID_SIZE×SHOWCASE_GRID_SIZE（当前 26×26）等距实体展台底座、
+ * 多模型全局遮挡排序渲染、AABB 碰撞磁吸检测与无碰撞自由拖拽。
  */
 export function ShowcaseScene({
   placements,
@@ -131,7 +132,7 @@ export function ShowcaseScene({
   sortedStaticCubesRef.current = sortedStaticCubes
 
   // E2：命中检测用的 footprint 表与「带落位偏移的积木列表」都是 placements 的纯派生，
-  // 每帧/每次 pointermove 重算会让已落成模型 × 每座块数（最多约 220）次迭代白跑。
+  // 每帧/每次 pointermove 重算会让已落成模型 × 每座块数（当前最大 190 块）次迭代白跑。
   const footprintRef = useRef(footprintMap)
   footprintRef.current = footprintMap
   // 已落位模型的偏移积木坐标（阴影与植被绘制、命中检测共用；placements 不变时引用不变）
