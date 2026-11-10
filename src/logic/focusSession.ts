@@ -104,27 +104,136 @@ export function extendSession(
   }
 }
 
+/** 一个会话在 UI 里的展示条目 */
+export interface FocusSessionEntry {
+  id: string
+  view: FocusView
+}
+
 /**
- * 多会话时摆件该显示哪一个：取「最早到点」的一个（同时刻按 startedAt 早者优先）。
- * 过期会话不参与；没有可显示的会话返回 null。
+ * 多会话展示视图（B4 / D-20261110-064 收尾）：
+ * - ready 优先于 focusing：待确认的会话必须最先被看见，否则用户会一直等一个「已经到点」的会话；
+ * - 同相位按到点时间（startedAt + 有效目标）早者优先，再按 startedAt、id 兜底保证确定性；
+ * - 过期会话（到点超过 TTL）不参与展示，由调用方 prune 清理。
+ */
+export interface FocusSessionsView {
+  /** 按展示优先级排序的会话（primaryId 恒为 ordered[0]?.id） */
+  ordered: FocusSessionEntry[]
+  /** 主面板应显示的会话；没有可展示会话时为 null */
+  primaryId: string | null
+  /** 主会话之外仍在进行/待确认的会话数（「另有 N 个专注」） */
+  otherCount: number
+}
+
+/** 展示优先级：ready=0 先于 focusing=1 */
+function phaseRank(phase: FocusPhase): number {
+  return phase === 'ready' ? 0 : 1
+}
+
+/** 计算多会话展示视图（纯函数；同一 (sessions, now) 永远得到同一结果） */
+export function viewFocusSessions(
+  sessions: Record<string, FocusSessionLike>,
+  now: number,
+): FocusSessionsView {
+  const entries: Array<{ id: string; view: FocusView; rank: number; end: number; startedAt: number }> = []
+  for (const [id, session] of Object.entries(sessions)) {
+    const view = viewSession(session, now)
+    if (view.phase === 'expired') continue
+    entries.push({
+      id,
+      view,
+      rank: phaseRank(view.phase),
+      end: session.startedAt + view.targetMs,
+      startedAt: session.startedAt,
+    })
+  }
+  entries.sort(
+    (a, b) =>
+      a.rank - b.rank ||
+      a.end - b.end ||
+      a.startedAt - b.startedAt ||
+      (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+  )
+  const ordered = entries.map(({ id, view }) => ({ id, view }))
+  return {
+    ordered,
+    primaryId: ordered[0]?.id ?? null,
+    otherCount: Math.max(0, ordered.length - 1),
+  }
+}
+
+/**
+ * 多会话时摆件该显示哪一个：viewFocusSessions 的主会话（ready 优先，其次最早到点）。
+ * 过期会话不参与；没有可显示的会话返回 null。保留此函数作为既有调用方的稳定入口。
  */
 export function primarySessionId(
   sessions: Record<string, FocusSessionLike>,
   now: number,
 ): string | null {
-  let bestId: string | null = null
-  let bestEnd = Number.POSITIVE_INFINITY
-  let bestStart = Number.POSITIVE_INFINITY
-  for (const [id, session] of Object.entries(sessions)) {
-    if (isSessionStale(session, now)) continue
-    const end = session.startedAt + effectiveTargetMs(session)
-    if (end < bestEnd || (end === bestEnd && session.startedAt < bestStart)) {
-      bestId = id
-      bestEnd = end
-      bestStart = session.startedAt
-    }
+  return viewFocusSessions(sessions, now).primaryId
+}
+
+/** 一条「到点通知」计划：App 必须先 markNotified(notifiedAt) 落盘，再弹通知（重启不重复） */
+export interface FocusNotificationPlan {
+  habitId: string
+  /** 应写入会话的 notifiedAt（= now） */
+  notifiedAt: number
+}
+
+/**
+ * 通知计划（B4）：把 App.tsx 里 TimerWatcher 的判定抽成纯函数，App 只做副作用调用。
+ * 规则：
+ * - 只有 ready 相位才通知（focusing/expired 不通知；过期不打扰）；
+ * - notifiedAt 已存在则跳过（重启恢复后不重复通知）；
+ * - 习惯已删除/归档（不在 validHabitIds）不通知；
+ * - 同一时刻多条到点时按到点时间早者优先，再按 habitId 兜底，保证顺序可测。
+ */
+export function planFocusNotifications(
+  sessions: Record<string, FocusSessionLike>,
+  now: number,
+  validHabitIds: ReadonlySet<string>,
+): FocusNotificationPlan[] {
+  const plans: Array<{ habitId: string; notifiedAt: number; end: number }> = []
+  for (const [habitId, session] of Object.entries(sessions)) {
+    if (!validHabitIds.has(habitId)) continue
+    if (session.notifiedAt) continue
+    const view = viewSession(session, now)
+    if (view.phase !== 'ready') continue
+    plans.push({ habitId, notifiedAt: now, end: session.startedAt + view.targetMs })
   }
-  return bestId
+  plans.sort((a, b) => a.end - b.end || (a.habitId < b.habitId ? -1 : a.habitId > b.habitId ? 1 : 0))
+  return plans.map(({ habitId, notifiedAt }) => ({ habitId, notifiedAt }))
+}
+
+/** 托盘/摆件的专注相位：ready 优先于 focusing；没有会话返回 null */
+export type TrayFocusPhase = 'focusing' | 'ready' | null
+
+export function trayPhaseFor(
+  sessions: Record<string, FocusSessionLike>,
+  now: number,
+): TrayFocusPhase {
+  const first = viewFocusSessions(sessions, now).ordered[0]
+  if (!first) return null
+  return first.view.phase === 'ready' ? 'ready' : 'focusing'
+}
+
+export interface FocusPhaseLabels {
+  focusing: string
+  ready: string
+}
+
+/**
+ * 托盘 tooltip 文案（B4）：基础进度文案 + 专注相位后缀。
+ * 无会话时原样返回；相位变化才改变字符串，调用方据此只在相位变化时 update_tray。
+ */
+export function trayStatusFor(
+  base: string,
+  phase: TrayFocusPhase,
+  labels: FocusPhaseLabels,
+): string {
+  if (phase === 'focusing') return `${base} · ${labels.focusing}`
+  if (phase === 'ready') return `${base} · ${labels.ready}`
+  return base
 }
 
 /**

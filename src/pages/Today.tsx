@@ -3,8 +3,9 @@ import { useTransient } from '../platform/useTransient'
 import type { CheckInResult, Habit, HabitPeriod } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useReminderStore } from '../store/reminderStore'
+import { useTimerStore } from '../store/timerStore'
 import { useTodayKey } from '../logic/useTodayKey'
-import { habitMetOnDay } from '../logic/checkin'
+import { canCheckInHabit, habitMetOnDay } from '../logic/checkin'
 import { noBlockReason } from '../logic/blockHints'
 import { buildTodayBrief } from '../logic/todayBrief'
 import { templateFrequency, type HabitTemplate } from '../logic/habitTemplates'
@@ -20,8 +21,8 @@ import { HabitDialog } from '../components/HabitDialog'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { BlockDropModal } from '../components/BlockDropModal'
 import { playCelebrationSound } from '../audio/sound'
-import { IconBuild, IconCheck, IconEcho, IconMoodHard, IconPlus, IconRestore, IconSparkle, IconToday, IconTrash } from '../components/Icons'
-import { triggerHaptic } from '../platform'
+import { IconBuild, IconCheck, IconEcho, IconInProgress, IconMoodHard, IconPlus, IconRestore, IconSparkle, IconToday, IconTrash } from '../components/Icons'
+import { triggerHaptic, usePlatform } from '../platform'
 import { ensureNotifyPermission } from '../platform/notify'
 
 // 自上而下：任意 → 早晨 → 午后 → 夜晚
@@ -154,6 +155,15 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
     const entryMs = new Date(echoEntry.date + 'T00:00:00').getTime()
     return Math.max(1, Math.round((todayMs - entryMs) / 86400000))
   }, [echoEntry, day])
+
+  // B4：今日页专注入口 —— 有可开始的专注习惯且当前无任何会话时出现；启动复用 HabitRow 的同一个 timerStore.start
+  const { isMobile } = usePlatform()
+  const focusSessions = useTimerStore((s) => s.sessions)
+  const startTimer = useTimerStore((s) => s.start)
+  const focusStartHabit =
+    Object.keys(focusSessions).length > 0
+      ? null
+      : (filteredActive.find((h) => h.kind === 'focus' && Boolean(h.targetMinutes) && canCheckInHabit(h, checkIns, day).ok) ?? null)
 
   // 仍待处理的到点提醒（打卡/跳过/移除提醒后自动从横幅消失，与调度器剪枝同口径）
   const activeReminders = useMemo(
@@ -342,6 +352,32 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
       </div>
 
       {brief.show && <TodayBrief brief={brief} onStartFirst={handleStartFirst} />}
+
+      {/* B4：今日页专注入口（复用现有 --ink/--line/--r-md 视觉语言；移动端触控 ≥44px） */}
+      {focusStartHabit && (
+        <button
+          type="button"
+          data-testid="today-focus-entry"
+          title={t.focusCompanion.startHint}
+          aria-label={`${t.focusCompanion.start} · ${focusStartHabit.name} · ${t.today.targetMinutes(focusStartHabit.targetMinutes ?? 25)}`}
+          onClick={() => {
+            triggerHaptic('medium')
+            startTimer(focusStartHabit.id, (focusStartHabit.targetMinutes ?? 25) * 60_000)
+            showToast(t.focusCompanion.focusing)
+          }}
+          style={{ width: '100%', margin: '14px 0 6px', padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 'var(--r-md)', background: 'var(--surface)', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', cursor: 'pointer', minHeight: isMobile ? 48 : undefined }}
+        >
+          <IconInProgress size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
+          <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: 'var(--fs-small)', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {t.focusCompanion.start} · {focusStartHabit.name} · {t.today.targetMinutes(focusStartHabit.targetMinutes ?? 25)}
+            </span>
+            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {t.focusCompanion.startHint}
+            </span>
+          </span>
+        </button>
+      )}
       {hasAnyCheckIn && nudgeConsent === null && !nudgeEnabled && (
         <EveningNudgeConsent onEnable={handleNudgeEnable} onDecline={handleNudgeDecline} />
       )}

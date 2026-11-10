@@ -4,6 +4,7 @@ import type { CheckInResult, Habit, MicroMood } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useTimerStore } from '../store/timerStore'
 import { canCheckInHabit, isHabitDueOnDay } from '../logic/checkin'
+import { effectiveTargetMs } from '../logic/focusSession'
 import { selectHabitCheckInSlice } from '../store/habitSelectors'
 import { playComboChime, playSnapSound } from '../audio/sound'
 import { useI18n } from '../i18n'
@@ -127,12 +128,12 @@ export const HabitRow = memo(function HabitRow({
   const missed = !done && weekMissed(habit, weekCount, day)
   const isFocus = habit.kind === 'focus' && Boolean(habit.targetMinutes)
   const targetMs = (habit.targetMinutes ?? 25) * 60_000
-  // B2：摆件可延长会话，今日页必须用有效目标，否则会在原目标提前显示「待确认」
-  const effectiveTargetMs = session?.targetMs ?? targetMs
+  // B2/B4：摆件可延长会话，今日页必须用「含延长的有效目标」，否则会在原目标提前显示「待确认」
+  const sessionTargetMs = session ? effectiveTargetMs(session) : targetMs
   const elapsed = session ? now - session.startedAt : 0
-  const running = isFocus && !!session && !done && elapsed < effectiveTargetMs
-  const ended = isFocus && !!session && !done && elapsed >= effectiveTargetMs
-  const progressRatio = effectiveTargetMs > 0 ? elapsed / effectiveTargetMs : 1
+  const running = isFocus && !!session && !done && elapsed < sessionTargetMs
+  const ended = isFocus && !!session && !done && elapsed >= sessionTargetMs
+  const progressRatio = sessionTargetMs > 0 ? elapsed / sessionTargetMs : 1
   const actualMinutes = Math.max(1, Math.round(elapsed / 60_000))
 
   const isDueToday = isHabitDueOnDay(habit, day)
@@ -543,7 +544,7 @@ export const HabitRow = memo(function HabitRow({
                 className="big-num"
                 style={{ fontSize: 'var(--fs-display)', color: 'var(--progress-blue)', lineHeight: 1 }}
               >
-                {fmtRemaining(session ? session.startedAt + effectiveTargetMs - now : 0)}
+                {fmtRemaining(session ? session.startedAt + sessionTargetMs - now : 0)}
               </span>
               <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>
                 {t.today.focusedMinutes(actualMinutes)}

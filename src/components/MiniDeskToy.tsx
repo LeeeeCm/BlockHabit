@@ -8,8 +8,7 @@ import {
   MAX_EXTENSIONS,
   formatRemaining,
   normalizeExtensions,
-  primarySessionId,
-  viewSession,
+  viewFocusSessions,
   type FocusView,
 } from '../logic/focusSession'
 import { MINI_PRESETS, type MiniSize } from '../platform/miniWindow'
@@ -119,14 +118,18 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
   const activeHabits = habits.filter((h) => !h.archivedAt)
   const doneCount = activeHabits.filter((h) => habitMetOnDay(h, checkIns, day)).length
 
-  // —— 专注态：取最早到点的会话；过期/习惯已删的会话不显示（由 App 的 TimerWatcher prune） ——
+  // —— 专注态：主面板显示 viewFocusSessions 的主会话（ready 优先，其次最早到点）；
+  // 过期/习惯已删的会话不显示（由 App 的 TimerWatcher prune）。
   const focusNow = useFocusNow(Object.keys(sessions).length > 0)
-  const focusHabitId = primarySessionId(sessions, focusNow)
+  const focusSessionsView = viewFocusSessions(sessions, focusNow)
+  const focusHabitId = focusSessionsView.primaryId
   const focusSession = focusHabitId ? sessions[focusHabitId] : null
   const focusHabit = focusHabitId ? habits.find((h) => h.id === focusHabitId && !h.archivedAt) : undefined
-  const focusView: FocusView | null = focusSession ? viewSession(focusSession, focusNow) : null
+  const focusView: FocusView | null = focusSessionsView.ordered[0]?.view ?? null
   const focusActive = Boolean(focusHabit && focusView && focusView.phase !== 'expired')
   const canExtend = focusSession ? normalizeExtensions(focusSession) < MAX_EXTENSIONS : false
+  // B4：主面板之外仍有会话时在副行提示「另有 N 个专注」，避免两个会话时另一个被完全藏起来
+  const otherFocusCount = focusActive ? focusSessionsView.otherCount : 0
 
   useEffect(() => {
     setGiveUpPending(false)
@@ -217,6 +220,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
         <div
           data-testid="focus-panel"
           data-focus-phase={focusView.phase}
+          data-other-focus={otherFocusCount}
           style={{
             flex: 1,
             minHeight: 0,
@@ -241,6 +245,21 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
             >
               {focusHabit.name}
             </span>
+            {/* 口袋档 ready 态纵向空间已被按钮占满：「另有 N 个专注」放进标题行，避免被挤成 0 高 */}
+            {!focusing && otherFocusCount > 0 && (
+              <span
+                style={{
+                  fontSize: 'var(--fs-caption)',
+                  color: 'var(--ink-2)',
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {t.focusCompanion.moreSessions(otherFocusCount)}
+              </span>
+            )}
             {focusing && !giveUpPending && (
               <button
                 className="btn ghost"
@@ -333,6 +352,20 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
               </div>
             </>
           )}
+          {/* focusing 态空间足够：副行显示「另有 N 个专注」（ready 态见标题行） */}
+          {focusing && otherFocusCount > 0 && (
+            <div
+              style={{
+                fontSize: 'var(--fs-caption)',
+                color: 'var(--ink-2)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {t.focusCompanion.moreSessions(otherFocusCount)}
+            </div>
+          )}
         </div>
       )
     }
@@ -341,6 +374,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
       <div
         data-testid="focus-panel"
         data-focus-phase={focusView.phase}
+        data-other-focus={otherFocusCount}
         style={{
           height: '100%',
           display: 'flex',
@@ -376,6 +410,19 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
             >
               {focusing ? t.focusCompanion.focusing : t.focusCompanion.ready}
             </span>
+            {otherFocusCount > 0 && (
+              <span
+                style={{
+                  fontSize: 'var(--fs-caption)',
+                  color: 'var(--ink-2)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {t.focusCompanion.moreSessions(otherFocusCount)}
+              </span>
+            )}
             {size === 'display' && (
               <span
                 style={{

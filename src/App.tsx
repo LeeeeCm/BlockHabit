@@ -9,7 +9,12 @@ import { pickAdapter } from './storage'
 import { setSoundMuted, setVolume } from './audio/sound'
 import { getBlueprint } from './logic/blueprints'
 import { useTimerStore } from './store/timerStore'
-import { primarySessionId, viewSession, type FocusPhase } from './logic/focusSession'
+import {
+  planFocusNotifications,
+  trayPhaseFor,
+  trayStatusFor,
+  type TrayFocusPhase,
+} from './logic/focusSession'
 import { useReminderStore } from './store/reminderStore'
 import { getBlueprintName, useI18n } from './i18n'
 import Today from './pages/Today'
@@ -61,9 +66,10 @@ const inTauri =
 
 /**
  * 专注相位（摆件 / 托盘共用）：只有存在会话时才按 1s 心跳；
+ * 相位判定抽到纯函数 trayPhaseFor（ready 优先于 focusing），
  * 返回值只在相位变化时改变，调用方可以把它放进 effect 依赖而不触发每秒副作用。
  */
-function useFocusPhase(): FocusPhase | null {
+function useFocusPhase(): TrayFocusPhase {
   const sessions = useTimerStore((s) => s.sessions)
   const hasSession = Object.keys(sessions).length > 0
   const [now, setNow] = useState(() => Date.now())
@@ -73,8 +79,7 @@ function useFocusPhase(): FocusPhase | null {
     return () => window.clearInterval(timer)
   }, [hasSession])
   if (!hasSession) return null
-  const id = primarySessionId(sessions, now)
-  return id ? viewSession(sessions[id], now).phase : null
+  return trayPhaseFor(sessions, now)
 }
 
 /**
@@ -102,13 +107,14 @@ function TimerWatcher() {
       const currentHabits = habitsRef.current
       const activeIds = new Set(currentHabits.filter((h) => !h.archivedAt).map((h) => h.id))
       useTimerStore.getState().prune(activeIds, now)
-      for (const [habitId, session] of Object.entries(useTimerStore.getState().sessions)) {
-        if (session.notifiedAt) continue
-        if (viewSession(session, now).phase !== 'ready') continue
-        const habit = currentHabits.find((h) => h.id === habitId)
-        if (!habit || habit.archivedAt) continue
+      // 通知计划是纯函数（logic/focusSession）：只有 ready 且未提醒的会话才进计划，
+      // 这里只负责「先落盘 → 再弹」的副作用顺序。
+      const plans = planFocusNotifications(useTimerStore.getState().sessions, now, activeIds)
+      for (const plan of plans) {
+        const habit = currentHabits.find((h) => h.id === plan.habitId)
+        if (!habit) continue
         // 先落盘再去弹：即使进程立刻被杀，重开也不会重复通知
-        useTimerStore.getState().markNotified(habitId, now)
+        useTimerStore.getState().markNotified(plan.habitId, plan.notifiedAt)
         const msg = tRef.current.focusCompanion.notificationBody(habit.name)
         toastRef.current(msg, 5200)
         void notify('BlockHabit', msg)
@@ -161,11 +167,11 @@ function TraySync() {
     if (pendingReminders > 0) {
       status += ` · ${t.reminder.bannerTitle(pendingReminders)}`
     }
-    if (focusPhase === 'focusing') {
-      status += ` · ${t.focusCompanion.focusing}`
-    } else if (focusPhase === 'ready') {
-      status += ` · ${t.focusCompanion.ready}`
-    }
+    // 专注相位后缀由纯函数拼接（ready 优先于 focusing），便于单测覆盖最终 tooltip 字符串
+    status = trayStatusFor(status, focusPhase, {
+      focusing: t.focusCompanion.focusing,
+      ready: t.focusCompanion.ready,
+    })
     void (async () => {
       const { invoke } = await import('@tauri-apps/api/core')
       await invoke('update_tray', { status })

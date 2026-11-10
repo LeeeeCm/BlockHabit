@@ -305,6 +305,70 @@ describe('MiniDeskToy component', () => {
       act(() => root.unmount())
     })
 
+    it('多会话：主面板显示 ready 会话（ready 优先于 focusing），副行提示另有 1 个专注', () => {
+      act(() => {
+        useTimerStore.setState({
+          sessions: {
+            h1: { startedAt: Date.now() - 5 * MINUTE, targetMs: 25 * MINUTE }, // 晨跑：还在专注
+            h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE }, // 阅读：已到点待确认
+          },
+        })
+      })
+      const root = renderToy('standard')
+      const panel = container.querySelector('[data-testid="focus-panel"]') as HTMLElement
+      expect(panel.dataset.focusPhase).toBe('ready')
+      expect(panel.dataset.otherFocus).toBe('1')
+      expect(container.textContent).toContain('阅读')
+      expect(container.textContent).toContain(en.focusCompanion.moreSessions(1))
+
+      // 确认阅读落块后，主面板切到另一个仍在专注的会话（不再被藏起来）
+      const confirm = [...container.querySelectorAll('button')].find((b) =>
+        b.textContent?.includes(en.focusCompanion.confirmCheckIn),
+      )
+      act(() => confirm!.click())
+      expect(useTimerStore.getState().sessions.h2).toBeUndefined()
+      expect(useTimerStore.getState().sessions.h1).toBeDefined()
+      const nextPanel = container.querySelector('[data-testid="focus-panel"]') as HTMLElement
+      expect(nextPanel.dataset.focusPhase).toBe('focusing')
+      expect(nextPanel.dataset.otherFocus).toBe('0')
+      expect(container.textContent).toContain('晨跑')
+      expect(container.textContent).not.toContain(en.focusCompanion.moreSessions(1))
+      act(() => root.unmount())
+    })
+
+    it('多会话：同相位按最早到点排序（延长后的有效目标参与计算）', () => {
+      act(() => {
+        useTimerStore.setState({
+          sessions: {
+            h1: { startedAt: Date.now() - 5 * MINUTE, targetMs: 25 * MINUTE }, // 20 分钟后到点
+            h2: { startedAt: Date.now() - 21 * MINUTE, targetMs: 25 * MINUTE, extensions: 1 }, // 有效 30 分钟 → 9 分钟后到点
+          },
+        })
+      })
+      const root = renderToy('standard')
+      const panel = container.querySelector('[data-testid="focus-panel"]') as HTMLElement
+      expect(panel.dataset.focusPhase).toBe('focusing')
+      expect(panel.dataset.otherFocus).toBe('1')
+      expect(container.textContent).toContain('阅读')
+      act(() => root.unmount())
+    })
+
+    it('口袋档多会话：倒计时下方仍能看到「另有 N 个专注」且不裁切主内容', () => {
+      act(() => {
+        useTimerStore.setState({
+          sessions: {
+            h1: { startedAt: Date.now() - 5 * MINUTE, targetMs: 25 * MINUTE },
+            h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE },
+          },
+        })
+      })
+      const root = renderToy('pocket')
+      const panel = container.querySelector('[data-testid="focus-panel"]') as HTMLElement
+      expect(panel.dataset.otherFocus).toBe('1')
+      expect(container.textContent).toContain(en.focusCompanion.moreSessions(1))
+      act(() => root.unmount())
+    })
+
     it('放弃：二次确认后清除会话，且不产生任何打卡', () => {
       act(() => {
         useTimerStore.setState({
