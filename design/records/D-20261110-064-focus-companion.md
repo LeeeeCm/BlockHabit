@@ -41,3 +41,4 @@ focusSession 单测（剩余时间/ready/超时恢复/延长/时钟回拨/跨午
 - 2026-11-10 人类在对话中确认按路线图进入 Wave 2（记录仍保持 proposed，状态更新由人类在台账完成）；Wave 2 实现开工。
 - 2026-11-10 实现（innovation-engineer）：`logic/focusSession.ts` + 21 tests、timerStore 重写（localStorage v1、TTL/prune/notifiedAt/extend）、MiniDeskToy 专注态三档（6 tests）、TimerWatcher 通知去重落盘、TraySync 仅相位变化；全量 89 files / 841 tests。Lead 补 HabitRow 用 `session.targetMs ?? targetMinutes` 判断 running/ended，修复「延长后今日页提前待确认」。
 - 2026-11-11 人类确认（LeeCM）：状态 proposed → approved。
+- 2026-11-11 B4 收尾（b4-focus）：① 今日页新增专注入口条（有可开始专注习惯且无会话时出现，复用 `timerStore.start`，与 HabitRow 既有入口同源不重复）；② 多会话展示规则抽为 `viewFocusSessions`（ready 优先于 focusing、同相位按最早到点，主面板 + 「另有 N 个专注」副行），`primarySessionId` 改为其别名；③ `planFocusNotifications` / `trayPhaseFor` / `trayStatusFor` 从 App 抽成纯函数，App 只做副作用；④ HabitRow 改用含延长的 `effectiveTargetMs` 判断进行中/待确认（修正上一条「session.targetMs」不含延长的缺陷），新增 `HabitRow.focus.test.tsx` 回归。

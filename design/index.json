@@ -604,6 +604,15 @@
       "owner": "lead",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261111-067-blueprint-color-system.md"
+    },
+    {
+      "id": "D-20261111-068",
+      "date": "2026-11-11",
+      "title": "自由装饰模式：全落成后的展台补充玩法（最小方案，暂不实现）",
+      "status": "proposed",
+      "owner": "lead",
+      "reviewer": "pending",
+      "file": "design/records/D-20261111-068-free-decoration-mode.md"
     }
   ]
 }

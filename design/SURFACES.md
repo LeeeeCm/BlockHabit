@@ -12,6 +12,7 @@
 - **复用**：`.habit-grid/.habit-card`（HabitRow）、`.pill-action`、`.card`、`.echo-capsule-bar`、`.reminder-banner`、`.archive-*`、`.toast`。
 - **尺寸**：卡片双列 `gap:12px`（ui.css:441–445）、卡片 `min-height:172px` / 内距 `15px`；时段小标题 `12px + letter-spacing .14em`（Today.tsx:459–466）；空态卡 `padding:52px 24px` + 56×56 图标块（r18）。
 - **必须**：完成态只能由 `habitMetOnDay` 判定（Today.tsx:472–474，A6）；卡片点击=打卡、按钮点击 `stopPropagation`；元信息只用 `--ink-2`；页面只保留一个"+"入口。
+- **专注入口（B4 / D-20261110-064）**：今日简报下方一条紧凑入口条（`data-testid="today-focus-entry"`，`1px --line` + `--surface` + `--r-md`），仅在「存在可开始的专注习惯（未完成、有目标时长）且当前没有任何专注会话」时出现；点击复用 `timerStore.start` 并在成功 toast「专注中」；`aria-label` 含习惯名与目标时长；移动端最小高度 ≥48px；不新增颜色。
 - **例外**：全勤卡用 `--accent@7%/45%` 底色（Today.tsx:294–295，A1③ 的既有例外）；空态图标底也用 accent 14%（415）——**属越界，见 TOKENS §7**。
 
 ## 2. 建造页 Build.tsx + render/BuildScene.tsx
@@ -51,11 +52,12 @@
 
 ## 6. 设置弹窗 SettingsDialog.tsx
 
-- **用途**：偏好 / 感官 / 系统 / 数据 / WebDAV 五组。
-- **结构**：桌面 `.dialog`（宽 **480**）· 移动 `BottomSheet` → `.dialog-body` 内 5 个 `.apple-group`：界面偏好（语言/主题/快捷键/音效/音量）· 感官与氛围（7 个 `.seg` 排）· 系统集成 · 数据安全（导出/导入/修复砖库存）· WebDAV → `.dialog-footer` 常驻「完成」。
+- **用途**：偏好 / 系统 / 数据 / WebDAV / 内容路线（关于）/ 实验 六组。
+- **结构**：桌面 `.dialog`（宽 **480**）· 移动 `BottomSheet` → `.dialog-body` 内分组（SettingsDialog 已拆出 `WebdavPanel` / `ArchiveDataPanel` / `AboutPanel`）：界面偏好（语言/主题/快捷键/音效/音量）· 系统集成 · 数据安全（导出/导入/备份/诊断包）· WebDAV（含冒烟自检）· **内容路线（关于）** · 实验室（进阶开关，默认折叠）→ `.dialog-footer` 常驻「完成」。
+- **内容路线（C2 / D-20261110-063 §3.5.5）**：只展示事实 —— 当前内置蓝图数与积木数（从 `blueprintOrder`/manifest 动态计算，禁止硬编码）、当前 contentVersion、年度免费扩建节奏（随安装包内置、不联网下载、不额外收费）、跨设备升级说明（更高内容版本会让旧设备拒绝读取并暂停保存）、本地优先与无遥测承诺。**不得写死未来内容包日期**；文案 zh/en 齐全，数值随内容版本自动更新。
 - **尺寸**：`.apple-group` = `ink@2.5%` 底 + `1px --line` + `--r-md` + `14px 16px` + `gap:10px`（ui.css:334–343）；组标题 `11px/700 + uppercase + letter-spacing .05em`（345–352）；每行 `.field` `margin-bottom:12px`。
 - **必须**：所有开关必须来自 `settings.*` 且写回 store；关闭态文案不得出现"未实现占位"（历史上出现过幽灵开关）；组内每行一个决策，不叠加说明文字超过 2 行。
-- **例外**：WebDAV 组出现在系统集成之后，语义上属"数据"，位置为历史遗留（不阻塞，改版时并入数据组）。
+- **例外**：WebDAV 组出现在系统集成之后，语义上属"数据"，位置为历史遗留（不阻塞，改版时并入数据组）；内容路线组紧随数据组之后，信息型内容不参与开关决策。
 
 ## 7. 习惯弹窗 HabitDialog.tsx
 
@@ -202,6 +204,4 @@
 - 图鉴：锁定卡使用 `BlueprintThumb` 的 `silhouette` 模式——只用 `--ink` 透明度派生灰阶、透明底、忽略建筑自定义色、不画虚线地基；卡片不再整体压暗，名字与「待解锁」保持可读；已完成/当前建筑视觉不变。
 - 解锁：完成基础 12 座后自动指向扩展包第一座，其余按 `blueprintOrder` 顺序解锁；旧 12 座数据与视觉零改动。
 - 必须：内容版本门（`contentVersion=2`）先于 sanitize；旧客户端读新档只能 needsUpgrade，不得静默清洗；图鉴 18 卡可滚动，底部关闭按钮固定。
-
-
 

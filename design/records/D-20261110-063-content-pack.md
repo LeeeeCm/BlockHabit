@@ -45,3 +45,6 @@ reviewer: LeeCM
 - 2026-11-11 独立验证（task-21）：**PASS，P0/P1/P2=0**；旧 12 座与 HEAD 逐块一致、新 6 座 594 块/40–120、18 卡与容量动态、旧档补写 2、未来 v3 needsUpgrade+raw 不变+同步 PUT=0。修复其 P3① 语义：显式 contentVersion=1 读入/保存也升为当前（避免新客户端建 v2 建筑却保留 1 被旧端误判可读）；task-22 聚焦复验。
 - 2026-11-11 聚焦复验（task-22）：**PASS，P0/P1/P2=0**；显式 v1 读档→2、保存/导出/导入均 2、无字段旧档→2、未来 v3 仍 needsUpgrade+raw 不变+同步 0 请求、merge 不写低。修复其 P3：merge 双端显式旧版本也至少写当前版本；清理 ShowcaseScene「12 座」旧注释。B1 内容包完成。
 - 2026-11-11 数量校正：色彩系统为 treehouse +4 树冠、bridge +2 灯柱，扩展包最终 600 块、全量 18 座 1985 块；README/CHANGELOG 已同步。
+- 2026-11-11 补充记录：自由装饰模式最小方案另立 D-20261111-068（proposed，待人类确认后实现），不新增持久化字段、不做沙盒经济；本轮不写代码。
+- 2026-11-11 C2 实现（lead）：设置页新增「内容路线」分组（`src/components/AboutPanel.tsx`，属 D-063 §3.5.5 approved 范围）——动态展示当前蓝图数 / 积木数 / contentVersion（从 `blueprintOrder` 与 manifest 计算，不硬编码）、年度免费扩建节奏（随安装包内置、不联网下载、不额外收费）、跨设备升级说明（更高内容版本的存档会让旧设备拒绝读取并暂停保存）、本地优先与无遥测承诺；zh/en 齐全，不写死未来内容包日期。`design/SURFACES.md` §6 同步更新，新增 AboutPanel 3 例测试。
+- 2026-11-11 B3 收尾（b3-settings）：档案包 manifest 不再复用易混淆的 `contentVersion` 字段名——新增 `archiveFormatVersion`（档案**格式**版本，保持 1；旧 manifest 的 `contentVersion` 作为兼容读取别名）与 `appContentVersion`（写出当前 `CONTENT_VERSION`，说明导出时的内容代际）；缺失 `appContentVersion` 的旧档读取时回退为当前版本（仅作人读提示，不参与导入判定）。档案包 README 生成文本新增中英「版本字段怎么读 / Version fields」小节；新增 `parseArchiveManifest` 与 7 例测试（旧档回退、新档 round-trip、非法 manifest 拒绝、未来格式版本原样解析），导入路径（state JSON）不受影响。
