@@ -1,0 +1,291 @@
+/* 读砖气泡、回声胶囊、分段控制器、手账卡、移动端、到点提醒 */
+/* 拆分自 ui.css（E4）；原文行 930–1218。纯搬移，规则顺序保持不变。 */
+
+/* 3D 积木悬浮读砖气泡卡 */
+.brick-inspect-popover {
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: var(--backdrop-filter);
+  -webkit-backdrop-filter: var(--backdrop-filter);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  max-width: 270px;
+  animation: drop-modal-in var(--dur-sm) ease-out;
+  pointer-events: none;
+}
+
+/* 积木历史回响时间胶囊 */
+.echo-capsule-bar {
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ==================== 苹果风格分段控制器 (Apple Segmented Control) ==================== */
+.apple-segmented {
+  display: inline-flex;
+  align-items: center;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  padding: 3px;
+  border-radius: var(--r-pill);
+  border: 1px solid color-mix(in srgb, var(--ink) 5%, transparent);
+  gap: 2px;
+}
+
+.apple-segmented-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--ink-2);
+  border-radius: var(--r-pill);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--dur-sm) var(--ease-out),
+              color var(--dur-sm) var(--ease-out),
+              box-shadow var(--dur-sm) var(--ease-out),
+              transform var(--dur-xs) var(--ease-out);
+  user-select: none;
+}
+
+.apple-segmented-item:hover {
+  color: var(--ink);
+}
+
+.apple-segmented-item.active {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1.5px 6px color-mix(in srgb, var(--ink) 9%, transparent),
+              0 0.5px 2px color-mix(in srgb, var(--ink) 4%, transparent);
+}
+
+.apple-segmented-item:active {
+  transform: scale(0.96);
+}
+
+/* 自律手账长廊卡片 */
+.chronicle-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 3%, transparent);
+  transition: transform var(--dur-md) var(--ease-out),
+              box-shadow var(--dur-md) var(--ease-out),
+              border-color var(--dur-md) var(--ease-default);
+}
+
+.chronicle-card:hover {
+  transform: translateY(-1.5px);
+  border-color: color-mix(in srgb, var(--ink) 20%, var(--line));
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+/* 移动端习惯卡片触控与按压反馈 */
+.habit-card:active { transform: scale(0.98); }
+.habit-card.mobile {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.habit-card.mobile:active { transform: scale(0.98); }
+.habit-card.mobile button:active { transform: scale(0.95); }
+
+/* ===== 到点提醒（Reminder）===== */
+
+/* 积木风时间步进器：方块按钮 + 等宽数字，与 .seg 同一圆角/描边语言 */
+.time-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.time-stepper .ts-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.time-stepper .ts-btn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink-2);
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  transition: border-color var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default), transform var(--dur-2xs) var(--ease-default);
+}
+.time-stepper .ts-btn:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.time-stepper .ts-btn:active {
+  transform: translateY(1px) scale(0.94);
+}
+.time-stepper .ts-num {
+  min-width: 2.4ch;
+  padding: 3px 4px;
+  text-align: center;
+  font-weight: 700;
+  font-size: var(--fs-subhead);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.time-stepper .ts-colon {
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* 提醒弹窗顶部：积木依次掉落咬合入场（配合首块落定播咬合声） */
+.reminder-dialog {
+  width: 380px;
+  max-width: 92vw;
+}
+.reminder-bricks {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 14px 0 2px;
+}
+.reminder-brick {
+  width: 34px;
+  height: 22px;
+  border-radius: 5px;
+  position: relative;
+  background: var(--block-top);
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  box-shadow:
+    inset 0 2px 0 color-mix(in srgb, var(--accent) 55%, transparent),
+    3px 3px 0 0 var(--block-left);
+  opacity: 0;
+  animation: reminder-brick-drop var(--dur-xl) var(--ease-bounce) forwards;
+}
+.reminder-brick::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.reminder-brick:nth-child(1) { animation-delay: var(--dur-2xs); }
+.reminder-brick:nth-child(2) { animation-delay: var(--dur-lg); }
+.reminder-brick:nth-child(3) { animation-delay: var(--dur-xl); }
+@keyframes reminder-brick-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-46px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  78% {
+    transform: translateY(-7px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 提醒条目列表：多个提醒合并一窗，避免连环打断 */
+.reminder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.reminder-item {
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+  padding: 12px 14px;
+  animation: pop-in var(--dur-md) var(--ease-bounce);
+}
+.reminder-item.due-soon {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+.reminder-item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: var(--fs-subhead);
+  color: var(--ink);
+}
+.reminder-item-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
+.reminder-due-badge {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.reminder-item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Today 页提醒横幅 */
+.reminder-banner {
+  margin: 14px 0 0;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  animation: pop-in var(--dur-md) var(--ease-bounce);
+}
+
+/* 提醒「开始打卡」跳转后的习惯卡片脉冲高亮 */
+.habit-focus-flash {
+  animation: habit-focus-pulse var(--dur-scene) var(--ease-default) 2;
+  border-color: var(--accent) !important;
+}
+@keyframes habit-focus-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+}

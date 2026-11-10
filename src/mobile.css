@@ -67,7 +67,7 @@ html, body {
 }
 .mobile-app-root .build-top-bar .btn {
   padding: 6px 10px !important;
-  font-size: 12px !important;
+  font-size: var(--fs-small) !important;
 }
 
 /* 移动端展台页顶栏 */
@@ -86,7 +86,7 @@ html, body {
 .mobile-app-root .field input,
 .mobile-app-root .field textarea,
 .mobile-app-root .micro-note-input {
-  font-size: 16px !important;
+  font-size: var(--fs-title) !important;
 }
 
 /* 移动端触控优化与点击态反馈 */
@@ -94,5 +94,5 @@ html, body {
 .mobile-app-root .card-action:active,
 .mobile-app-root .pill-action:active {
   transform: scale(0.94);
-  transition: transform 0.08s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--dur-2xs) var(--ease-out);
 }

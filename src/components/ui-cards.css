@@ -1,0 +1,292 @@
+/* 卡片语言：今日双列卡、胶囊按钮、图鉴、托盘菜单、中央打卡、归档区 */
+/* 拆分自 ui.css（E4）；原文行 405–694。纯搬移，规则顺序保持不变。 */
+
+/* 圆角方形悬浮按钮（积木按钮） */
+
+/* 卡片 */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 4%, transparent);
+  transition: transform var(--dur-md) var(--ease-out),
+              box-shadow var(--dur-md) var(--ease-out),
+              border-color var(--dur-md) var(--ease-default);
+}
+
+/* 今日页双列大卡片 */
+.habit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 520px) {
+  .habit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.habit-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 172px;
+  padding: 15px 15px 14px;
+  cursor: pointer;
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: 0 1.5px 5px color-mix(in srgb, var(--ink) 3.5%, transparent);
+  transition: transform var(--dur-md) var(--ease-out),
+              box-shadow var(--dur-md) var(--ease-out),
+              border-color var(--dur-md) var(--ease-default);
+}
+
+.habit-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--ink) 18%, var(--line));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 7%, transparent),
+              0 2px 6px color-mix(in srgb, var(--ink) 3.5%, transparent);
+}
+
+.habit-card .card-actions-group {
+  display: inline-flex;
+  align-items: center;
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
+  border-radius: 10px;
+  padding: 2px;
+  transition: background var(--dur-sm) var(--ease-default);
+}
+
+.habit-card .card-actions-group:hover {
+  background: color-mix(in srgb, var(--ink) 6.5%, transparent);
+}
+
+.habit-card .card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--ink-2);
+  transition: background var(--dur-sm) var(--ease-out),
+              color var(--dur-sm) var(--ease-out),
+              transform var(--dur-xs) var(--ease-out);
+}
+.habit-card .card-action:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+.habit-card .card-action.active {
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.habit-card .card-action.danger:hover {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+/* 胶囊操作按钮（无边框极简风格） */
+.pill-action,
+.habit-card .pill-action {
+  border: none;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  color: var(--ink);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  padding: 5px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default), transform var(--dur-xs) var(--ease-default);
+}
+.pill-action:hover,
+.habit-card .pill-action:hover {
+  background: color-mix(in srgb, var(--ink) 13%, transparent);
+  transform: translateY(-1px);
+}
+.pill-action:active,
+.habit-card .pill-action:active {
+  transform: scale(0.96);
+}
+.pill-action.success,
+.habit-card .pill-action.success {
+  background: color-mix(in srgb, var(--progress-green) 15%, transparent);
+  color: var(--success-text);
+  font-weight: 600;
+}
+.pill-action.success:hover,
+.habit-card .pill-action.success:hover {
+  background: var(--progress-green);
+  color: var(--on-success);
+}
+.pill-action.danger,
+.habit-card .pill-action.danger {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+.pill-action.danger:hover,
+.habit-card .pill-action.danger:hover {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+/* 状态图标按钮（卡片左上） */
+.habit-card .status-btn {
+  border-radius: 12px;
+  transition: background var(--dur-xs) var(--ease-default);
+}
+.habit-card .status-btn:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+/* 模型图鉴 */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.gallery-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 12px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  transition: border-color var(--dur-xs) var(--ease-default), transform var(--dur-xs) var(--ease-default), background var(--dur-xs) var(--ease-default);
+}
+.gallery-card:hover {
+  border-color: var(--ink);
+  transform: translateY(-2px);
+}
+.gallery-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.gallery-card.locked:hover {
+  border-color: var(--line);
+  transform: none;
+}
+
+.gallery-name {
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+}
+
+.gallery-status {
+  font-size: var(--fs-small);
+}
+
+/* 托盘右键菜单弹窗 */
+.tray-menu-root {
+  width: 100vw;
+  height: 100vh;
+  padding: 22px;
+  background: transparent;
+}
+
+.tray-menu-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 6px;
+  /* 阴影范围须 ≤ 窗口留白（22px），否则在透明窗口边界被裁切形成“透明膜” */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+.tray-menu-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 6px;
+}
+
+.tray-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  font-size: var(--fs-subhead);
+  border-radius: 10px;
+  color: var(--ink);
+  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default);
+}
+.tray-menu-item:hover {
+  background: var(--ink);
+  color: var(--bg);
+}
+.tray-menu-item.quit:hover {
+  background: var(--danger);
+  color: var(--danger-ink);
+}
+
+/* 中央每日打卡按钮 */
+
+/* 归档区（今日页底部） */
+.archive-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+  background: transparent;
+  transition: border-color var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default);
+}
+.archive-toggle:hover {
+  border-color: var(--ink-2);
+  color: var(--ink);
+}
+
+.archive-list {
+  margin-top: 8px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  padding: 6px;
+}
+
+.archive-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+}
+.archive-row:hover {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.archive-row > div {
+  flex: 1;
+}
+
+.archive-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 6px 10px;
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  border: 1px solid var(--line);
+  transition: color var(--dur-xs) var(--ease-default), border-color var(--dur-xs) var(--ease-default);
+}
+.archive-act:hover {
+  color: var(--ink);
+  border-color: var(--ink-2);
+}

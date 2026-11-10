@@ -338,6 +338,20 @@ describe('mergeAppState facts merge (schema v2)', () => {
     expect(mergeAppState(local2, remote2).repairBricks).toBe(2)
   })
 
+  it('F8：修复积木月份键合并取较近的一个（额度结算不丢）', () => {
+    const local = createMockState({ repairBricks: 1, repairBrickMonth: '2026-10' })
+    const remote = createMockState({ repairBricks: 3, repairBrickMonth: '2026-11' })
+    const merged = mergeAppState(local, remote)
+    expect(merged.repairBricks).toBe(3)
+    expect(merged.repairBrickMonth).toBe('2026-11')
+  })
+
+  it('F8：只有一侧有月份键时保留该侧', () => {
+    const local = createMockState({ repairBricks: 2 })
+    const remote = createMockState({ repairBricks: 2, repairBrickMonth: '2026-11' })
+    expect(mergeAppState(local, remote).repairBrickMonth).toBe('2026-11')
+  })
+
   it('merges foundationNotes and showcasePlacements (local priority)', () => {
     const local = createMockState({
       foundationNotes: { plant: 'First plant note', tower: 'Tower local note' },

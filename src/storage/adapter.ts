@@ -1,4 +1,7 @@
-import type { AppState, DayClaim, DeletedDayClaim } from '../types'
+import { REPAIR_MAX } from '../logic/repairBricks'
+import type { AppState, DayClaim, DeletedDayClaim, ReminderLogEntry } from '../types'
+import { blueprintOrder } from '../logic/blueprints'
+import { CONTENT_VERSION, isFutureContentVersion } from '../logic/blueprints/manifest'
 
 export const STATE_KEY = 'blockhabit-state'
 /** localStorage 路径的损坏档备份 key（Tauri 端为 .corrupt-backup 文件） */
@@ -10,6 +13,18 @@ export interface LoadResult {
   state: AppState | null
   /** 存档来自更新版本的应用（合法但当前版本不可读）：应挂起持久化并提示升级 */
   needsUpgrade?: boolean
+  /**
+   * 读取失败（IO / 权限 / 被占用 / 迁移崩溃）：与「没有存档」严格区分。
+   * 调用方必须挂起持久化，否则首次交互会用空态覆盖真实存档。
+   */
+  loadFailed?: boolean
+  /** loadFailed 时的诊断信息（仅用于本地日志与提示，不入档） */
+  detail?: string
+  /**
+   * 存档损坏（JSON 无法解析）且原文已备份到 .corrupt-backup。
+   * 调用方照常以空态启动，但必须提示用户「原档已备份」，不能静默清空。
+   */
+  corruptRecovered?: boolean
 }
 
 export interface StorageAdapter {
@@ -20,6 +35,17 @@ export interface StorageAdapter {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * 已知蓝图 id 白名单。
+ * 存档里的 activeBlueprintId / builds[].blueprintId / completedBlueprintIds 都是外键，
+ * 非法外键会让 getBlueprint 在渲染层抛错（整树卸载 → 白屏），且坏档会被立即落盘形成 crash loop。
+ */
+const KNOWN_BLUEPRINT_IDS: ReadonlySet<string> = new Set(blueprintOrder)
+
+export function isKnownBlueprintId(id: unknown): id is string {
+  return typeof id === 'string' && KNOWN_BLUEPRINT_IDS.has(id)
+}
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null
@@ -55,6 +81,7 @@ function isValidCheckInElement(c: unknown): boolean {
   if (typeof c.date !== 'string' || !DATE_RE.test(c.date)) return false
   if (!isParseableDate(c.at)) return false
   if (c.value !== undefined && typeof c.value !== 'number') return false
+  if (c.bonus !== undefined && typeof c.bonus !== 'boolean') return false
   if (c.actualMinutes !== undefined && typeof c.actualMinutes !== 'number') return false
   return true
 }
@@ -112,9 +139,16 @@ export function validateState(v: unknown): ValidateResult {
     return { ok: false, error: 'schema-version' }
   }
   if (v.schemaVersion > SCHEMA_VERSION) return { ok: false, error: 'schema-version' }
+  if (isFutureContentVersion(v.contentVersion)) return { ok: false, error: 'content-version' }
   if (!Array.isArray(v.habits) || !v.habits.every(isValidHabitElement)) return { ok: false, error: 'habits' }
   if (!Array.isArray(v.checkIns) || !v.checkIns.every(isValidCheckInElement)) return { ok: false, error: 'checkIns' }
-  if (!Array.isArray(v.builds) || !v.builds.every(isValidBlockElement)) return { ok: false, error: 'builds' }
+  if (
+    !Array.isArray(v.builds) ||
+    !v.builds.every(isValidBlockElement) ||
+    !v.builds.every((b) => isKnownBlueprintId((b as Record<string, unknown>).blueprintId))
+  ) {
+    return { ok: false, error: 'builds' }
+  }
   if (v.dayClaims !== undefined && (!Array.isArray(v.dayClaims) || !v.dayClaims.every(isValidDayClaimElement))) {
     return { ok: false, error: 'dayClaims' }
   }
@@ -124,8 +158,10 @@ export function validateState(v: unknown): ValidateResult {
   ) {
     return { ok: false, error: 'deletedDayClaims' }
   }
-  if (typeof v.activeBlueprintId !== 'string' || !v.activeBlueprintId) return { ok: false, error: 'activeBlueprintId' }
-  if (!Array.isArray(v.completedBlueprintIds)) return { ok: false, error: 'completedBlueprintIds' }
+  if (!isKnownBlueprintId(v.activeBlueprintId)) return { ok: false, error: 'activeBlueprintId' }
+  if (!Array.isArray(v.completedBlueprintIds) || !v.completedBlueprintIds.every(isKnownBlueprintId)) {
+    return { ok: false, error: 'completedBlueprintIds' }
+  }
   if (!isRecord(v.settings)) return { ok: false, error: 'settings' }
   return { ok: true, state: v as unknown as AppState }
 }
@@ -137,9 +173,11 @@ export function sanitizeState(v: unknown): AppState | null {
   if (!isRecord(v)) return null
   if (typeof v.schemaVersion !== 'number' || !Number.isInteger(v.schemaVersion) || v.schemaVersion < 1) return null
   if (v.schemaVersion > SCHEMA_VERSION) return null
-  if (typeof v.activeBlueprintId !== 'string' || !v.activeBlueprintId) return null
   if (!isRecord(v.settings)) return null
   if (!Array.isArray(v.completedBlueprintIds)) return null
+  // 外键回落：未知蓝图不让渲染层抛错（否则白屏），统一收敛到第一座蓝图
+  const activeBlueprintId = isKnownBlueprintId(v.activeBlueprintId) ? v.activeBlueprintId : blueprintOrder[0]
+  const completedBlueprintIds = v.completedBlueprintIds.filter(isKnownBlueprintId)
   const habits = Array.isArray(v.habits)
     ? v.habits
         .filter(isValidHabitElementLenient)
@@ -158,8 +196,19 @@ export function sanitizeState(v: unknown): AppState | null {
         })
     : []
   const checkIns = Array.isArray(v.checkIns) ? v.checkIns.filter(isValidCheckInElement) : []
-  const builds = Array.isArray(v.builds) ? v.builds.filter(isValidBlockElement) : []
-  return normalizeState({ ...(v as object), habits, checkIns, builds } as AppState)
+  const builds = Array.isArray(v.builds)
+    ? v.builds
+        .filter(isValidBlockElement)
+        .filter((b) => isKnownBlueprintId((b as Record<string, unknown>).blueprintId))
+    : []
+  return normalizeState({
+    ...(v as object),
+    habits,
+    checkIns,
+    builds,
+    activeBlueprintId,
+    completedBlueprintIds,
+  } as AppState)
 }
 
 /**
@@ -225,6 +274,8 @@ export function loadAndMigrate(
   v: unknown,
 ): { state: AppState } | { state: null; needsUpgrade?: boolean } {
   if (!isRecord(v)) return { state: null }
+  // B1 内容版本门：必须在 sanitize 之前拦截，否则未知 blueprint 会被静默清洗并落盘
+  if (isFutureContentVersion(v.contentVersion)) return { state: null, needsUpgrade: true }
   let version = typeof v.schemaVersion === 'number' && Number.isInteger(v.schemaVersion) && v.schemaVersion >= 1 ? v.schemaVersion : 1
   if (version > SCHEMA_VERSION) return { state: null, needsUpgrade: true }
   let current: Record<string, unknown> = v
@@ -245,6 +296,8 @@ export function loadAndMigrate(
  * - 其余（损坏 / 未来版本）：返回 null。
  */
 export function prepareImport(v: unknown): AppState | null {
+  // B1：更高内容版本无法渲染，导入/同步都必须拒绝，不能清洗后落盘
+  if (isRecord(v) && isFutureContentVersion(v.contentVersion)) return null
   if (isRecord(v) && v.schemaVersion === 1) {
     const check = validateState(migrateV1toV2(v))
     if (check.ok) return normalizeState(check.state)
@@ -265,6 +318,9 @@ export function normalizeState(s: AppState): AppState {
         : 'en'
   return {
     ...s,
+    // 门禁已按原始版本拦截未来内容；低于当前版本的旧档读入后即视为「本安装包可产出全部内容」，
+    // 保存时统写当前版本，否则新客户端建了 v2 建筑却保留 contentVersion=1，旧客户端会误判可读并清洗数据。
+    contentVersion: CONTENT_VERSION,
     settings: {
       theme:
         s.settings?.theme === 'dark' || s.settings?.theme === 'oat' || s.settings?.theme === 'fog'
@@ -285,10 +341,23 @@ export function normalizeState(s: AppState): AppState {
       enableGyroscope: Boolean(s.settings?.enableGyroscope),
       enableXRayInspection: Boolean(s.settings?.enableXRayInspection),
       soundMuted: s.settings?.soundMuted === true,
+      remindersEnabled: s.settings?.remindersEnabled !== false,
       volume:
         typeof s.settings?.volume === 'number' && Number.isFinite(s.settings.volume)
           ? Math.max(0, Math.min(100, Math.round(s.settings.volume)))
           : 100,
+      eveningNudgeEnabled: s.settings?.eveningNudgeEnabled === true,
+      eveningNudgeTime:
+        typeof s.settings?.eveningNudgeTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s.settings.eveningNudgeTime)
+          ? s.settings.eveningNudgeTime
+          : '21:00',
+      miniWidgetSize:
+        s.settings?.miniWidgetSize === 'pocket' ||
+        s.settings?.miniWidgetSize === 'display' ||
+        s.settings?.miniWidgetSize === 'standard'
+          ? s.settings.miniWidgetSize
+          : 'standard',
+      miniWidgetAlwaysOnTop: s.settings?.miniWidgetAlwaysOnTop === true,
     },
     dayClaims: Array.isArray(s.dayClaims)
       ? (s.dayClaims as unknown[]).flatMap((c) => {
@@ -302,11 +371,24 @@ export function normalizeState(s: AppState): AppState {
     deletedDayClaims: Array.isArray(s.deletedDayClaims)
       ? (s.deletedDayClaims as unknown[]).filter(isValidDeletedDayClaimElement).map((c) => c as DeletedDayClaim)
       : [],
-    repairBricks: typeof s.repairBricks === 'number' ? s.repairBricks : 0,
+    repairBricks: typeof s.repairBricks === 'number' ? Math.max(0, Math.min(REPAIR_MAX, s.repairBricks)) : 0,
+    repairBrickMonth: typeof s.repairBrickMonth === 'string' && /^\d{4}-\d{2}$/.test(s.repairBrickMonth) ? s.repairBrickMonth : undefined,
     showcasePlacements: Array.isArray(s.showcasePlacements) ? s.showcasePlacements : [],
     foundationNotes:
       typeof s.foundationNotes === 'object' && s.foundationNotes !== null
         ? s.foundationNotes
+        : {},
+    reminderLog:
+      typeof s.reminderLog === 'object' && s.reminderLog !== null
+        ? Object.fromEntries(
+            Object.entries(s.reminderLog as Record<string, unknown>).filter(
+              (entry): entry is [string, ReminderLogEntry] =>
+                isRecord(entry[1]) &&
+                typeof entry[1].date === 'string' &&
+                DATE_RE.test(entry[1].date) &&
+                entry[1].action === 'skipped',
+            ),
+          )
         : {},
   }
 }
@@ -325,23 +407,31 @@ function backupCorruptRaw(raw: string): void {
 export function createLocalStorageAdapter(): StorageAdapter {
   return {
     async load(): Promise<LoadResult> {
+      let raw: string | null
       try {
-        const raw = localStorage.getItem(STATE_KEY)
-        if (!raw) return { state: null }
-        let parsed: unknown
-        try {
-          parsed = JSON.parse(raw)
-        } catch {
-          backupCorruptRaw(raw)
-          return { state: null }
-        }
+        raw = localStorage.getItem(STATE_KEY)
+      } catch (e) {
+        // 读取本身失败（隐私模式 / 配额 / 被策略禁用）：绝不能当成「没有存档」
+        return { state: null, loadFailed: true, detail: String(e) }
+      }
+      if (!raw) return { state: null }
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(raw)
+      } catch {
+        backupCorruptRaw(raw)
+        return { state: null, corruptRecovered: true }
+      }
+      try {
         const migrated = loadAndMigrate(parsed)
         if (migrated.state) return { state: migrated.state }
         // needsUpgrade：来自更新版本应用的合法存档，不能当损坏覆盖
         if (!migrated.needsUpgrade) backupCorruptRaw(raw)
         return { state: null, needsUpgrade: migrated.needsUpgrade }
-      } catch {
-        return { state: null }
+      } catch (e) {
+        // 解析成功但迁移/清洗崩溃：原始内容已备份，标记读取失败并挂起持久化
+        backupCorruptRaw(raw)
+        return { state: null, loadFailed: true, detail: String(e) }
       }
     },
     async save(state: AppState): Promise<void> {

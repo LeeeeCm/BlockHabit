@@ -1,0 +1,237 @@
+/* 落块动效弹窗、连击粒子、步进进度条、微日记、镌刻抽屉 */
+/* 拆分自 ui.css（E4）；原文行 695–929。纯搬移，规则顺序保持不变。 */
+
+/* 习惯打卡成功后的积木掉落动效弹窗 */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--ink) 35%, transparent);
+  backdrop-filter: var(--backdrop-filter);
+  -webkit-backdrop-filter: var(--backdrop-filter);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: drop-overlay-in var(--dur-md) ease-out;
+  transition: opacity var(--dur-md) var(--ease-default);
+  opacity: 1;
+}
+
+.drop-overlay.closing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.drop-modal {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  width: 440px;
+  max-width: 90vw;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: drop-modal-in var(--dur-md) var(--ease-bounce);
+  transition: transform var(--dur-md) var(--ease-bounce), opacity var(--dur-md) var(--ease-default);
+  transform: scale(1);
+  opacity: 1;
+}
+
+.drop-overlay.closing .drop-modal {
+  transform: scale(0.95) translateY(10px);
+  opacity: 0;
+}
+
+@keyframes drop-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes drop-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.93) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 原地打卡连击粒子与浮动积木胶囊 */
+@keyframes float-up-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.06);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-16px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-28px) scale(0.95);
+  }
+}
+
+.checkin-float-pill {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  background: var(--progress-green);
+  color: var(--on-success);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-caption);
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--progress-green) 40%, transparent);
+  pointer-events: none;
+  animation: float-up-fade var(--dur-scene) var(--ease-out) forwards;
+  z-index: 20;
+}
+
+.habit-card.pinned {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+}
+
+/* 步进型习惯专属进度条容器 */
+.counter-track {
+  height: 5px;
+  background: var(--line);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.counter-fill {
+  height: 100%;
+  background: var(--ink);
+  border-radius: var(--r-pill);
+  will-change: width;
+  transition: width var(--dur-lg) var(--ease-bounce), background var(--dur-lg) var(--ease-default);
+}
+
+.counter-fill.done {
+  background: var(--progress-green);
+}
+
+/* 微日记随笔输入框 */
+.micro-note-input {
+  width: 100%;
+  border: 1px dashed var(--line);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
+  border-radius: var(--r-sm);
+  padding: 5px 9px;
+  font-size: var(--fs-small);
+  color: var(--ink);
+  outline: none;
+  box-sizing: border-box;
+  margin-top: 6px;
+  transition: border-color var(--dur-xs) var(--ease-default), background var(--dur-xs) var(--ease-default);
+}
+
+.micro-note-input:focus {
+  border-color: var(--ink);
+  background: var(--surface);
+}
+
+/* 积木即刻镌刻栏：平滑抽屉展开，避免弹窗突兀跳动 */
+.drop-engrave-section {
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  transition: max-height var(--dur-lg) var(--ease-bounce), opacity var(--dur-md) var(--ease-default), padding var(--dur-lg) var(--ease-default);
+}
+
+.micro-mood-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.micro-mood-chip {
+  padding: 3px 10px;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all var(--dur-sm) var(--ease-default);
+  user-select: none;
+}
+
+.micro-mood-chip:hover {
+  border-color: var(--ink-2);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.micro-mood-chip.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.drop-engrave-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drop-engrave-input {
+  flex: 1;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
+  border-radius: var(--r-sm);
+  padding: 7px 12px;
+  font-size: var(--fs-body);
+  color: var(--ink);
+  outline: none;
+  transition: border-color var(--dur-xs) var(--ease-default), background var(--dur-xs) var(--ease-default);
+}
+
+.drop-engrave-input:focus {
+  border-color: var(--ink);
+  background: var(--surface);
+}
+
+.star-toggle-btn {
+  border: 1px solid var(--line);
+  background: transparent;
+  border-radius: var(--r-sm);
+  padding: 6px 9px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-2);
+  transition: all var(--dur-xs) var(--ease-default);
+}
+
+.star-toggle-btn.starred {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.star-toggle-btn:hover:not(.starred) {
+  border-color: var(--ink-2);
+  color: var(--ink);
+}

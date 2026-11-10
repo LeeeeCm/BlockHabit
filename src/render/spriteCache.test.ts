@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   getCubeSprite,
   clearCubeSpriteCache,
+  cubeSpriteCacheStats,
   drawCube,
   DEFAULT_ISO_CONFIG,
   type IsoConfig,
@@ -128,18 +129,44 @@ describe('iso block sprite cache', () => {
     expect(getCubeSprite('#3b82f6', 'basic', false, c, mockPalette, 2)).toBe(light)
   })
 
-  it('evicts the oldest entry beyond the 512 cap (FIFO)', () => {
+  it('LRU：超出 512 条目上限时淘汰最久未使用的条目', () => {
     const c: IsoConfig = DEFAULT_ISO_CONFIG
-    const first = getCubeSprite('#evict-000', 'basic', false, c, mockPalette, 2)
-    // 灌入 512 个新 key：总插入 513 次，最早条目（#evict-000）被淘汰
+    // dpr=1：单精灵约 15KB，512 条约 7.7MB，不触及字节预算，可纯粹测「条目数上限」
+    const first = getCubeSprite('#evict-000', 'basic', false, c, mockPalette, 1)
     for (let i = 0; i < 512; i++) {
-      getCubeSprite(`#evict-${i}`, 'basic', false, c, mockPalette, 2)
+      getCubeSprite(`#evict-${i}`, 'basic', false, c, mockPalette, 1)
     }
-    const firstAgain = getCubeSprite('#evict-000', 'basic', false, c, mockPalette, 2)
+    const firstAgain = getCubeSprite('#evict-000', 'basic', false, c, mockPalette, 1)
     expect(firstAgain).not.toBe(first)
     // 最近条目仍在缓存（命中不重新生成）
-    const last = getCubeSprite('#evict-511', 'basic', false, c, mockPalette, 2)
-    expect(getCubeSprite('#evict-511', 'basic', false, c, mockPalette, 2)).toBe(last)
+    const last = getCubeSprite('#evict-511', 'basic', false, c, mockPalette, 1)
+    expect(getCubeSprite('#evict-511', 'basic', false, c, mockPalette, 1)).toBe(last)
+  })
+
+  it('LRU：刚命中过的条目不会被后续新块挤掉', () => {
+    const c: IsoConfig = DEFAULT_ISO_CONFIG
+    clearCubeSpriteCache()
+    // 灌满 512 条
+    const key = (i: number) => '#lru-' + String(i).padStart(4, '0')
+    const touched = getCubeSprite(key(0), 'basic', false, c, mockPalette, 1)
+    for (let i = 1; i < 512; i++) getCubeSprite(key(i), 'basic', false, c, mockPalette, 1)
+    // 重新命中第 0 条（移到队尾）
+    expect(getCubeSprite(key(0), 'basic', false, c, mockPalette, 1)).toBe(touched)
+    // 再插入一条新 key → 被淘汰的应是第 1 条，而不是刚用过的第 0 条
+    getCubeSprite('#lru-extra', 'basic', false, c, mockPalette, 1)
+    expect(getCubeSprite(key(0), 'basic', false, c, mockPalette, 1)).toBe(touched)
+  })
+
+  it('字节预算：高 DPR 下精灵缓存总量不超过 24MB', () => {
+    const c: IsoConfig = DEFAULT_ISO_CONFIG
+    clearCubeSpriteCache()
+    // dpr=4 时单个精灵约 245KB，灌 200 个足以越过 24MB 预算
+    for (let i = 0; i < 200; i++) getCubeSprite('#mem-' + i, 'basic', false, c, mockPalette, 4)
+    const stats = cubeSpriteCacheStats()
+    expect(stats.bytes).toBeLessThanOrEqual(24 * 1024 * 1024)
+    expect(stats.count).toBeLessThan(200)
+    // 统计与真实条数一致
+    expect(stats.count).toBeGreaterThan(0)
   })
 
   it('drawCube invokes drawImage when sprite is cached', () => {

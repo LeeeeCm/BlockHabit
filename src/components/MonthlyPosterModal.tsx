@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
 import { getBlueprint } from '../logic/blueprints'
 import {
@@ -28,7 +29,7 @@ interface Props {
 export function MonthlyPosterModal({ onClose }: Props) {
   const { lang, t } = useI18n()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, showToast] = useTransient<string>(2500)
   const [copying, setCopying] = useState(false)
   const [aspectRatio, setAspectRatio] = useState<'4:5' | '9:16' | '1:1'>('4:5')
   const habits = useAppStore((s) => s.habits)
@@ -177,6 +178,11 @@ export function MonthlyPosterModal({ onClose }: Props) {
     drawGroundBase(ctx, blueprint.blocks, cfg, palette, 0, cx, cy)
 
     const visibleBlocks = isComplete ? blueprint.blocks : blueprint.blocks.slice(0, placedCount)
+    // B1：visibleBlocks 与 blueprint.blocks 前段一一对应，序位即 PlacedBlock.index
+    const bonusByIndex: boolean[] = []
+    for (const b of builds) {
+      if (b.blueprintId === blueprint.id) bonusByIndex[b.index] = b.bonus
+    }
     const cubes = visibleBlocks
       .map((b, i) => ({ b, i }))
       .sort((m, n) => {
@@ -189,13 +195,14 @@ export function MonthlyPosterModal({ onClose }: Props) {
     const indexAt = new Map<string, number>()
     visibleBlocks.forEach((b, i) => indexAt.set(`${b.x},${b.y},${b.z}`, i))
 
-    for (const { b } of cubes) {
+    for (const { b, i } of cubes) {
       const aboveIdx = indexAt.get(`${b.x},${b.y},${b.z + 1}`)
       const { sx: px, sy: py } = worldToScreen(b.x, b.y, b.z, cfg)
       drawCube(ctx, px, py, cfg, palette, {
         type: b.type,
         color: b.color,
         noStuds: aboveIdx !== undefined,
+        bonus: bonusByIndex[i] === true,
         // 导出画布固定 2x 变换：精灵密度必须对齐，否则 1x 屏导出图块面模糊
         spriteScale: 2,
       })
@@ -359,12 +366,11 @@ export function MonthlyPosterModal({ onClose }: Props) {
       }
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-        setToast(t.poster.copySuccess)
+        showToast(t.poster.copySuccess, 2500)
       } catch {
-        setToast(t.poster.copyFail)
+        showToast(t.poster.copyFail, 2500)
       }
       setCopying(false)
-      setTimeout(() => setToast(null), 2500)
     })
   }
 
@@ -384,6 +390,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-label={t.poster.modalTitle}
       tabIndex={-1}
       className="overlay"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
@@ -402,7 +409,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
         }}
       >
         <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ fontSize: 16, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 'var(--fs-title)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <IconPoster size={18} />
             <span>{t.poster.modalTitle}</span>
           </span>
@@ -426,7 +433,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
                 key={r}
                 type="button"
                 className={`apple-segmented-item${aspectRatio === r ? ' active' : ''}`}
-                style={{ padding: '3px 14px', fontSize: 12 }}
+                style={{ padding: '3px 14px', fontSize: 'var(--fs-small)' }}
                 onClick={() => {
                   triggerHaptic('selection')
                   setAspectRatio(r)
@@ -458,7 +465,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
             <button
               className="btn ghost"
               onClick={() => setQuoteIdx((prev) => (prev + 1) % monthNotes.length)}
-              style={{ fontSize: 12, padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              style={{ fontSize: 'var(--fs-small)', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
               title={t.poster.cycleQuoteTooltip}
             >
               <IconShuffle size={13} style={{ flexShrink: 0 }} />

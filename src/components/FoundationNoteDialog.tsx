@@ -63,6 +63,7 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="foundation-dialog-title"
       tabIndex={-1}
       className="overlay"
       onMouseDown={(e) => {
@@ -78,7 +79,7 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
         <div className="dialog-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <IconFoundation size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-            <span style={{ fontSize: 16, fontWeight: 700 }}>
+            <span id="foundation-dialog-title" style={{ fontSize: 'var(--fs-title)', fontWeight: 700 }}>
               {bpName} · {t.reflections.foundationModalTitle}
             </span>
           </div>
@@ -95,13 +96,13 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
         </div>
 
         <div className="dialog-body">
-        <p style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.6, margin: '0 0 16px' }}>
+        <p style={{ fontSize: 'var(--fs-body)', color: 'var(--ink-2)', lineHeight: 1.6, margin: '0 0 16px' }}>
           {t.reflections.foundationPrompt}
         </p>
 
         {candidates.length > 0 && (
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 6 }}>
+            <div style={{ fontSize: 'var(--fs-small)', fontWeight: 600, color: 'var(--ink-2)', marginBottom: 6 }}>
               {t.reflections.pickFromReflections}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -117,17 +118,17 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
                       background: 'color-mix(in srgb, var(--ink) 3%, transparent)',
                       border: '1px solid var(--line)',
                       cursor: 'pointer',
-                      fontSize: 12,
+                      fontSize: 'var(--fs-small)',
                       display: 'flex',
                       alignItems: 'baseline',
                       gap: 8,
-                      transition: 'border-color 0.15s ease',
+                      transition: 'border-color var(--dur-xs) var(--ease-default)',
                     }}
                     title={t.reflections.clickToUseDedication}
                   >
                     {c.starred && <IconStar size={12} filled style={{ color: 'var(--accent)', flexShrink: 0 }} />}
                     <span style={{ color: 'var(--ink)', flex: 1, wordBreak: 'break-word' }}>“{c.note}”</span>
-                    <span style={{ fontSize: 10.5, color: 'var(--ink-2)', flexShrink: 0 }}>
+                    <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', flexShrink: 0 }}>
                       {h?.name} · {c.date}
                     </span>
                   </div>
@@ -149,7 +150,7 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
             borderRadius: 'var(--r-sm)',
             border: '1px solid var(--line)',
             background: 'color-mix(in srgb, var(--ink) 2%, transparent)',
-            fontSize: 13,
+            fontSize: 'var(--fs-body)',
             color: 'var(--ink)',
             resize: 'none',
             outline: 'none',

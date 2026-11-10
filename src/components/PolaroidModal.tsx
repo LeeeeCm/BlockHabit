@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTransient } from '../platform/useTransient'
 import type { Blueprint, MicroMood } from '../types'
 import { useAppStore } from '../store/appStore'
 import {
@@ -33,7 +34,7 @@ function cssVar(name: string, fallback: string): string {
 export function PolaroidModal({ blueprint, onClose }: Props) {
   const { lang, t } = useI18n()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, showToast] = useTransient<string>(2500)
   const [copying, setCopying] = useState(false)
   const [isBack, setIsBack] = useState(false)
 
@@ -45,6 +46,15 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
   const habits = useAppStore((s) => s.habits)
 
   const foundationNote = foundationNotes[blueprint.id]
+
+  // B1：按蓝图内序位取该块的 bonus 标记（蓝图数组顺序 = 拼建顺序 = PlacedBlock.index）
+  const bonusByIndex = useMemo(() => {
+    const list: boolean[] = []
+    for (const b of builds) {
+      if (b.blueprintId === blueprint.id) list[b.index] = b.bonus
+    }
+    return list
+  }, [builds, blueprint.id])
 
   // 提取参与本建筑拼搭的所有随笔
   const blueprintNotes = useMemo(() => {
@@ -159,7 +169,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       const indexAt = new Map<string, number>()
       blueprint.blocks.forEach((b, i) => indexAt.set(`${b.x},${b.y},${b.z}`, i))
 
-      for (const { b } of cubes) {
+      for (const { b, i } of cubes) {
         const aboveIdx = indexAt.get(`${b.x},${b.y},${b.z + 1}`)
         const { sx: px, sy: py } = worldToScreen(b.x, b.y, b.z, cfg)
         drawCube(ctx, px, py, cfg, palette, {
@@ -167,6 +177,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
           type: b.type,
           color: b.color,
           noStuds: aboveIdx !== undefined,
+          bonus: bonusByIndex[i] === true,
         })
       }
       ctx.restore()
@@ -349,12 +360,11 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       }
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-        setToast(t.polaroid.copiedToast)
+        showToast(t.polaroid.copiedToast, 2500)
       } catch {
-        setToast(t.polaroid.copyFailedToast)
+        showToast(t.polaroid.copyFailedToast, 2500)
       }
       setCopying(false)
-      setTimeout(() => setToast(null), 2500)
     })
   }
 
@@ -373,6 +383,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-label={isBack ? t.polaroid.modalTitleBack : t.polaroid.modalTitle}
       tabIndex={-1}
       className="overlay"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
@@ -390,7 +401,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         }}
       >
         <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ fontSize: 16, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 'var(--fs-title)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <IconCamera size={18} />
             <span>{isBack ? t.polaroid.modalTitleBack : t.polaroid.modalTitle}</span>
           </span>
@@ -416,7 +427,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
             boxShadow: '0 16px 48px rgba(0,0,0,0.18)',
             border: '1px solid var(--line)',
             display: 'block',
-            transition: 'transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1)',
+            transition: 'transform var(--dur-lg) var(--ease-bounce)',
           }}
         />
 

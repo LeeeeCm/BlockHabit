@@ -51,7 +51,6 @@ describe('Scene Touch Gestures Integration', () => {
 
   const mockBlueprint: Blueprint = {
     id: 'bp_sample',
-    name: 'Sample',
     blocks: [
       { x: 0, y: 0, z: 0, type: 'basic' },
       { x: 1, y: 0, z: 0, type: 'basic' },
@@ -71,6 +70,7 @@ describe('Scene Touch Gestures Integration', () => {
       {
         canvas: document.createElement('canvas'),
         createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
+        createRadialGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
       },
       {
         get: (target, prop) => {

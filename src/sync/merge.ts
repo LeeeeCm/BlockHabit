@@ -1,6 +1,7 @@
-import type { AppState, CheckIn, DayClaim, Habit } from '../types'
+import type { AppState, CheckIn, DayClaim, Habit, ReminderLogEntry } from '../types'
 import { blueprints } from '../logic/blueprints'
-import { rebuildBuilds, liveCheckInsView } from '../logic/builds'
+import { CONTENT_VERSION } from '../logic/blueprints/manifest'
+import { rebuildBuilds, liveCheckInsView, BLUEPRINT_CAPACITY } from '../logic/builds'
 
 /** 安全获取蓝图总块数（未知/畸形 id 返回 null，不抛异常） */
 function blueprintBlockCount(id: string): number | null {
@@ -107,6 +108,7 @@ function mergeCheckIns(
         blueprintId: base.blueprintId || other.blueprintId,
         actualMinutes: base.actualMinutes ?? other.actualMinutes,
         value: base.value ?? other.value,
+        bonus: base.bonus ?? other.bonus,
         // 墓碑一旦出现即生效（不可逆），任一侧携带即保留
         deletedAt: base.deletedAt ?? other.deletedAt,
       }
@@ -216,9 +218,14 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
   )
 
   // 积木层 = 事实投影（合并后重建，不再按 index 并集）
-  const builds = rebuildBuilds(liveCheckInsView(gcCheckIns), dayClaims)
+  const builds = rebuildBuilds(liveCheckInsView(gcCheckIns), dayClaims, BLUEPRINT_CAPACITY)
 
   const repairBricks = Math.max(local.repairBricks ?? 0, remote.repairBricks ?? 0)
+  // 月份键取较晚的一个：谁的月额度结算更近，以谁为准（同月则相同）
+  const repairBrickMonth = [local.repairBrickMonth, remote.repairBrickMonth]
+    .filter((m): m is string => typeof m === 'string')
+    .sort()
+    .pop()
 
   const foundationNotes: Record<string, string> = {
     ...(remote.foundationNotes || {}),
@@ -229,6 +236,20 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
   for (const p of remote.showcasePlacements || []) placementMap.set(p.blueprintId, { ...p })
   for (const p of local.showcasePlacements || []) placementMap.set(p.blueprintId, { ...p })
   const showcasePlacements = Array.from(placementMap.values())
+
+  // 提醒处置（跳过今天）：按 habit 保留日期更新的一方（记录本身按天覆盖，取新即最新决策）
+  const reminderLog: Record<string, ReminderLogEntry> = {}
+  const reminderLogIds = new Set([
+    ...Object.keys(local.reminderLog || {}),
+    ...Object.keys(remote.reminderLog || {}),
+  ])
+  for (const id of reminderLogIds) {
+    const l = local.reminderLog?.[id]
+    const r = remote.reminderLog?.[id]
+    if (l && r) reminderLog[id] = l.date >= r.date ? l : r
+    else if (l) reminderLog[id] = l
+    else if (r) reminderLog[id] = r
+  }
 
   // 设置全字段并集（本地优先，缺字段回退远端）
   const settings = {
@@ -257,6 +278,13 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
 
   return {
     schemaVersion: 2,
+    // 内容版本取双方较高值：旧端与高内容端合并后不能把版本写低（门禁在读取前）
+    // 至少为当前内容版本：合并结果可能被本安装包继续产出 v2 建筑，不能写低
+    contentVersion: Math.max(
+      CONTENT_VERSION,
+      local.contentVersion ?? CONTENT_VERSION,
+      remote.contentVersion ?? CONTENT_VERSION,
+    ),
     habits,
     checkIns: gcCheckIns,
     builds,
@@ -266,8 +294,10 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
     dayClaims,
     deletedDayClaims: gcDeletedClaims,
     repairBricks,
+    repairBrickMonth,
     showcasePlacements: showcasePlacementsFiltered,
     foundationNotes,
+    reminderLog,
   }
 }
 

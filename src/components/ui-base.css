@@ -1,0 +1,149 @@
+/* 通用骨架：根排版、标题栏、窗口按钮、底部导航、按钮 */
+/* 拆分自 ui.css（E4）；原文行 1–147。纯搬移，规则顺序保持不变。 */
+
+/* 通用 UI：圆角积木风 —— 软阴影、胶囊、无棱角 */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* 自定义标题栏（无边框窗口）：整体为拖拽区 */
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 10px 20px;
+  flex: none;
+  user-select: none;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Rubik', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: var(--fs-title);
+  letter-spacing: -0.015em;
+  pointer-events: none;
+}
+
+.brand svg {
+  display: block;
+  pointer-events: none;
+}
+
+/* 窗口控制按钮：圆润、贴合应用风格 */
+.win-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border-radius: 9px;
+  color: var(--ink-2);
+  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default);
+}
+.win-btn:hover {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  color: var(--ink);
+}
+.win-btn.close:hover {
+  background: var(--danger);
+  color: var(--danger-ink);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* 底部导航：胶囊分段 */
+.tabbar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px calc(12px);
+  flex: none;
+}
+
+.tabbar button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 0 7px;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  color: var(--ink-2);
+  border-radius: var(--r-md);
+  transition: background var(--dur-sm) var(--ease-default), color var(--dur-sm) var(--ease-default), transform var(--dur-sm) var(--ease-default);
+}
+
+.tabbar button:hover {
+  color: var(--ink);
+}
+
+.tabbar button.active {
+  background: var(--ink);
+  color: var(--bg);
+  transform: translateY(-1px);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: var(--ink-2);
+  border-radius: var(--r-sm);
+  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default);
+}
+.icon-btn:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+/* 按钮 */
+.btn {
+  border: 1.5px solid var(--ink);
+  padding: 9px 20px;
+  font-size: var(--fs-subhead);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default), transform var(--dur-xs) var(--ease-default);
+}
+.btn:hover {
+  background: var(--ink);
+  color: var(--bg);
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn.primary {
+  background: var(--ink);
+  color: var(--bg);
+}
+.btn.primary:hover {
+  opacity: 0.88;
+}
+.btn.ghost {
+  border-color: var(--line);
+  color: var(--ink-2);
+}
+.btn.ghost:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: none;
+}
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}

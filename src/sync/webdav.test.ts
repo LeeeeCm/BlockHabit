@@ -131,4 +131,22 @@ describe('WebDAV client', () => {
     expect(err).toBeInstanceOf(WebDavError)
     expect(err.code).toBe('http')
   })
+
+  /**
+   * F4 回归：fetch 抛 TypeError（Failed to fetch / Load failed）时，最常见原因是 CORS 被拦，
+   * 而不是真的断网。此前统一报 'network'，会让用户去查网络设置而永远查不到问题。
+   */
+  it('fetch 抛 TypeError 时归类为 cors（跨域被拦）而非 network', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    const err = await fetchRemoteState(mockConfig).catch((e) => e)
+    expect(err).toBeInstanceOf(WebDavError)
+    expect(err.code).toBe('cors')
+  })
+
+  it('非 CORS 的网络异常仍归类为 network', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('ECONNRESET'))
+    const err = await fetchRemoteState(mockConfig).catch((e) => e)
+    expect(err).toBeInstanceOf(WebDavError)
+    expect(err.code).toBe('network')
+  })
 })

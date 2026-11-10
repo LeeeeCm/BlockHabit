@@ -1,0 +1,259 @@
+/* 弹窗外壳（苹果分层浮窗）、表单、操作底栏、内嵌分组、toast */
+/* 拆分自 ui.css（E4）；原文行 148–404。纯搬移，规则顺序保持不变。 */
+
+/* 弹窗 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  backdrop-filter: var(--backdrop-filter);
+  -webkit-backdrop-filter: var(--backdrop-filter);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: overlay-fade-in var(--dur-md) var(--ease-out);
+}
+
+@keyframes overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ==================== 苹果风格分层浮动弹窗 (Apple Sheet Modal Architecture) ==================== */
+.dialog {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  min-width: 380px;
+  max-width: 92vw;
+  max-height: 86vh;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
+  animation: pop-in var(--dur-md) var(--ease-out);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* <--- 物理级圆角硬裁切，杜绝任何滚动条刺破圆角 */
+  position: relative;
+  padding: 0;
+}
+
+/* 弹窗固定导航顶栏：标题 + 极简圆角关闭按钮 */
+.dialog-header {
+  padding: 18px 24px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  z-index: 2;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* 弹窗独立滚动主体：在顶栏与底栏之间平滑浮动，距圆角有充裕的安全直边距离 */
+.dialog-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 24px 20px;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 20%, transparent) transparent;
+}
+
+.dialog-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-body::-webkit-scrollbar-track {
+  background: transparent !important;
+  margin: 8px 0;
+}
+
+.dialog-body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 999px;
+}
+
+.dialog-body::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--ink) 38%, transparent);
+}
+
+.dialog.habit-dialog {
+  width: 460px;
+  max-width: 92vw;
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+
+/* 表单 */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 16px;
+}
+
+.field > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-body);
+  color: var(--ink-2);
+}
+
+.field input[type='text'],
+.field input[type='number'],
+.field textarea {
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+  padding: 9px 12px;
+  outline: none;
+  border-radius: var(--r-sm);
+  transition: border-color var(--dur-xs) var(--ease-default);
+}
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--ink);
+}
+.field textarea {
+  resize: none;
+  min-height: 64px;
+}
+
+.seg {
+  display: flex;
+  gap: 4px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 3px;
+}
+.seg button {
+  flex: 1;
+  padding: 7px 0;
+  font-size: var(--fs-body);
+  color: var(--ink-2);
+  border-radius: 8px;
+  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default);
+}
+.seg button.active {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* 弹窗固定操作底栏：主行动按钮常驻，绝不随着内容滑动而沉底遗失 */
+.dialog-footer,
+.dialog-actions {
+  padding: 14px 24px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 97%, var(--ink));
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-top: 0;
+  z-index: 2;
+}
+
+/* 苹果风格内嵌卡片分组 (Apple Inset Grouped Sections) */
+.apple-group {
+  background: color-mix(in srgb, var(--ink) 2.5%, var(--surface));
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.apple-group-title {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--ink-2);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+/* 苹果风格按压触感微动效与平滑回弹 */
+.btn,
+.icon-btn,
+.card-action,
+.pill-action {
+  transition: background var(--dur-sm) var(--ease-out),
+              color var(--dur-sm) var(--ease-out),
+              border-color var(--dur-sm) var(--ease-out),
+              transform var(--dur-sm) var(--ease-out),
+              box-shadow var(--dur-sm) var(--ease-out);
+}
+
+.btn:active,
+.card-action:active,
+.pill-action:active,
+.seg button:active,
+.icon-btn:active {
+  transform: scale(0.95);
+  transition: transform var(--dur-2xs) var(--ease-out);
+}
+/* toast 胶囊 */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 86px;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 10px 24px;
+  font-size: var(--fs-subhead);
+  border-radius: var(--r-pill);
+  z-index: 100;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+  animation: toast-in var(--dur-md) var(--ease-bounce);
+}
+
+.toast .accent {
+  color: var(--accent);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
