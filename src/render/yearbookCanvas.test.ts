@@ -116,6 +116,78 @@ function dataModel() {
   return buildYearbook(state, 2026)
 }
 
+/** 给 canvas 打一个同步 toBlob 桩（jsdom 无真实 2D context，toBlob 不可用） */
+function stubPngBlob(canvas: HTMLCanvasElement, blob: Blob | null): void {
+  Object.defineProperty(canvas, 'toBlob', {
+    configurable: true,
+    value: (callback: (value: Blob | null) => void) => callback(blob),
+  })
+}
+
+/** 下载环境桩：URL.createObjectURL/revokeObjectURL + a[download].click */
+function stubDownloadEnvironment() {
+  const createObjectURL = vi.fn(() => 'blob:yearbook')
+  const revokeObjectURL = vi.fn()
+  const originalCreateObjectURL = URL.createObjectURL
+  const originalRevokeObjectURL = URL.revokeObjectURL
+  Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL })
+  Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL })
+
+  const anchors: HTMLAnchorElement[] = []
+  const originalCreateElement = document.createElement.bind(document)
+  const createElement = vi
+    .spyOn(document, 'createElement')
+    .mockImplementation(((tagName: string, options?: ElementCreationOptions) => {
+      const element = originalCreateElement(tagName, options)
+      if (tagName === 'a') anchors.push(element as HTMLAnchorElement)
+      return element
+    }) as typeof document.createElement)
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+
+  return {
+    anchors,
+    createObjectURL,
+    click,
+    restore() {
+      createElement.mockRestore()
+      click.mockRestore()
+      Object.defineProperty(URL, 'createObjectURL', {
+        configurable: true,
+        value: originalCreateObjectURL,
+      })
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        value: originalRevokeObjectURL,
+      })
+    },
+  }
+}
+
+/** 剪贴板桩：write 传 undefined 表示「浏览器不支持 clipboard」 */
+function stubClipboard(write?: (items: unknown[]) => Promise<void>) {
+  const originalItem = Object.getOwnPropertyDescriptor(globalThis, 'ClipboardItem')
+  const originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+  Object.defineProperty(globalThis, 'ClipboardItem', {
+    configurable: true,
+    value: class MockClipboardItem {
+      items: Record<string, Blob>
+      constructor(items: Record<string, Blob>) {
+        this.items = items
+      }
+    },
+  })
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: write ? { write: vi.fn(write) } : undefined,
+  })
+  return () => {
+    if (originalItem) Object.defineProperty(globalThis, 'ClipboardItem', originalItem)
+    else delete (globalThis as { ClipboardItem?: unknown }).ClipboardItem
+    if (originalClipboard) Object.defineProperty(navigator, 'clipboard', originalClipboard)
+    else delete (navigator as { clipboard?: unknown }).clipboard
+  }
+}
+
 let fake: ReturnType<typeof createFakeContext>
 let getContextSpy: ReturnType<typeof vi.spyOn>
 let fontsInstalled = false
@@ -341,21 +413,73 @@ describe('绘制与导出', () => {
     expect(texts).toContain(zh.yearbook.emptyBody)
   })
 
-  it('导出文件名含年份；无 ClipboardItem 时复制返回 false（调用方回退提示）', async () => {
+  it('导出文件名含年份', () => {
     expect(yearbookPngFileName(2026)).toBe('blockhabit-yearbook-2026.png')
     expect(yearbookMarkdownFileName(2026)).toBe('blockhabit-yearbook-2026.md')
+  })
 
-    const original = (globalThis as { ClipboardItem?: unknown }).ClipboardItem
-    Object.defineProperty(globalThis, 'ClipboardItem', { configurable: true, value: undefined })
+  it('复制成功：返回 copied，不触发下载', async () => {
+    const download = stubDownloadEnvironment()
+    const restoreClipboard = stubClipboard(() => Promise.resolve())
     try {
       const canvas = document.createElement('canvas')
-      await expect(copyYearbookPng(canvas)).resolves.toBe(false)
+      const blob = new Blob(['png'], { type: 'image/png' })
+      stubPngBlob(canvas, blob)
+      await expect(copyYearbookPng(canvas, 2026)).resolves.toBe('copied')
+      expect(download.anchors).toHaveLength(0)
+      expect(download.click).not.toHaveBeenCalled()
     } finally {
-      if (original !== undefined) {
-        Object.defineProperty(globalThis, 'ClipboardItem', { configurable: true, value: original })
-      } else {
-        delete (globalThis as { ClipboardItem?: unknown }).ClipboardItem
-      }
+      restoreClipboard()
+      download.restore()
+    }
+  })
+
+  it('剪贴板被拒绝（NotAllowedError）：自动降级下载 PNG，返回 downloaded', async () => {
+    const download = stubDownloadEnvironment()
+    const restoreClipboard = stubClipboard(() =>
+      Promise.reject(new DOMException('Write permission denied.', 'NotAllowedError')),
+    )
+    try {
+      const canvas = document.createElement('canvas')
+      const blob = new Blob(['png'], { type: 'image/png' })
+      stubPngBlob(canvas, blob)
+      await expect(copyYearbookPng(canvas, 2026)).resolves.toBe('downloaded')
+      // 复用保存逻辑：blob → objectURL → a[download].click
+      expect(download.createObjectURL).toHaveBeenCalledWith(blob)
+      expect(download.anchors).toHaveLength(1)
+      expect(download.anchors[0].download).toBe(yearbookPngFileName(2026))
+      expect(download.click).toHaveBeenCalledTimes(1)
+    } finally {
+      restoreClipboard()
+      download.restore()
+    }
+  })
+
+  it('剪贴板不可用（无 ClipboardItem / navigator.clipboard）：直接下载 PNG', async () => {
+    const download = stubDownloadEnvironment()
+    const restoreClipboard = stubClipboard(undefined)
+    try {
+      const canvas = document.createElement('canvas')
+      stubPngBlob(canvas, new Blob(['png'], { type: 'image/png' }))
+      await expect(copyYearbookPng(canvas, 2026)).resolves.toBe('downloaded')
+      expect(download.click).toHaveBeenCalledTimes(1)
+    } finally {
+      restoreClipboard()
+      download.restore()
+    }
+  })
+
+  it('toBlob 为空：返回 failed，不触发下载', async () => {
+    const download = stubDownloadEnvironment()
+    const restoreClipboard = stubClipboard(() => Promise.resolve())
+    try {
+      const canvas = document.createElement('canvas')
+      stubPngBlob(canvas, null)
+      await expect(copyYearbookPng(canvas, 2026)).resolves.toBe('failed')
+      expect(download.click).not.toHaveBeenCalled()
+    } finally {
+      restoreClipboard()
+      download.restore()
     }
   })
 

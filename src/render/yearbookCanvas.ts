@@ -1,19 +1,14 @@
-import type { BlockDef, Blueprint, Language } from '../types'
+import type { Blueprint, Language } from '../types'
 import type { TranslationSchema } from '../i18n/types'
 import type { BuildingEntry, YearbookModel } from '../logic/yearbook'
 import { formatPeakHour } from '../logic/yearbook'
 import { blueprints } from '../logic/blueprints'
-import {
-  DEFAULT_ISO_CONFIG,
-  STUD_H,
-  drawCube,
-  drawGroundBase,
-  paletteFromDocument,
-  withAlpha,
-  worldToScreen,
-  type IsoConfig,
-  type IsoPalette,
-} from './iso'
+import { paletteFromDocument, withAlpha, type IsoPalette } from './iso'
+import { paintModelStage, type Rect } from './modelStage'
+
+// 等距模型 measure/fit 已抽到 render/modelStage（B2）；这里保持既有导出路径可用
+export { fitModelInto, measureModelBounds } from './modelStage'
+export type { ModelBounds, ModelFit, ModelPadding, Rect } from './modelStage'
 
 /**
  * 落成年鉴画布（D-20261110-060）。
@@ -24,9 +19,9 @@ import {
  * - 只做「封面 + 本年总结」一页，不做超长 12 屏拼接（内存与阅读体验都差）；
  * - 单页建筑年表两列最多展示 12 座（每列 6），超出以「+N」计数，不伪造条目。
  *
- * 本模块不修改任何既有渲染实现（画报/相纸/图鉴的 modelStage 抽取不在本次写入范围内），
- * 缩略图复用 iso 的 fit + painter 排序 + drawCube；年鉴缩略图视口很小，垂直基准取居中（0.5），
- * 而不是画报大舞台的 0.54 地面基准（后者在小视口里会把模型顶出边界）。
+ * 缩略图走 render/modelStage 的公共 fit + painter（B2 抽取；与画报/相纸/图鉴同一套投影与排序）；
+ * 年鉴缩略图视口很小，垂直基准取居中（0.5），而不是画报大舞台的 0.54 地面基准
+ * （后者在小视口里会把模型顶出边界）。
  */
 
 export const YEARBOOK_CANVAS = { width: 720, height: 1200, dpr: 2 } as const
@@ -63,13 +58,6 @@ export function readYearbookPalette(doc: Document = document): YearbookPalette {
     line: read('--line', '#e8e8e8'),
     accent: read('--accent', '#f5b301'),
   }
-}
-
-export interface Rect {
-  x: number
-  y: number
-  w: number
-  h: number
 }
 
 export interface YearbookLayout {
@@ -227,61 +215,6 @@ export function buildingRowRects(area: Rect, count: number): BuildingRowLayout[]
   return buildingGridRects(area, count, 1)
 }
 
-export interface ModelBounds {
-  minX: number
-  maxX: number
-  minY: number
-  maxY: number
-}
-
-/** 等距模型在屏幕空间的包围盒（含凸点顶部与块底，与画报/相纸一致） */
-export function measureModelBounds(
-  blocks: BlockDef[],
-  cfg: IsoConfig = DEFAULT_ISO_CONFIG,
-): ModelBounds {
-  if (blocks.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 }
-  let minX = Infinity
-  let maxX = -Infinity
-  let minY = Infinity
-  let maxY = -Infinity
-  for (const block of blocks) {
-    const { sx, sy } = worldToScreen(block.x, block.y, block.z, cfg)
-    minX = Math.min(minX, sx - cfg.tileW / 2)
-    maxX = Math.max(maxX, sx + cfg.tileW / 2)
-    minY = Math.min(minY, sy - cfg.tileH / 2 - STUD_H)
-    maxY = Math.max(maxY, sy + cfg.tileH / 2 + cfg.blockH)
-  }
-  return { minX, maxX, minY, maxY }
-}
-
-export interface ModelFit {
-  scale: number
-  panX: number
-  panY: number
-}
-
-/** 把模型包围盒等比塞进视口（pad 内边距、maxScale 上限、baseline 垂直基准线） */
-export function fitModelInto(
-  bounds: ModelBounds,
-  viewport: Rect,
-  pad = 6,
-  maxScale = 1,
-  baseline = 0.5,
-): ModelFit {
-  const spanX = Math.max(1, bounds.maxX - bounds.minX)
-  const spanY = Math.max(1, bounds.maxY - bounds.minY)
-  const availableW = Math.max(1, viewport.w - pad * 2)
-  const availableH = Math.max(1, viewport.h - pad * 2)
-  const scale = Math.min(availableW / spanX, availableH / spanY, maxScale)
-  const centerX = (bounds.minX + bounds.maxX) / 2
-  const centerY = (bounds.minY + bounds.maxY) / 2
-  return {
-    scale,
-    panX: viewport.x + viewport.w / 2 - centerX * scale,
-    panY: viewport.y + viewport.h * baseline - centerY * scale,
-  }
-}
-
 /** 单行文本按宽度截断（超出补 ...） */
 export function truncateToWidth(
   ctx: Pick<CanvasRenderingContext2D, 'measureText'>,
@@ -373,64 +306,27 @@ function blueprintLabel(t: TranslationSchema, blueprintId: string): string {
   return t.blueprints[blueprintId] || blueprintId
 }
 
-/** 等距建筑缩略图：fit → 地基 → 画家排序 → 积木 */
+/** 等距建筑缩略图：fit → 地基 → 画家排序 → 积木（与画报/相纸/图鉴共用 modelStage） */
 function drawBuildingThumb(
   ctx: CanvasRenderingContext2D,
   blueprint: Blueprint,
   rect: Rect,
   palette: IsoPalette,
-  cfg: IsoConfig,
 ): void {
   ctx.save()
   ctx.beginPath()
   ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 4)
   ctx.clip()
 
-  const bounds = measureModelBounds(blueprint.blocks, cfg)
-  const fit = fitModelInto(bounds, rect, 3, 0.7)
-
-  let minBx = Infinity
-  let maxBx = -Infinity
-  let minBy = Infinity
-  let maxBy = -Infinity
-  for (const block of blueprint.blocks) {
-    minBx = Math.min(minBx, block.x)
-    maxBx = Math.max(maxBx, block.x)
-    minBy = Math.min(minBy, block.y)
-    maxBy = Math.max(maxBy, block.y)
-  }
-  const centerX = Math.round((minBx + maxBx) / 2)
-  const centerY = Math.round((minBy + maxBy) / 2)
-
-  ctx.translate(fit.panX, fit.panY)
-  ctx.scale(fit.scale, fit.scale)
-  drawGroundBase(ctx, blueprint.blocks, cfg, palette, 0, centerX, centerY)
-
-  const cubes = blueprint.blocks
-    .map((block, index) => ({ block, index }))
-    .sort((a, b) => {
-      const sumA = a.block.x + a.block.y
-      const sumB = b.block.x + b.block.y
-      if (sumA !== sumB) return sumA - sumB
-      return a.block.z - b.block.z
-    })
-  const indexAt = new Map<string, number>()
-  blueprint.blocks.forEach((block, index) =>
-    indexAt.set(`${block.x},${block.y},${block.z}`, index),
-  )
-
-  for (const { block } of cubes) {
-    const above = indexAt.get(`${block.x},${block.y},${block.z + 1}`)
-    const { sx, sy } = worldToScreen(block.x, block.y, block.z, cfg)
-    drawCube(ctx, sx, sy, cfg, palette, {
-      type: block.type,
-      color: block.color,
-      noStuds: above !== undefined,
-      bonus: false,
-      // 缩略图很小：精灵固定 1x 烘焙，避免每个小图都在 2x 下重烘焙撑大缓存
-      spriteScale: 1,
-    })
-  }
+  paintModelStage(ctx, {
+    blocks: blueprint.blocks,
+    palette,
+    viewport: rect,
+    pad: 3,
+    maxScale: 0.7,
+    // 缩略图很小：精灵固定 1x 烘焙，避免每个小图都在 2x 下重烘焙撑大缓存
+    spriteScale: 1,
+  })
   ctx.restore()
 }
 
@@ -591,7 +487,6 @@ function drawBuildings(
   const columns = visible.length > YEARBOOK_MAX_BUILDINGS ? 2 : 1
   const rowsPerColumn = Math.max(1, Math.ceil(visible.length / columns))
   const rows = buildingGridRects(area, rowsPerColumn, columns)
-  const cfg = DEFAULT_ISO_CONFIG
 
   rows.forEach((rowLayout, index) => {
     const entry = visible[index]
@@ -607,7 +502,7 @@ function drawBuildings(
     ctx.stroke()
 
     const blueprint = blueprints[entry.blueprintId]
-    if (blueprint) drawBuildingThumb(ctx, blueprint, thumb, isoPalette, cfg)
+    if (blueprint) drawBuildingThumb(ctx, blueprint, thumb, isoPalette)
 
     const name = blueprintLabel(t, entry.blueprintId)
     setFont(ctx, 600, 13)
@@ -844,15 +739,13 @@ function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
   })
 }
 
-/** 保存 PNG（下载）；返回是否成功。调用方负责 toast 文案 */
-export async function saveYearbookPng(canvas: HTMLCanvasElement, year: number): Promise<boolean> {
-  const blob = await canvasToPngBlob(canvas)
-  if (!blob) return false
+/** 用 blob + a[download] 触发一次浏览器下载；返回是否已触发 */
+function downloadPngBlob(blob: Blob, fileName: string): boolean {
   const url = URL.createObjectURL(blob)
   try {
     const link = document.createElement('a')
     link.href = url
-    link.download = yearbookPngFileName(year)
+    link.download = fileName
     link.click()
   } finally {
     setTimeout(() => URL.revokeObjectURL(url), 1000)
@@ -860,15 +753,36 @@ export async function saveYearbookPng(canvas: HTMLCanvasElement, year: number): 
   return true
 }
 
-/** 复制 PNG 到剪贴板（ClipboardItem）；失败返回 false，由调用方回退提示 */
-export async function copyYearbookPng(canvas: HTMLCanvasElement): Promise<boolean> {
-  if (typeof ClipboardItem === 'undefined' || !navigator.clipboard?.write) return false
+/** 保存 PNG（下载）；返回是否成功。调用方负责 toast 文案 */
+export async function saveYearbookPng(canvas: HTMLCanvasElement, year: number): Promise<boolean> {
   const blob = await canvasToPngBlob(canvas)
   if (!blob) return false
-  try {
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-    return true
-  } catch {
-    return false
+  return downloadPngBlob(blob, yearbookPngFileName(year))
+}
+
+/**
+ * 复制 PNG 到剪贴板（ClipboardItem）。
+ *
+ * 剪贴板可能因为「没有权限 / NotAllowedError / 非安全上下文 / 浏览器不支持」而失败；
+ * 这种情况不再只回一个 false 让用户自己点保存，而是**自动降级为下载 PNG**
+ * （复用保存逻辑的 blob + a[download]，不新增依赖），并把结果告诉调用方去提示。
+ */
+export type YearbookCopyResult = 'copied' | 'downloaded' | 'failed'
+
+export async function copyYearbookPng(
+  canvas: HTMLCanvasElement,
+  year: number,
+): Promise<YearbookCopyResult> {
+  const blob = await canvasToPngBlob(canvas)
+  if (!blob) return 'failed'
+  const canCopy = typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write
+  if (canCopy) {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+      return 'copied'
+    } catch {
+      // 无权限 / NotAllowedError / 用户拒绝：走下载降级
+    }
   }
+  return downloadPngBlob(blob, yearbookPngFileName(year)) ? 'downloaded' : 'failed'
 }

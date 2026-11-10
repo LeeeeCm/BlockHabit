@@ -137,8 +137,16 @@ export function YearbookModal({ onClose }: Props) {
     if (!canvas || busy) return
     setBusy(true)
     try {
-      const ok = await copyYearbookPng(canvas)
-      showToast(ok ? t.yearbook.copiedToast : t.yearbook.copyFail, 2500)
+      const result = await copyYearbookPng(canvas, year)
+      // 剪贴板不可用/被拒绝时画布模块已自动降级为下载，toast 必须如实说明
+      showToast(
+        result === 'copied'
+          ? t.yearbook.copiedToast
+          : result === 'downloaded'
+            ? t.yearbook.copyFallbackToast
+            : t.yearbook.copyFail,
+        2500,
+      )
     } finally {
       setBusy(false)
     }
