@@ -3,6 +3,92 @@
 本项目遵循「每次改动都能追到一条设计记录」的约定：每条变更下方的 `D-YYYYMMDD-NNN` 指向
 `design/records/` 里对应的记录（含背景、方案、取舍与验收证据）。
 
+## [未发布] — 2026-11-11（第九轮：Git 整理 + B 类技术收尾 + C 类发布增强 → 发布候选）
+
+本轮按用户目标做三件事：先把历轮未提交成果整理成可回滚的 Git 基线（任务 A），再完成 B1–B6
+技术收尾，最后完成 C1–C6 产品/发布增强。**不改版本号、不新增依赖、不 push、不打 tag。**
+
+### Git 整理（任务 A）
+
+- 在 `main` 之上新建分支 `chore/release-prep`，把工作区约 200 项改动按主题拆成 8 条基线提交：
+  工程配置与设计台账 / 0.2.0 基线 / 第四轮打开动机 / Wave 1 / Wave 2 / B1 内容包 / 18 座配色 /
+  CHANGELOG。跨轮次共享文件（App.tsx、SettingsDialog、i18n、storage/sync 等）无法按轮次重建
+  中间态，已在对应 commit body 说明并合并提交。
+- 不提交 `.tmp*`、`dist/`、`src-tauri/target/`、`node_modules`、个人截图产物；每条提交跑
+  `tsc` 门禁，基线整体跑全量测试与 `design:check`；最终工作区干净（仅忽略项）。共 20 条提交
+  （8 基线 + 12 收尾），未 push、未打 tag。中间提交是按主题切片的工作区快照，跨轮次共享文件
+  无法重建独立中间态，**单条中间提交不保证单独可编译**（已在各 commit body 说明）；回滚方式为
+  按序列反向 revert 或以分支整体回退。
+
+### B 类技术收尾
+
+- **B1 A3 WebDAV**：分步自检可取消（AbortController；取消后不再发起后续阶段、仍尽力 DELETE 已创建
+  的临时文件，结果区分「已取消 / 取消但清理失败」）；`rememberPassword` 开关（关闭时
+  localStorage 绝不写密码、读取旧配置丢弃遗留密码，会话内存内继续可用）；密码 DOM 缓解（已保存
+  密码不回填 `input.value`，placeholder 提示留空继续使用，`autoComplete=new-password`）；服务商
+  切换统一单一 handler。新增 diagnose 取消 4 例、配置落盘 5 例、面板 4 例。
+- **B2 A2 年鉴**：抽出 `src/render/modelStage.ts`（画报/相纸/图鉴/年鉴共用 measure+fit+painter）；
+  重构前 25 张 canvas PNG sha256 全等、RGBA 逐像素 diff=0；复制 PNG 失败自动降级下载
+  （`copied|downloaded|failed` 三态 + toast）；modelStage 20 例、yearbookCanvas 20 例。
+- **B3 A4 档案包**：SettingsDialog 1314 → 740 行（<800），WebDAV 与档案/备份/诊断 UI 抽为
+  `WebdavPanel` / `ArchiveDataPanel`（useSync 生命周期不变）；档案 manifest 语义澄清为
+  `archiveFormatVersion`（格式版本=1）+ `appContentVersion`（=当前 CONTENT_VERSION），旧
+  manifest 的 `contentVersion` 兼容读取；`parseArchiveManifest` 7 例；manifest 再拆
+  `archiveManifest.ts`，收尾再把字节/压缩层拆到 `archiveZip.ts`：最终 archive.ts 587 行 /
+  archiveManifest.ts 212 行 / archiveZip.ts 263 行（Node 行口径，均 <800）。
+- **B4 B2 专注**：今日页新增专注入口条（有可开始的专注习惯且无会话时出现，移动端 ≥48px）；
+  多会话展示规则（ready 优先→到点时间含延长→startedAt→id；「另有 N 个专注」副行，确认后自动
+  切下一会话）；通知计划/托盘相位抽纯函数（先 `markNotified` 落盘再通知、tooltip 可单测）；
+  修「延长后今日页提前待确认」并补 4 例 fake-timers 回归。
+- **B5 B3 建筑档案**：移动端接 BottomSheet（嵌套拍立得 z-index 分层、Esc 逐层关闭）；档案舞台
+  `data-testid="archive-stage"`；拍立得落成日改为 `completionDateOfBuilds`（=max(placedAt)
+  本地日期，与 D-065 同口径；无有效日期显示「不可考」，修掉原来的 UTC+今天错误）；100+ 块
+  性能实测（打开 40–45ms、切换 p95 ≤10.7ms、滚动 0 超帧、PNG 15–17ms）。
+- **B6 工程卫生**：vitest 排除 `**/.tmp-*/**`（`npm test` 只跑源码测试）；`.prettierignore`
+  忽略 `.tmp*`；`format:check` 通过；修正 ShowcaseScene / generators.ts 过期块数注释。
+
+### C 类产品/发布增强
+
+- **C2 内容路线/关于**：设置页新增「内容路线」分组（默认折叠）——动态展示 18 座 / 1985 块 /
+  contentVersion 2、年度免费扩建节奏、跨设备升级说明、本地优先承诺；zh/en 齐全，不写死未来
+  内容包日期。新增 AboutPanel 3 例。
+- **C1 自由装饰模式**：新增设计记录 **D-20261111-068（proposed，reviewer=pending）**，按最小方案
+  设计（全落成后展台解锁，复用 ShowcasePlacements/现有模型自由摆位 + 90° 旋转 + 微生态，不新增
+  持久化字段、不做沙盒经济）。**按 AGENTS.md 新机制需人类确认，本轮明确暂停、不写实现代码。**
+- **C4 自动更新/签名/keyring**：`docs/release/updater-and-keyring-assessment.md` —— 现状事实、
+  Tauri updater 机制与签名密钥/发布端点分步方案、更正「updater 签名 ≠ Windows 代码签名」口径、
+  keyring 迁移/回滚方案；需人类批准的依赖/密钥/端点/证书均标 blocked，**未装依赖、未生成密钥、
+  未改存储格式**。
+- **C3 下一批内容包**：`docs/release/content-pack-v3-assessment.md` —— 不生产内容、不改
+  CONTENT_VERSION；给出 5 座/约 500 块/每年一批建议、脚手架改动点（含 BASE_PACK_IDS 推导坑）、
+  发布门禁与兼容矩阵；主题/规模等待人类确认。
+- **C5 性能基线复测**：首屏 FCP 148–168ms（基线 144ms，+3%~17% 噪声；gzip 主包 +2.4KB）、
+  切页 5.9–10.8ms（0 chunk/0 long task）、建造 190 块 p95 3.6–3.8ms（0 超帧）、展台拖拽
+  p95 4.0ms、图鉴 18 缩略图首开 40.2ms、展台 18 座 p95 3.7ms、年鉴打开 60.5ms/PNG 导出 49.6ms；
+  全部在帧预算内，无功能性回退（详见 `.tmp-c5/report.md`，不提交产物）。
+- **C6 真机验收清单**：`docs/release/real-device-acceptance.md` —— 多屏/HiDPI/拖拽双击、A4 真实
+  落盘/reveal、A3 真实 Nextcloud/坚果云/群晖、B2 真实 25 分钟+系统通知+托盘、B3 100 块时间线；
+  每项列「操作步骤 + 期望结果 + 本机自动化证据」，真机项交人类执行。
+
+### 验证
+
+- Lead 门禁：`npx tsc --noEmit` 0 错；`npm test` **100 文件 / 990 用例全绿**（全部源码测试；
+  2 个历史 `.tmp-verify-a2` 验证脚本已移出匹配范围）；`npm run design:check` **68 条记录通过**
+  （含 D-068 proposed）；`npm run format:check` 通过；`npm run build` 成功。
+- 构建：主入口 414.61KB（gzip 127.44KB，较上轮 405.40/125.08 +1.9%，来自设置面板拆分与内容路线
+  UI，无新依赖）；MiniDeskToy 懒加载 13.45KB（gzip 3.48KB）；CSS 252.17KB（gzip 108.68KB）。
+- `npm run tauri build -- --no-bundle` 成功（release exe，Rust 编译 1m36s）。
+- B/C 期间浏览器验证：四主题 × zh/en（设置各面板、今日专注入口、摆件三档、档案卡移动端、
+  年鉴/拍立得日期）、0 console error；证据在各 `.tmp-b*/shots`。
+- 独立 verifier 验证（本轮收尾）：**PASS，P0=0 / P1=0，P2=2 已处置，P3=3 已修正/记录**。verifier
+  亲自复跑门禁（100 文件 / 990 用例、68 条记录、tsc 0、format 通过、构建 414.61/127.44）与浏览器
+  核验（seed 密码后 input.value 为空且 DOM 无密码、rememberPassword=不记住后 localStorage 无密码、
+  今日专注入口四主题、移动端档案 BottomSheet + 嵌套拍立得 Esc 分层、拍立得落成日=max(placedAt)、
+  0 console error），并核对 Git/记录卫生（无 tag/remote/stash、版本未变、ls-tree 无禁止路径、6 条
+  旧记录仅追加履历、D-068 proposed 已登记）。P2-2 行数口径已处置（见 B3 条目）；P2-1「单条中间
+  提交不可编译」为跨轮次主题切片的已知限制（见任务 A 说明），不阻断 HEAD，回滚按序列反向 revert。
+  报告 `.tmp-verify-final/report.md`（不提交产物）。
+
 ## [未发布] — 2026-11-11（第八轮：18 座蓝图逐座色彩设计）
 
 本轮按人类要求「每一个蓝图都要有颜色设计」，建立材质调色板并逐座检查 18 个模型；不改几何/块数/顺序，不新增色相。

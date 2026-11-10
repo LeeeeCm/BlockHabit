@@ -78,7 +78,7 @@
 | 8. 浏览器预览同操作 | 明确提示「浏览器预览受跨域限制，请在桌面端重试」，不伪装成网络错误 |
 
 **自动化覆盖/证据**：
-- 自动：`src/sync/webdav.test.ts`（13 例：URL/鉴权/200/404+PROPFIND/401/412/MKCOL/500/CORS 归类）；`src/sync/webdav.e2e.test.ts`（3 例：**真实本地 HTTP 服务器**模拟 WebDAV，双设备撤销不复活、并发 412 收敛）；`src/sync/providers.test.ts`（14 例：四预设 URL、编码、切换不沿用旧端点）；`src/sync/diagnose.test.ts`（38 例：五阶段/错误分类/脱敏/取消/清理）；`src/sync/useSync.test.ts`（配置落盘/合并流程）。
+- 自动：`src/sync/webdav.test.ts`（12 例：URL/鉴权/200/404+PROPFIND/401/412/MKCOL/500/CORS 归类）；`src/sync/webdav.e2e.test.ts`（3 例：**真实本地 HTTP 服务器**模拟 WebDAV，双设备撤销不复活、并发 412 收敛）；`src/sync/providers.test.ts`（13 例：四预设 URL、编码、切换不沿用旧端点）；`src/sync/diagnose.test.ts`（35 例：五阶段/错误分类/脱敏/取消（B1）/清理）；`src/sync/webdavConfig.test.ts`（5 例：rememberPassword 落盘策略）；`src/components/WebdavPanel.test.tsx`（4 例：密码不回填/开关/取消）；`src/sync/useSync.test.ts`（10 例：配置落盘/合并流程）。
 - 本轮实测：上述文件通过（§6）。
 - **必须真机**：真实 Nextcloud/坚果云/群晖的 TLS、2FA 应用密码、目录权限、服务器差异（PROPFIND 状态码、MKCOL 支持）、Tauri 原生 HTTP 通道（浏览器 CORS 已被绕开）。
 
@@ -99,7 +99,7 @@
 | 9. 多会话（两个习惯同时专注） | 主面板显示最早到点/ready 优先；副行提示「另有 N 个专注」 |
 
 **自动化覆盖/证据**：
-- 自动：`src/logic/focusSession.test.ts`（34 个测试块：状态机、跨午夜、延长、通知计划、托盘相位/文案、timerStore 持久化/坏 JSON/prune）；`src/components/MiniDeskToy.test.tsx`（16 例：三档、ready 不自动完成、延长上限、多会话、放弃无打卡、重开恢复）。
+- 自动：`src/logic/focusSession.test.ts`（31 个测试块：状态机、跨午夜、延长、通知计划（B4）、托盘相位/文案（B4）、多会话规则（B4）、timerStore 持久化/坏 JSON/prune）；`src/components/MiniDeskToy.test.tsx`（14 例：三档、ready 不自动完成、延长上限、多会话副行、放弃无打卡、重开恢复）；`src/components/HabitRow.focus.test.tsx`（4 例：延长后今日页不提前待确认，fake timers）。
 - 本轮实测：上述文件通过（§6）。
 - **必须真机**：Windows 系统通知权限与通知中心、托盘 tooltip 真实更新（`update_tray` Rust command）、WebView2 后台节流下 25 分钟计时/通知是否准时（**重点风险**：窗口隐藏时 JS 定时器可能被节流；状态用绝对时间派生，但通知触发点需实测；若延迟明显，记录为 P2 并评估原生调度）。
 - 建议先跑 1 分钟快速冒烟（临时习惯 targetMinutes=1，仅测试用），再跑完整 25 分钟终验。
@@ -121,9 +121,9 @@
 | 7. 移动端布局（窗口缩窄/实验性） | 走 BottomSheet；Esc 逐层关闭（嵌套拍立得不误关抽屉）——桌面端不强制 |
 
 **自动化覆盖/证据**：
-- 自动：`src/logic/buildingArchive.test.ts`（31 块：落成日=max(placedAt) 本地日期、第 N 座、耗时、投入最多、关键块锚点、随笔时间线、墓碑排除、旧档不可考、跨年）；`src/render/buildingArchiveCanvas.test.ts`（10 例：640×880@2x / 640×260@2x、绘制契约、字体等待、data-testid）；`src/components/BuildingArchiveModal.test.tsx`（9 例：桌面/移动 BottomSheet、Esc、嵌套、空态）。
+- 自动：`src/logic/buildingArchive.test.ts`（24 块：落成日=max(placedAt) 本地日期、第 N 座、耗时、投入最多、关键块锚点、随笔时间线、墓碑排除、旧档不可考、跨年、completionDateOfBuilds 5 例）；`src/render/buildingArchiveCanvas.test.ts`（7 例：640×880@2x / 640×260@2x、绘制契约、字体等待、data-testid）；`src/components/BuildingArchiveModal.test.tsx`（7 例：桌面/移动 BottomSheet、Esc、嵌套、空态）。
 - 本轮实测：上述文件通过（§6）。
-- **性能数据**：B5 任务的 100 块时间线性能测量本轮仍在进行（`.tmp-b5/results/b5-archive-baseline.json` 的 timeline/scroll 采样未就绪，**不作为结论**）；性能结论以 B5 报告为准，真机复核为最终口径。
+- **性能数据（B5，dev + agent-browser，castle 190 块，3 次运行）**：打开档案卡首帧 40–45ms（舞台 380 次 blit 仅 0.9–1.2ms）、关键块切换 mean 7.7–7.9ms / p95 ≤10.7ms、滚动 2s p95 ≤4.0ms / >16.7ms 帧 0、档案卡 PNG 绘制 15–17ms；均在 16.7ms 帧预算内（详见 `.tmp-b5/report.md`，不提交产物）。真机复核为最终口径。
 - **必须真机**：真实 canvas 绘制性能、PNG 实际保存、字体加载、100+ 块滚动流畅度。
 
 ---
@@ -164,19 +164,19 @@
 
 ## 8. 自动化 vs 真机 覆盖总结
 
-| 模块 | 本轮自动化证据（2026-11-11 02:56 定向运行） | 必须人类真机 |
+| 模块 | 本轮自动化证据（2026-11-11 收尾后实测） | 必须人类真机 |
 | --- | --- | --- |
-| T1 多屏/HiDPI/拖拽双击 | miniWindow 10、showcaseLayout 17、touchGesture 8、MiniDeskToy 16 | ✅ 全部 OS 窗口/托盘/DPR |
-| T2 A4 档案包 | archive 40（含 mock fs 的写盘/取消/reveal 流程） | ✅ 真实 fs/reveal/磁盘错误 |
-| T3 A3 WebDAV | webdav 13、webdav.e2e 3（本地 HTTP 服务器）、providers 14、diagnose 38 | ✅ 三个真实服务商 |
-| T4 B2 专注/通知/托盘 | focusSession 34、MiniDeskToy 16 | ✅ 系统通知/托盘/后台计时 |
-| T5 B3 100 块时间线 | buildingArchive 31、buildingArchiveCanvas 10、BuildingArchiveModal 9 | ✅ 真机绘制/滚动/PNG |
+| T1 多屏/HiDPI/拖拽双击 | miniWindow 7、showcaseLayout 12、touchGesture 6、MiniDeskToy 14 | ✅ 全部 OS 窗口/托盘/DPR |
+| T2 A4 档案包 | archive 37（含 mock fs 的写盘/取消/reveal 流程；manifest 版本语义 7 例） | ✅ 真实 fs/reveal/磁盘错误 |
+| T3 A3 WebDAV | webdav 12、webdav.e2e 3（本地 HTTP 服务器）、providers 13、diagnose 35、webdavConfig 5、WebdavPanel 4 | ✅ 三个真实服务商 |
+| T4 B2 专注/通知/托盘 | focusSession 31、MiniDeskToy 14、HabitRow.focus 4 | ✅ 系统通知/托盘/后台计时 |
+| T5 B3 100 块时间线 | buildingArchive 24、buildingArchiveCanvas 7、BuildingArchiveModal 7 | ✅ 真机绘制/滚动/PNG |
 | T6 自动更新 | 无 | ✅ 条件：C4 批准后 |
 | 全局壳 | 单实例/退出握手为 Rust 逻辑，无 JS 单测 | ✅ 全部 |
 
-**本轮定向测试结果**：`npx vitest run` 12 个相关文件 → **12 文件 / 195 用例全部通过**（2.83s）；`npx tsc --noEmit` 0 错误；`npm run format:check` 通过。
+**本轮定向测试结果**：`npx vitest run` 17 个相关文件 → **17 文件 / 242 用例全部通过**；`npx tsc --noEmit` 0 错误；`npm run format:check` 通过。
 
-> 说明：全量 `npm test` 的最终文件/用例数受并发改动影响，以 Lead 最终提交后的门禁为准；本清单只引用与验收模块相关的定向结果。
+> 说明：最终全量门禁以 Lead 提交前实测为准：`npm test` **100 文件 / 990 用例全绿**、`design:check` 68 条、`tauri build --no-bundle` 成功；本清单只引用与验收模块相关的定向结果。
 
 ---
 
