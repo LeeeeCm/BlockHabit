@@ -335,6 +335,16 @@ export const zh: TranslationSchema = {
       browserTestHint: '连接自检需要在桌面端运行（浏览器预览受跨域限制）。',
       copyError: '复制错误详情',
       copiedToast: '已复制',
+      cancelTest: '取消自检',
+      testCancelled: '已取消连接自检',
+      testCancelledCleanupFail: '已取消；临时文件可能未清理，可再运行一次自检完成清理',
+      rememberPassword: '记住密码',
+      rememberPasswordOn: '记住',
+      rememberPasswordOff: '不记住',
+      rememberPasswordHintOn: '密码保存在本机（与存档分开），重开应用后仍可自动同步。',
+      rememberPasswordHintOff: '密码只保留在本次运行内存中，重开应用后需要重新输入才能同步。',
+      passwordStoredPlaceholder: '已保存；留空继续使用',
+      passwordKeepHint: '已保存密码：留空表示继续使用，输入新密码可替换。',
     },
     shortcutsTitle: '快捷键说明',
     shortcutsDetail: '按键 1~4 切换页面 · Ctrl+N 新建习惯 · 退出键关闭弹窗',
@@ -386,6 +396,18 @@ export const zh: TranslationSchema = {
       `在册习惯 ${habits} 个 · 已落成建筑 ${buildings} 座`,
     repairInventory: '修复积木库存',
     slogan: 'BlockHabit · 每一次打卡，都算数。',
+    aboutTitle: '内容路线',
+    aboutContent: (blueprints, blocks, contentVersion) =>
+      `当前版本内置 ${blueprints} 座蓝图 / ${blocks} 块积木（contentVersion ${contentVersion}）。`,
+    aboutPaceTitle: '年度免费扩建',
+    aboutPaceBody:
+      '扩展包随安装包内置，不联网下载也不额外收费；计划每年追加一批（4–6 座，约 400–600 块），具体日期以发布说明为准。',
+    aboutUpgradeTitle: '升级说明',
+    aboutUpgradeBody:
+      '更高内容版本的存档需要所有设备一起升级：旧设备会拒绝读取并暂停自动保存，以免把未知建筑数据写坏。请在所有设备更新到同一版本后再继续。',
+    aboutLocalTitle: '数据与隐私',
+    aboutLocalBody:
+      '无账号、无遥测上传；数据保存在本机，可随时导出 JSON 或完整档案包带走。',
     labTitle: '实验室',
     soundGroupTitle: '声音',
     diagnosticsLabel: '诊断包',
@@ -620,6 +642,7 @@ export const zh: TranslationSchema = {
     savedToast: '年鉴已保存',
     copiedToast: '年鉴已复制到剪贴板',
     copyFail: '复制失败，可点击保存图片',
+    copyFallbackToast: '剪贴板不可用，已改为下载 PNG',
     sections: {
       overview: '这一年',
       months: '十二个月',
@@ -670,6 +693,7 @@ export const zh: TranslationSchema = {
     entry: '档案',
     title: '建筑档案',
     completedAt: (date) => `落成于 ${date}`,
+    unknownDate: '不可考',
     nth: (n) => `第 ${n} 座`,
     metrics: { blocks: '积木', days: '耗时', topHabit: '投入最多', perfectDays: '全勤日', bonusBlocks: '奖励块' },
     timeline: '时间线',
@@ -700,5 +724,6 @@ export const zh: TranslationSchema = {
     gaveUp: '已放弃，本次没有打卡',
     persistedHint: '计时按真实时间计算，重开应用会直接显示当前状态',
     notificationBody: (name) => `「${name}」专注时间到，确认后落块`,
+    moreSessions: (n) => `另有 ${n} 个专注`,
   },
 }

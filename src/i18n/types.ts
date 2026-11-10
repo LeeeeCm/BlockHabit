@@ -340,6 +340,17 @@ export interface TranslationSchema {
       browserTestHint: string
       copyError: string
       copiedToast: string
+      /** B1：诊断取消与 rememberPassword */
+      cancelTest: string
+      testCancelled: string
+      testCancelledCleanupFail: string
+      rememberPassword: string
+      rememberPasswordOn: string
+      rememberPasswordOff: string
+      rememberPasswordHintOn: string
+      rememberPasswordHintOff: string
+      passwordStoredPlaceholder: string
+      passwordKeepHint: string
     }
     shortcutsTitle: string
     shortcutsDetail: string
@@ -391,6 +402,15 @@ export interface TranslationSchema {
     assetSummaryDetail: (habits: number, buildings: number) => string
     repairInventory: string
     slogan: string
+    /** C2 内容路线/关于（D-20261110-063 §3.5.5 approved 范围） */
+    aboutTitle: string
+    aboutContent: (blueprints: number, blocks: number, contentVersion: number) => string
+    aboutPaceTitle: string
+    aboutPaceBody: string
+    aboutUpgradeTitle: string
+    aboutUpgradeBody: string
+    aboutLocalTitle: string
+    aboutLocalBody: string
     /** D4：实验性开关组（默认折叠） */
     labTitle: string
     /** D4：声音分组（音效开关 + 音量） */
@@ -619,6 +639,8 @@ export interface TranslationSchema {
     savedToast: string
     copiedToast: string
     copyFail: string
+    /** B2：剪贴板不可用时自动降级下载的提示 */
+    copyFallbackToast: string
     sections: {
       overview: string
       months: string
@@ -669,6 +691,8 @@ export interface TranslationSchema {
     entry: string
     title: string
     completedAt: (date: string) => string
+    /** B5：落成日不可考（缺 placedAt 的旧档） */
+    unknownDate: string
     nth: (n: number) => string
     metrics: {
       blocks: string
@@ -705,5 +729,7 @@ export interface TranslationSchema {
     gaveUp: string
     persistedHint: string
     notificationBody: (name: string) => string
+    /** B4：多会话展示副行 */
+    moreSessions: (n: number) => string
   }
 }

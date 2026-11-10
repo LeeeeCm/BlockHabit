@@ -352,6 +352,16 @@ export const en: TranslationSchema = {
       browserTestHint: 'Connection check runs in the desktop app (the browser preview is limited by CORS).',
       copyError: 'Copy error details',
       copiedToast: 'Copied',
+      cancelTest: 'Cancel test',
+      testCancelled: 'Connection check cancelled',
+      testCancelledCleanupFail: 'Cancelled; the temporary file may not have been cleaned up — run the check again to clean it up.',
+      rememberPassword: 'Remember password',
+      rememberPasswordOn: 'Remember',
+      rememberPasswordOff: "Don't remember",
+      rememberPasswordHintOn: 'The password is stored on this device (separate from your archive) so auto-sync keeps working after a restart.',
+      rememberPasswordHintOff: 'The password is kept only in memory for this run; re-enter it after restarting to sync.',
+      passwordStoredPlaceholder: 'Saved — leave blank to keep using it',
+      passwordKeepHint: 'A password is saved. Leave blank to keep it, or type a new one to replace it.',
     },
     shortcutsDetail: '1~4 Switch Tabs · Ctrl/Cmd+N New Habit · Esc Close Dialog',
     soundLabel: 'Procedural Audio (Web Audio Synthesized)',
@@ -405,6 +415,18 @@ export const en: TranslationSchema = {
       `${habits} Active Habits · ${buildings} Completed Buildings`,
     repairInventory: 'Repair Brick Stock',
     slogan: 'BlockHabit · Every check-in builds something lasting.',
+    aboutTitle: 'Content Roadmap',
+    aboutContent: (blueprints, blocks, contentVersion) =>
+      `This build ships ${blueprints} blueprints / ${blocks} blocks (contentVersion ${contentVersion}).`,
+    aboutPaceTitle: 'Yearly free expansions',
+    aboutPaceBody:
+      'Expansion packs ship inside the app, with no downloads and no extra cost; we plan one batch per year (4–6 buildings, about 400–600 blocks). Exact dates are announced in release notes.',
+    aboutUpgradeTitle: 'Upgrading',
+    aboutUpgradeBody:
+      'Archives with a newer content version require upgrading every device together: older devices refuse to read and pause auto-save so unknown building data is not damaged. Update all devices to the same version before continuing.',
+    aboutLocalTitle: 'Data & privacy',
+    aboutLocalBody:
+      'No account and no telemetry upload. Your data stays on this device and can be exported as JSON or a full archive pack at any time.',
     labTitle: 'Lab',
     soundGroupTitle: 'Sound',
     diagnosticsLabel: 'Diagnostics',
@@ -639,6 +661,7 @@ export const en: TranslationSchema = {
     savedToast: 'Yearbook saved',
     copiedToast: 'Yearbook copied to clipboard',
     copyFail: 'Copy failed. Try Save image.',
+    copyFallbackToast: 'Clipboard unavailable — PNG downloaded instead',
     sections: {
       overview: 'The year',
       months: 'Twelve months',
@@ -689,6 +712,7 @@ export const en: TranslationSchema = {
     entry: 'Archive',
     title: 'Building archive',
     completedAt: (date) => `Completed ${date}`,
+    unknownDate: 'Unknown',
     nth: (n) => `No. ${n}`,
     metrics: { blocks: 'Blocks', days: 'Days', topHabit: 'Top habit', perfectDays: 'All-clear days', bonusBlocks: 'Bonus blocks' },
     timeline: 'Timeline',
@@ -719,5 +743,6 @@ export const en: TranslationSchema = {
     gaveUp: 'Gave up; nothing was checked in',
     persistedHint: 'Timing uses real time; reopening the app shows the current state',
     notificationBody: (name) => `Focus time for "${name}" is up. Confirm to place the block.`,
+    moreSessions: (n) => (n === 1 ? '1 more focus session' : `${n} more focus sessions`),
   },
 }
