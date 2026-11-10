@@ -5,6 +5,14 @@ export type HabitFrequency =
   | { type: 'weekly'; times: number }
   | { type: 'custom'; days: number[] } // 1=周一, 2=周二 ... 7=周日
 
+/** 提醒窗口："HH:mm"（24 小时制，同一天内，start < end） */
+export interface HabitReminder {
+  /** 开始提醒时刻（必填） */
+  start: string
+  /** 截止时刻（选填）：距截止 30 分钟内会再催一次；不填则当天 23:59 前有效 */
+  end?: string
+}
+
 export interface Habit {
   id: string
   name: string
@@ -17,6 +25,8 @@ export interface Habit {
   kind?: HabitKind
   /** 选填：归属时段 */
   period?: HabitPeriod
+  /** 选填：到点提醒窗口（缺省 = 不提醒） */
+  reminder?: HabitReminder
   /** 选填：目标时长（分钟） */
   targetMinutes?: number
   /** 选填：量化目标数值（如 2000ml / 50个） */
@@ -36,6 +46,7 @@ export interface Habit {
 export interface HabitExtra {
   kind?: HabitKind
   period?: HabitPeriod
+  reminder?: HabitReminder
   targetMinutes?: number
   targetValue?: number
   unit?: string
@@ -69,6 +80,8 @@ export interface CheckIn {
   mood?: MicroMood
   /** 精选星标铭文 */
   starred?: boolean
+  /** 该次打卡掉落的积木是否为连击里程碑奖励块（点缀色描边）；投影重建时据此还原 PlacedBlock.bonus */
+  bonus?: boolean
 }
 
 export type BlockType = 'basic' | 'window' | 'gate'
@@ -84,7 +97,6 @@ export interface BlockDef {
 
 export interface Blueprint {
   id: string
-  name: string
   /** 数组顺序即拼建顺序：自下而上、由内向外 */
   blocks: BlockDef[]
 }
@@ -141,8 +153,18 @@ export interface AppSettings {
   soundMaterial?: SoundMaterial
   /** 全局静音开关（重启保持） */
   soundMuted?: boolean
+  /** 习惯到点提醒总开关（免打扰闸，默认开；重启保持） */
+  remindersEnabled?: boolean
   /** 主音量 0~100（默认 100，重启保持） */
   volume?: number
+  /** 晚间收尾提醒开关（D-20261110-055）：默认关，首次打卡后由用户显式开启 */
+  eveningNudgeEnabled?: boolean
+  /** 晚间收尾提醒时刻 "HH:mm"，默认 21:00 */
+  eveningNudgeTime?: string
+  /** 迷你摆件尺寸档（D-20261110-059）：口袋 / 标准 / 展台 */
+  miniWidgetSize?: 'pocket' | 'standard' | 'display'
+  /** 迷你摆件是否置顶（默认关，避免打扰） */
+  miniWidgetAlwaysOnTop?: boolean
   /** 移动端陀螺仪重力微视差 (默认关闭，遵循 Apple 减弱动态无障碍规范) */
   enableGyroscope?: boolean
   /** 积木透视考古探针模式 (透视幽灵蓝图 + 琥珀色随笔高亮) */
@@ -150,6 +172,8 @@ export interface AppSettings {
 }
 export interface AppState {
   schemaVersion: 2
+  /** 蓝图内容版本（B1）：独立于 schemaVersion；缺省视为 1，高于本安装包时旧客户端必须拒绝读取 */
+  contentVersion?: number
   habits: Habit[]
   checkIns: CheckIn[]
   builds: PlacedBlock[]
@@ -160,12 +184,22 @@ export interface AppState {
   dayClaims: DayClaim[]
   /** 全勤领取墓碑 */
   deletedDayClaims?: DeletedDayClaim[]
-  /** 修复积木库存数量（最高储存 2 块） */
+  /** 修复积木库存数量（月度额度 2 + 连击里程碑，最高 4 块） */
   repairBricks?: number
+  /** 最近一次发放月度额度的月份键（'YYYY-MM'），用于补签时结算月额度（F8） */
+  repairBrickMonth?: string
   /** 展台沙盘模型摆放位置 */
   showcasePlacements?: ShowcasePlacement[]
   /** 蓝图落成奠基石铭言：blueprintId -> noteText */
   foundationNotes?: Record<string, string>
+  /** 提醒当日处置记录：habitId -> { date, action }，用于「跳过今天」跨重启静默 */
+  reminderLog?: Record<string, ReminderLogEntry>
+}
+
+/** 提醒处置记录：date 是事实主键（本地时区 YYYY-MM-DD），跨天自动失效 */
+export interface ReminderLogEntry {
+  date: string
+  action: 'skipped'
 }
 
 export interface CheckInResult {

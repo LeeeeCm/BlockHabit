@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
 import { blueprints, getBlueprint } from '../logic/blueprints'
 import { findNextAvailablePlacement, SHOWCASE_GRID_SIZE } from '../logic/showcase'
 import { ShowcaseScene } from '../render/ShowcaseScene'
 import { PolaroidModal } from '../components/PolaroidModal'
+import { GuideTip } from '../components/GuideTip'
+import { hasSeenTip, markTipSeen } from '../platform/guideTips'
 import { useI18n } from '../i18n'
 import { IconBulb, IconSparkle } from '../components/Icons'
 import type { ShowcasePlacement } from '../types'
@@ -17,7 +20,13 @@ export default function Showcase() {
   const updateShowcasePlacement = useAppStore((s) => s.updateShowcasePlacement)
   const completed = useAppStore((s) => s.completedBlueprintIds)
   const [selectedBlueprintId, setSelectedBlueprintId] = useState<string | null>(null)
-  const [arrangeToast, setArrangeToast] = useState<string | null>(null)
+  const [arrangeToast, showArrangeToast] = useTransient<string>(2400)
+  // 页面提示（D-20261110-054）：已有摆放时首次提示拖动/点击；挂载即标记已读
+  const [showGuideTip, setShowGuideTip] = useState(() => !hasSeenTip('showcase'))
+  const guideTipVisible = showGuideTip && showcasePlacements.length > 0
+  useEffect(() => {
+    if (guideTipVisible) markTipSeen('showcase')
+  }, [guideTipVisible])
   function handleAutoArrange() {
     const list = completed.length > 0 ? completed : ['plant']
     const next: ShowcasePlacement[] = []
@@ -35,8 +44,7 @@ export default function Showcase() {
       updateShowcasePlacement(p.blueprintId, p.gridX, p.gridY)
     }
     if (overflow) {
-      setArrangeToast(t.showcase.fullHint)
-      setTimeout(() => setArrangeToast(null), 2400)
+      showArrangeToast(t.showcase.fullHint, 2400)
     }
   }
 
@@ -56,8 +64,8 @@ export default function Showcase() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-          <span style={{ fontWeight: 700, fontSize: 16 }}>{t.showcase.title}</span>
-          <span style={{ fontSize: 12, color: 'var(--ink-2)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontWeight: 700, fontSize: 'var(--fs-title)' }}>{t.showcase.title}</span>
+          <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
             <IconBulb size={13} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span>{t.showcase.dragHint}</span>
           </span>
@@ -68,7 +76,7 @@ export default function Showcase() {
             <button
               className="btn ghost"
               onClick={handleAutoArrange}
-              style={{ fontSize: 12, padding: '4px 12px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+              style={{ fontSize: 'var(--fs-small)', padding: '4px 12px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }}
               title={t.showcase.autoArrange}
             >
               <IconSparkle size={12} style={{ color: 'var(--accent)' }} />
@@ -85,7 +93,7 @@ export default function Showcase() {
               border: '1px solid var(--line)',
               borderRadius: 999,
               padding: '3px 12px',
-              fontSize: 12,
+              fontSize: 'var(--fs-small)',
               fontWeight: 600,
             }}
           >
@@ -115,7 +123,7 @@ export default function Showcase() {
               backdropFilter: 'blur(8px)',
               borderRadius: 'var(--r-md)',
               border: '1px solid var(--line)',
-              fontSize: 13,
+              fontSize: 'var(--fs-body)',
               color: 'var(--ink-2)',
               lineHeight: 1.6,
             }}
@@ -124,6 +132,17 @@ export default function Showcase() {
           </div>
         )}
       </div>
+
+      {/* D-20261110-054：首次有摆放时给一次「拖动换位置 / 点击看相纸」提示 */}
+      {guideTipVisible && (
+        <GuideTip
+          variant="fixed"
+          title={t.guide.showcaseTitle}
+          body={t.guide.showcaseBody}
+          dismissLabel={t.guide.gotIt}
+          onDismiss={() => setShowGuideTip(false)}
+        />
+      )}
 
       {/* 点击模型打开拍立得纪念卡 */}
       {selectedBlueprintId && (

@@ -5,6 +5,7 @@ import type { AppState } from '../types'
 import { DEFAULT_WEBDAV_CONFIG, type SyncStatus, type WebDavConfig } from './types'
 import { fetchRemoteState, pushRemoteState, WebDavError } from './webdav'
 import { mergeAppState } from './merge'
+import { serializeState } from '../store/serializeState'
 
 const CONFIG_STORAGE_KEY = 'blockhabit_webdav_config'
 
@@ -46,21 +47,7 @@ export function saveWebDavConfig(config: WebDavConfig): void {
 }
 
 function buildLocalState(): AppState {
-  const store = useAppStore.getState()
-  return {
-    schemaVersion: 2,
-    habits: store.habits,
-    checkIns: store.checkIns,
-    builds: store.builds,
-    activeBlueprintId: store.activeBlueprintId,
-    completedBlueprintIds: store.completedBlueprintIds,
-    settings: store.settings,
-    dayClaims: store.dayClaims,
-    deletedDayClaims: store.deletedDayClaims ?? [],
-    repairBricks: store.repairBricks,
-    showcasePlacements: store.showcasePlacements,
-    foundationNotes: store.foundationNotes,
-  }
+  return serializeState(useAppStore.getState())
 }
 
 /** 拉取远端 → 迁移/校验为当前 schema；失败抛 SyncFlowError */
