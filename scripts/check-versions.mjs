@@ -42,7 +42,7 @@ export function readVersions(root = ROOT) {
   return {
     packageJson: pkg.version ?? null,
     tauriConf: tauri.version ?? null,
-    cargoToml: cargoVersion,
+    cargoToml: cargoVersion
   }
 }
 
@@ -57,7 +57,7 @@ export function checkVersions(root = ROOT) {
     ok: values.size === 1 && missing.length === 0,
     versions,
     missing,
-    mismatches,
+    mismatches
   }
 }
 
@@ -80,7 +80,9 @@ if (isMain) {
       console.error('  - ' + file + ': ' + (version ?? '(缺失)'))
     }
     if (result.missing.length > 0) console.error('  缺失字段：' + result.missing.join(', '))
-    console.error('  请同步 package.json / src-tauri/tauri.conf.json / src-tauri/Cargo.toml 的版本号。')
+    console.error(
+      '  请同步 package.json / src-tauri/tauri.conf.json / src-tauri/Cargo.toml 的版本号。'
+    )
   }
   process.exit(result.ok ? 0 : 1)
 }

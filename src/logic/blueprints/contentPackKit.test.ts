@@ -7,7 +7,7 @@ import {
   packBlockCount,
   planAppendedOrder,
   validateContentPackDraft,
-  type ContentPackContext,
+  type ContentPackContext
 } from './contentPackKit'
 
 /**
@@ -18,14 +18,14 @@ const BASE_PACK: ContentPack = {
   id: 'base',
   version: 1,
   releasedAt: '2026-11-10',
-  blueprintIds: ['a', 'b'],
+  blueprintIds: ['a', 'b']
 }
 
 const CONTEXT: ContentPackContext = {
   packs: [BASE_PACK],
   order: ['a', 'b'],
   blockCounts: { a: 100, b: 95, c: 95, d: 85, e: 105, f: 90, g: 110 },
-  currentVersion: 2,
+  currentVersion: 2
 }
 
 function draft(overrides: Partial<{ id: string; version: number; blueprintIds: string[] }> = {}) {
@@ -33,7 +33,7 @@ function draft(overrides: Partial<{ id: string; version: number; blueprintIds: s
     id: 'v3',
     version: 3,
     blueprintIds: ['c', 'd', 'e', 'f', 'g'],
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -76,7 +76,11 @@ describe('contentPackKit：validateContentPackDraft', () => {
 
   it('已发布包默认上下文：候选包含既有蓝图会被拒绝', () => {
     // 默认注册表已到 v3（23 座），下一个合法版本是 4
-    const result = validateContentPackDraft({ id: 'v4', version: nextContentVersion(), blueprintIds: ['plant'] })
+    const result = validateContentPackDraft({
+      id: 'v4',
+      version: nextContentVersion(),
+      blueprintIds: ['plant']
+    })
     expect(result.ok).toBe(false)
     expect(result.errors.join('\n')).toMatch(/已在既有内容包中：plant/)
     expect(result.errors.join('\n')).toMatch(/不得包含既有蓝图/)
@@ -101,27 +105,45 @@ describe('contentPackKit：validateContentPackDraft', () => {
   })
 
   it('blueprintIds 重复 / 未注册 / 已在既有包中均报错', () => {
-    const dup = validateContentPackDraft(draft({ blueprintIds: ['c', 'c', 'd', 'e', 'f'] }), { context: CONTEXT })
+    const dup = validateContentPackDraft(draft({ blueprintIds: ['c', 'c', 'd', 'e', 'f'] }), {
+      context: CONTEXT
+    })
     expect(dup.errors.join('\n')).toMatch(/重复/)
 
-    const unknown = validateContentPackDraft(draft({ blueprintIds: ['c', 'd', 'e', 'f', 'zzz'] }), { context: CONTEXT })
+    const unknown = validateContentPackDraft(draft({ blueprintIds: ['c', 'd', 'e', 'f', 'zzz'] }), {
+      context: CONTEXT
+    })
     expect(unknown.errors.join('\n')).toMatch(/未注册：zzz/)
 
-    const existing = validateContentPackDraft(draft({ blueprintIds: ['a', 'c', 'd', 'e'] }), { context: CONTEXT })
+    const existing = validateContentPackDraft(draft({ blueprintIds: ['a', 'c', 'd', 'e'] }), {
+      context: CONTEXT
+    })
     expect(existing.errors.join('\n')).toMatch(/已在既有内容包中：a/)
   })
 
   it('座数区间 4–6：3 座或 7 座报错', () => {
-    const tooFew = validateContentPackDraft(draft({ blueprintIds: ['c', 'd', 'e'] }), { context: CONTEXT })
+    const tooFew = validateContentPackDraft(draft({ blueprintIds: ['c', 'd', 'e'] }), {
+      context: CONTEXT
+    })
     expect(tooFew.ok).toBe(false)
-    const tooMany = validateContentPackDraft(draft({ blueprintIds: ['c', 'd', 'e', 'f', 'g', 'a', 'b'] }), { context: CONTEXT })
+    const tooMany = validateContentPackDraft(
+      draft({ blueprintIds: ['c', 'd', 'e', 'f', 'g', 'a', 'b'] }),
+      { context: CONTEXT }
+    )
     expect(tooMany.ok).toBe(false)
   })
 
   it('每座 80–120 块与整包 400–600 块区间可覆盖（供其他规模复用）', () => {
     const small = validateContentPackDraft(draft(), {
       context: CONTEXT,
-      rules: { minPackBuildings: 1, maxPackBuildings: 1, minPackBlocks: 1, maxPackBlocks: 9999, minBlocksPerBuilding: 1, maxBlocksPerBuilding: 999 },
+      rules: {
+        minPackBuildings: 1,
+        maxPackBuildings: 1,
+        minPackBlocks: 1,
+        maxPackBlocks: 9999,
+        minBlocksPerBuilding: 1,
+        maxBlocksPerBuilding: 999
+      }
     })
     // 仍会因 5 座 > maxPackBuildings=1 而失败，但块数规则已放宽，错误里不应再有块数区间
     expect(small.errors.join('\n')).toMatch(/座数/)
@@ -131,7 +153,7 @@ describe('contentPackKit：validateContentPackDraft', () => {
   it('候选包保持全部规则错误一次性返回（不被首个错误短路）', () => {
     const result = validateContentPackDraft(
       { id: 'BAD ID', version: 9, blueprintIds: ['c', 'c', 'plant'] },
-      { context: CONTEXT },
+      { context: CONTEXT }
     )
     expect(result.ok).toBe(false)
     expect(result.errors.length).toBeGreaterThanOrEqual(4)

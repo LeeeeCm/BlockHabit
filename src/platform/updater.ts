@@ -23,9 +23,7 @@ export type UpdateCheckResult =
 
 /** 安装更新的结果（UI 可选使用；安装成功后 Windows 安装器默认重启应用） */
 export type UpdateInstallResult =
-  | { status: 'disabled' }
-  | { status: 'installed' }
-  | { status: 'error'; error: UpdaterErrorInfo }
+  { status: 'disabled' } | { status: 'installed' } | { status: 'error'; error: UpdaterErrorInfo }
 
 export interface UpdaterErrorInfo {
   /** 稳定的错误码，UI 不直接展示；便于日志与后续文案映射 */

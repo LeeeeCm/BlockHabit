@@ -172,7 +172,7 @@ export function makeWatertowerBlueprint(): Blueprint {
     [0, 0],
     [3, 0],
     [0, 3],
-    [3, 3],
+    [3, 3]
   ]
   for (const [x, y] of LEGS) b.fill(x, x, y, y, 1, 3, 'basic', C_LEG)
   // 木斜撑 4 块（z2，各自与一根支腿同层相邻，不悬空）

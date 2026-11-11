@@ -22,7 +22,17 @@ function makeRepo(files) {
 
 describe('parseCargoPackageVersion', () => {
   it('只取 [package] 段的 version，忽略其它段与注释', () => {
-    const toml = ['[workspace]', 'version = "9.9.9"', '', '[package]', 'name = "blockhabit"', 'version = "0.2.0"', '', '[dependencies]', 'version = "1.2.3"'].join('\n')
+    const toml = [
+      '[workspace]',
+      'version = "9.9.9"',
+      '',
+      '[package]',
+      'name = "blockhabit"',
+      'version = "0.2.0"',
+      '',
+      '[dependencies]',
+      'version = "1.2.3"'
+    ].join('\n')
     expect(parseCargoPackageVersion(toml)).toBe('0.2.0')
   })
 
@@ -44,7 +54,7 @@ describe('checkVersions', () => {
     const dir = makeRepo({
       packageJson: { version: '1.2.3' },
       tauriConf: { version: '1.2.3' },
-      cargoToml: '[package]\nname = "blockhabit"\nversion = "1.2.3"\n',
+      cargoToml: '[package]\nname = "blockhabit"\nversion = "1.2.3"\n'
     })
     expect(checkVersions(dir)).toMatchObject({ ok: true, missing: [] })
   })
@@ -53,18 +63,22 @@ describe('checkVersions', () => {
     const dir = makeRepo({
       packageJson: { version: '1.2.3' },
       tauriConf: { version: '1.2.4' },
-      cargoToml: '[package]\nversion = "1.2.3"\n',
+      cargoToml: '[package]\nversion = "1.2.3"\n'
     })
     const result = checkVersions(dir)
     expect(result.ok).toBe(false)
-    expect(result.versions).toEqual({ packageJson: '1.2.3', tauriConf: '1.2.4', cargoToml: '1.2.3' })
+    expect(result.versions).toEqual({
+      packageJson: '1.2.3',
+      tauriConf: '1.2.4',
+      cargoToml: '1.2.3'
+    })
   })
 
   it('缺少版本字段时 ok=false 并标出缺失项', () => {
     const dir = makeRepo({
       packageJson: { version: '1.2.3' },
       tauriConf: {},
-      cargoToml: '[package]\nversion = "1.2.3"\n',
+      cargoToml: '[package]\nversion = "1.2.3"\n'
     })
     const result = checkVersions(dir)
     expect(result.ok).toBe(false)

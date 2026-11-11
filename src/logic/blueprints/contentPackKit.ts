@@ -58,7 +58,7 @@ export const DEFAULT_CONTENT_PACK_RULES: Required<ContentPackRules> = {
   minPackBuildings: 4,
   maxPackBuildings: 6,
   minPackBlocks: 400,
-  maxPackBlocks: 600,
+  maxPackBlocks: 600
 }
 
 const PACK_ID_RE = /^[a-z0-9][a-z0-9-]*$/
@@ -71,7 +71,7 @@ export function existingPackBlueprintIds(packs: ContentPack[] = CONTENT_PACKS): 
 /** 某批蓝图的总块数（未知 id 计 0；调用方应先用校验排除未知 id） */
 export function packBlockCount(
   blueprintIds: string[],
-  blockCounts?: Record<string, number>,
+  blockCounts?: Record<string, number>
 ): number {
   const counts = blockCounts ?? countRegisteredBlocks()
   let total = 0
@@ -92,7 +92,10 @@ export function nextContentVersion(currentVersion: number = CONTENT_VERSION): nu
 }
 
 /** 把新包追加到现有蓝图顺序末尾（纯函数；不校验，校验交给 validateContentPackDraft） */
-export function planAppendedOrder(draft: ContentPackDraft, order: string[] = blueprintOrder): string[] {
+export function planAppendedOrder(
+  draft: ContentPackDraft,
+  order: string[] = blueprintOrder
+): string[] {
   return [...order, ...draft.blueprintIds]
 }
 
@@ -102,7 +105,7 @@ export function planAppendedOrder(draft: ContentPackDraft, order: string[] = blu
  */
 export function validateContentPackDraft(
   draft: ContentPackDraft,
-  options: { context?: ContentPackContext; rules?: ContentPackRules } = {},
+  options: { context?: ContentPackContext; rules?: ContentPackRules } = {}
 ): ContentPackCheck {
   const context = options.context ?? {}
   const rules = { ...DEFAULT_CONTENT_PACK_RULES, ...options.rules }
@@ -121,7 +124,9 @@ export function validateContentPackDraft(
 
   const expectedVersion = nextContentVersion(currentVersion)
   if (!Number.isInteger(draft.version) || draft.version !== expectedVersion) {
-    errors.push('version 必须为 nextContentVersion() = ' + expectedVersion + '（当前 ' + currentVersion + '）')
+    errors.push(
+      'version 必须为 nextContentVersion() = ' + expectedVersion + '（当前 ' + currentVersion + '）'
+    )
   }
 
   const ids = draft.blueprintIds ?? []
@@ -141,18 +146,38 @@ export function validateContentPackDraft(
   }
 
   if (ids.length < rules.minPackBuildings || ids.length > rules.maxPackBuildings) {
-    errors.push('座数 ' + ids.length + ' 不在 ' + rules.minPackBuildings + '–' + rules.maxPackBuildings + ' 之间')
+    errors.push(
+      '座数 ' +
+        ids.length +
+        ' 不在 ' +
+        rules.minPackBuildings +
+        '–' +
+        rules.maxPackBuildings +
+        ' 之间'
+    )
   }
   for (const id of ids) {
     const count = blockCounts[id]
     if (count == null) continue
     if (count < rules.minBlocksPerBuilding || count > rules.maxBlocksPerBuilding) {
-      errors.push('建筑 ' + id + ' 块数 ' + count + ' 不在 ' + rules.minBlocksPerBuilding + '–' + rules.maxBlocksPerBuilding + ' 之间')
+      errors.push(
+        '建筑 ' +
+          id +
+          ' 块数 ' +
+          count +
+          ' 不在 ' +
+          rules.minBlocksPerBuilding +
+          '–' +
+          rules.maxBlocksPerBuilding +
+          ' 之间'
+      )
     }
   }
   const total = packBlockCount(ids, blockCounts)
   if (ids.length > 0 && (total < rules.minPackBlocks || total > rules.maxPackBlocks)) {
-    errors.push('整包块数 ' + total + ' 不在 ' + rules.minPackBlocks + '–' + rules.maxPackBlocks + ' 之间')
+    errors.push(
+      '整包块数 ' + total + ' 不在 ' + rules.minPackBlocks + '–' + rules.maxPackBlocks + ' 之间'
+    )
   }
 
   return { ok: errors.length === 0, errors }

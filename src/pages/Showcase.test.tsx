@@ -11,7 +11,7 @@ import type { ShowcasePlacement } from '../types'
  * 画布渲染（ShowcaseScene）与拍立得用桩替换，只钉「解锁/开关/点击语义/旋转/换植被/不落盘」。
  */
 const { sceneProps } = vi.hoisted(() => ({
-  sceneProps: [] as Array<Record<string, unknown>>,
+  sceneProps: [] as Array<Record<string, unknown>>
 }))
 
 // React 19 的 act 需要显式声明测试环境（与其它 jsdom 测试保持一致）
@@ -35,13 +35,13 @@ vi.mock('../render/ShowcaseScene', () => ({
         ))}
       </div>
     )
-  },
+  }
 }))
 
 vi.mock('../components/PolaroidModal', () => ({
   PolaroidModal: (props: { blueprint: { id: string } }) => (
     <div data-testid="polaroid">{props.blueprint.id}</div>
-  ),
+  )
 }))
 
 vi.mock('../components/GuideTip', () => ({ GuideTip: () => null }))
@@ -53,7 +53,7 @@ function seedStore(completed: string[], placements: ShowcasePlacement[]) {
   useAppStore.setState({
     completedBlueprintIds: completed,
     showcasePlacements: placements,
-    settings: { ...useAppStore.getState().settings, language: 'zh', enableEcoProps: true },
+    settings: { ...useAppStore.getState().settings, language: 'zh', enableEcoProps: true }
   })
 }
 
@@ -70,7 +70,8 @@ function renderShowcase(): HTMLDivElement {
 
 function findButton(target: HTMLDivElement, label: string): HTMLButtonElement {
   const hit = Array.from(target.querySelectorAll('button')).find(
-    (b) => b.textContent?.includes(label) || b.getAttribute('aria-label') === label || b.title === label,
+    (b) =>
+      b.textContent?.includes(label) || b.getAttribute('aria-label') === label || b.title === label
   )
   if (!hit) throw new Error(`button not found: ${label}`)
   return hit
@@ -197,7 +198,7 @@ describe('Showcase 自由装饰模式（D-20261111-068）', () => {
     expect(after).toBe(before)
     // 会话态只在 React 子组件 props 上，不在 store 的持久化字段里
     expect(useAppStore.getState().showcasePlacements).toEqual([
-      { blueprintId: 'plant', gridX: 2, gridY: 2 },
+      { blueprintId: 'plant', gridX: 2, gridY: 2 }
     ])
   })
 })
