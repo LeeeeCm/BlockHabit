@@ -163,6 +163,15 @@ export interface TranslationSchema {
     dragHint: string
     emptyHint: string
     fullHint: string
+    /** D-068 自由装饰模式（全落成后解锁；旋转/植被重排仅本次会话有效） */
+    decoration: string
+    decorationHint: string
+    exitDecoration: string
+    rotateLeft: string
+    rotateRight: string
+    rotateBlocked: string
+    ecoReshuffle: string
+    ecoReshuffled: string
   }
   stats: {
     title: string
@@ -411,6 +420,18 @@ export interface TranslationSchema {
     aboutUpgradeBody: string
     aboutLocalTitle: string
     aboutLocalBody: string
+    /** D-069 手动检查更新（发布链路未配置时诚实禁用） */
+    updateTitle: string
+    updateCurrent: (version: string) => string
+    updateCheck: string
+    updateChecking: string
+    updateCancel: string
+    updateLatest: string
+    updateAvailable: (version: string) => string
+    updateDownload: string
+    updateDisabled: string
+    updateError: string
+    updateCheckedAt: (time: string) => string
     /** D4：实验性开关组（默认折叠） */
     labTitle: string
     /** D4：声音分组（音效开关 + 音量） */
