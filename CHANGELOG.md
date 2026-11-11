@@ -3,6 +3,33 @@
 本项目遵循「每次改动都能追到一条设计记录」的约定：每条变更下方的 `D-YYYYMMDD-NNN` 指向
 `design/records/` 里对应的记录（含背景、方案、取舍与验收证据）。
 
+## [未发布] — 2026-11-12（第十一轮：P3 收尾 / 审核摘要 / 发布链路脚手架）
+
+人类确认「开始做」后，处理第十轮 verifier 的 P3 与发布准备项。**未新增运行时依赖、版本仍 0.2.0、无密钥入库。**
+
+### P3 收尾（D-20261112-071 approved）
+
+- 移动端（实验态）新增工具类 `.touch-target-mobile`：仅在 ≤640px 断点给装饰模式开关与「检查更新」按钮 44×44 命中区域；桌面尺寸不变；不新增颜色/圆角/阴影。
+- 图鉴「可建造但未开始」卡片由「开始建造 · 94 / 94 块」改为「开始建造 · 共 94 块」（新增 `gallery.totalBlocks` zh/en），不再把容量读成进度；进行中/已完成口径不变；测试 +1。
+- 装饰会话态与 `updateShowcasePlacement` 仍按基础 footprint 二次校验的限制继续在 D-068/发布报告中如实记录（本轮不改 store 接口）。
+
+### 58 条 proposed 记录批量审核摘要
+
+- `design/REVIEW-QUEUE.md` §12 新增 58 条 proposed 记录的分组摘要：已实施功能 6 / 已实施工程 40 / 文档·方案·决议 12；每条给出「建议批准」，并标注 D-048 的 F6「暂不接 updater」已被 D-069/C4 取代。**未改动任何记录状态**，仅作为人类批量审批入口。
+
+### 发布链路脚手架（C4，代码就绪；凭证仍待人类）
+
+- 新增 `.github/workflows/release.yml`：手动触发（workflow_dispatch），跑 tsc/test/design/format/check:versions，校验输入版本与构建文件一致，带 `TAURI_SIGNING_PRIVATE_KEY` 构建签名包，创建 GitHub Release 并生成/上传 `latest.json`。
+- 新增 `src-tauri/tauri.release.conf.json`：发布专用 `createUpdaterArtifacts: true`（本地默认构建不受影响，开发者无需密钥）。
+- 新增 `scripts/make-latest-json.mjs`：Tauri updater latest.json 纯数据组装 + 校验（version/https/signature/platform），8 例单测；已纳入 `format:check`。
+- 新增 `docs/release/release-runbook.md`：密钥生成/保管、pubkey 与 endpoints 填写、Actions secrets、发布步骤、T6 验收、回滚、私有仓库需公开或 CDN 的明确限制、`on_before_exit` 前置项。
+- 实测 `npx tauri build --no-bundle --config src-tauri/tauri.release.conf.json` 成功（配置合并路径正确）。
+
+### 验证
+
+- 实测：`npx tsc --noEmit` 0 错；`npm test` **105 文件 / 1099 用例全绿**（新增 latest.json 8 例 + 图鉴 1 例）；`design:check` **71 条**；`format:check`、`check:versions` 通过；`build` 426.19KB / gzip 130.33KB；`tauri build --no-bundle --config src-tauri/tauri.release.conf.json` 成功。
+- 仍未做：签名私钥/pubkey 实际值、发布端点与 latest.json 托管、CI secrets、Windows 代码签名、`on_before_exit` 存档握手、T6/T7 真机验收。
+
 ## [未发布] — 2026-11-11（第十轮：人类批准项落地 —— 自由装饰模式 / 内容包 v3 / 手动检查更新）
 
 人类确认「批准所有内容，继续完成，合并 main」后，本轮把此前 blocked 的三项全部落地：

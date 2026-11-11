@@ -117,3 +117,9 @@ npm run build
 npm run tauri build -- --no-bundle
 # 浏览器/性能/真机：见 .tmp-c5/report.md、.tmp-verify-*/report.md、docs/release/real-device-acceptance.md
 ```
+## 8. 第十一轮（2026-11-12）：P3 收尾与发布链路脚手架
+
+- **P3（D-20261112-071 approved）**：移动端装饰开关/检查更新按钮 44×44（≤640px 断点）；图鉴未开始卡片改为「共 N 块」；store 校验口径继续记录为已知限制。
+- **审核摘要**：REVIEW-QUEUE §12 给出 58 条 proposed 的分组摘要（6 功能 / 40 工程 / 12 文档决议），供人类批量审批。
+- **发布脚手架**：release workflow（手动触发）+ tauri.release.conf.json + latest.json 生成器（8 例测试）+ release-runbook；本机已验证配置合并与构建；**签名密钥/端点/secrets/on_before_exit 仍待人类**。
+- 台账 71 条（13 approved）；本轮提交后 push 至 origin/main，走 GitHub Actions CI 复核。
