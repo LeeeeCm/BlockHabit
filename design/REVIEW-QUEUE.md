@@ -169,3 +169,19 @@
   4. C6：按 `docs/release/real-device-acceptance.md` 在真实 Windows 设备执行多屏/HiDPI、A4 落盘/reveal、三服务商 WebDAV、25 分钟专注+通知+托盘、100 块时间线。
   5. 其余 59 条 proposed 记录按 REVIEW-QUEUE §1–§9 分组审核。
 - **独立验证**：verifier **PASS（P0=0 / P1=0）**，P2 两项已处置（单条中间提交不可编译的主题切片限制 + 行数口径/再拆 archiveZip），P3 三项已修正/记录；报告 `.tmp-verify-final/report.md`（不提交产物）。
+
+## 11. 2026-11-11 第十轮：人类批准项全部落地（发布候选完成）
+
+- **人类决策（LeeCM）**：「批准你的所有内容，继续完成，合并 main」。据此 D-068（自由装饰模式）与 D-069（手动检查更新）由 proposed → approved 并实现；新增 D-20261111-070（内容包 v3：5 座 / 500 块 / CONTENT_VERSION=3）approved 并实现。
+- **Git**：分支 `chore/release-prep` 在第九轮 23 条基础上新增 5 条（i18n、自由装饰模式、内容包 v3、updater 骨架、第十轮文档），共 **28 条**；随后 `--no-ff` 合并到 `main`（不 push、不打 tag、版本仍 0.2.0）。工作区干净。
+- **C1 自由装饰模式**：全落成后展台解锁装饰模式；会话内 90° 旋转（整数格点、宽深互换、越界/碰撞回退）+ 换一组植被；旋转/植被只存 React state（不写存档/settings/schema，重启复原）；移动端 44px、四主题 zh/en、reduced-motion 验证；已知限制：store 落位二次校验仍按基础 footprint（旋转仅会话态），极端拖拽回弹但无数据损坏。
+- **C3 内容包 v3**：bakery 98 / bookshop 104 / postoffice 92 / firestation 112 / watertower 94 = 500 块 → 全量 **23 座 / 2485 块**；既有 18 座 FNV 指纹锁定零改动；颜色全部复用批准 24 色板；兼容矩阵升 v4；独立 data-check 141 断言 PASS。
+- **C4 手动检查更新**：updater/process 依赖与插件骨架、AboutPanel「版本与更新」行（默认构建安全禁用并诚实说明）、零外部网络请求（单测 + 抓包）；签名密钥/发布端点/latest.json/CI secrets/代码签名/on_before_exit 存档握手仍 **blocked（人类提供后按 C4 文档 §3.7 验收）**；keyring 仍为设计+迁移方案（未接依赖、未改存储格式）。
+- **台账现状**：**70 条记录**（12 条 approved：D-059…D-070；58 条 proposed）。
+- **仍待人类处理**：
+  1. C4 发布链路：生成并保管签名密钥（仓库外/CI secrets）、发布端点与 latest.json 托管、CI release secrets、Windows Authenticode（可选）、启用前 Rust on_before_exit 存档握手；随后按 T6 真机验收。
+  2. C6 真机验收（含 T6 更新、T7 装饰模式）：按 `docs/release/real-device-acceptance.md` 在真实 Windows 设备执行并记录。
+  3. keyring 阶段三（OS keychain）：需新依赖与存储迁移决策，按评估 §4 方案 B 执行。
+  4. 其余 58 条 proposed 记录按 REVIEW-QUEUE 分组审核。
+  5. 远程发布：本轮只合并本地 main，未 push/未打 tag；是否推送/发布由人类决定。
+- **独立验证**：第十轮 verifier 报告见 `.tmp-verify-r10/report.md`（不提交产物；结论以该报告为准）。

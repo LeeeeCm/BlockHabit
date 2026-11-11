@@ -3,6 +3,50 @@
 本项目遵循「每次改动都能追到一条设计记录」的约定：每条变更下方的 `D-YYYYMMDD-NNN` 指向
 `design/records/` 里对应的记录（含背景、方案、取舍与验收证据）。
 
+## [未发布] — 2026-11-11（第十轮：人类批准项落地 —— 自由装饰模式 / 内容包 v3 / 手动检查更新）
+
+人类确认「批准所有内容，继续完成，合并 main」后，本轮把此前 blocked 的三项全部落地：
+D-20261111-068（自由装饰模式）与 D-20261111-069（手动检查更新）改为 approved，
+新增 approved 记录 D-20261111-070（内容包 v3）。**版本号仍 0.2.0；不 push、不打 tag。**
+
+### C1 自由装饰模式（D-20261111-068 approved）
+
+- 全落成（`completedBlueprintIds` 覆盖 `blueprintOrder` 全部；数量动态，当前 23）后展台出现「装饰模式」开关（默认关）。
+- 会话内 90° 象限旋转：整数格点旋转 + bbox 归一化，宽深互换；旋转前校验不出界/不与其它模型（按其会话旋转）重叠，非法不应用并 toast 还原。
+- 「换一组植被」：`drawEcoProps` 增加可选 seed（默认 0 与旧实现逐像素一致），装饰模式下用 mulberry32 在 margin 环带内确定性重排。
+- 旋转/植被/选中只存在 React state：**不写存档、不改 settings、不改 schema**；退出装饰或重开复原；jsdom 断言操作前后 `exportData()` 深度相等，浏览器断言 localStorage 逐字节不变。
+- 复用 `ShowcasePlacements`/现有模型与视觉令牌；旋转按钮移动端 44×44；四主题 zh/en 截图与 reduced-motion 验证通过。
+- 测试：logic/showcase 21、render/showcaseLayout 20、pages/Showcase 6；`rotations={}` 与旧调用完全一致（回归断言）。
+- 已知限制：store 侧落位二次校验仍按基础 footprint（旋转仅会话态，不扩大 store 接口），极端拖拽会回弹，无数据损坏。
+
+### C3 内容包 v3（D-20261111-070 approved，CONTENT_VERSION=3）
+
+- 新增 5 座免费扩展蓝图（追加在既有 18 座之后，既有 18 座几何/顺序/块数/色值零改动，FNV 指纹锁定）：
+  街角面包房 bakery 98 / 旧书店 bookshop 104 / 邮政所 postoffice 92 / 消防站 firestation 112 / 水塔 watertower 94，
+  合计 500 块；全量 **23 座 / 2485 块**。
+- 新 5 座全部复用既有批准 24 色材质调色板（无新 hex），每座 7–8 色 / 4–5 材质家族 / accent ≥ 8%；`generatorsV3.ts` 承载 5 个 make*（`generators.ts` 671 行零改动）。
+- `CONTENT_VERSION=3`；新增 `CONTENT_PACK_V3_IDS` 与 `city-life-2` pack；`BASE_PACK_IDS` 同时排除 v2+v3（基础包仍恰 12 座/1385 块）。
+- 兼容矩阵随版本升级：旧 v2 档读入升 3、未来 v4 needsUpgrade（raw 不变/同步 0 请求/导入拒绝）、merge 取高不写低；三处白名单与 archive `appContentVersion` 自动跟随。
+- 图鉴 23 卡 / 容量 23 / 建造·展台·年鉴·档案·关于页数字全部动态；内容包测试 29 例、独立 `.tmp-c3/data-check.mjs` 141 断言 PASS；浏览器四主题 zh/en 23 卡、新座建造正常、0 page error。
+
+### C4 手动检查更新 + updater 骨架（D-20261111-069 approved）
+
+- 新增依赖 `@tauri-apps/plugin-updater@2.14.1` / `@tauri-apps/plugin-process@2.4.0` 与 Rust `tauri-plugin-updater` / `tauri-plugin-process`，lib.rs 注册、capabilities 授权、`plugins.updater` 占位（空 pubkey/endpoints，`installMode: passive`，未开 `createUpdaterArtifacts`）。
+- 新增 `src/platform/updater.ts`：`isUpdaterEnabled()`（`VITE_UPDATER_ENABLED=1` 且 Tauri 运行时）、`checkForUpdate()` 四态、`installUpdate()`、`discardPendingUpdate()`，插件按需动态 import。
+- 设置 → 内容路线新增「版本与更新」行：idle/checking/已是最新/发现新版本/失败；**默认构建安全禁用并如实说明「发布链路尚未启用」**；只有用户点击才联网；取消只忽略迟到结果（插件无 abort API，不误报失败）。
+- 单测 19 例（updater 10 + AboutPanel 9）含「默认构建不 import 插件/不发请求」；`npm run tauri build -- --no-bundle` 成功（Rust 2m17s）。
+- **仍 blocked（需人类提供）**：签名密钥生成与保管、发布端点 URL、`latest.json` 托管、CI release secrets、`createUpdaterArtifacts` 开启、Windows Authenticode（可选）、启用前 Rust `on_before_exit` 存档握手；keyring 仍为设计+迁移方案（未接依赖、未改存储格式）。
+
+### 文档与验证
+
+- README：23 座 / 2485 块、contentVersion=3、自由装饰模式、版本与更新说明；SURFACES：展台装饰模式、图鉴动态卡数、设置页「版本与更新」行。
+- docs/release：内容包 v3 评估更新为已实施；自动更新评估更新实施状态与 blocked 清单；真机验收清单补 T7 装饰模式与更新项。
+- 设计记录：D-068/D-069 approved + 履历、新增 D-070 approved；台账 70 条通过。
+- Lead 门禁：`npx tsc --noEmit` 0 错；`npm test` **104 文件 / 1090 用例全绿**；`npm run design:check` **70 条记录通过**；`npm run format:check`、`npm run check:versions` 通过；`npm run build` 成功（主入口 426.10KB / gzip 130.28KB，新增内容与更新入口 +11.5KB raw/+2.8KB gzip，无新运行时依赖除已批准的 updater/process）。
+- 第十轮独立 verifier：**PASS**（P0=0；P1=1 设计台账未提交 → 随第十轮 docs 提交消除；P2=2 已修复：更新失败详情脱敏可复制 / 内联 lang 三元改映射表；P3=6 记录为已知限制，见发布报告 §6）。verifier 亲测 tsc 0、104/1090、design 70、build 425.82/130.22、tauri build exit 0、内容包独立脚本 23/2485 + 旧 18 座 0 mismatch、浏览器四主题/移动端/装饰/更新禁用态 0 page error。
+- `npm run tauri build -- --no-bundle` 成功（含 updater/process 插件）。
+- 本轮完成后将 `chore/release-prep` 合并到 `main`（`--no-ff`，不 push、不打 tag）。
+
 ## [未发布] — 2026-11-11（第九轮补充：C4 零依赖项 + C3 内容包脚手架 + D-069）
 
 在第九轮发布候选基础上，继续推进「依赖与人类决策之前就能做」的零依赖收尾。**未新增依赖、未生产内容、未改视觉语言/存储格式/版本号。**

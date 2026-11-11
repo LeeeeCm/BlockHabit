@@ -85,7 +85,8 @@
 | D-20261110-065 | 2026-11-10 | 建筑即编年史：图鉴里的建筑档案卡 | approved | build, gallery | LeeCM |
 | D-20261110-066 | 2026-11-10 | 创新路线图与优先级：三波次（每天看见 / 陪伴与带走 / 长期故事） | approved | — | LeeCM |
 | D-20261111-067 | 2026-11-11 | 蓝图色彩系统：18 座模型逐座配色与材质母题 | approved | build, gallery, showcase, archive | LeeCM |
-| D-20261111-068 | 2026-11-11 | 自由装饰模式：全落成后的展台补充玩法（最小方案，proposed 待确认） | proposed | showcase | pending |
-| D-20261111-069 | 2026-11-11 | 手动检查更新入口（关于页设计草案；发布链路未启用，暂不实现） | proposed | settings | pending |
+| D-20261111-068 | 2026-11-11 | 自由装饰模式：全落成后的展台补充玩法（最小方案） | approved | showcase | LeeCM |
+| D-20261111-069 | 2026-11-11 | 手动检查更新入口（关于页） | approved | settings | LeeCM |
+| D-20261111-070 | 2026-11-11 | 内容包 v3：城市与生活续章 5 座（约 500 块）与 CONTENT_VERSION=3 | approved | build, gallery, stats, settings | LeeCM |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

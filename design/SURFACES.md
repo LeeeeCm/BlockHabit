@@ -35,16 +35,17 @@
 
 ## 4. 展台 Showcase.tsx + render/ShowcaseScene.tsx
 
-- **用途**：已落成建筑的沙盘陈列，可拖拽自由摆位。
-- **结构**：顶栏（标题 **16px** + 拖拽提示 12px + [自动排列] + 陈列计数胶囊）→ 画布（flex 1，`background: var(--bg)`）→ 空态提示卡（绝对 `left:24; bottom:24`）→ 点选建筑 → `PolaroidModal`。
+- **用途**：已落成建筑的沙盘陈列，可拖拽自由摆位；全部蓝图落成后解锁「装饰模式」（D-20261111-068）。
+- **结构**：顶栏（标题 **16px** + 拖拽提示 12px + [装饰模式/退出装饰]（仅全落成解锁）+ [自动排列] + 陈列计数胶囊）→ 画布（flex 1，`background: var(--bg)`）→ 空态提示卡（绝对 `left:24; bottom:24`）→ 点选建筑 → `PolaroidModal`。
+- **装饰模式**：点击模型改为**选中**而非开拍立得；选中后出现旋转控件（↺/↻ 90°）与「换一组植被」；旋转按 90° 象限整数格点变换（宽深互换，先校验不出界/不与其它模型重叠，失败 toast `rotateBlocked` 并还原）；旋转与植被重排**只存在本次会话 React state，不写存档/settings**，退出装饰或重开即复原；移动端旋转按钮 44×44。
 - **复用**：`ShowcaseScene`（26×26 网格、slabH 12）、`.btn.ghost`、`.toast`。
-- **尺寸**：顶栏 `14px 22px` + 1px 底边；计数胶囊 `3px 12px` + 999 圆角；自动排列按钮 `4px 12px; font-size:12`。
-- **必须**：落位必须过 `canPlaceModel`（AABB 无重叠 + 不出界）；非法落位画红虚线脚印 + `haptic('warning')`；满位要 toast（`fullHint`）而不是静默覆盖。
+- **尺寸**：顶栏 `14px 22px` + 1px 底边；计数胶囊 `3px 12px` + 999 圆角；自动排列按钮 `4px 12px; font-size:12`；装饰工具按钮移动端 ≥44px。
+- **必须**：落位必须过 `canPlaceModel`（AABB 无重叠 + 不出界，装饰模式下按会话旋转计算）；非法落位画红虚线脚印 + `haptic('warning')`；满位要 toast（`fullHint`）而不是静默覆盖；装饰模式入口不得在未全落成时出现。
 - **例外**：拖拽提示图标、自动排列图标用 accent（Showcase.tsx:61、74）——越界。
 
 ## 5. 图鉴弹窗 GalleryDialog.tsx
 
-- **用途**：12 座蓝图的解锁顺序与切换当前目标。
+- **用途**：全部蓝图（当前 23 座，随内容包动态；`blueprintOrder` 为唯一来源）的解锁顺序与切换当前目标。
 - **结构**：`.overlay > .dialog`（宽 **500**）→ `.dialog-header`（标题 + 总数 + 关闭）→ `.dialog-body > .gallery-grid`（**3 列**）→ 每卡：`BlueprintThumb` 缩略图 + 名称 14px/600 + 状态 11.5px → `.dialog-footer`（关闭）。
 - **尺寸**：`gap:10px`、卡片 `padding:14px 12px`（ui.css:570–586）；锁定态 `opacity:.5` 且 hover 不动。
 - **必须**：解锁顺序 = `blueprintOrder`（logic/blueprints/index.ts:30–43），前一座未落成才锁；锁定态不加锁图标（用状态行表达）。
@@ -55,6 +56,7 @@
 - **用途**：偏好 / 系统 / 数据 / WebDAV / 内容路线（关于）/ 实验 六组。
 - **结构**：桌面 `.dialog`（宽 **480**）· 移动 `BottomSheet` → `.dialog-body` 内分组（SettingsDialog 已拆出 `WebdavPanel` / `ArchiveDataPanel` / `AboutPanel`）：界面偏好（语言/主题/快捷键/音效/音量）· 系统集成 · 数据安全（导出/导入/备份/诊断包）· WebDAV（含冒烟自检）· **内容路线（关于）** · 实验室（进阶开关，默认折叠）→ `.dialog-footer` 常驻「完成」。
 - **内容路线（C2 / D-20261110-063 §3.5.5）**：只展示事实 —— 当前内置蓝图数与积木数（从 `blueprintOrder`/manifest 动态计算，禁止硬编码）、当前 contentVersion、年度免费扩建节奏（随安装包内置、不联网下载、不额外收费）、跨设备升级说明（更高内容版本会让旧设备拒绝读取并暂停保存）、本地优先与无遥测承诺。**不得写死未来内容包日期**；文案 zh/en 齐全，数值随内容版本自动更新。
+- **版本与更新（D-20261111-069）**：内容路线组内一行「版本与更新」——当前版本 + 检查更新按钮；状态机 idle/checking/up-to-date/available/error；**只有用户点击才联网**，无启动自动检查、无静默下载；发布链路未配置时按钮禁用并如实说明（不得出现点了没反应的按钮）；取消只忽略迟到结果（插件无 abort API，UI 不得误报失败）；不新增颜色/控件类型。
 - **尺寸**：`.apple-group` = `ink@2.5%` 底 + `1px --line` + `--r-md` + `14px 16px` + `gap:10px`（ui.css:334–343）；组标题 `11px/700 + uppercase + letter-spacing .05em`（345–352）；每行 `.field` `margin-bottom:12px`。
 - **必须**：所有开关必须来自 `settings.*` 且写回 store；关闭态文案不得出现"未实现占位"（历史上出现过幽灵开关）；组内每行一个决策，不叠加说明文字超过 2 行。
 - **例外**：WebDAV 组出现在系统集成之后，语义上属"数据"，位置为历史遗留（不阻塞，改版时并入数据组）；内容路线组紧随数据组之后，信息型内容不参与开关决策。
@@ -204,4 +206,3 @@
 - 图鉴：锁定卡使用 `BlueprintThumb` 的 `silhouette` 模式——只用 `--ink` 透明度派生灰阶、透明底、忽略建筑自定义色、不画虚线地基；卡片不再整体压暗，名字与「待解锁」保持可读；已完成/当前建筑视觉不变。
 - 解锁：完成基础 12 座后自动指向扩展包第一座，其余按 `blueprintOrder` 顺序解锁；旧 12 座数据与视觉零改动。
 - 必须：内容版本门（`contentVersion=2`）先于 sanitize；旧客户端读新档只能 needsUpgrade，不得静默清洗；图鉴 18 卡可滚动，底部关闭按钮固定。
-

@@ -1,10 +1,10 @@
 # C4 评估：自动更新 / 签名 / keyring 可行性
 
-- 日期：2026-11-11
-- 评估者：b6-release-docs（task-5）
-- 代码基线：`chore/release-prep`（HEAD 5bbcf1e，工作区含并发改动，见文末"评估时点"）
-- 性质：**只读评估 + 分步方案**。本轮没有安装任何依赖、没有生成签名密钥、没有改存储格式、没有改 `src-tauri/`。
-- 结论分级：**现在可做 / 需人类批准 / 暂不做**，见 §1。所有"未实施"项均如实标注，不写完成态。
+- 日期：2026-11-11（初版）；2026-11-11 第十轮更新实施状态
+- 评估者：b6-release-docs（task-5）；实施：c4-updater（task-9，D-20261111-069 approved）
+- 代码基线：`chore/release-prep`（第十轮 HEAD，含 updater/process 插件与手动检查更新 UI 骨架）
+- 性质：**评估 + 按批准实施**。第十轮已安装 `@tauri-apps/plugin-updater` / `plugin-process` 与 Rust 插件、注册 capabilities、新增 AboutPanel 手动检查入口（默认构建安全禁用）；**未生成/未提交签名密钥、未配置发布端点/latest.json/CI secrets**，发布链路仍需人类提供（见 §1.5、§3.7）。
+- 结论分级：**已落地 / 需人类提供 / 暂不做**，见 §1 与 §1.5。
 
 ---
 

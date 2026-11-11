@@ -609,19 +609,28 @@
       "id": "D-20261111-068",
       "date": "2026-11-11",
       "title": "自由装饰模式：全落成后的展台补充玩法（最小方案，暂不实现）",
-      "status": "proposed",
+      "status": "approved",
       "owner": "lead",
-      "reviewer": "pending",
+      "reviewer": "LeeCM",
       "file": "design/records/D-20261111-068-free-decoration-mode.md"
     },
     {
       "id": "D-20261111-069",
       "date": "2026-11-11",
       "title": "手动检查更新入口（关于页设计草案；发布链路未启用，暂不实现）",
-      "status": "proposed",
+      "status": "approved",
       "owner": "lead",
-      "reviewer": "pending",
+      "reviewer": "LeeCM",
       "file": "design/records/D-20261111-069-manual-update-check.md"
+    },
+    {
+      "id": "D-20261111-070",
+      "date": "2026-11-11",
+      "title": "内容包 v3：城市与生活续章 5 座（约 500 块）与 CONTENT_VERSION=3",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261111-070-content-pack-v3.md"
     }
   ]
 }

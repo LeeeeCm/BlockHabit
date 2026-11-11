@@ -2,13 +2,13 @@
 id: D-20261111-068
 date: 2026-11-11
 title: 自由装饰模式：全落成后的展台补充玩法（最小方案，暂不实现）
-status: proposed
+status: approved
 owner: lead
 surface: [showcase]
 axioms: [A1, A5, A7]
 files: [src/pages/Showcase.tsx, src/render/ShowcaseScene.tsx, src/render/showcaseLayout.ts, src/logic/showcase.ts, src/i18n/types.ts, src/i18n/locales/zh.ts, src/i18n/locales/en.ts]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -50,3 +50,5 @@ D-20261110-063（approved）正文已写明「全落成后提供自由装饰模�
 ## 变更履历
 
 - 2026-11-11 created (lead)：按用户本轮目标提出最小方案，status=proposed，等待人类确认；确认后按上述范围实现并补测试/四主题/移动端降级。
+- 2026-11-11 人类确认（LeeCM）：按用户「批准你的所有内容，继续完成」指示，status proposed → approved；本轮开始实现。
+- 2026-11-11 implemented (c1-decoration)：按 approved 范围落地——src/logic/showcase.ts 新增 isDecorationUnlocked / normalizeRotation / rotateBlockCoords / getRotatedFootprint / canRotatePlacement（canPlaceModel 增可选 rotations）；src/render/showcaseLayout.ts 新增 rotateBlocksForRender / buildRotatedFootprintMap，collectSortedCubes 与 buildOffsetBlocksMap 增可选 rotations，ShowcaseScene 的阴影/植被/命中检测/拖拽校验全部改用会话旋转派生；src/render/isoGround.ts 的 drawEcoProps 增可选 seed（默认 0 逐像素与旧实现一致，mulberry32 确定性重排）；src/pages/Showcase.tsx 增解锁开关（长度动态取自 blueprintOrder，不硬编码 18/23）、点击选中语义、旋转控件与「换一组植被」浮层（44px 触控、btn ghost/--ink/--line/--r-md、无新增颜色/依赖）。旋转/植被种子/选中均为本次会话 React state，不写存档、不改 settings/schema（浏览器 localStorage 与 exportData 操作前后相等已验证；退出装饰即复原，重开复原文案见 decorationHint）。测试：logic/showcase.test.ts 21 条 + render/showcaseLayout.test.ts 20 条 + 新增 src/pages/Showcase.test.tsx 6 条，全绿；npx tsc --noEmit 0 错；四主题 zh/en 与移动端 390 截图证据在 .tmp-c1/。

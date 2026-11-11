@@ -2,13 +2,13 @@
 id: D-20261111-069
 date: 2026-11-11
 title: 手动检查更新入口（关于页设计草案；发布链路未启用，暂不实现）
-status: proposed
+status: approved
 owner: lead
 surface: [settings]
 axioms: [A7]
 files: [src/components/AboutPanel.tsx, src/i18n/types.ts, src/i18n/locales/zh.ts, src/i18n/locales/en.ts, design/SURFACES.md]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -53,3 +53,5 @@ C4 评估（`docs/release/updater-and-keyring-assessment.md`）结论：Tauri 2 
 ## 变更履历
 
 - 2026-11-11 created (lead)：C4「现在可做」第 ② 项（仅设计记录，proposed，reviewer=pending）。依赖（updater/process）、签名密钥、发布端点、CI secrets 仍需人类批准。
+- 2026-11-11 人类确认（LeeCM）：按用户「批准你的所有内容，继续完成」指示，status proposed → approved；本轮开始实现。
+- 2026-11-11 实现（c4-updater，task-9）：新增 `@tauri-apps/plugin-updater@2.14.1` + `@tauri-apps/plugin-process@2.4.0` 与 Rust `tauri-plugin-updater`/`tauri-plugin-process`，lib.rs 注册插件，capabilities 加 `updater:default`/`process:default`，tauri.conf.json 加 `plugins.updater` 占位（pubkey/endpoints 为空；空值经 updater 2.14.1 Config 反序列化接受，未开启 `createUpdaterArtifacts`）；新增 `src/platform/updater.ts` 适配层（isUpdaterEnabled/checkForUpdate 四态/installUpdate/取消只忽略迟到结果）与 AboutPanel「版本与更新」行（idle/checking/latest/available/error，未启用时按钮禁用 + updateDisabled 诚实说明），i18n 未改（Key 由 Lead 提供）；测试 `src/platform/updater.test.ts` 9 例 + `src/components/AboutPanel.test.tsx` 原 3 例 + 新增 6 例全绿；`npx tsc --noEmit` 0；`npm run tauri build -- --no-bundle` 结果见 `.tmp-c4/report.md`。默认构建（未设 `VITE_UPDATER_ENABLED`）不 import 插件、不发任何请求。**仍 blocked（需人类提供）**：签名私钥生成与保管（`npx tauri signer generate`，公钥填 pubkey、私钥只进 CI secrets/离线备份）、发布端点 URL、`latest.json` 托管、CI release secrets、Windows Authenticode 代码签名；启用前还需补 Rust `on_before_exit` 存档握手与真机验收。keyring 仅更新评估文档的实施状态（设计+迁移方案，未接依赖、未改存储格式）。
