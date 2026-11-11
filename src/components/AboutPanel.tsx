@@ -274,7 +274,7 @@ export function AboutPanel() {
               )}
             </div>
             <button
-              className="btn ghost"
+              className="btn ghost touch-target-mobile"
               disabled={updateButtonDisabled}
               onClick={handleUpdateButton}
               style={{

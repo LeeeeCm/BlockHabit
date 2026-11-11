@@ -147,3 +147,11 @@
   cursor: not-allowed;
   transform: none;
 }
+/* 移动端（实验态）触控目标：≥44×44，避免新的小按钮在触摸设备上难以点按。
+   仅移动断点生效，桌面尺寸不变（D-20261112-071）。 */
+@media (max-width: 640px) {
+  .touch-target-mobile {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

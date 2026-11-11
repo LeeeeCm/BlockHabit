@@ -272,6 +272,8 @@ export interface TranslationSchema {
     inProgress: string
     locked: string
     completePreviousFirst: string
+    /** 未开始（可建造）时显示总块数，避免 total/total 被读成进度 */
+    totalBlocks: (total: number) => string
   }
   polaroid: {
     modalTitle: string

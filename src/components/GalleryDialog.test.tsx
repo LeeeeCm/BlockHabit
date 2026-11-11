@@ -2,7 +2,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GalleryDialog } from './GalleryDialog'
-import { blueprintOrder } from '../logic/blueprints'
+import { blueprintOrder, blueprints } from '../logic/blueprints'
 import { canSelectBlueprint, firstIncompleteIndex } from '../logic/blueprint'
 import { noBlockReason } from '../logic/blockHints'
 import { useAppStore } from '../store/appStore'
@@ -71,6 +71,17 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
     expect(view.cards()).toHaveLength(blueprintOrder.length)
     // 只有第一座可建，其余按顺序锁定
     expect(view.lockedCards()).toHaveLength(blueprintOrder.length - 1)
+    view.unmount()
+  })
+
+  it('未开始的可建造卡片显示总块数，不把容量读成进度（P3）', () => {
+    setState({ activeBlueprintId: blueprintOrder[1] })
+    const view = renderGallery(() => {})
+    const first = view.cards()[0]
+    const total = blueprints[blueprintOrder[0]].blocks.length
+    expect(first.textContent).toContain(zh.build.startBuildBtn)
+    expect(first.textContent).toContain(zh.gallery.totalBlocks(total))
+    expect(first.textContent).not.toContain(`${total} / ${total}`)
     view.unmount()
   })
 

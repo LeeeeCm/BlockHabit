@@ -73,7 +73,7 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
               : building
                 ? { label: `${t.gallery.inProgress} · ${placed}/${bp.blocks.length}`, color: 'var(--progress-blue)' }
                 : unlocked
-                  ? { label: `${t.build.startBuildBtn} · ${t.build.blocksCount(bp.blocks.length, bp.blocks.length)}`, color: 'var(--ink-2)' }
+                  ? { label: `${t.build.startBuildBtn} · ${t.gallery.totalBlocks(bp.blocks.length)}`, color: 'var(--ink-2)' }
                   : { label: t.gallery.locked, color: 'var(--ink-2)' }
             return (
               <div key={id} style={{ position: 'relative', minWidth: 0, display: 'flex' }}>

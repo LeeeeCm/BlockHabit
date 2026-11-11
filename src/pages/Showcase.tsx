@@ -171,7 +171,7 @@ export default function Showcase() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {decorationUnlocked && (
             <button
-              className="btn ghost"
+              className="btn ghost touch-target-mobile"
               type="button"
               onClick={toggleDecorationMode}
               aria-pressed={decorationMode}

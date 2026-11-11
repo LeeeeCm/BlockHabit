@@ -282,6 +282,7 @@ export const en: TranslationSchema = {
     inProgress: 'In Progress',
     locked: 'Locked',
     completePreviousFirst: 'Please complete the previous building first',
+    totalBlocks: (total) => `${total} blocks`,
   },
   polaroid: {
     modalTitle: 'Building Memorial Polaroid',

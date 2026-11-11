@@ -266,6 +266,7 @@ export const zh: TranslationSchema = {
     inProgress: '建造中',
     locked: '待解锁',
     completePreviousFirst: '请完成上一个积木拼装任务',
+    totalBlocks: (total) => `共 ${total} 块`,
   },
   polaroid: {
     modalTitle: '建筑落成纪念相纸',
