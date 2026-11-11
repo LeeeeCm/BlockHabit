@@ -88,5 +88,6 @@
 | D-20261111-068 | 2026-11-11 | 自由装饰模式：全落成后的展台补充玩法（最小方案） | approved | showcase | LeeCM |
 | D-20261111-069 | 2026-11-11 | 手动检查更新入口（关于页） | approved | settings | LeeCM |
 | D-20261111-070 | 2026-11-11 | 内容包 v3：城市与生活续章 5 座（约 500 块）与 CONTENT_VERSION=3 | approved | build, gallery, stats, settings | LeeCM |
+| D-20261112-071 | 2026-11-12 | P3 收尾：移动端触控目标 44px、图鉴未开始容量口径、装饰会话态说明 | approved | showcase, gallery, settings | LeeCM |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

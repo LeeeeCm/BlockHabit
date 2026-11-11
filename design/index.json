@@ -631,6 +631,15 @@
       "owner": "lead",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261111-070-content-pack-v3.md"
+    },
+    {
+      "id": "D-20261112-071",
+      "date": "2026-11-12",
+      "title": "P3 收尾：移动端触控目标 44px、图鉴未开始容量口径、装饰会话态说明",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261112-071-p3-polish.md"
     }
   ]
 }
