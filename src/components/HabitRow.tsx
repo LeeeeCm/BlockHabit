@@ -4,6 +4,7 @@ import type { CheckInResult, Habit, MicroMood } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useTimerStore } from '../store/timerStore'
 import { canCheckInHabit, isHabitDueOnDay } from '../logic/checkin'
+import { effectiveTargetMs } from '../logic/focusSession'
 import { selectHabitCheckInSlice } from '../store/habitSelectors'
 import { playComboChime, playSnapSound } from '../audio/sound'
 import { useI18n } from '../i18n'
@@ -32,6 +33,8 @@ interface Props {
   onNoteSaved?: () => void
   /** 昨日休整、今日打卡已接续（韧性保护生效，卡片展示反馈） */
   resilienceProtected?: boolean
+  /** DOM 锚点 id（提醒「开始打卡」跳转后滚动+高亮定位用） */
+  domId?: string
 }
 
 
@@ -65,6 +68,7 @@ export const HabitRow = memo(function HabitRow({
   onEdit,
   onNoteSaved,
   resilienceProtected,
+  domId,
 }: Props) {
   const { isMobile } = usePlatform()
   const { t } = useI18n()
@@ -84,6 +88,7 @@ export const HabitRow = memo(function HabitRow({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [now, setNow] = useState(Date.now())
   const [showEarlyConfirm, setShowEarlyConfirm] = useState(false)
+  const [showUndoConfirm, setShowUndoConfirm] = useState(false)
   const [floatingPill, setFloatingPill] = useState<string | null>(null)
 
   const isCounter = habit.kind === 'counter'
@@ -123,10 +128,12 @@ export const HabitRow = memo(function HabitRow({
   const missed = !done && weekMissed(habit, weekCount, day)
   const isFocus = habit.kind === 'focus' && Boolean(habit.targetMinutes)
   const targetMs = (habit.targetMinutes ?? 25) * 60_000
+  // B2/B4：摆件可延长会话，今日页必须用「含延长的有效目标」，否则会在原目标提前显示「待确认」
+  const sessionTargetMs = session ? effectiveTargetMs(session) : targetMs
   const elapsed = session ? now - session.startedAt : 0
-  const running = isFocus && !!session && !done && elapsed < targetMs
-  const ended = isFocus && !!session && !done && elapsed >= targetMs
-  const progressRatio = targetMs > 0 ? elapsed / targetMs : 1
+  const running = isFocus && !!session && !done && elapsed < sessionTargetMs
+  const ended = isFocus && !!session && !done && elapsed >= sessionTargetMs
+  const progressRatio = sessionTargetMs > 0 ? elapsed / sessionTargetMs : 1
   const actualMinutes = Math.max(1, Math.round(elapsed / 60_000))
 
   const isDueToday = isHabitDueOnDay(habit, day)
@@ -193,9 +200,9 @@ export const HabitRow = memo(function HabitRow({
   }
   function handleStatusClick() {
     if (done) {
-      // 已完成状态点击：支持撤销打卡
+      // 已完成状态点击：支持撤销打卡（有确认，防误触摧毁积木/连击）
       triggerHaptic('light')
-      uncheckIn(habit.id, day)
+      setShowUndoConfirm(true)
       return
     }
     if (isCounter) {
@@ -244,6 +251,7 @@ export const HabitRow = memo(function HabitRow({
 
   return (
     <div
+      id={domId}
       className={`card habit-card${habit.pinned ? ' pinned' : ''}${isMobile ? ' mobile' : ''}`}
       style={{
         position: 'relative',
@@ -295,7 +303,7 @@ export const HabitRow = memo(function HabitRow({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'transform 0.28s cubic-bezier(0.34,1.5,0.64,1)',
+            transition: 'transform var(--dur-lg) var(--ease-bounce)',
             transform: pulse ? 'scale(1.25) rotate(90deg)' : 'scale(1) rotate(0deg)',
           }}
         >
@@ -355,12 +363,12 @@ export const HabitRow = memo(function HabitRow({
         </div>
       </div>
 
-      <div style={{ fontSize: 16.5, fontWeight: 600, lineHeight: 1.35, marginTop: 6, wordBreak: 'break-word' }}>
+      <div style={{ fontSize: 'var(--fs-title)', fontWeight: 600, lineHeight: 1.35, marginTop: 6, wordBreak: 'break-word' }}>
         {habit.name}
       </div>
-      <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 4 }}>{meta}</div>
+      <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginTop: 4 }}>{meta}</div>
       {habit.note ? (
-        <div style={{ fontSize: 12, color: 'var(--ink-2)', opacity: 0.75, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', opacity: 0.75, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {habit.note}
         </div>
       ) : null}
@@ -369,11 +377,11 @@ export const HabitRow = memo(function HabitRow({
 
       {isCounter && (
         <div style={{ marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--fs-small)' }}>
             <span style={{ fontWeight: 600, color: done ? 'var(--progress-green)' : 'var(--ink)' }}>
               {counterVal} / {targetVal} {habit.unit ?? ''}
             </span>
-            <span style={{ color: 'var(--ink-2)', fontSize: 11 }}>
+            <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-caption)' }}>
               {Math.round(counterRatio * 100)}%
             </span>
           </div>
@@ -468,7 +476,7 @@ export const HabitRow = memo(function HabitRow({
                   type="button"
                   className="pill-action"
                   onClick={commitNote}
-                  style={{ padding: '4px 10px', fontSize: 11 }}
+                  style={{ padding: '4px 10px', fontSize: 'var(--fs-caption)' }}
                 >
                   {t.common.complete}
                 </button>
@@ -478,7 +486,7 @@ export const HabitRow = memo(function HabitRow({
             <div
               onClick={() => setEditingNote(true)}
               style={{
-                fontSize: 11.5,
+                fontSize: 'var(--fs-small)',
                 color: todayCheckIn?.note || todayCheckIn?.mood ? 'var(--ink)' : 'var(--ink-2)',
                 opacity: todayCheckIn?.note || todayCheckIn?.mood ? 0.95 : 0.6,
                 cursor: 'pointer',
@@ -497,7 +505,7 @@ export const HabitRow = memo(function HabitRow({
               {todayCheckIn?.mood && (
                 <span
                   style={{
-                    fontSize: 10.5,
+                    fontSize: 'var(--fs-caption)',
                     padding: '2px 7px',
                     borderRadius: 999,
                     background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
@@ -534,11 +542,11 @@ export const HabitRow = memo(function HabitRow({
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
               <span
                 className="big-num"
-                style={{ fontSize: 22, color: 'var(--progress-blue)', lineHeight: 1 }}
+                style={{ fontSize: 'var(--fs-display)', color: 'var(--progress-blue)', lineHeight: 1 }}
               >
-                {fmtRemaining(session ? session.startedAt + targetMs - now : 0)}
+                {fmtRemaining(session ? session.startedAt + sessionTargetMs - now : 0)}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>
+              <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>
                 {t.today.focusedMinutes(actualMinutes)}
               </span>
             </div>
@@ -592,8 +600,8 @@ export const HabitRow = memo(function HabitRow({
                 padding: '8px 12px',
                 background: 'color-mix(in srgb, var(--ink) 5%, transparent)',
                 borderRadius: 'var(--r-md)',
-                fontSize: 12,
-                animation: 'pop-in 0.15s ease-out',
+                fontSize: 'var(--fs-small)',
+                animation: 'pop-in var(--dur-xs) var(--ease-out)',
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -603,14 +611,14 @@ export const HabitRow = memo(function HabitRow({
               <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                 <button
                   className="pill-action"
-                  style={{ fontSize: 11, padding: isMobile ? '10px 14px' : '3px 10px', ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined) }}
+                  style={{ fontSize: 'var(--fs-caption)', padding: isMobile ? '10px 14px' : '3px 10px', ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined) }}
                   onClick={() => setShowEarlyConfirm(false)}
                 >
                   {t.common.cancel}
                 </button>
                 <button
                   className="pill-action success"
-                  style={{ fontSize: 11, padding: isMobile ? '10px 14px' : '3px 10px', ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined) }}
+                  style={{ fontSize: 'var(--fs-caption)', padding: isMobile ? '10px 14px' : '3px 10px', ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined) }}
                   onClick={() => performCheckIn(actualMinutes)}
                 >
                   {t.today.earlyFinish}
@@ -630,7 +638,7 @@ export const HabitRow = memo(function HabitRow({
             gap: 8,
           }}
         >
-          <span style={{ fontSize: 13, color: 'var(--progress-blue)', fontWeight: 600 }}>
+          <span style={{ fontSize: 'var(--fs-body)', color: 'var(--progress-blue)', fontWeight: 600 }}>
             {t.today.timingTooltip}
           </span>
           <button
@@ -676,7 +684,7 @@ export const HabitRow = memo(function HabitRow({
         >
           <span
             style={{
-              fontSize: 12,
+              fontSize: 'var(--fs-small)',
               borderRadius: 999,
               padding: '3px 11px',
               color: done ? 'var(--accent-ink)' : 'var(--ink-2)',
@@ -691,7 +699,7 @@ export const HabitRow = memo(function HabitRow({
             onClick={(e) => {
               if (done) {
                 e.stopPropagation()
-                uncheckIn(habit.id, day)
+                setShowUndoConfirm(true)
               }
             }}
             title={
@@ -705,7 +713,7 @@ export const HabitRow = memo(function HabitRow({
             {done ? t.today.completedPill : isRestDay ? t.today.restDay : t.today.checkInTooltip}
           </span>
           {streak > 0 && (
-            <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>{t.stats.currentStreak(streak)}</span>
+            <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>{t.stats.currentStreak(streak)}</span>
           )}
         </div>
       )}
@@ -722,6 +730,21 @@ export const HabitRow = memo(function HabitRow({
             cancelTimer(habit.id)
             deleteHabit(habit.id)
             setConfirmDelete(false)
+          }}
+        />
+      )}
+
+      {showUndoConfirm && (
+        <ConfirmDialog
+          title={t.today.undoConfirmTitle}
+          message={t.today.undoConfirmBody}
+          confirmLabel={t.today.undoConfirmAction}
+          cancelLabel={t.common.cancel}
+          danger={false}
+          onCancel={() => setShowUndoConfirm(false)}
+          onConfirm={() => {
+            uncheckIn(habit.id, day)
+            setShowUndoConfirm(false)
           }}
         />
       )}

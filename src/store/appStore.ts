@@ -16,14 +16,24 @@ import type {
   UndoResult,
 } from '../types'
 import { canCheckIn, canClaimDay, habitMetOnDay } from '../logic/checkin'
-import { dayClaimStreak } from '../logic/streak'
+import { REPAIR_MAX, refreshMonthlyAllowance, repairBricksForStreak } from '../logic/repairBricks'
+import { currentStreak, dayClaimStreak } from '../logic/streak'
 import { awardBlock, canSelectBlueprint, isComplete, nextSlot } from '../logic/blueprint'
-import { rebuildBuilds, liveCheckInsView } from '../logic/builds'
+import {
+  rebuildBuilds,
+  liveCheckInsView,
+  buildsMatchFacts,
+  removeBlocksAndCompact,
+  BLUEPRINT_CAPACITY,
+} from '../logic/builds'
 import { blueprints, getBlueprint } from '../logic/blueprints'
 import { canPlaceModel, findNextAvailablePlacement } from '../logic/showcase'
 import { todayKey } from '../logic/dates'
 import type { StorageAdapter } from '../storage/adapter'
 import { prepareImport } from '../storage/adapter'
+import { clearHabitSliceCache } from './habitSelectors'
+import { serializeState } from './serializeState'
+import { CONTENT_VERSION } from '../logic/blueprints/manifest'
 
 const uid = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -56,6 +66,7 @@ function defaultState(): AppState {
     typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en'
   return {
     schemaVersion: 2,
+    contentVersion: CONTENT_VERSION,
     habits: [],
     checkIns: [],
     builds: [],
@@ -70,7 +81,12 @@ function defaultState(): AppState {
       enableEcoProps: true,
       soundMaterial: 'classic',
       soundMuted: false,
+      remindersEnabled: true,
       volume: 100,
+      eveningNudgeEnabled: false,
+      eveningNudgeTime: '21:00',
+      miniWidgetSize: 'standard',
+      miniWidgetAlwaysOnTop: false,
       enableGyroscope: false,
       enableXRayInspection: false,
     },
@@ -79,6 +95,7 @@ function defaultState(): AppState {
     repairBricks: 0,
     showcasePlacements: [],
     foundationNotes: {},
+    reminderLog: {},
   }
 }
 
@@ -86,7 +103,7 @@ interface AppActions {
   addHabit(name: string, frequency: Habit['frequency'], extra?: HabitExtra): Habit
   updateHabit(
     id: string,
-    patch: Partial<Pick<Habit, 'name' | 'frequency' | 'period' | 'targetMinutes' | 'targetValue' | 'unit' | 'step' | 'category' | 'pinned' | 'note'>>,
+    patch: Partial<Pick<Habit, 'name' | 'frequency' | 'period' | 'reminder' | 'targetMinutes' | 'targetValue' | 'unit' | 'step' | 'category' | 'pinned' | 'note'>>,
   ): void
   archiveHabit(id: string): void
   /** 永久删除习惯及其打卡记录 */
@@ -106,18 +123,31 @@ interface AppActions {
   /** 每日大满贯打卡：全部任务完成后领取额外里程碑奖励积木 */
   checkInDay(): ClaimDayResult
   /** 消耗 1 块修复积木挽回过去某天的遗漏打卡 */
+  /** 结算本月修复积木额度（幂等；启动与进入统计页时调用） */
+  refreshRepairAllowance(): void
   useRepairBrick(habitId: string, date: string): { ok: boolean; reason?: string }
   /** 展台沙盘位置调整（带 AABB 碰撞检测） */
   updateShowcasePlacement(blueprintId: string, gridX: number, gridY: number): boolean
   chooseBlueprint(id: string): void
   updateSettings(patch: Partial<AppSettings>): void
+  /** 跳过某习惯今天的到点提醒（持久化到 reminderLog，跨重启当天沉默） */
+  skipReminderToday(habitId: string): void
   setTheme(t: Theme): void
   setLanguage(l: Language): void
   exportData(): string
   importData(json: string): boolean
 }
 
-export type AppStore = AppState & AppActions & { hydrated: boolean; saveError?: number; needsUpgrade?: boolean }
+export type AppStore = AppState &
+  AppActions & {
+    hydrated: boolean
+    saveError?: number
+    needsUpgrade?: boolean
+    /** 读档失败（IO/权限/占用）：持久化已挂起，避免空态覆盖真实存档 */
+    loadFailed?: boolean
+    /** 存档损坏且原文已备份（.corrupt-backup），需提示用户不要静默清空 */
+    dataCorrupt?: boolean
+  }
 
 /** initPersistence 注入的立即落盘实现；未初始化时为空操作 */
 let flushNowImpl: (() => void) | null = null
@@ -161,6 +191,8 @@ export function applyDemoCastleState(): void {
       bonus: false,
     })),
     completedBlueprintIds: ['castle'],
+    // 演示模式不读盘：直接视作已水合，避免启动水合门挡住演示页（D-20261110-056）
+    hydrated: true,
   })
 }
 
@@ -214,19 +246,25 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const affectedBpIds = new Set(
       builds.filter((b) => b.fromHabitId === id).map((b) => b.blueprintId),
     )
-    const nextBuilds = rebuildBuilds(liveCheckInsView(remainingCheckIns), dayClaims)
+    const nextBuilds = rebuildBuilds(liveCheckInsView(remainingCheckIns), dayClaims, BLUEPRINT_CAPACITY)
     const { completed: nextCompleted, showcase: nextShowcase } = reconcileCompletion(
       affectedBpIds,
       nextBuilds,
       completedBlueprintIds,
       get().showcasePlacements ?? [],
     )
+    // 清理该习惯的提醒处置记录，避免 reminderLog 随习惯删除无限增长
+    const reminderLog = { ...(get().reminderLog ?? {}) }
+    delete reminderLog[id]
+    // 选择器按 habitId 缓存：习惯本体变化后必须失效，否则会读到过期切片
+    clearHabitSliceCache()
     set({
       habits: habits.filter((h) => h.id !== id),
       checkIns: remainingCheckIns,
       builds: nextBuilds,
       completedBlueprintIds: nextCompleted,
       showcasePlacements: nextShowcase,
+      reminderLog,
     })
     requestFlushNow()
   },
@@ -281,8 +319,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const stepDelta = counterDelta ?? habit?.step ?? 1
     const nextValue = prevValue + stepDelta
     const targetValue = habit?.targetValue ?? 1
-    const reachedTarget = prevValue < targetValue && nextValue >= targetValue
-    const shouldAwardBlock = !isCounter || reachedTarget
+    // 掉块判定（counter）：必须「当日该习惯还没掉过块」且本次是正向增量跨过目标。
+    // 旧实现只看"跨阈值事件"，导致「达标 → 减一档 → 加回来」可无限重复产出积木。
+    const awardedToday = todayCheckIns.some((c) => Boolean(c.placedBlockId))
+    const reachedTarget = stepDelta > 0 && prevValue < targetValue && nextValue >= targetValue
+    const shouldAwardBlock = !isCounter || (!awardedToday && reachedTarget)
 
     const blueprint = getBlueprint(activeBlueprintId)
     const placedCount = builds.filter((b) => b.blueprintId === activeBlueprintId).length
@@ -296,6 +337,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     let nextPlacements = showcasePlacements ?? []
     const blockId = uid()
 
+    // 连击里程碑奖励（B1）：本次打卡后该习惯的连续天数每满 7 天，掉落的这块积木变为点缀色 bonus 块。
+    // currentStreak 只按「习惯 × 日期」计数，与打卡记录的其它字段无关，故用最小占位记录参与计算。
+    const streakAfter = habit
+      ? currentStreak(habit, [...checkIns, { id: blockId, habitId, date: day, at: '' } as CheckIn], new Date())
+      : 0
+    const isBonus = Boolean(slot) && awardBlock(streakAfter)
+    // F8：连击每满 30 天额外奖励 1 块修复积木（与月度额度独立叠加）
+    const prevStreak = habit ? currentStreak(habit, checkIns, new Date()) : 0
+    nextRepair = repairBricksForStreak(nextRepair, prevStreak, streakAfter)
+
     if (slot) {
       nextBuilds = [
         ...builds,
@@ -305,14 +356,14 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           index: placedCount,
           placedAt: new Date().toISOString(),
           fromHabitId: habitId,
-          bonus: false,
+          bonus: isBonus,
         },
       ]
       const nowComplete = isComplete(blueprint.blocks, placedCount + 1)
       complete = !wasComplete && nowComplete
       if (nowComplete && !completedBlueprintIds.includes(activeBlueprintId)) {
         nextCompleted = [...completedBlueprintIds, activeBlueprintId]
-        nextRepair = Math.min(2, nextRepair + 1) // 落成奖励 1 块修复积木，上限 2 块
+        nextRepair = Math.min(REPAIR_MAX, nextRepair + 1) // 落成奖励 1 块修复积木（F8 上限放宽到 4 块）
         if (!nextPlacements.some((p) => p.blueprintId === activeBlueprintId)) {
           const placement = findNextAvailablePlacement(activeBlueprintId, nextPlacements, blueprints)
           // 展台已满：跳过自动上展台（不阻塞落成）
@@ -335,6 +386,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       note: note?.trim() || undefined,
       mood,
       starred,
+      bonus: isBonus ? true : undefined,
     }
 
     set({
@@ -345,7 +397,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       showcasePlacements: nextPlacements,
     })
     requestFlushNow()
-    return { placed: slot ?? undefined, bonus: false, complete, checkInId: entry.id }
+    return { placed: slot ?? undefined, bonus: isBonus, complete, checkInId: entry.id }
   },
 
   uncheckIn(habitId, day) {
@@ -374,6 +426,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     // 若撤销导致当日不再全勤：领取记录墓碑化（防反复刷块），精确回收全勤块
     let nextClaims = dayClaims
     let nextDeletedClaims = [...(get().deletedDayClaims ?? [])]
+    /** 需要一并回收的全勤块 id */
+    const reclaimedBlockIds = new Set<string>()
     if (dayClaims.some((c) => c.date === targetDay)) {
       const activeHabits = habits.filter((h) => !h.archivedAt)
       const stillAllDone =
@@ -385,12 +439,19 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         nextDeletedClaims = [...nextDeletedClaims, { date: targetDay, deletedAt: nowIso }]
         if (claim.blockId && claim.blueprintId) {
           affectedBpIds.add(claim.blueprintId)
+          reclaimedBlockIds.add(claim.blockId)
         }
       }
     }
 
-    // 事实层变更后统一重建积木投影（index 0..N-1 连续压实，多端一致）
-    const nextBuilds = rebuildBuilds(liveCheckInsView(nextCheckIns), nextClaims)
+    // 事实层变更后：能安全重建则重建（index 0..N-1 连续压实，多端一致）；
+    // 旧档/外部导入的 builds 可能含无法由事实推导的块，此时全量重建会抹掉它们 → 改用保守移除。
+    const liveAfterUncheck = liveCheckInsView(nextCheckIns)
+    const canRebuild = buildsMatchFacts(builds, liveAfterUncheck, nextClaims)
+    const removalIds = new Set<string>([...removedBlockIds, ...reclaimedBlockIds])
+    const nextBuilds = canRebuild
+      ? rebuildBuilds(liveAfterUncheck, nextClaims)
+      : removeBlocksAndCompact(builds, removalIds)
 
     // 校验受影响蓝图的完成状态，退回未完成时同步移出展台
     const { completed: nextCompleted, showcase: nextShowcase } = reconcileCompletion(
@@ -413,15 +474,30 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     return { ok: true, habitId, removedBlock }
   },
 
+  refreshRepairAllowance() {
+    const { repairBricks, repairBrickMonth } = get()
+    const allowance = refreshMonthlyAllowance(repairBricks ?? 0, repairBrickMonth)
+    if (allowance.granted === 0 && repairBrickMonth === allowance.month) return
+    set({ repairBricks: allowance.count, repairBrickMonth: allowance.month })
+  },
+
   useRepairBrick(habitId, date) {
-    const { habits, checkIns, repairBricks } = get()
-    const count = repairBricks ?? 0
+    const { habits, checkIns, repairBricks, repairBrickMonth } = get()
+    // F8：先结算本月额度（幂等），再判断库存——否则月初第一次补签会被误判为「没有积木」
+    const allowance = refreshMonthlyAllowance(repairBricks ?? 0, repairBrickMonth)
+    const count = allowance.count
+    if (allowance.granted > 0) set({ repairBricks: count, repairBrickMonth: allowance.month })
     if (count <= 0) return { ok: false, reason: 'no-bricks' }
     const habit = habits.find((h) => h.id === habitId)
     if (!habit) return { ok: false, reason: 'no-habit' }
     if (habit.archivedAt) return { ok: false, reason: 'archived' }
     // 拒绝未来日期（补卡只应发生在过去）
     if (date > todayKey()) return { ok: false, reason: 'future' }
+    // 拒绝早于习惯创建日：那之前用户还没这个习惯，补出来的连击是假的
+    const createdDay = habit.createdAt.slice(0, 10)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(createdDay) && date < createdDay) {
+      return { ok: false, reason: 'before-creation' }
+    }
     if (checkIns.some((c) => !c.deletedAt && c.habitId === habitId && c.date === date)) {
       return { ok: false, reason: 'already' }
     }
@@ -434,6 +510,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set({
       checkIns: [...checkIns, entry],
       repairBricks: count - 1,
+      repairBrickMonth: allowance.month,
     })
     requestFlushNow()
     return { ok: true }
@@ -520,6 +597,15 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!canSelectBlueprint(id, completedBlueprintIds)) return
     set({ activeBlueprintId: id })
   },
+  skipReminderToday(habitId) {
+    const { reminderLog } = get()
+    set({
+      reminderLog: {
+        ...(reminderLog ?? {}),
+        [habitId]: { date: todayKey(), action: 'skipped' },
+      },
+    })
+  },
   updateSettings(patch) {
     const { settings } = get()
     // 纯状态变更：DOM（data-theme/lang）与跨窗口事件由 App 层订阅 settings 驱动
@@ -535,38 +621,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
   exportData() {
-    const {
-      schemaVersion,
-      habits,
-      checkIns,
-      builds,
-      activeBlueprintId,
-      completedBlueprintIds,
-      settings,
-      dayClaims,
-      deletedDayClaims,
-      repairBricks,
-      showcasePlacements,
-      foundationNotes,
-    } = get()
-    return JSON.stringify(
-      {
-        schemaVersion,
-        habits,
-        checkIns,
-        builds,
-        activeBlueprintId,
-        completedBlueprintIds,
-        settings,
-        dayClaims,
-        deletedDayClaims,
-        repairBricks,
-        showcasePlacements,
-        foundationNotes,
-      },
-      null,
-      2,
-    )
+    return JSON.stringify(serializeState(get()), null, 2)
   },
 
   importData(json) {
@@ -591,6 +646,8 @@ export async function initPersistence(adapter: StorageAdapter): Promise<void> {
   if (persistenceStarted) return
   persistenceStarted = true
 
+  /** 必须挂起持久化的情形：读档异常或存档来自更高版本 */
+  let suspendPersistence = false
   try {
     // 演示模式：main.tsx 已注入内存态（applyDemoCastleState），不读写本地存档
     if (isDemoMode()) return
@@ -599,11 +656,19 @@ export async function initPersistence(adapter: StorageAdapter): Promise<void> {
     if (res.needsUpgrade) {
       // 存档来自更高版本的应用：挂起持久化（不注入 flush、不订阅保存），
       // 防止低版本会话把默认空态写回、覆盖高版本存档；UI 层提示升级。
+      suspendPersistence = true
       useAppStore.setState({ hydrated: true, needsUpgrade: true })
-      return
-    }
-    const saved = res.state
-    if (saved) {
+    } else if (res.loadFailed) {
+      // 读档失败（IO / 权限 / 被占用 / 迁移崩溃）≠ 没有存档。
+      // 此时若照常订阅持久化，用户第一次交互就会把默认空态写回磁盘、永久覆盖真实存档。
+      suspendPersistence = true
+      useAppStore.setState({ hydrated: true, loadFailed: true })
+      if (typeof console !== 'undefined') console.warn('[persistence] 读档失败，已挂起自动保存：', res.detail)
+    } else if (res.corruptRecovered) {
+      // 存档损坏已备份：照常以空态启动（可继续保存新数据），但必须提示原档去向
+      useAppStore.setState({ hydrated: true, dataCorrupt: true })
+    } else if (res.state) {
+      const saved = res.state
       const lang = saved.settings.language ?? (typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en')
       useAppStore.setState({ ...saved, settings: { ...saved.settings, language: lang }, hydrated: true })
     } else {
@@ -612,53 +677,45 @@ export async function initPersistence(adapter: StorageAdapter): Promise<void> {
   } finally {
     resolvePersistenceReadyImpl?.()
   }
+  if (suspendPersistence) return
+
+  // F8：启动时结算本月修复积木额度（跨月后第一次打开就能拿到当月额度）
+  useAppStore.getState().refreshRepairAllowance()
 
   let timer: number | undefined
   let pendingState: AppState | null = null
 
+  /** 在途 + 排队中的写盘数量：0 表示可以立即同步发起（保持"关键动作立即落盘"的既有语义） */
+  let pendingWrites = 0
+  /** 写盘串行队列：后一笔必须等前一笔落地，杜绝共用状态互相截断 */
+  let saveChain: Promise<void> = Promise.resolve()
+
   function persistState(state: AppState): void {
-    const {
-      schemaVersion,
-      habits,
-      checkIns,
-      builds,
-      activeBlueprintId,
-      completedBlueprintIds,
-      settings,
-      dayClaims,
-      deletedDayClaims,
-      repairBricks,
-      showcasePlacements,
-      foundationNotes,
-    } = state
-    // saveError 是运行时字段，不进持久化 schema
-    lastSavePromise = adapter
-      .save({
-        schemaVersion,
-        habits,
-        checkIns,
-        builds,
-        activeBlueprintId,
-        completedBlueprintIds,
-        settings,
-        dayClaims,
-        deletedDayClaims,
-        repairBricks,
-        showcasePlacements,
-        foundationNotes,
-      })
-      .then(() => {
-        // 恢复成功后清除错误标记；该 setState 会再触发一次订阅，但输出相同、自然收敛
-        if (useAppStore.getState().saveError !== undefined) {
-          useAppStore.setState({ saveError: undefined })
-        }
-      })
-      .catch(() => {
-        // 首次失败才置位，避免"失败→订阅→再保存→再失败"的循环
-        if (useAppStore.getState().saveError === undefined) {
-          useAppStore.setState({ saveError: Date.now() })
-        }
-      })
+    // 唯一白名单在 store/serializeState；saveError/hydrated 等运行时字段自然被排除
+    const payload = serializeState(state)
+    const exec = () =>
+      adapter
+        .save(payload)
+        .then(() => {
+          // 恢复成功后清除错误标记；该 setState 会再触发一次订阅，但输出相同、自然收敛
+          if (useAppStore.getState().saveError !== undefined) {
+            useAppStore.setState({ saveError: undefined })
+          }
+        })
+        .catch(() => {
+          // 首次失败才置位，避免"失败→订阅→再保存→再失败"的循环
+          if (useAppStore.getState().saveError === undefined) {
+            useAppStore.setState({ saveError: Date.now() })
+          }
+        })
+    // 队列空闲时立即发起（保持同步语义）；否则排到队尾，等上一笔完成
+    const run = pendingWrites === 0 ? exec() : saveChain.then(exec)
+    pendingWrites++
+    saveChain = run.finally(() => {
+      pendingWrites--
+    })
+    // forceFlush 等待整条链（含排队中的写入）
+    lastSavePromise = saveChain
   }
 
   function flushSave() {

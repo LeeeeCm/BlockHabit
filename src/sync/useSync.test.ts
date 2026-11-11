@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useSync, loadWebDavConfig, saveWebDavConfig } from './useSync'
 import { useAppStore } from '../store/appStore'
+import { CONTENT_VERSION } from '../logic/blueprints/manifest'
 
 function renderHookHelper<T>(useHook: () => T) {
   const result: { current: T } = { current: null as unknown as T }
@@ -59,7 +60,8 @@ describe('useSync hook', () => {
       lastSyncError: null,
     }
     saveWebDavConfig(sample)
-    expect(loadWebDavConfig()).toEqual(sample)
+    // B1：新字段 rememberPassword 缺省为 true（旧配置兼容）
+    expect(loadWebDavConfig()).toEqual({ ...sample, rememberPassword: true })
   })
 
   it('syncNow fails if endpoint is empty', async () => {
@@ -157,7 +159,8 @@ describe('useSync hook', () => {
       checkIns: [],
       builds: [],
       activeBlueprintId: 'plant',
-      completedBlueprintIds: ['remote-bp'],
+      // 必须是真实蓝图 id：存档校验现在会拒绝未知外键（见 A3 / adapter.blueprint.test.ts）
+      completedBlueprintIds: ['castle'],
       settings: { theme: 'light', language: 'zh' },
       dayClaims: [],
       repairBricks: 1,
@@ -278,6 +281,44 @@ describe('useSync hook', () => {
     })
     expect(ok).toBe(false)
     expect(result.current.error).toBe('parse')
+    unmount()
+  })
+  it('拒绝更高内容版本的远端存档，且不写坏远端（B1 兼容矩阵）', async () => {
+    saveWebDavConfig({
+      endpoint: 'https://dav.test/dav/',
+      username: 'user',
+      password: 'pwd',
+      enabled: true,
+    })
+    const remoteFuture = {
+      schemaVersion: 2,
+      // B1：必须以「当前内容版本 + 1」构造未来档，否则内容包升级后该用例会失效
+      contentVersion: CONTENT_VERSION + 1,
+      habits: [],
+      checkIns: [],
+      builds: [],
+      activeBlueprintId: 'plant',
+      completedBlueprintIds: [],
+      settings: { theme: 'light', language: 'zh' },
+      dayClaims: [],
+    }
+    let putCalls = 0
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      if (init?.method === 'GET') return new Response(JSON.stringify(remoteFuture), { status: 200 })
+      if (init?.method === 'PUT') {
+        putCalls++
+        return new Response(null, { status: 204 })
+      }
+      return new Response(null, { status: 400 })
+    })
+    const { result, unmount } = renderHookHelper(() => useSync())
+    let ok = true
+    await act(async () => {
+      ok = await result.current.syncNow()
+    })
+    expect(ok).toBe(false)
+    expect(result.current.error).toBe('incompatible')
+    expect(putCalls).toBe(0)
     unmount()
   })
 })

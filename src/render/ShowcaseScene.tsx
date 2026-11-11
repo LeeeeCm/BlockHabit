@@ -11,12 +11,21 @@ import {
 } from './iso'
 import {
   canPlaceModel,
-  getModelFootprint,
-  type ModelFootprint,
+  getRotatedFootprint,
   screenToGroundIso,
   SHOWCASE_GRID_SIZE,
 } from '../logic/showcase'
-import { drawEcoProps } from './iso'
+import { drawEcoProps, drawGroundShadow, withAlpha } from './iso'
+import {
+  buildBaseGeometry,
+  buildFootprintMap,
+  buildOffsetBlocksMap,
+  buildRotatedFootprintMap,
+  collectSortedCubes,
+  compareCubes,
+  rotateBlocksForRender,
+  type RenderCube,
+} from './showcaseLayout'
 import { ecoStageFor } from '../logic/eco'
 import { currentStreakWithResilience } from '../logic/streak'
 import { playSnapSound } from '../audio/sound'
@@ -35,24 +44,17 @@ interface Props {
   blueprintsMap: Record<string, Blueprint>
   onUpdatePlacement: (blueprintId: string, gridX: number, gridY: number) => boolean
   onSelectModel?: (blueprintId: string) => void
+  /** 装饰模式（D-20261111-068）：蓝图 → 本次会话 90° 象限（0/1/2/3），不落盘；默认空 = 现状 */
+  rotations?: Record<string, number>
+  /** 装饰模式：微生态植被重排种子（确定性伪随机）；默认 0 = 现状逐像素一致 */
+  ecoSeed?: number
+  /** 装饰模式：当前选中模型（高亮）；默认 null = 现状 */
+  selectedId?: string | null
 }
 
-interface RenderCube {
-  worldX: number
-  worldY: number
-  worldZ: number
-  block: Blueprint['blocks'][0]
-  blueprintId: string
-  isDragging: boolean
-}
+/** 稳定空表：默认旋转不开时保持引用不变，静态派生 memo 不会因每次渲染新建对象而失效 */
+const EMPTY_ROTATIONS: Record<string, number> = {}
 
-/** Painter's 遮挡比较器：先按 (x+y) 深度，再按 z 高度 */
-function compareCubes(a: RenderCube, b: RenderCube): number {
-  const da = a.worldX + a.worldY
-  const db = b.worldX + b.worldY
-  if (da !== db) return da - db
-  return a.worldZ - b.worldZ
-}
 
 interface DragState {
   blueprintId: string
@@ -68,13 +70,17 @@ interface DragState {
 
 /**
  * 展台沙盘（Showcase Island）：
- * 18×18 等距实体展台底座、多模型全局遮挡排序渲染、AABB 碰撞磁吸检测与无碰撞自由拖拽。
+ * SHOWCASE_GRID_SIZE×SHOWCASE_GRID_SIZE（当前 26×26）等距实体展台底座、
+ * 多模型全局遮挡排序渲染、AABB 碰撞磁吸检测与无碰撞自由拖拽。
  */
 export function ShowcaseScene({
   placements,
   blueprintsMap,
   onUpdatePlacement,
   onSelectModel,
+  rotations = EMPTY_ROTATIONS,
+  ecoSeed = 0,
+  selectedId = null,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const viewRef = useRef({ scale: 0.9, panX: 0, panY: 0, fitted: false })
@@ -85,6 +91,23 @@ export function ShowcaseScene({
   const habits = useAppStore((s) => s.habits)
   const checkIns = useAppStore((s) => s.checkIns)
   const enableEcoProps = useAppStore((s) => s.settings.enableEcoProps !== false)
+  const builds = useAppStore((s) => s.builds)
+
+  // B1/B5：蓝图 → 序位 → 奖励等级（streak / attendance）。用 ref 承载，避免进入 draw 的依赖数组导致重绑监听
+  const bonusByBlueprint = useMemo(() => {
+    const map = new Map<string, Array<'streak' | 'attendance' | undefined>>()
+    for (const b of builds) {
+      let list = map.get(b.blueprintId)
+      if (!list) {
+        list = []
+        map.set(b.blueprintId, list)
+      }
+      list[b.index] = b.bonus ? (b.fromHabitId === '__day__' ? 'attendance' : 'streak') : undefined
+    }
+    return map
+  }, [builds])
+  const bonusRef = useRef(bonusByBlueprint)
+  bonusRef.current = bonusByBlueprint
   // 微生态彩蛋阶段：所有在册习惯的最大连胜（与建造页同一口径）
   const ecoStage = useMemo(() => {
     if (!enableEcoProps) return 0
@@ -107,94 +130,46 @@ export function ShowcaseScene({
 
   const placementsRef = useRef(placements)
   placementsRef.current = placements
+  // 装饰模式的会话态（旋转/植被种子/选中）：用 ref 供事件与绘制闭包读取，避免重绑监听
+  const rotationsRef = useRef(rotations)
+  rotationsRef.current = rotations
+  const ecoSeedRef = useRef(ecoSeed)
+  ecoSeedRef.current = ecoSeed
+  const selectedIdRef = useRef<string | null>(selectedId)
+  selectedIdRef.current = selectedId
 
-  // 1. 静态实木沙盘底托曲线采样点（纯几何静态，不随帧刷新）
-  const baseGeometry = useMemo(() => {
-    const slabH = 12
-    const radii: IsoCornerRadii = {
-      bottom: 2.6,
-      side: 2.1,
-      top: 1.7,
-    }
-
-    const STEPS = 20
-    const topPts: { sx: number; sy: number }[] = []
-    const botPts: { sx: number; sy: number }[] = []
-    const addSample = (gx: number, gy: number) => {
-      const s = worldToScreen(gx, gy, 0, cfg)
-      topPts.push({ sx: s.sx, sy: s.sy + cfg.tileH / 2 })
-      botPts.push({ sx: s.sx, sy: s.sy + cfg.tileH / 2 + slabH })
-    }
-
-    const rt = radii.top
-    const rs = radii.side
-    const rb = radii.bottom
-
-    for (let i = 0; i <= STEPS; i++) {
-      const a = (i / STEPS) * (Math.PI / 2)
-      addSample(rt - rt * Math.cos(a), rt - rt * Math.sin(a))
-    }
-    for (let i = 0; i <= STEPS; i++) {
-      const a = (i / STEPS) * (Math.PI / 2)
-      addSample(G - rs + rs * Math.sin(a), rs - rs * Math.cos(a))
-    }
-    for (let i = 0; i <= STEPS; i++) {
-      const a = (i / STEPS) * (Math.PI / 2)
-      addSample(G - rb + rb * Math.cos(a), G - rb + rb * Math.sin(a))
-    }
-    for (let i = 0; i <= STEPS; i++) {
-      const a = (i / STEPS) * (Math.PI / 2)
-      addSample(rs - rs * Math.sin(a), G - rs + rs * Math.cos(a))
-    }
-
-    let leftIdx = 0
-    let rightIdx = 0
-    for (let i = 1; i < topPts.length; i++) {
-      if (topPts[i].sx < topPts[leftIdx].sx) leftIdx = i
-      if (topPts[i].sx > topPts[rightIdx].sx) rightIdx = i
-    }
-
-    const skirtPts: { sx: number; sy: number }[] = []
-    if (leftIdx > rightIdx) {
-      for (let i = rightIdx; i <= leftIdx; i++) skirtPts.push(topPts[i])
-      for (let i = leftIdx; i >= rightIdx; i--) skirtPts.push(botPts[i])
-    }
-
-    return { topPts, botPts, skirtPts }
-  }, [cfg, G])
+  // 1. 静态实木沙盘底托曲线采样点（E5：纯几何搬到 showcaseLayout，按 cfg/G 记忆）
+  const baseGeometry = useMemo(() => buildBaseGeometry(cfg, G), [cfg, G])
 
   // 2. 蓝图模型包围盒尺寸缓存
-  const footprintMap = useMemo(() => {
-    const map = new Map<string, ModelFootprint>()
-    for (const [id, bp] of Object.entries(blueprintsMap)) {
-      map.set(id, getModelFootprint(bp.blocks))
-    }
-    return map
-  }, [blueprintsMap])
+  const footprintMap = useMemo(() => buildFootprintMap(blueprintsMap), [blueprintsMap])
+  // 2.5 装饰模式（D-20261111-068）：本次会话旋转下的蓝图足迹表（阴影/植被/命中/拖拽共用）。
+  //     rotations 为空时与 footprintMap 完全一致，静态路径行为不变。
+  const rotatedFootprintMap = useMemo(
+    () => buildRotatedFootprintMap(blueprintsMap, rotations),
+    [blueprintsMap, rotations],
+  )
   // 3. 静态排序列表：所有模型按当前落位展开并排好序；拖拽时仅与"被拖模型"双有序归并，
   //    不再每帧全量重建 + 全量排序（ref 承载保持 draw 引用稳定，不触发监听重绑）
-  const sortedStaticCubes = useMemo(() => {
-    const cubes: RenderCube[] = []
-    for (const p of placements) {
-      const bp = blueprintsMap[p.blueprintId]
-      if (!bp) continue
-      const fp = footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks)
-      for (const b of bp.blocks) {
-        cubes.push({
-          worldX: p.gridX + (b.x - fp.minX),
-          worldY: p.gridY + (b.y - fp.minY),
-          worldZ: b.z,
-          block: b,
-          blueprintId: p.blueprintId,
-          isDragging: false,
-        })
-      }
-    }
-    cubes.sort(compareCubes)
-    return cubes
-  }, [placements, blueprintsMap, footprintMap])
+  const sortedStaticCubes = useMemo(
+    () => collectSortedCubes(placements, blueprintsMap, footprintMap, rotations),
+    [placements, blueprintsMap, footprintMap, rotations],
+  )
   const sortedStaticCubesRef = useRef(sortedStaticCubes)
   sortedStaticCubesRef.current = sortedStaticCubes
+
+  // E2：命中检测用的 footprint 表与「带落位偏移的积木列表」都是 placements 的纯派生，
+  // 每帧/每次 pointermove 重算会让已落成模型 × 每座块数（当前最大 190 块）次迭代白跑。
+  // D-20261111-068：命中/拖拽校验用「带会话旋转」的足迹表（默认空表 = 原 footprint）。
+  const footprintRef = useRef(rotatedFootprintMap)
+  footprintRef.current = rotatedFootprintMap
+  // 已落位模型的偏移积木坐标（阴影与植被绘制、命中检测共用；placements/rotations 不变时引用不变）
+  const offsetBlocksMap = useMemo(
+    () => buildOffsetBlocksMap(placements, blueprintsMap, footprintMap, rotations),
+    [placements, blueprintsMap, footprintMap, rotations],
+  )
+  const offsetBlocksRef = useRef(offsetBlocksMap)
+  offsetBlocksRef.current = offsetBlocksMap
 
   // 4. 静态底座离屏层缓存：视口/dpr/主题任一变化才重绘（拖拽与悬停期间恒命中）
   const baseCacheRef = useRef<{ canvas: HTMLCanvasElement; key: string } | null>(null)
@@ -207,17 +182,17 @@ export function ShowcaseScene({
       bctx.beginPath()
       botPts.forEach((pt, i) => (i === 0 ? bctx.moveTo(pt.sx, pt.sy + 6) : bctx.lineTo(pt.sx, pt.sy + 6)))
       bctx.closePath()
-      bctx.fillStyle = 'rgba(0, 0, 0, 0.04)'
+      bctx.fillStyle = withAlpha(palette.ink, 0.06)
       bctx.fill()
       bctx.restore()
 
-      // 朝向观众的 3D 侧面厚度（光滑连续曲面，绝无任何外溢线条）
+      // 朝向观众的 3D 侧面厚度（光滑连续曲面，绝无任何外溢线条）：取块体左脸色调做暗面
       if (skirtPts.length > 0) {
         bctx.save()
         bctx.beginPath()
         skirtPts.forEach((pt, i) => (i === 0 ? bctx.moveTo(pt.sx, pt.sy) : bctx.lineTo(pt.sx, pt.sy)))
         bctx.closePath()
-        bctx.fillStyle = '#f1f5f9'
+        bctx.fillStyle = palette.left
         bctx.fill()
         bctx.strokeStyle = palette.ink
         bctx.lineWidth = 1.5
@@ -226,12 +201,12 @@ export function ShowcaseScene({
         bctx.restore()
       }
 
-      // 展台顶面（纯白主体色 + 黑色外轮廓线）与顶面内部对齐网格
+      // 展台顶面（主题块体顶面色 + 墨色外轮廓线）与顶面内部对齐网格
       bctx.save()
       bctx.beginPath()
       topPts.forEach((pt, i) => (i === 0 ? bctx.moveTo(pt.sx, pt.sy) : bctx.lineTo(pt.sx, pt.sy)))
       bctx.closePath()
-      bctx.fillStyle = '#ffffff'
+      bctx.fillStyle = palette.top
       bctx.fill()
       bctx.strokeStyle = palette.ink
       bctx.lineWidth = 1.5
@@ -251,7 +226,7 @@ export function ShowcaseScene({
         bctx.moveTo(c.sx, c.sy + cfg.tileH / 2)
         bctx.lineTo(d.sx, d.sy + cfg.tileH / 2)
       }
-      bctx.strokeStyle = 'rgba(10, 10, 10, 0.08)'
+      bctx.strokeStyle = withAlpha(palette.ink, 0.08)
       bctx.lineWidth = 0.8
       bctx.stroke()
       bctx.restore()
@@ -277,14 +252,22 @@ export function ShowcaseScene({
     const gyro = gyroEnabled ? gyroOffsetRef.current : { x: 0, y: 0 }
 
     // 1. 静态底座离屏层：拖拽/悬停/陀螺仪静止期间恒命中，仅视口、dpr、主题变化时重绘
-    const baseKey = `${w}x${h}|${dpr}|${view.scale}|${view.panX}|${view.panY}|${gyro.x}|${gyro.y}|${ambient}|${palette.ink}`
+    const baseKey = `${w}x${h}|${dpr}|${view.scale}|${view.panX}|${view.panY}|${gyro.x}|${gyro.y}|${ambient}|${palette.ink}|${palette.top}|${palette.left}`
     let base = baseCacheRef.current
     if (!base || base.key !== baseKey) {
-      const off = document.createElement('canvas')
-      off.width = Math.max(1, Math.round(w * dpr))
-      off.height = Math.max(1, Math.round(h * dpr))
+      // 复用同一块离屏 canvas：平移/缩放时 baseKey 每帧都变，若每帧新建 canvas + 取上下文
+      // 会产生持续的显存分配与 GC 抖动（E2）。只在尺寸变化时改 width/height（会自动清空）。
+      const off = base?.canvas ?? document.createElement('canvas')
+      const ow = Math.max(1, Math.round(w * dpr))
+      const oh = Math.max(1, Math.round(h * dpr))
+      if (off.width !== ow || off.height !== oh) {
+        off.width = ow
+        off.height = oh
+      }
       const octx = off.getContext('2d')
       if (octx) {
+        octx.setTransform(1, 0, 0, 1, 0, 0)
+        octx.clearRect(0, 0, ow, oh)
         octx.setTransform(dpr, 0, 0, dpr, 0, 0)
         octx.translate(view.panX + gyro.x, view.panY + gyro.y)
         octx.scale(view.scale, view.scale)
@@ -299,18 +282,20 @@ export function ShowcaseScene({
     ctx.translate(view.panX + gyro.x, view.panY + gyro.y)
     ctx.scale(view.scale, view.scale)
 
+    // 2.4 每个落位模型的地面接触阴影（积木与植被之前绘制）
+    for (const p of placementsRef.current) {
+      const offsetBlocks = offsetBlocksRef.current.get(p.blueprintId)
+      if (!offsetBlocks) continue
+      drawGroundShadow(ctx, offsetBlocks, cfg, palette)
+    }
+
     // 2.5 微生态植被：每个落位模型的 margin 环带内（积木之前绘制，正确深度）
     if (ecoStageRef.current >= 1) {
       for (const p of placementsRef.current) {
-        const bp = blueprintsMap[p.blueprintId]
-        if (!bp) continue
-        const fp = footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks)
-        const offsetBlocks = bp.blocks.map((b) => ({
-          x: p.gridX + (b.x - fp.minX),
-          y: p.gridY + (b.y - fp.minY),
-        }))
-        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'back')
-        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'front')
+        const offsetBlocks = offsetBlocksRef.current.get(p.blueprintId)
+        if (!offsetBlocks) continue
+        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'back', ecoSeedRef.current)
+        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'front', ecoSeedRef.current)
       }
     }
 
@@ -319,7 +304,9 @@ export function ShowcaseScene({
     if (drag) {
       const bp = blueprintsMap[drag.blueprintId]
       if (bp) {
-        const fp = getModelFootprint(bp.blocks)
+        const fp =
+          footprintRef.current.get(bp.id) ??
+          getRotatedFootprint(bp.blocks, rotationsRef.current[drag.blueprintId] ?? 0)
         const gx0 = drag.currentGx
         const gy0 = drag.currentGy
         const gx1 = gx0 + fp.width
@@ -361,10 +348,14 @@ export function ShowcaseScene({
       drawList = staticCubes
     } else {
       const bp = blueprintsMap[drag.blueprintId]
-      const fp = bp ? footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks) : null
+      const dragRotation = rotationsRef.current[drag.blueprintId] ?? 0
+      const dragBlocks = bp ? rotateBlocksForRender(bp.blocks, dragRotation) : null
+      const fp = bp
+        ? footprintRef.current.get(bp.id) ?? getRotatedFootprint(bp.blocks, dragRotation)
+        : null
       const dragCubes: RenderCube[] = []
-      if (bp && fp) {
-        for (const b of bp.blocks) {
+      if (bp && fp && dragBlocks) {
+        for (const b of dragBlocks) {
           dragCubes.push({
             worldX: drag.currentGx + (b.x - fp.minX),
             worldY: drag.currentGy + (b.y - fp.minY),
@@ -403,14 +394,19 @@ export function ShowcaseScene({
     }
 
     // 绘制所有积木
-    for (const { worldX, worldY, worldZ, block, blueprintId, isDragging } of drawList) {
+    for (const { worldX, worldY, worldZ, block, blueprintId, isDragging, index } of drawList) {
       const { sx: px, sy: py } = worldToScreen(worldX, worldY, worldZ, cfg)
-      const isHovered = hoveredIdRef.current === blueprintId && !drag
+      const isHovered =
+        (hoveredIdRef.current === blueprintId || selectedIdRef.current === blueprintId) && !drag
+      const bonusTier = index !== undefined ? bonusRef.current.get(blueprintId)?.[index] : undefined
+    const isBonus = bonusTier !== undefined
       drawCube(ctx, px, py + cfg.tileH / 2, cfg, palette, {
         type: block.type,
         color: block.color,
         highlight: isHovered,
         ghost: isDragging && !drag?.isValid,
+        bonus: isBonus,
+      bonusTier,
       })
     }
   }, [blueprintsMap, cfg, G, footprintMap, renderBase])
@@ -419,6 +415,10 @@ export function ShowcaseScene({
   useEffect(() => {
     draw()
   }, [placements, draw])
+  // 装饰模式会话态（旋转/植被种子/选中）变化时重绘
+  useEffect(() => {
+    draw()
+  }, [rotations, ecoSeed, selectedId, draw])
   // 初始化与自适应窗口大小
   useEffect(() => {
     const canvas = canvasRef.current
@@ -481,7 +481,10 @@ export function ShowcaseScene({
         const p = curPlacements[i]
         const bp = blueprintsMap[p.blueprintId]
         if (!bp) continue
-        const fp = getModelFootprint(bp.blocks)
+        // 命中检测每次 pointermove 都会跑；footprint 是纯派生值，用 memo 缓存而非重算
+        const fp =
+          footprintRef.current.get(bp.id) ??
+          getRotatedFootprint(bp.blocks, rotationsRef.current[p.blueprintId] ?? 0)
         const { gx, gy } = screenToGroundIso(worldPx, worldPy, cfg.tileW, cfg.tileH)
         if (
           gx >= p.gridX - 0.4 &&
@@ -654,7 +657,9 @@ export function ShowcaseScene({
         const p = curPlacements[i]
         const bp = blueprintsMap[p.blueprintId]
         if (!bp) continue
-        const fp = getModelFootprint(bp.blocks)
+        const fp =
+          footprintRef.current.get(bp.id) ??
+          getRotatedFootprint(bp.blocks, rotationsRef.current[p.blueprintId] ?? 0)
         const { gx, gy } = screenToGroundIso(worldPx, worldPy, cfg.tileW, cfg.tileH)
         if (
           gx >= p.gridX - 0.4 &&
@@ -708,7 +713,10 @@ export function ShowcaseScene({
         }
         const { gx, gy } = screenToGroundIso(worldPx, worldPy, cfg.tileW, cfg.tileH)
         const bp = blueprintsMap[drag.blueprintId]
-        const fp = bp ? getModelFootprint(bp.blocks) : { width: 1, depth: 1 }
+        const dragRotation = rotationsRef.current[drag.blueprintId] ?? 0
+        const fp = bp
+          ? footprintRef.current.get(bp.id) ?? getRotatedFootprint(bp.blocks, dragRotation)
+          : { width: 1, depth: 1 }
 
         // 磁吸对齐至整数网格坐标
         const targetGx = Math.max(0, Math.min(G - fp.width, Math.round(gx - fp.width / 2)))
@@ -721,6 +729,7 @@ export function ShowcaseScene({
           placementsRef.current,
           blueprintsMap,
           G,
+          rotationsRef.current,
         )
         canvas.style.cursor = drag.isValid ? 'grabbing' : 'not-allowed'
         draw()

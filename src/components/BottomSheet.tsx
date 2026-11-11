@@ -130,7 +130,7 @@ export function BottomSheet({
           boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.16)',
           paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
           transform: `translateY(${dragY}px)`,
-          transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: isDragging ? 'none' : 'transform var(--dur-md) var(--ease-out)',
           willChange: 'transform',
           overflow: 'hidden',
         }}
@@ -194,7 +194,7 @@ export function BottomSheet({
               style={{
                 flex: 1,
                 minWidth: 0,
-                fontSize: 17,
+                fontSize: 'var(--fs-title)',
                 fontWeight: 700,
                 color: 'var(--ink)',
                 overflow: 'hidden',
@@ -213,7 +213,7 @@ export function BottomSheet({
                 background: 'color-mix(in srgb, var(--ink) 6%, transparent)',
                 border: 'none',
                 color: 'var(--ink-2)',
-                fontSize: 14,
+                fontSize: 'var(--fs-subhead)',
                 width: 30,
                 height: 30,
                 borderRadius: '50%',

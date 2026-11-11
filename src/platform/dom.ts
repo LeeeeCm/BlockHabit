@@ -1,3 +1,16 @@
+/**
+ * 用户是否要求「减少动态效果」（系统无障碍设置）。
+ * canvas 侧动画必须据此降级为「瞬时落位」，无法判定时按「不减少」处理。
+ */
+export function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  } catch {
+    return false
+  }
+}
+
 /** body 滚动锁（引用计数，支持弹窗嵌套）——BottomSheet 与对话框共用 */
 let lockCount = 0
 let originalBodyOverflow = ''

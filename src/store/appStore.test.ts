@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useAppStore } from './appStore'
+import { REPAIR_MAX, monthKeyOf } from '../logic/repairBricks'
 import { getBlueprint } from '../logic/blueprints'
 import { dateKey } from '../logic/dates'
 
@@ -261,13 +262,33 @@ describe('appStore checkIn & uncheckIn block economy', () => {
   it('useRepairBrick consumes a brick and saves retroactive checkin', () => {
     const store = useAppStore.getState()
     const habit = store.addHabit('健身', { type: 'daily' })
-    useAppStore.setState({ repairBricks: 1 })
+    // 补签日期必须晚于习惯创建日（A12）：把创建日提前到补签日之前
+    useAppStore.setState({
+      repairBricks: 1,
+      // F8：月度额度已结算（月份键=当前月），隔离掉「月初补足」逻辑，只测消耗
+      repairBrickMonth: monthKeyOf(),
+      habits: useAppStore
+        .getState()
+        .habits.map((h) => (h.id === habit.id ? { ...h, createdAt: '2026-08-01T00:00:00.000Z' } : h)),
+    })
 
     const res = store.useRepairBrick(habit.id, '2026-08-20')
     expect(res.ok).toBe(true)
     expect(useAppStore.getState().repairBricks).toBe(0)
     expect(useAppStore.getState().checkIns).toHaveLength(1)
     expect(useAppStore.getState().checkIns[0].date).toBe('2026-08-20')
+  })
+
+  it('useRepairBrick rejects dates before the habit was created (A12)', () => {
+    const store = useAppStore.getState()
+    const habit = store.addHabit('新建习惯', { type: 'daily' })
+    useAppStore.setState({ repairBricks: 1, habits: useAppStore.getState().habits.map((h) => (h.id === habit.id ? { ...h, createdAt: '2026-11-01T00:00:00.000Z' } : h)) })
+
+    const res = store.useRepairBrick(habit.id, '2026-10-01')
+    expect(res.ok).toBe(false)
+    expect(res.reason).toBe('before-creation')
+    // 未消耗库存
+    expect(useAppStore.getState().repairBricks).toBe(1)
   })
 
   it('useRepairBrick rejects when inventory is empty', () => {
@@ -358,5 +379,45 @@ describe('appStore checkIn & uncheckIn block economy', () => {
 
     store.setTheme('fog')
     expect(useAppStore.getState().settings.theme).toBe('fog')
+  })
+
+  it('F8：跨月后第一次补签会先发放当月 2 块额度', () => {
+    const store = useAppStore.getState()
+    const habit = store.addHabit('早睡', { type: 'daily' })
+    useAppStore.setState({
+      repairBricks: 0,
+      repairBrickMonth: '2020-01', // 很久以前的月份 → 触发补足
+      habits: useAppStore
+        .getState()
+        .habits.map((h) => (h.id === habit.id ? { ...h, createdAt: '2026-08-01T00:00:00.000Z' } : h)),
+    })
+
+    const res = store.useRepairBrick(habit.id, '2026-08-20')
+    expect(res.ok).toBe(true)
+    // 补足到 2 后消耗 1 → 1；月份键更新为当前月
+    expect(useAppStore.getState().repairBricks).toBe(1)
+    expect(useAppStore.getState().repairBrickMonth).toBe(monthKeyOf())
+  })
+
+  it('F8：连击跨过 30 天时额外奖励 1 块（与月度额度叠加，上限 4）', () => {
+    const store = useAppStore.getState()
+    const habit = store.addHabit('连续跑步', { type: 'daily' })
+    const today = new Date()
+    // 本地日期键（不能用 toISOString：UTC+8 的凌晨会退到前一天，导致连击被误判为中断）
+    const key = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    // 造 29 天连续打卡（今天之前），再打卡第 30 天
+    const checkIns = Array.from({ length: 29 }, (_, i) => {
+      const d = new Date(today)
+      d.setDate(d.getDate() - (29 - i))
+      return { id: 'seed' + i, habitId: habit.id, date: key(d), at: d.toISOString() }
+    })
+    useAppStore.setState({ checkIns, repairBricks: 0, repairBrickMonth: monthKeyOf() })
+
+    store.checkIn(habit.id)
+    expect(useAppStore.getState().repairBricks).toBe(1)
+  })
+
+  it('F8：落成奖励不再被旧的 2 块上限卡住（上限为 4）', () => {
+    expect(REPAIR_MAX).toBe(4)
   })
 })

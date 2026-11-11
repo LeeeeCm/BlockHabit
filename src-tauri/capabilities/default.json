@@ -16,15 +16,25 @@
     "core:window:allow-unminimize",
     "core:window:allow-set-focus",
     "core:window:allow-set-size",
+    "core:window:allow-set-min-size",
+    "core:window:allow-set-position",
     "core:window:allow-set-always-on-top",
     "core:window:allow-set-resizable",
     "core:window:allow-center",
     "autostart:allow-enable",
     "autostart:allow-disable",
     "autostart:allow-is-enabled",
+    "notification:default",
+    "updater:default",
+    "process:default",
     "fs:allow-exists",
     "fs:allow-read-text-file",
     "fs:allow-write-text-file",
+    "fs:allow-write-file",
+    {
+      "identifier": "http:default",
+      "allow": [{ "url": "https://*" }, { "url": "http://*" }]
+    },
     "fs:allow-mkdir",
     "fs:allow-rename",
     "fs:allow-remove",
@@ -33,7 +43,9 @@
       "identifier": "fs:scope",
       "allow": [
         { "path": "$APPDATA" },
-        { "path": "$APPDATA/blockhabit*" }
+        { "path": "$APPDATA/blockhabit*" },
+        { "path": "$APPDATA/exports" },
+        { "path": "$APPDATA/exports/**" }
       ]
     }
   ]

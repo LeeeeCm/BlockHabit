@@ -56,7 +56,7 @@ export function ConfirmDialog({
     )
     return (
       <BottomSheet open={true} onClose={onCancel} title={title} footer={footerContent}>
-        <div style={{ padding: '8px 0 16px', fontSize: 14, color: 'var(--ink)', lineHeight: 1.6 }}>
+        <div style={{ padding: '8px 0 16px', fontSize: 'var(--fs-subhead)', color: 'var(--ink)', lineHeight: 1.6 }}>
           {message}
         </div>
       </BottomSheet>
@@ -68,6 +68,7 @@ export function ConfirmDialog({
       <div
         ref={dialogRef}
         role="dialog"
+      aria-labelledby="confirm-dialog-title"
         aria-modal="true"
         tabIndex={-1}
         className="dialog"
@@ -75,7 +76,7 @@ export function ConfirmDialog({
         style={{ width: 380, maxWidth: '92vw' }}
       >
         <div className="dialog-header">
-          <h3>{title}</h3>
+          <h3 id="confirm-dialog-title">{title}</h3>
           <button
             className="icon-btn"
             onClick={() => {
@@ -88,7 +89,7 @@ export function ConfirmDialog({
           </button>
         </div>
         <div className="dialog-body" style={{ padding: '20px 24px' }}>
-          <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.6 }}>{message}</p>
+          <p style={{ margin: 0, fontSize: 'var(--fs-subhead)', color: 'var(--ink)', lineHeight: 1.6 }}>{message}</p>
         </div>
         <div className="dialog-footer">
           <button className="btn ghost" onClick={onCancel}>

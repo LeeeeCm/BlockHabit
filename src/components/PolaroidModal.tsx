@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTransient } from '../platform/useTransient'
 import type { Blueprint, MicroMood } from '../types'
 import { useAppStore } from '../store/appStore'
-import {
-  DEFAULT_ISO_CONFIG,
-  drawCube,
-  drawGroundBase,
-  STUD_H,
-  worldToScreen,
-} from '../render/iso'
+import { DEFAULT_ISO_CONFIG } from '../render/iso'
+import { paintModelStage } from '../render/modelStage'
+import { completionDateOfBuilds } from '../logic/buildingArchive'
 import { getBlueprintName, useI18n } from '../i18n'
 import { IconCamera, IconClose, IconFlip } from './Icons'
 import { triggerHaptic } from '../platform'
@@ -33,7 +30,7 @@ function cssVar(name: string, fallback: string): string {
 export function PolaroidModal({ blueprint, onClose }: Props) {
   const { lang, t } = useI18n()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, showToast] = useTransient<string>(2500)
   const [copying, setCopying] = useState(false)
   const [isBack, setIsBack] = useState(false)
 
@@ -45,6 +42,15 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
   const habits = useAppStore((s) => s.habits)
 
   const foundationNote = foundationNotes[blueprint.id]
+
+  // B1：按蓝图内序位取该块的 bonus 标记（蓝图数组顺序 = 拼建顺序 = PlacedBlock.index）
+  const bonusByIndex = useMemo(() => {
+    const list: boolean[] = []
+    for (const b of builds) {
+      if (b.blueprintId === blueprint.id) list[b.index] = b.bonus
+    }
+    return list
+  }, [builds, blueprint.id])
 
   // 提取参与本建筑拼搭的所有随笔
   const blueprintNotes = useMemo(() => {
@@ -76,7 +82,11 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
     ctx.scale(2, 2)
 
     const bpName = getBlueprintName(blueprint.id, lang)
-    const todayStr = new Date().toISOString().slice(0, 10)
+    // 落成日口径（D-20261110-065，B5 收尾）：max(placedAt) 的本地日期，与档案卡 completedAt 同源；
+    // 旧实现是 new Date()（今天）且取 UTC 日期 —— 既不是落成日，UTC+ 时区还会差一天。
+    // 无有效 placedAt（旧档/坏时间戳）→「不可考」，不伪造日期。
+    const completionDate =
+      completionDateOfBuilds(builds, blueprint.id) ?? t.buildingArchive.unknownDate
 
     if (!isBack) {
       // ==================== 正面：3D 拍立得相纸 ====================
@@ -112,63 +122,18 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       }
       const cfg = DEFAULT_ISO_CONFIG
 
-      let minBx = Infinity, maxBx = -Infinity, minBy = Infinity, maxBy = -Infinity
-      for (const b of blueprint.blocks) {
-        minBx = Math.min(minBx, b.x)
-        maxBx = Math.max(maxBx, b.x)
-        minBy = Math.min(minBy, b.y)
-        maxBy = Math.max(maxBy, b.y)
-      }
-      const cx = Math.round((minBx + maxBx) / 2)
-      const cy = Math.round((minBy + maxBy) / 2)
-
-      const xs: number[] = []
-      const ys: number[] = []
-      for (const b of blueprint.blocks) {
-        const { sx, sy } = worldToScreen(b.x, b.y, b.z, cfg)
-        xs.push(sx + cfg.tileW / 2, sx - cfg.tileW / 2)
-        ys.push(sy + cfg.tileH / 2 + cfg.blockH, sy - cfg.tileH / 2 - STUD_H)
-      }
-      const modelMinX = Math.min(...xs)
-      const modelMaxX = Math.max(...xs)
-      const modelMinY = Math.min(...ys)
-      const modelMaxY = Math.max(...ys)
-
-      const scale = Math.min(
-        (photoW - 60) / (modelMaxX - modelMinX),
-        (photoH - 60) / (modelMaxY - modelMinY),
-        1.5,
-      )
-      const panX = photoX + photoW / 2 - ((modelMinX + modelMaxX) / 2) * scale
-      const panY = photoY + photoH * 0.54 - ((modelMinY + modelMaxY) / 2) * scale
-
-      ctx.translate(panX, panY)
-      ctx.scale(scale, scale)
-
-      drawGroundBase(ctx, blueprint.blocks, cfg, palette, 0, cx, cy)
-
-      const cubes = blueprint.blocks
-        .map((b, i) => ({ b, i }))
-        .sort((m, n) => {
-          const a = m.b.x + m.b.y
-          const c = n.b.x + n.b.y
-          if (a !== c) return a - c
-          return m.b.z - n.b.z
-        })
-
-      const indexAt = new Map<string, number>()
-      blueprint.blocks.forEach((b, i) => indexAt.set(`${b.x},${b.y},${b.z}`, i))
-
-      for (const { b } of cubes) {
-        const aboveIdx = indexAt.get(`${b.x},${b.y},${b.z + 1}`)
-        const { sx: px, sy: py } = worldToScreen(b.x, b.y, b.z, cfg)
-        drawCube(ctx, px, py, cfg, palette, {
-          spriteScale: 2,
-          type: b.type,
-          color: b.color,
-          noStuds: aboveIdx !== undefined,
-        })
-      }
+      // 照片框内 3D 模型：30/30 内边距、0.54 地面基准、1.5 缩放上限由 modelStage 承接
+      paintModelStage(ctx, {
+        blocks: blueprint.blocks,
+        viewport: { x: photoX, y: photoY, w: photoW, h: photoH },
+        pad: 30,
+        maxScale: 1.5,
+        baseline: 0.54,
+        palette,
+        cfg,
+        bonusByIndex,
+        spriteScale: 2,
+      })
       ctx.restore()
 
       // 4. 照片底部文字与奠基石铭文
@@ -191,7 +156,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         ctx.fillStyle = '#64748b'
         ctx.font = '500 12px "Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
         ctx.fillText(
-          t.polaroid.cardDetails(blueprint.blocks.length, todayStr),
+          t.polaroid.cardDetails(blueprint.blocks.length, completionDate),
           photoX,
           photoY + photoH + 74,
         )
@@ -199,7 +164,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         ctx.fillStyle = '#64748b'
         ctx.font = '500 13px "Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
         ctx.fillText(
-          t.polaroid.cardDetails(blueprint.blocks.length, todayStr),
+          t.polaroid.cardDetails(blueprint.blocks.length, completionDate),
           photoX,
           photoY + photoH + 64,
         )
@@ -330,13 +295,13 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
 
       ctx.fillStyle = '#a8a29e'
       ctx.font = '600 11px "Rubik", "MiSans", sans-serif'
-      ctx.fillText(`${t.polaroid.cardDetails(blueprint.blocks.length, todayStr)}`, 38, footerY + 20)
+      ctx.fillText(`${t.polaroid.cardDetails(blueprint.blocks.length, completionDate)}`, 38, footerY + 20)
 
       ctx.textAlign = 'right'
       ctx.fillText('BLOCKHABIT CHRONICLE', W - 38, footerY + 20)
       ctx.textAlign = 'left'
     }
-  }, [blueprint, lang, t, isBack, foundationNote, blueprintNotes, habits])
+  }, [blueprint, builds, lang, t, isBack, foundationNote, blueprintNotes, habits])
 
   async function handleCopy() {
     const canvas = canvasRef.current
@@ -349,12 +314,11 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       }
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-        setToast(t.polaroid.copiedToast)
+        showToast(t.polaroid.copiedToast, 2500)
       } catch {
-        setToast(t.polaroid.copyFailedToast)
+        showToast(t.polaroid.copyFailedToast, 2500)
       }
       setCopying(false)
-      setTimeout(() => setToast(null), 2500)
     })
   }
 
@@ -373,6 +337,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-label={isBack ? t.polaroid.modalTitleBack : t.polaroid.modalTitle}
       tabIndex={-1}
       className="overlay"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
@@ -390,7 +355,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         }}
       >
         <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ fontSize: 16, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 'var(--fs-title)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <IconCamera size={18} />
             <span>{isBack ? t.polaroid.modalTitleBack : t.polaroid.modalTitle}</span>
           </span>
@@ -416,7 +381,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
             boxShadow: '0 16px 48px rgba(0,0,0,0.18)',
             border: '1px solid var(--line)',
             display: 'block',
-            transition: 'transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1)',
+            transition: 'transform var(--dur-lg) var(--ease-bounce)',
           }}
         />
 

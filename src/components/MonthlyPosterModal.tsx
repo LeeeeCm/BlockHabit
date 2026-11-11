@@ -1,14 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
 import { getBlueprint } from '../logic/blueprints'
-import {
-  DEFAULT_ISO_CONFIG,
-  drawCube,
-  drawGroundBase,
-  paletteFromDocument,
-  STUD_H,
-  worldToScreen,
-} from '../render/iso'
+import { DEFAULT_ISO_CONFIG, paletteFromDocument } from '../render/iso'
+import { paintModelStage } from '../render/modelStage'
 import { getBlueprintName, useI18n } from '../i18n'
 import { dateKey } from '../logic/dates'
 import { dayCompletionRatio } from '../logic/checkin'
@@ -28,7 +23,7 @@ interface Props {
 export function MonthlyPosterModal({ onClose }: Props) {
   const { lang, t } = useI18n()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, showToast] = useTransient<string>(2500)
   const [copying, setCopying] = useState(false)
   const [aspectRatio, setAspectRatio] = useState<'4:5' | '9:16' | '1:1'>('4:5')
   const habits = useAppStore((s) => s.habits)
@@ -145,61 +140,29 @@ export function MonthlyPosterModal({ onClose }: Props) {
     ctx.roundRect(margin, stageY, innerW, stageH, 16)
     ctx.clip()
 
-    let minBx = Infinity, maxBx = -Infinity, minBy = Infinity, maxBy = -Infinity
-    for (const b of blueprint.blocks) {
-      minBx = Math.min(minBx, b.x)
-      maxBx = Math.max(maxBx, b.x)
-      minBy = Math.min(minBy, b.y)
-      maxBy = Math.max(maxBy, b.y)
-    }
-    const cx = Math.round((minBx + maxBx) / 2)
-    const cy = Math.round((minBy + maxBy) / 2)
-
-    const xs: number[] = []
-    const ys: number[] = []
-    for (const b of blueprint.blocks) {
-      const { sx, sy } = worldToScreen(b.x, b.y, b.z, cfg)
-      xs.push(sx + cfg.tileW / 2, sx - cfg.tileW / 2)
-      ys.push(sy + cfg.tileH / 2 + cfg.blockH, sy - cfg.tileH / 2 - STUD_H)
-    }
-    const mMinX = Math.min(...xs)
-    const mMaxX = Math.max(...xs)
-    const mMinY = Math.min(...ys)
-    const mMaxY = Math.max(...ys)
-
-    const scale = Math.min((innerW - 60) / (mMaxX - mMinX), (stageH - 50) / (mMaxY - mMinY), 1.5)
-    const panX = margin + innerW / 2 - ((mMinX + mMaxX) / 2) * scale
-    const panY = stageY + stageH * 0.54 - ((mMinY + mMaxY) / 2) * scale
-
-    ctx.translate(panX, panY)
-    ctx.scale(scale, scale)
-
-    drawGroundBase(ctx, blueprint.blocks, cfg, palette, 0, cx, cy)
-
     const visibleBlocks = isComplete ? blueprint.blocks : blueprint.blocks.slice(0, placedCount)
-    const cubes = visibleBlocks
-      .map((b, i) => ({ b, i }))
-      .sort((m, n) => {
-        const a = m.b.x + m.b.y
-        const c = n.b.x + n.b.y
-        if (a !== c) return a - c
-        return m.b.z - n.b.z
-      })
-
-    const indexAt = new Map<string, number>()
-    visibleBlocks.forEach((b, i) => indexAt.set(`${b.x},${b.y},${b.z}`, i))
-
-    for (const { b } of cubes) {
-      const aboveIdx = indexAt.get(`${b.x},${b.y},${b.z + 1}`)
-      const { sx: px, sy: py } = worldToScreen(b.x, b.y, b.z, cfg)
-      drawCube(ctx, px, py, cfg, palette, {
-        type: b.type,
-        color: b.color,
-        noStuds: aboveIdx !== undefined,
-        // 导出画布固定 2x 变换：精灵密度必须对齐，否则 1x 屏导出图块面模糊
-        spriteScale: 2,
-      })
+    // B1：visibleBlocks 与 blueprint.blocks 前段一一对应，序位即 PlacedBlock.index
+    const bonusByIndex: boolean[] = []
+    for (const b of builds) {
+      if (b.blueprintId === blueprint.id) bonusByIndex[b.index] = b.bonus
     }
+
+    // 中央英雄舞台：30/25 内边距、0.54 地面基准、1.5 缩放上限全部由 modelStage 承接。
+    // 未完成时地基仍按完整蓝图铺（groundBlocks），积木只画已落块（blocks）。
+    paintModelStage(ctx, {
+      blocks: visibleBlocks,
+      groundBlocks: blueprint.blocks,
+      boundsBlocks: blueprint.blocks,
+      viewport: { x: margin, y: stageY, w: innerW, h: stageH },
+      pad: { x: 30, y: 25 },
+      maxScale: 1.5,
+      baseline: 0.54,
+      palette,
+      cfg,
+      bonusByIndex,
+      // 导出画布固定 2x 变换：精灵密度必须对齐，否则 1x 屏导出图块面模糊
+      spriteScale: 2,
+    })
     ctx.restore()
 
     // 建筑标签与实时进度徽章
@@ -359,12 +322,11 @@ export function MonthlyPosterModal({ onClose }: Props) {
       }
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-        setToast(t.poster.copySuccess)
+        showToast(t.poster.copySuccess, 2500)
       } catch {
-        setToast(t.poster.copyFail)
+        showToast(t.poster.copyFail, 2500)
       }
       setCopying(false)
-      setTimeout(() => setToast(null), 2500)
     })
   }
 
@@ -384,6 +346,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-label={t.poster.modalTitle}
       tabIndex={-1}
       className="overlay"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
@@ -402,7 +365,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
         }}
       >
         <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ fontSize: 16, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 'var(--fs-title)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <IconPoster size={18} />
             <span>{t.poster.modalTitle}</span>
           </span>
@@ -426,7 +389,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
                 key={r}
                 type="button"
                 className={`apple-segmented-item${aspectRatio === r ? ' active' : ''}`}
-                style={{ padding: '3px 14px', fontSize: 12 }}
+                style={{ padding: '3px 14px', fontSize: 'var(--fs-small)' }}
                 onClick={() => {
                   triggerHaptic('selection')
                   setAspectRatio(r)
@@ -458,7 +421,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
             <button
               className="btn ghost"
               onClick={() => setQuoteIdx((prev) => (prev + 1) % monthNotes.length)}
-              style={{ fontSize: 12, padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              style={{ fontSize: 'var(--fs-small)', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
               title={t.poster.cycleQuoteTooltip}
             >
               <IconShuffle size={13} style={{ flexShrink: 0 }} />

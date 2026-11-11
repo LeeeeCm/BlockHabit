@@ -1,3 +1,4 @@
+import { httpFetch } from '../platform/http'
 import type { WebDavConfig } from './types'
 
 export const GET_TIMEOUT_MS = 15000
@@ -5,7 +6,18 @@ export const PUT_TIMEOUT_MS = 30000
 export const SYNC_FILE_NAME = 'blockhabit-data.json'
 
 /** 同步层错误码：UI 侧按 code 映射 i18n 文案 */
-export type WebDavErrorCode = 'auth' | 'network' | 'conflict' | 'no-collection' | 'http'
+export type WebDavErrorCode = 'auth' | 'network' | 'conflict' | 'no-collection' | 'http' | 'cors'
+
+/**
+ * fetch 抛出 TypeError（Failed to fetch / Load failed）时，最常见的原因是**跨域被拦**：
+ * 标准 WebDAV 服务器（Nextcloud、群晖等）默认不返回 Access-Control-Allow-Origin，
+ * 而应用跑在 Tauri WebView 里，请求同样受 CORS 约束。此时报「网络错误」会误导用户去查网络。
+ */
+function isLikelyCors(err: unknown): boolean {
+  if (!(err instanceof TypeError)) return false
+  const msg = String(err.message ?? '')
+  return /failed to fetch|load failed|networkerror|network request failed/i.test(msg) || msg === ''
+}
 
 export class WebDavError extends Error {
   code: WebDavErrorCode
@@ -31,8 +43,8 @@ export function getSyncUrl(endpoint: string): string {
   return encodeUrlPath(file)
 }
 
-/** 对路径段做编码；已编码过的段保持原样（避免双重编码） */
-function encodeUrlPath(url: string): string {
+/** 对路径段做编码；已编码过的段保持原样（避免双重编码）。导出供 diagnose 复用（行为不变） */
+export function encodeUrlPath(url: string): string {
   const schemeEnd = url.indexOf('://') + 3
   const pathStart = url.indexOf('/', schemeEnd)
   if (pathStart < 0) return url
@@ -96,7 +108,7 @@ export async function fetchRemoteState(config: WebDavConfig): Promise<RemoteFetc
 
   let response: Response
   try {
-    response = await fetch(url, {
+    response = await httpFetch(url, {
       method: 'GET',
       headers: {
         ...getAuthHeaders(config),
@@ -106,6 +118,9 @@ export async function fetchRemoteState(config: WebDavConfig): Promise<RemoteFetc
     })
   } catch (err) {
     if (err instanceof WebDavError) throw err
+    if (isLikelyCors(err)) {
+      throw new WebDavError('cors', `WebDAV request blocked (likely CORS): ${String(err)}`)
+    }
     throw new WebDavError('network', `WebDAV request failed: ${String(err)}`)
   }
 
@@ -127,7 +142,7 @@ async function confirmCollectionEmpty(config: WebDavConfig, fileUrl: string): Pr
   const dirUrl = fileUrl.slice(0, fileUrl.lastIndexOf('/') + 1)
   let propfind: Response
   try {
-    propfind = await fetch(dirUrl, {
+    propfind = await httpFetch(dirUrl, {
       method: 'PROPFIND',
       headers: {
         ...getAuthHeaders(config),
@@ -136,6 +151,7 @@ async function confirmCollectionEmpty(config: WebDavConfig, fileUrl: string): Pr
       signal: AbortSignal.timeout(GET_TIMEOUT_MS),
     })
   } catch (err) {
+    if (isLikelyCors(err)) throw new WebDavError('cors', `WebDAV request blocked (likely CORS): ${String(err)}`)
     throw new WebDavError('network', `WebDAV request failed: ${String(err)}`)
   }
   if (propfind.status === 404) {
@@ -175,13 +191,14 @@ export async function pushRemoteState(config: WebDavConfig, json: string, etag?:
 
   const doPut = async (extraHeaders: Record<string, string>): Promise<Response> => {
     try {
-      return await fetch(url, {
+      return await httpFetch(url, {
         method: 'PUT',
         headers: { ...headers, ...extraHeaders },
         body: json,
         signal: AbortSignal.timeout(PUT_TIMEOUT_MS),
       })
     } catch (err) {
+      if (isLikelyCors(err)) throw new WebDavError('cors', `WebDAV request blocked (likely CORS): ${String(err)}`)
       throw new WebDavError('network', `WebDAV request failed: ${String(err)}`)
     }
   }
@@ -191,13 +208,14 @@ export async function pushRemoteState(config: WebDavConfig, json: string, etag?:
     // 父集合缺失：创建目录后重试一次
     let mkcolOk = false
     try {
-      const mkcol = await fetch(parentCollectionUrl(url), {
+      const mkcol = await httpFetch(parentCollectionUrl(url), {
         method: 'MKCOL',
         headers: getAuthHeaders(config),
         signal: AbortSignal.timeout(GET_TIMEOUT_MS),
       })
       mkcolOk = mkcol.ok || mkcol.status === 201
     } catch (err) {
+      if (isLikelyCors(err)) throw new WebDavError('cors', `WebDAV MKCOL blocked (likely CORS): ${String(err)}`)
       throw new WebDavError('network', `WebDAV MKCOL failed: ${String(err)}`)
     }
     if (mkcolOk) {

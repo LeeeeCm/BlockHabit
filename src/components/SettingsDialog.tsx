@@ -1,7 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useTransient } from '../platform/useTransient'
+import type { ReactNode } from 'react'
 import { useAppStore } from '../store/appStore'
 import { useI18n } from '../i18n'
-import { validateState } from '../storage/adapter'
+import { prepareImport } from '../storage/adapter'
+import { resetGuideTips } from '../platform/guideTips'
+import { ensureNotifyPermission } from '../platform/notify'
 import { pickAdapter } from '../storage'
 import type { AppState } from '../types'
 import { IconClose, IconKeyboard, IconRepair } from './Icons'
@@ -10,11 +14,76 @@ import { BottomSheet } from './BottomSheet'
 import { ConfirmDialog } from './ConfirmDialog'
 import { useDialogA11y } from './useDialogA11y'
 import { useSync } from '../sync/useSync'
+import { WebdavPanel } from './WebdavPanel'
+import { ArchiveBackupsPanel, ArchiveDataPanel, DiagnosticsExportPanel } from './ArchiveDataPanel'
+import { AboutPanel } from './AboutPanel'
+import { MINI_SIZE_ORDER } from '../platform/miniWindow'
 const inTauri =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 interface Props {
   onClose: () => void
+}
+
+/**
+ * D4：设置分组容器。
+ * 设置项从 19 个控件 / 3.6 屏收敛为「首屏三组 + 折叠的进阶组」：
+ * collapsible 时标题行可点击（并支持 Enter / Space），展开态记在本地 state，不影响任何已保存设置。
+ */
+function Group({
+  title,
+  children,
+  collapsible = false,
+  defaultOpen = true,
+}: {
+  title: string
+  children: ReactNode
+  collapsible?: boolean
+  defaultOpen?: boolean
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="apple-group">
+      <div
+        className="apple-group-title"
+        role={collapsible ? 'button' : undefined}
+        tabIndex={collapsible ? 0 : undefined}
+        aria-expanded={collapsible ? open : undefined}
+        onClick={collapsible ? () => setOpen((v) => !v) : undefined}
+        onKeyDown={
+          collapsible
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setOpen((v) => !v)
+                }
+              }
+            : undefined
+        }
+        style={
+          collapsible
+            ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }
+            : undefined
+        }
+      >
+        <span>{title}</span>
+        {collapsible && (
+          <span
+            aria-hidden="true"
+            style={{
+              display: 'inline-flex',
+              color: 'var(--ink-2)',
+              transition: 'transform var(--dur-xs) var(--ease-default)',
+              transform: open ? 'rotate(90deg)' : 'none',
+            }}
+          >
+            ›
+          </span>
+        )}
+      </div>
+      {open && children}
+    </div>
+  )
 }
 
 export function SettingsDialog({ onClose }: Props) {
@@ -25,15 +94,13 @@ export function SettingsDialog({ onClose }: Props) {
   const theme = settings.theme
   const setTheme = useAppStore((s) => s.setTheme)
   const setLanguage = useAppStore((s) => s.setLanguage)
-  const exportData = useAppStore((s) => s.exportData)
   const importData = useAppStore((s) => s.importData)
-  const fileRef = useRef<HTMLInputElement>(null)
   const habits = useAppStore((s) => s.habits)
   const completed = useAppStore((s) => s.completedBlueprintIds)
   const repairBricks = useAppStore((s) => s.repairBricks ?? 0)
   const muted = settings.soundMuted === true
   const volume = typeof settings.volume === 'number' ? settings.volume : 100
-  const [msg, setMsg] = useState<string | null>(null)
+  const [msg, showMsg] = useTransient<string>(2400)
   /** 通过深度校验、待用户确认后覆盖导入的存档 */
   const [importCandidate, setImportCandidate] = useState<AppState | null>(null)
   const [autostart, setAutostart] = useState<boolean | null>(null)
@@ -44,54 +111,9 @@ export function SettingsDialog({ onClose }: Props) {
       setAutostart(await isEnabled())
     })()
   }, [])
-  const {
-    config: syncConfig,
-    updateConfig: updateSyncConfig,
-    isSyncing,
-    status: syncStatus,
-    error: syncError,
-    lastSyncAt,
-    syncNow,
-    getLastError,
-  } = useSync()
-  const [endpoint, setEndpoint] = useState(syncConfig.endpoint)
-  const [username, setUsername] = useState(syncConfig.username)
-  const [password, setPassword] = useState(syncConfig.password)
-
-  useEffect(() => {
-    setEndpoint(syncConfig.endpoint)
-    setUsername(syncConfig.username)
-    setPassword(syncConfig.password)
-  }, [syncConfig.endpoint, syncConfig.username, syncConfig.password])
-
-  /** 同步错误码 → 用户文案 */
-  function syncErrorText(code: string | null): string | null {
-    if (!code) return null
-    const map: Record<string, string> = {
-      'no-endpoint': t.settings.syncErrors.noEndpoint,
-      auth: t.settings.syncErrors.auth,
-      parse: t.settings.syncErrors.parse,
-      incompatible: t.settings.syncErrors.incompatible,
-      network: t.settings.syncErrors.network,
-      conflict: t.settings.syncErrors.conflict,
-      'no-collection': t.settings.syncErrors.noCollection,
-      http: t.settings.syncErrors.http,
-    }
-    return map[code] ?? t.settings.syncErrors.network
-  }
-
-  async function handleSync() {
-    const ok = await syncNow()
-    if (ok) {
-      setMsg(t.settings.webdav.syncSuccess)
-    } else {
-      setMsg(syncErrorText(getLastError()) ?? t.settings.webdav.syncFailed)
-    }
-    setTimeout(() => setMsg(null), 3000)
-  }
+  const sync = useSync()
   // 嵌套的导入确认弹窗打开时抑制本弹窗的 Esc/焦点管理
   const { ref: dialogRef } = useDialogA11y({ open: true, onClose, enabled: !importCandidate })
-
 
   async function toggleAutostart() {
     if (!inTauri) return
@@ -102,28 +124,17 @@ export function SettingsDialog({ onClose }: Props) {
     setAutostart(next)
   }
 
-  function doExport() {
-    const blob = new Blob([exportData()], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `blockhabit-backup-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   async function doImport(file: File) {
     let candidate: AppState | null = null
     try {
       const text = await file.text()
-      const verdict = validateState(JSON.parse(text))
-      if (verdict.ok) candidate = verdict.state
+      // prepareImport：v2 档严格校验；v1 旧档先迁移再校验（否则合法旧备份会被误判为损坏）
+      candidate = prepareImport(JSON.parse(text))
     } catch {
       candidate = null
     }
     if (!candidate) {
-      setMsg(t.settings.importFail)
-      setTimeout(() => setMsg(null), 2400)
+      showMsg(t.settings.importFail, 2400)
       return
     }
     setImportCandidate(candidate)
@@ -141,8 +152,7 @@ export function SettingsDialog({ onClose }: Props) {
       // 备份失败不阻塞导入
     }
     const ok = importData(JSON.stringify(candidate))
-    setMsg(ok ? t.settings.importSuccess : t.settings.importFail)
-    setTimeout(() => setMsg(null), 2400)
+    showMsg(ok ? t.settings.importSuccess : t.settings.importFail, 2400)
   }
 
   const footerContent = (
@@ -156,8 +166,7 @@ export function SettingsDialog({ onClose }: Props) {
   const bodyContent = (
     <>
           {/* 1. 界面与感官偏好 */}
-          <div className="apple-group">
-            <div className="apple-group-title">{t.settings.groupPreferences}</div>
+          <Group title={t.settings.groupPreferences}>
 
             <div className="field" style={{ marginBottom: 12 }}>
               <label>{t.settings.languageLabel}</label>
@@ -190,6 +199,89 @@ export function SettingsDialog({ onClose }: Props) {
             </div>
 
             <div className="field" style={{ marginBottom: 0 }}>
+              <label>{t.settings.reminderToggleLabel}</label>
+              <div className="seg">
+                <button
+                  type="button"
+                  className={settings.remindersEnabled !== false ? 'active' : ''}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    updateSettings({ remindersEnabled: true })
+                  }}
+                >
+                  {t.settings.reminderToggleOn}
+                </button>
+                <button
+                  type="button"
+                  className={settings.remindersEnabled === false ? 'active' : ''}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    updateSettings({ remindersEnabled: false })
+                  }}
+                >
+                  {t.settings.reminderToggleOff}
+                </button>
+              </div>
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
+                {t.settings.reminderToggleHint}
+              </div>
+            </div>
+
+            {/* D-20261110-055 晚间收尾提醒：默认关，首次打卡后由用户显式开启 */}
+            <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
+              <label>{t.eveningNudge.settingsTitle}</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <div className="seg" style={{ flex: '0 0 auto', minWidth: 192 }}>
+                  <button
+                    type="button"
+                    style={{ whiteSpace: 'nowrap' }}
+                    className={settings.eveningNudgeEnabled === true ? 'active' : ''}
+                    onClick={() => {
+                      triggerHaptic('selection')
+                      updateSettings({ eveningNudgeEnabled: true })
+                      void ensureNotifyPermission()
+                    }}
+                  >
+                    {t.settings.reminderToggleOn}
+                  </button>
+                  <button
+                    type="button"
+                    style={{ whiteSpace: 'nowrap' }}
+                    className={settings.eveningNudgeEnabled !== true ? 'active' : ''}
+                    onClick={() => {
+                      triggerHaptic('selection')
+                      updateSettings({ eveningNudgeEnabled: false })
+                    }}
+                  >
+                    {t.settings.reminderToggleOff}
+                  </button>
+                </div>
+                <input
+                  type="time"
+                  value={settings.eveningNudgeTime ?? '21:00'}
+                  disabled={settings.eveningNudgeEnabled !== true}
+                  aria-label={t.eveningNudge.settingsTime}
+                  onChange={(e) => updateSettings({ eveningNudgeTime: e.target.value })}
+                  style={{
+                    padding: '5px 9px',
+                    borderRadius: 'var(--r-sm)',
+                    border: '1px solid var(--line)',
+                    background: 'var(--surface)',
+                    color: 'var(--ink)',
+                    fontSize: 'var(--fs-small)',
+                    fontFamily: 'inherit',
+                    opacity: settings.eveningNudgeEnabled === true ? 1 : 0.45,
+                  }}
+                />
+              </div>
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 4, lineHeight: 1.5 }}>
+                {t.eveningNudge.settingsDesc} · {t.eveningNudge.settingsTimeNote}
+              </div>
+            </div>
+          </Group>
+
+          <Group title={t.settings.soundGroupTitle} collapsible defaultOpen={false}>
+            <div className="field" style={{ marginBottom: 12 }}>
               <label>{t.settings.soundLabel}</label>
               <div className="seg">
                 <button
@@ -206,7 +298,7 @@ export function SettingsDialog({ onClose }: Props) {
                 </button>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, opacity: muted ? 0.4 : 1 }}>
-                <span style={{ fontSize: 11, color: 'var(--ink-2)', flexShrink: 0 }}>{t.settings.volumeLabel}</span>
+                <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', flexShrink: 0 }}>{t.settings.volumeLabel}</span>
                 <input
                   type="range"
                   min={0}
@@ -214,17 +306,17 @@ export function SettingsDialog({ onClose }: Props) {
                   step={5}
                   value={volume}
                   disabled={muted}
+                  aria-label={t.settings.volumeLabel}
                   onChange={(e) => updateSettings({ volume: Number(e.target.value) })}
-                  style={{ flex: 1, accentColor: 'var(--accent)' }}
+                  style={{ flex: 1, accentColor: 'var(--ink)' }}
                 />
-                <span style={{ fontSize: 11, color: 'var(--ink-2)', width: 32, textAlign: 'right', flexShrink: 0 }}>{volume}</span>
+                <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', width: 32, textAlign: 'right', flexShrink: 0 }}>{volume}</span>
               </div>
             </div>
-          </div>
+          </Group>
 
           {/* 2. 感官与氛围体验 (Apple HIG Ambience Panel) */}
-          <div className="apple-group">
-            <div className="apple-group-title">{t.settings.ambienceTitle}</div>
+          <Group title={t.settings.labTitle} collapsible defaultOpen={false}>
 
             {/* 时段感知昼夜光照 */}
             <div className="field" style={{ marginBottom: 12 }}>
@@ -251,7 +343,7 @@ export function SettingsDialog({ onClose }: Props) {
                   {t.settings.ambientLightingOff}
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
                 {t.settings.ambientLightingHint}
               </div>
             </div>
@@ -281,7 +373,7 @@ export function SettingsDialog({ onClose }: Props) {
                   {t.settings.gentleDecayOff}
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
                 {t.settings.gentleDecayHint}
               </div>
             </div>
@@ -311,8 +403,38 @@ export function SettingsDialog({ onClose }: Props) {
                   {t.settings.ecoPropsOff}
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
                 {t.settings.ecoPropsHint}
+              </div>
+            </div>
+
+            {/* 透视考古默认态：接线 Build 页会话内开关的初始值 */}
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>{t.settings.xrayDefaultLabel}</label>
+              <div className="seg">
+                <button
+                  type="button"
+                  className={Boolean(settings.enableXRayInspection) ? 'active' : ''}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    updateSettings({ enableXRayInspection: true })
+                  }}
+                >
+                  {t.settings.xrayDefaultOn}
+                </button>
+                <button
+                  type="button"
+                  className={!settings.enableXRayInspection ? 'active' : ''}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    updateSettings({ enableXRayInspection: false })
+                  }}
+                >
+                  {t.settings.xrayDefaultOff}
+                </button>
+              </div>
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
+                {t.settings.xrayDefaultHint}
               </div>
             </div>
 
@@ -371,11 +493,12 @@ export function SettingsDialog({ onClose }: Props) {
                     {t.settings.gyroscopeOff}
                   </button>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
+                <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
                   {t.settings.gyroscopeHint}
                 </div>
               </div>
             ) : (
+              <>
               <div className="field" style={{ marginBottom: 0 }}>
                 <label>{t.settings.miniWidgetLabel}</label>
                 <div className="seg">
@@ -400,17 +523,97 @@ export function SettingsDialog({ onClose }: Props) {
                     {t.settings.miniWidgetOff}
                   </button>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
+                <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
                   {t.settings.miniWidgetHint}
                 </div>
               </div>
+
+              {/* D-20261110-059：三档尺寸 + 置顶 */}
+              <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
+                <label>{t.settings.miniSizeLabel}</label>
+                <div className="seg">
+                  {MINI_SIZE_ORDER.map((size) => {
+                    const label =
+                      size === 'pocket'
+                        ? t.settings.miniSizePocket
+                        : size === 'display'
+                          ? t.settings.miniSizeDisplay
+                          : t.settings.miniSizeStandard
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        className={(settings.miniWidgetSize ?? 'standard') === size ? 'active' : ''}
+                        onClick={() => {
+                          triggerHaptic('selection')
+                          updateSettings({ miniWidgetSize: size })
+                        }}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
+                  {t.settings.miniSizeHint}
+                </div>
+              </div>
+
+              <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
+                <label>{t.settings.miniAlwaysOnTopLabel}</label>
+                <div className="seg">
+                  <button
+                    type="button"
+                    className={settings.miniWidgetAlwaysOnTop === true ? 'active' : ''}
+                    onClick={() => {
+                      triggerHaptic('selection')
+                      updateSettings({ miniWidgetAlwaysOnTop: true })
+                    }}
+                  >
+                    {t.settings.miniAlwaysOnTopOn}
+                  </button>
+                  <button
+                    type="button"
+                    className={settings.miniWidgetAlwaysOnTop !== true ? 'active' : ''}
+                    onClick={() => {
+                      triggerHaptic('selection')
+                      updateSettings({ miniWidgetAlwaysOnTop: false })
+                    }}
+                  >
+                    {t.settings.miniAlwaysOnTopOff}
+                  </button>
+                </div>
+                <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
+                  {t.settings.miniAlwaysOnTopHint}
+                </div>
+              </div>
+              </>
             )}
-          </div>
+
+            <DiagnosticsExportPanel onToast={showMsg} />
+
+            {/* D-20261110-054 页面提示：清空已读，三页首访提示重新出现一次 */}
+            <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
+              <label>{t.guide.replayTitle}</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <button
+                  className="btn ghost"
+                  style={{ padding: '7px 16px' }}
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    resetGuideTips()
+                    showMsg(t.guide.replayToast, 2400)
+                  }}
+                >
+                  {t.guide.replay}
+                </button>
+              </div>
+            </div>
+          </Group>
 
           {/* 2. 系统与常驻 */}
           {inTauri && (
-            <div className="apple-group">
-              <div className="apple-group-title">{t.settings.groupSystem}</div>
+            <Group title={t.settings.groupSystem} collapsible defaultOpen={false}>
               <div className="field" style={{ marginBottom: 0 }}>
                 <label>{t.settings.autostartLabel}</label>
                 <div className="seg">
@@ -421,110 +624,36 @@ export function SettingsDialog({ onClose }: Props) {
                     {t.settings.autostartOn}
                   </button>
                 </div>
+                {settings.remindersEnabled !== false && autostart === false && (
+                  <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 6, lineHeight: 1.5 }}>
+                    {t.settings.reminderAutostartHint}
+                  </div>
+                )}
               </div>
-            </div>
+            </Group>
           )}
 
           {/* 3. 数据备份 */}
-          <div className="apple-group">
-            <div className="apple-group-title">{t.settings.groupData}</div>
-            <div className="field" style={{ marginBottom: 0 }}>
-              <label>{t.settings.dataLabel}</label>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button className="btn ghost" onClick={doExport} style={{ flex: 1, padding: '7px 0' }}>
-                  {t.settings.exportJson}
-                </button>
-                <button className="btn ghost" onClick={() => fileRef.current?.click()} style={{ flex: 1, padding: '7px 0' }}>
-                  {t.settings.importJson}
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="application/json,.json"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0]
-                    if (f) void doImport(f)
-                    e.target.value = ''
-                  }}
-                />
-              </div>
-            </div>
-          </div>
+          <Group title={t.settings.groupData} collapsible defaultOpen={false}>
+            <ArchiveDataPanel onImportFile={doImport} />
+          </Group>
+
+          {/* 3.05 备份与恢复（桌面端）：可见、可恢复的本地备份 */}
+          {inTauri && (
+            <Group title={t.settings.backupsTitle} collapsible defaultOpen={false}>
+              <ArchiveBackupsPanel onToast={showMsg} onRestoreCandidate={setImportCandidate} />
+            </Group>
+          )}
 
           {/* 3.1 WebDAV 数据同步 */}
-          <div className="apple-group">
-            <div className="apple-group-title">{t.settings.webdav.groupTitle}</div>
-            <div className="field" style={{ marginBottom: 10 }}>
-              <label>{t.settings.webdav.serverUrl}</label>
-              <input
-                type="text"
-                placeholder="https://dav.example.com/sync/"
-                value={endpoint}
-                onChange={(e) => {
-                  setEndpoint(e.target.value)
-                  updateSyncConfig({ endpoint: e.target.value })
-                }}
-                disabled={isSyncing}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-              <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                <label>{t.settings.webdav.username}</label>
-                <input
-                  type="text"
-                  placeholder={t.settings.webdav.username}
-                  value={username}
-                  onChange={(e) => {
-                    setUsername(e.target.value)
-                    updateSyncConfig({ username: e.target.value })
-                  }}
-                  disabled={isSyncing}
-                />
-              </div>
-              <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                <label>{t.settings.webdav.password}</label>
-                <input
-                  type="password"
-                  placeholder={t.settings.webdav.passwordPlaceholder}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value)
-                    updateSyncConfig({ password: e.target.value })
-                  }}
-                  disabled={isSyncing}
-                  style={{
-                    border: '1.5px solid var(--line)',
-                    background: 'var(--bg)',
-                    padding: '9px 12px',
-                    borderRadius: 'var(--r-sm)',
-                    outline: 'none',
-                    width: '100%',
-                    color: 'var(--ink)',
-                  }}
-                />
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 4 }}>
-              <div style={{ fontSize: 11, color: syncStatus === 'error' ? 'var(--danger)' : 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {isSyncing
-                  ? t.settings.webdav.syncing
-                  : syncError
-                    ? (syncErrorText(syncError) ?? syncError)
-                    : lastSyncAt
-                      ? `${t.settings.webdav.lastSync}${new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      : t.settings.webdav.notSynced}
-              </div>
-              <button
-                className="btn primary"
-                onClick={() => void handleSync()}
-                disabled={isSyncing || !endpoint.trim()}
-                style={{ padding: '6px 16px', fontSize: 12.5, flexShrink: 0 }}
-              >
-                {isSyncing ? t.settings.webdav.syncingBtn : t.settings.webdav.syncNowBtn}
-              </button>
-            </div>
-          </div>
+          <Group title={t.settings.webdav.groupTitle} collapsible>
+            <WebdavPanel sync={sync} onToast={showMsg} />
+          </Group>
+
+          {/* 3.2 内容路线 / 关于（C2：D-20261110-063 §3.5.5） */}
+          <Group title={t.settings.aboutTitle} collapsible defaultOpen={false}>
+            <AboutPanel />
+          </Group>
 
           {/* 4. 自律资产统计与快捷键 */}
           <div
@@ -533,7 +662,7 @@ export function SettingsDialog({ onClose }: Props) {
               background: 'var(--bg)',
               borderRadius: 'var(--r-md)',
               border: '1px solid var(--line)',
-              fontSize: 12.5,
+              fontSize: 'var(--fs-body)',
               color: 'var(--ink)',
               display: 'flex',
               justifyContent: 'space-between',
@@ -543,7 +672,7 @@ export function SettingsDialog({ onClose }: Props) {
           >
             <div>
               <div style={{ fontWeight: 600 }}>{t.settings.assetSummaryTitle}</div>
-              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 2 }}>
                 {t.settings.assetSummaryDetail(habits.filter((h) => !h.archivedAt).length, completed.length)}
               </div>
             </div>
@@ -552,7 +681,7 @@ export function SettingsDialog({ onClose }: Props) {
                 <IconRepair size={13} style={{ color: 'var(--accent)' }} />
                 <span>{repairBricks} / 2</span>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>{t.settings.repairInventory}</div>
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 2 }}>{t.settings.repairInventory}</div>
             </div>
           </div>
 
@@ -561,7 +690,7 @@ export function SettingsDialog({ onClose }: Props) {
               padding: '10px 14px',
               background: 'color-mix(in srgb, var(--ink) 4%, transparent)',
               borderRadius: 'var(--r-md)',
-              fontSize: 12,
+              fontSize: 'var(--fs-small)',
               marginBottom: 14,
             }}
           >
@@ -569,10 +698,10 @@ export function SettingsDialog({ onClose }: Props) {
               <IconKeyboard size={14} />
               <span>{t.settings.shortcutsTitle}</span>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>{t.settings.shortcutsDetail}</div>
+            <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 2 }}>{t.settings.shortcutsDetail}</div>
           </div>
 
-          <p style={{ fontSize: 11.5, color: 'var(--ink-2)', margin: '0', textAlign: 'center', opacity: 0.8 }}>
+          <p style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', margin: '0', textAlign: 'center', opacity: 0.8 }}>
             {t.settings.slogan}
           </p>
     </>
@@ -605,6 +734,7 @@ export function SettingsDialog({ onClose }: Props) {
     <div
       ref={dialogRef}
       role="dialog"
+      aria-labelledby="settings-dialog-title"
       aria-modal="true"
       tabIndex={-1}
       className="overlay"
@@ -612,7 +742,7 @@ export function SettingsDialog({ onClose }: Props) {
     >
       <div className="dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 480, maxWidth: '92vw' }}>
         <div className="dialog-header">
-          <h3>{t.settings.title}</h3>
+          <h3 id="settings-dialog-title">{t.settings.title}</h3>
           <button
             className="icon-btn"
             onClick={() => {

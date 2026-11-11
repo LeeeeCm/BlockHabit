@@ -5,6 +5,9 @@ const FILE_NAME = 'blockhabit.json'
 const BACKUP_PREFIX = 'blockhabit-backup-'
 const BACKUP_KEEP = 5
 
+/** 临时文件序号：并发写时保证每笔写各用各的 tmp，避免互相截断 */
+let tmpSeq = 0
+
 async function statePath(): Promise<string> {
   const { appDataDir, join } = await import('@tauri-apps/api/path')
   const dir = await appDataDir()
@@ -15,25 +18,47 @@ async function statePath(): Promise<string> {
 export function createTauriStorageAdapter(): StorageAdapter {
   return {
     async load(): Promise<LoadResult> {
+      const { exists, readTextFile } = await import('@tauri-apps/plugin-fs')
+      let path: string
       try {
-        const { exists, readTextFile } = await import('@tauri-apps/plugin-fs')
-        const path = await statePath()
-        if (!(await exists(path))) return { state: null }
-        const raw = await readTextFile(path)
-        let parsed: unknown
-        try {
-          parsed = JSON.parse(raw)
-        } catch {
-          await backupCorrupt(path, raw)
-          return { state: null }
-        }
+        path = await statePath()
+      } catch (e) {
+        return { state: null, loadFailed: true, detail: String(e) }
+      }
+      let present: boolean
+      try {
+        present = await exists(path)
+      } catch (e) {
+        // 连「文件是否存在」都问不出来（权限/路径问题）：按读取失败处理
+        return { state: null, loadFailed: true, detail: String(e) }
+      }
+      if (!present) return { state: null }
+
+      let raw: string
+      try {
+        raw = await readTextFile(path)
+      } catch (e) {
+        // 文件存在但读不出来（被占用 / 权限 / IO 错误）：绝不能当成「没有存档」
+        return { state: null, loadFailed: true, detail: String(e) }
+      }
+
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(raw)
+      } catch {
+        await backupCorrupt(path, raw)
+        return { state: null, corruptRecovered: true }
+      }
+      try {
         const migrated = loadAndMigrate(parsed)
         if (migrated.state) return { state: migrated.state }
         // needsUpgrade：来自更新版本应用的合法存档，不能当损坏覆盖
         if (!migrated.needsUpgrade) await backupCorrupt(path, raw)
         return { state: null, needsUpgrade: migrated.needsUpgrade }
-      } catch {
-        return { state: null }
+      } catch (e) {
+        // 迁移/清洗崩溃：原文已备份，标记读取失败以挂起持久化
+        await backupCorrupt(path, raw)
+        return { state: null, loadFailed: true, detail: String(e) }
       }
     },
 
@@ -44,23 +69,17 @@ export function createTauriStorageAdapter(): StorageAdapter {
       const dir = await appDataDir()
       await mkdir(dir, { recursive: true })
       const path = await statePath()
-      const tmpPath = `${path}.tmp`
+      // 唯一临时文件名：并发写时两笔写不会共用同一个 tmp 互相截断
+      const tmpPath = `${path}.${++tmpSeq}.tmp`
       const json = JSON.stringify(state)
       // 先写入临时文件，再原子重命名替换，防止进程中断或系统断电导致主存档被截断或损毁
       await writeTextFile(tmpPath, json)
       try {
         await rename(tmpPath, path)
-      } catch {
-        try {
-          await writeTextFile(path, json)
-        } finally {
-          try {
-            const { remove } = await import('@tauri-apps/plugin-fs')
-            await remove(tmpPath)
-          } catch {
-            // tmp 已不存在或删除失败均无碍
-          }
-        }
+      } catch (err) {
+        // 不再回退「直接覆盖主档」：该回退是非原子写，可能留下半截 JSON。
+        // 保留 tmp（其中是最新完整状态，便于人工恢复）并抛出，由持久化层置 saveError 提示用户。
+        throw err
       }
       // 失败直接抛出（磁盘满/杀软锁定等），由持久化层捕获后上报 UI
     },

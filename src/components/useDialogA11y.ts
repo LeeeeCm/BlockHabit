@@ -31,8 +31,14 @@ export function useDialogA11y(opts: DialogA11yOptions): { ref: React.RefObject<H
     const panel = ref.current
     if (!panel) return
 
-    prevFocusRef.current = document.activeElement as HTMLElement | null
-    const initial = initialFocusRef?.current ?? panel
+    // 打开前的焦点（仅当它在面板外才需要恢复）：关闭时若焦回一个已卸载元素无意义
+    const active = document.activeElement as HTMLElement | null
+    const activeInside = active instanceof Node && panel.contains(active)
+    prevFocusRef.current = active && !activeInside ? active : null
+
+    // C6：React 的 autoFocus 在 commit 阶段已把焦点放到面板内的输入框上，
+    // 此处不能再把焦点抢回面板容器（否则 Ctrl+N 新建习惯后光标不在名称输入框里）。
+    const initial = initialFocusRef?.current ?? (activeInside ? (active as HTMLElement) : panel)
     initial.focus?.()
 
     const onKeyDown = (e: KeyboardEvent) => {

@@ -1,6 +1,6 @@
 [package]
 name = "blockhabit"
-version = "0.1.0"
+version = "0.2.0"
 description = "BlockHabit - build your habits block by block"
 authors = ["LeeCM"]
 edition = "2021"
@@ -21,8 +21,17 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-plugin-opener = "2"
 tauri-plugin-fs = "2"
+# F4：只要「绕开 CORS 的 HTTP 客户端」。默认特性会带上 cookies/brotli/zstd/multipart 等，
+# WebDAV 用不到；只留 rustls-tls，安装包少增 1 MB 量级（见 D-20261110-048）。
+tauri-plugin-http = { version = "2.8.3", default-features = false, features = ["rustls-tls"] }
+tauri-plugin-notification = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
+# D-20261111-069：手动检查更新（发布链路未配置时 UI 诚实禁用）。
+# 签名公钥/发布端点由人类后续填入 tauri.conf.json，代码骨架不含任何密钥。
+tauri-plugin-updater = "2"
+# 安装完成后非 Windows 平台需显式重启；Windows 由安装器默认重启（见 C4 报告）。
+tauri-plugin-process = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

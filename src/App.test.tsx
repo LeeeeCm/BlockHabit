@@ -2,6 +2,10 @@ import type * as AppStoreModule from './store/appStore'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { useAppStore } from './store/appStore'
+
+/** 让出一轮宏任务：兼容异步副作用与水合门后的渲染提交 */
+const flushLazy = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 // Mock pages to lightweight markers
 vi.mock('./pages/Today', () => ({
@@ -55,6 +59,8 @@ describe('App keyboard shortcuts and modal guard', () => {
   beforeEach(() => {
     container = document.createElement('div')
     document.body.appendChild(container)
+    // D-20261110-056 水合门：测试直接给已水合状态（initPersistence 在此被 mock）
+    useAppStore.setState({ hydrated: true })
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       configurable: true,
@@ -74,24 +80,27 @@ describe('App keyboard shortcuts and modal guard', () => {
     document.querySelectorAll('[role="dialog"]').forEach((el) => el.remove())
   })
 
-  it('switches tabs with number keys 1-4 when no dialog is open', () => {
+  it('switches tabs with number keys 1-4 when no dialog is open', async () => {
     const root = createRoot(container)
-    act(() => {
+    await act(async () => {
       root.render(<App />)
+      await flushLazy()
     })
 
     // Default tab is today
     expect(container.querySelector('[data-testid="page-today"]')).not.toBeNull()
 
     // Press '2' -> switches to build
-    act(() => {
+    await act(async () => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: '2' }))
+      await flushLazy()
     })
     expect(container.querySelector('[data-testid="page-build"]')).not.toBeNull()
 
     // Press '4' -> switches to stats
-    act(() => {
+    await act(async () => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: '4' }))
+      await flushLazy()
     })
     expect(container.querySelector('[data-testid="page-stats"]')).not.toBeNull()
 
@@ -100,10 +109,11 @@ describe('App keyboard shortcuts and modal guard', () => {
     })
   })
 
-  it('blocks number key tab switching when a modal dialog is open', () => {
+  it('blocks number key tab switching when a modal dialog is open', async () => {
     const root = createRoot(container)
-    act(() => {
+    await act(async () => {
       root.render(<App />)
+      await flushLazy()
     })
 
     // Starts at today
@@ -116,8 +126,9 @@ describe('App keyboard shortcuts and modal guard', () => {
     document.body.appendChild(dialogEl)
 
     // Press '2' while modal is open -> should NOT switch to build
-    act(() => {
+    await act(async () => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: '2' }))
+      await flushLazy()
     })
     expect(container.querySelector('[data-testid="page-today"]')).not.toBeNull()
     expect(container.querySelector('[data-testid="page-build"]')).toBeNull()
@@ -126,11 +137,25 @@ describe('App keyboard shortcuts and modal guard', () => {
     document.body.removeChild(dialogEl)
 
     // Press '2' now -> should switch to build
-    act(() => {
+    await act(async () => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: '2' }))
+      await flushLazy()
     })
     expect(container.querySelector('[data-testid="page-build"]')).not.toBeNull()
 
+    act(() => {
+      root.unmount()
+    })
+  })
+
+  it('renders only a hydration shell before the store is hydrated', () => {
+    useAppStore.setState({ hydrated: false })
+    const root = createRoot(container)
+    act(() => {
+      root.render(<App />)
+    })
+    expect(container.querySelector('[aria-busy="true"]')).not.toBeNull()
+    expect(container.querySelector('[data-testid="page-today"]')).toBeNull()
     act(() => {
       root.unmount()
     })

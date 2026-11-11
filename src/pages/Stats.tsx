@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
+import { REPAIR_MAX, REPAIR_WINDOW_DAYS } from '../logic/repairBricks'
 import { bestStreak, currentStreak } from '../logic/streak'
 import { useTodayKey } from '../logic/useTodayKey'
 import { Heatmap } from '../components/Heatmap'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { GuideTip } from '../components/GuideTip'
 import { MonthlyPosterModal } from '../components/MonthlyPosterModal'
-import { IconEcho, IconExport, IconMood, IconNote, IconPoster, IconRepair, IconStar, IconStats } from '../components/Icons'
+import { YearbookModal } from '../components/YearbookModal'
+import { IconEcho, IconExport, IconGallery, IconMood, IconNote, IconPoster, IconRepair, IconStar, IconStats } from '../components/Icons'
 import { useI18n } from '../i18n'
 import { triggerHaptic } from '../platform'
+import { hasSeenTip, markTipSeen } from '../platform/guideTips'
 import type { MicroMood } from '../types'
 
 const MOODS: MicroMood[] = ['energetic', 'hard', 'spark', 'calm']
@@ -17,6 +22,7 @@ export default function Stats() {
   const habits = useAppStore((s) => s.habits)
   const checkIns = useAppStore((s) => s.checkIns)
   const repairBricks = useAppStore((s) => s.repairBricks ?? 0)
+  const refreshRepairAllowance = useAppStore((s) => s.refreshRepairAllowance)
   const useRepairBrick = useAppStore((s) => s.useRepairBrick)
   const toggleCheckInStar = useAppStore((s) => s.toggleCheckInStar)
 
@@ -32,13 +38,25 @@ export default function Stats() {
   }, [filterHabitId, filterMood, onlyStarred, searchQuery])
 
   const [repairTarget, setRepairTarget] = useState<{ habitId: string; habitName: string; date: string } | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
+  // F8：进入统计页结算本月修复积木额度（跨月后打开即生效）
+  useEffect(() => {
+    refreshRepairAllowance()
+  }, [refreshRepairAllowance])
+  const [toast, showToast] = useTransient<string>(2500)
   const [posterOpen, setPosterOpen] = useState(false)
+  const [yearbookOpen, setYearbookOpen] = useState(false)
+  // 页面提示（D-20261110-054）：有在册习惯时首次给出热图读法；状态初始化时只读一次 localStorage
+  const [showGuideTip, setShowGuideTip] = useState(() => !hasSeenTip('stats'))
 
   // 稳定引用：避免 rows useMemo 每次渲染失效（切换页签重挂时自然刷新）
   const now = useMemo(() => new Date(), [])
   const today = useTodayKey()
   const active = useMemo(() => habits.filter((h) => !h.archivedAt), [habits])
+  // 提示只出现在指标视图（热图所在处）；挂载即标记已读
+  const guideTipVisible = showGuideTip && active.length > 0 && viewMode === 'metrics'
+  useEffect(() => {
+    if (guideTipVisible) markTipSeen('stats')
+  }, [guideTipVisible])
 
   const rows = useMemo(
     () =>
@@ -142,7 +160,7 @@ export default function Stats() {
       } else {
         throw new Error('Clipboard API unavailable')
       }
-      setToast(t.reflections.exportSuccessToast)
+      showToast(t.reflections.exportSuccessToast, 2500)
     } catch {
       const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
       const url = URL.createObjectURL(blob)
@@ -151,17 +169,16 @@ export default function Stats() {
       a.download = `blockhabit-chronicle-${new Date().toISOString().slice(0, 10)}.md`
       a.click()
       URL.revokeObjectURL(url)
-      setToast(t.reflections.exportSuccessToast)
+      showToast(t.reflections.exportSuccessToast)
     }
-    setTimeout(() => setToast(null), 2500)
   }
 
   return (
     <div className="stats-page-container" style={{ padding: '28px 24px 80px', maxWidth: 680, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 20, margin: '0 0 6px' }}>{t.stats.title}</h1>
-          <div style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 18 }}>
+          <h1 style={{ fontSize: 'var(--fs-display)', margin: '0 0 6px' }}>{t.stats.title}</h1>
+          <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginBottom: 18 }}>
             {t.stats.subtitle}
             {grandTotalMinutes > 0 && (
               <span> · {t.stats.focusHours((grandTotalMinutes / 60).toFixed(1))}</span>
@@ -177,7 +194,7 @@ export default function Stats() {
               alignItems: 'center',
               gap: 5,
               padding: '4px 12px',
-              fontSize: 12,
+              fontSize: 'var(--fs-small)',
               borderRadius: 999,
               flexShrink: 0,
             }}
@@ -191,6 +208,27 @@ export default function Stats() {
             <span>{t.stats.posterBtn}</span>
           </button>
 
+          <button
+            className="btn ghost"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '4px 12px',
+              fontSize: 'var(--fs-small)',
+              borderRadius: 999,
+              flexShrink: 0,
+            }}
+            onClick={() => {
+              triggerHaptic('light')
+              setYearbookOpen(true)
+            }}
+            title={t.yearbook.entryTooltip}
+          >
+            <IconGallery size={14} style={{ color: 'var(--ink)' }} />
+            <span>{t.yearbook.entry}</span>
+          </button>
+
           <div
             style={{
               display: 'inline-flex',
@@ -200,14 +238,14 @@ export default function Stats() {
               border: '1px solid var(--line)',
               borderRadius: 999,
               padding: '4px 12px',
-              fontSize: 12,
+              fontSize: 'var(--fs-small)',
               fontWeight: 600,
               flexShrink: 0,
             }}
             title={t.stats.repairBricksTooltip}
           >
             <IconRepair size={13} style={{ color: 'var(--accent)' }} />
-            <span>{t.stats.repairBricksBadge(repairBricks)}</span>
+            <span>{t.stats.repairBricksBadge(repairBricks, REPAIR_MAX)}</span>
           </div>
         </div>
       </div>
@@ -241,26 +279,37 @@ export default function Stats() {
       {/* 积木历史回响时间胶囊 */}
       {echoEntry && (
         <div className="echo-capsule-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--accent)', fontWeight: 700 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--fs-caption)', color: 'var(--accent)', fontWeight: 700 }}>
             <IconEcho size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span>
               {t.reflections.echoTitle} · {t.reflections.echoDaysAgo(echoDaysAgo)}
             </span>
           </div>
-          <div style={{ fontSize: 13, color: 'var(--ink)', fontStyle: 'italic', marginTop: 2, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 'var(--fs-body)', color: 'var(--ink)', fontStyle: 'italic', marginTop: 2, lineHeight: 1.5 }}>
             “{echoEntry.note}”
           </div>
-          <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>
+          <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 2 }}>
             {t.reflections.echoFromHabit(habits.find((h) => h.id === echoEntry.habitId)?.name || '—')}
           </div>
         </div>
+      )}
+
+      {/* D-20261110-054：首次进入说明热图灰阶与点击行为 */}
+      {guideTipVisible && (
+        <GuideTip
+          variant="inline"
+          title={t.guide.statsTitle}
+          body={t.guide.statsBody}
+          dismissLabel={t.guide.gotIt}
+          onDismiss={() => setShowGuideTip(false)}
+        />
       )}
 
       {/* 视图分支 */}
       {viewMode === 'metrics' ? (
         <div>
           {rows.length === 0 ? (
-            <div style={{ color: 'var(--ink-2)', fontSize: 14 }}>{t.stats.empty}</div>
+            <div style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-subhead)' }}>{t.stats.empty}</div>
           ) : (
             rows.map(({ habit, current, best, total, totalMinutes }) => (
               <div
@@ -283,14 +332,14 @@ export default function Stats() {
                       const diffDays = Math.round((todayMs - new Date(day + 'T00:00:00').getTime()) / 86400000)
                       const already = checkIns.some((c) => c.habitId === habit.id && c.date === day)
                       if (already) return
-                      if (diffDays > 7 || diffDays < 0) {
-                        setToast(t.stats.repairLimitToast)
-                        setTimeout(() => setToast(null), 2200)
+                      if (diffDays > REPAIR_WINDOW_DAYS || diffDays < 0) {
+                        showToast(t.stats.repairLimitToast, 2200)
                         return
                       }
                       if (repairBricks <= 0) {
-                        setToast(t.stats.repairNoBricksToast)
-                        setTimeout(() => setToast(null), 2600)
+                        // 月初第一次进来可能还没结算：触发一次并提示
+                        refreshRepairAllowance()
+                        showToast(t.stats.repairNoBricksToast, 2600)
                         return
                       }
                       setRepairTarget({ habitId: habit.id, habitName: habit.name, date: day })
@@ -299,8 +348,8 @@ export default function Stats() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15 }}>{habit.name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+                    <div style={{ fontSize: 'var(--fs-title)' }}>{habit.name}</div>
+                    <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
                       {habit.frequency.type === 'daily'
                         ? t.today.freqDaily
                         : habit.frequency.type === 'weekly'
@@ -331,14 +380,14 @@ export default function Stats() {
                   if (notes.length === 0) return null
                   return (
                     <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line)' }}>
-                      <div style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 6, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginBottom: 6, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                         <IconNote size={13} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
                         <span>{t.stats.recentReflections}</span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {notes.map((n) => (
-                          <div key={n.id} style={{ fontSize: 12, color: 'var(--ink)', display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                            <span style={{ fontSize: 11, color: 'var(--ink-2)', flexShrink: 0 }}>{n.date}</span>
+                          <div key={n.id} style={{ fontSize: 'var(--fs-small)', color: 'var(--ink)', display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', flexShrink: 0 }}>{n.date}</span>
                             <span style={{ minWidth: 0, wordBreak: 'break-word', opacity: 0.88 }}>{n.note}</span>
                           </div>
                         ))}
@@ -378,7 +427,7 @@ export default function Stats() {
                   borderRadius: 'var(--r-sm)',
                   border: '1px solid var(--line)',
                   background: 'color-mix(in srgb, var(--ink) 2%, transparent)',
-                  fontSize: 12.5,
+                  fontSize: 'var(--fs-body)',
                   color: 'var(--ink)',
                   outline: 'none',
                 }}
@@ -386,7 +435,7 @@ export default function Stats() {
               <button
                 className="btn ghost"
                 onClick={handleExportMarkdown}
-                style={{ fontSize: 12, padding: '7px 12px', borderRadius: 'var(--r-sm)', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                style={{ fontSize: 'var(--fs-small)', padding: '7px 12px', borderRadius: 'var(--r-sm)', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5 }}
                 title={t.reflections.exportMarkdown}
               >
                 <IconExport size={13} style={{ flexShrink: 0 }} />
@@ -396,11 +445,12 @@ export default function Stats() {
 
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <select
+                aria-label={t.stats.filterByHabit}
                 value={filterHabitId}
                 onChange={(e) => setFilterHabitId(e.target.value)}
                 style={{
                   padding: '4px 8px',
-                  fontSize: 11.5,
+                  fontSize: 'var(--fs-small)',
                   borderRadius: 'var(--r-sm)',
                   border: '1px solid var(--line)',
                   background: 'var(--surface)',
@@ -441,7 +491,7 @@ export default function Stats() {
                 type="button"
                 className={`pill-action${onlyStarred ? ' active' : ''}`}
                 style={{
-                  fontSize: 11.5,
+                  fontSize: 'var(--fs-small)',
                   padding: '3px 10px',
                   color: onlyStarred ? 'var(--accent)' : 'var(--ink-2)',
                   background: onlyStarred ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined,
@@ -459,7 +509,7 @@ export default function Stats() {
 
           {/* 列表流 */}
           {chronicleItems.length === 0 ? (
-            <div style={{ color: 'var(--ink-2)', fontSize: 13, textAlign: 'center', padding: '36px 0' }}>
+            <div style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-body)', textAlign: 'center', padding: '36px 0' }}>
               {t.reflections.emptyChronicle}
             </div>
           ) : (
@@ -471,14 +521,14 @@ export default function Stats() {
                   <div key={item.id} className="chronicle-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>
+                        <span style={{ fontSize: 'var(--fs-small)', fontWeight: 700, color: 'var(--ink)' }}>
                           {item.date}
                         </span>
-                        <span style={{ fontSize: 11.5, color: 'var(--ink-2)' }}>
+                        <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
                           【{h?.name || '—'}】
                         </span>
                         {item.actualMinutes && (
-                          <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>
+                          <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>
                             · {t.stats.metric.minutes(item.actualMinutes)}
                           </span>
                         )}
@@ -487,7 +537,7 @@ export default function Stats() {
                         {item.mood && (
                           <span
                             style={{
-                              fontSize: 10.5,
+                              fontSize: 'var(--fs-caption)',
                               padding: '2px 8px',
                               borderRadius: 999,
                               background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
@@ -516,7 +566,7 @@ export default function Stats() {
                       </div>
                     </div>
 
-                    <div style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.55 }}>
+                    <div style={{ fontSize: 'var(--fs-body)', color: 'var(--ink)', lineHeight: 1.55 }}>
                       “{item.note}”
                     </div>
                   </div>
@@ -528,7 +578,7 @@ export default function Stats() {
                   <button
                     type="button"
                     className="pill-action"
-                    style={{ padding: '7px 20px', fontSize: 12 }}
+                    style={{ padding: '7px 20px', fontSize: 'var(--fs-small)' }}
                     onClick={() => {
                       triggerHaptic('light')
                       setVisibleCount((prev) => prev + 25)
@@ -554,7 +604,7 @@ export default function Stats() {
           onConfirm={() => {
             const res = useRepairBrick(repairTarget.habitId, repairTarget.date)
             if (res.ok) {
-              setToast(t.stats.repairSuccessToast(repairTarget.habitName))
+              showToast(t.stats.repairSuccessToast(repairTarget.habitName), 2500)
             } else {
               const reasonToast: Record<string, string> = {
                 'no-bricks': t.stats.repairNoBricksToast,
@@ -562,16 +612,17 @@ export default function Stats() {
                 'no-habit': t.stats.repairNoHabitToast,
                 archived: t.stats.repairArchivedToast,
                 future: t.stats.repairFutureToast,
+                'before-creation': t.stats.repairBeforeCreationToast,
               }
-              setToast(reasonToast[res.reason ?? ''] ?? t.stats.repairFailToast)
+              showToast(reasonToast[res.reason ?? ''] ?? t.stats.repairFailToast, 2500)
             }
-            setTimeout(() => setToast(null), 2500)
           }}
         />
       )}
 
       {toast && <div className="toast">{toast}</div>}
       {posterOpen && <MonthlyPosterModal onClose={() => setPosterOpen(false)} />}
+      {yearbookOpen && <YearbookModal onClose={() => setYearbookOpen(false)} />}
     </div>
   )
 }
@@ -591,14 +642,14 @@ function Stat({
     <div style={{ textAlign: 'center', minWidth: 56 }} title={title}>
       <div
         style={{
-          fontSize: 18,
+          fontSize: 'var(--fs-heading)',
           fontWeight: 700,
           color: accent ? 'var(--progress-green)' : 'var(--ink)',
         }}
       >
         {value}
       </div>
-      <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>{label}</div>
+      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>{label}</div>
     </div>
   )
 }

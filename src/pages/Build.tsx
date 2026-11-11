@@ -7,16 +7,21 @@ import { BuildScene } from '../render/BuildScene'
 import { GalleryDialog } from '../components/GalleryDialog'
 import { PolaroidModal } from '../components/PolaroidModal'
 import { FoundationNoteDialog } from '../components/FoundationNoteDialog'
-import { IconCamera, IconEcho, IconFoundation, IconGallery, IconRotateCcw, IconRotateCw } from '../components/Icons'
+import { GuideTip } from '../components/GuideTip'
+import { IconCamera, IconEcho, IconFoundation, IconGallery, IconRotateCcw, IconRotateCw, IconSparkle } from '../components/Icons'
 import { triggerHaptic } from '../platform'
+import { hasSeenTip, markTipSeen } from '../platform/guideTips'
 export default function Build() {
   const { lang, t } = useI18n()
   const builds = useAppStore((s) => s.builds)
   const activeBlueprintId = useAppStore((s) => s.activeBlueprintId)
   const chooseBlueprint = useAppStore((s) => s.chooseBlueprint)
+  const completedBlueprintIds = useAppStore((s) => s.completedBlueprintIds)
   const blueprint = getBlueprint(activeBlueprintId)
   const placedCount = builds.filter((b) => b.blueprintId === activeBlueprintId).length
   const total = blueprint.blocks.length
+  // 进度不得超过 100%：多端离线各自建满后合并可能让投影块数短暂超出蓝图容量
+  const progressRatio = total > 0 ? Math.min(1, placedCount / total) : 0
   const complete = placedCount >= total
 
   // 已建成的蓝图被查看时不重播落成仪式；本会话内拼满时才触发
@@ -26,9 +31,17 @@ export default function Build() {
   const [foundationModalOpen, setFoundationModalOpen] = useState(false)
   const foundationNote = useAppStore((s) => s.foundationNotes?.[blueprint.id])
   const [rotation, setRotation] = useState(0)
-  const [xrayMode, setXrayMode] = useState(false)
+  // 透视考古默认态来自设置（enableXRayInspection），页内切换只影响本会话
+  const xrayDefault = useAppStore((s) => s.settings.enableXRayInspection === true)
+  const [xrayMode, setXrayMode] = useState(xrayDefault)
   const enableAmbientLighting = useAppStore((s) => s.settings.enableAmbientLighting !== false)
   const period = getTimePeriod()
+  // 页面提示（D-20261110-054）：首次进入且已有积木时出现一次；挂载即标记已读，避免不点就永远重复
+  const [showGuideTip, setShowGuideTip] = useState(() => !hasSeenTip('build'))
+  const guideTipVisible = showGuideTip && placedCount >= 1
+  useEffect(() => {
+    if (guideTipVisible) markTipSeen('build')
+  }, [guideTipVisible])
   useEffect(() => {
     setCeremonyShown(
       builds.filter((b) => b.blueprintId === activeBlueprintId).length >=
@@ -44,6 +57,9 @@ export default function Build() {
     return blueprints[nextId]
   }, [activeBlueprintId])
 
+  /** F2：全部蓝图落成 —— 打卡不再产块，必须显式告知，而不是静默无反应 */
+  const allBlueprintsDone = completedBlueprintIds.length >= blueprintOrder.length
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div
@@ -57,18 +73,18 @@ export default function Build() {
           borderBottom: '1px solid var(--line)',
         }}
       >
-        <span style={{ fontWeight: 700, fontSize: 15 }}>{getBlueprintName(blueprint.id, lang)}</span>
-        <span style={{ color: 'var(--ink-2)', fontSize: 13 }}>
+        <span style={{ fontWeight: 700, fontSize: 'var(--fs-title)' }}>{getBlueprintName(blueprint.id, lang)}</span>
+        <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-body)' }}>
           {t.build.blocksCount(placedCount, total)}
         </span>
         <div style={{ flex: 1, height: 6, background: 'var(--line)', maxWidth: 260, borderRadius: 999 }}>
           <div
             style={{
-              width: `${(placedCount / total) * 100}%`,
+              width: `${progressRatio * 100}%`,
               height: '100%',
               background: complete ? 'var(--progress-green)' : 'var(--ink)',
               borderRadius: 999,
-              transition: 'width 0.5s cubic-bezier(0.34, 1.2, 0.64, 1)',
+              transition: 'width var(--dur-xl) var(--ease-bounce)',
             }}
           />
         </div>
@@ -76,7 +92,7 @@ export default function Build() {
           <>
             <button
               className="btn ghost"
-              style={{ padding: '7px 12px', fontSize: 13 }}
+              style={{ padding: '7px 12px', fontSize: 'var(--fs-body)' }}
               onClick={() => setFoundationModalOpen(true)}
               title={t.reflections.foundationModalTitle}
             >
@@ -87,7 +103,7 @@ export default function Build() {
             </button>
             <button
               className="btn ghost"
-              style={{ padding: '7px 12px', fontSize: 13 }}
+              style={{ padding: '7px 12px', fontSize: 'var(--fs-body)' }}
               onClick={() => setPolaroidOpen(true)}
               title={t.build.polaroidBtn}
             >
@@ -101,7 +117,7 @@ export default function Build() {
         {enableAmbientLighting && (
           <span
             className="btn ghost"
-            style={{ padding: '7px 12px', fontSize: 13, borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'default' }}
+            style={{ padding: '7px 12px', fontSize: 'var(--fs-body)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'default' }}
             title={t.build.ambientHint}
           >
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
@@ -110,7 +126,7 @@ export default function Build() {
         )}
         <button
           className={`btn ${xrayMode ? 'primary' : 'ghost'}`}
-          style={{ padding: '7px 12px', fontSize: 13, borderRadius: 999 }}
+          style={{ padding: '7px 12px', fontSize: 'var(--fs-body)', borderRadius: 999 }}
           onClick={() => {
             triggerHaptic('selection')
             setXrayMode((v) => !v)
@@ -124,7 +140,7 @@ export default function Build() {
         </button>
         <button
           className="btn ghost"
-          style={{ padding: '7px 14px', fontSize: 13 }}
+          style={{ padding: '7px 14px', fontSize: 'var(--fs-body)' }}
           onClick={() => setGalleryOpen(true)}
           title={t.build.galleryBtn}
         >
@@ -134,6 +150,22 @@ export default function Build() {
           </span>
         </button>
       </div>
+
+      {/* F2：全部蓝图落成 —— 在顶栏下方常驻一行说明，而不是静默无反应 */}
+      {allBlueprintsDone && (
+        <div
+          style={{
+            flex: 'none',
+            padding: '8px 20px',
+            fontSize: 'var(--fs-caption)',
+            color: 'var(--ink-2)',
+            borderBottom: '1px solid var(--line)',
+            lineHeight: 1.5,
+          }}
+        >
+          {t.build.allDoneHint(blueprintOrder.length)}
+        </div>
+      )}
 
       <div style={{ flex: 1, position: 'relative' }}>
         <div
@@ -162,7 +194,7 @@ export default function Build() {
           </button>
           <span
             style={{
-              fontSize: 11.5,
+              fontSize: 'var(--fs-small)',
               fontWeight: 600,
               color: 'var(--ink-2)',
               minWidth: 32,
@@ -214,7 +246,7 @@ export default function Build() {
             <IconFoundation size={14} style={{ flexShrink: 0, color: 'var(--accent)' }} />
             <span
               style={{
-                fontSize: 12,
+                fontSize: 'var(--fs-small)',
                 color: 'var(--ink)',
                 fontStyle: 'italic',
                 opacity: 0.9,
@@ -235,7 +267,7 @@ export default function Build() {
               left: 20,
               bottom: 18,
               color: 'var(--ink-2)',
-              fontSize: 13,
+              fontSize: 'var(--fs-body)',
               lineHeight: 1.7,
             }}
           >
@@ -243,6 +275,16 @@ export default function Build() {
               {t.build.foundationGuide(getBlueprintName(blueprint.id, lang))}
             </span>
           </div>
+        )}
+
+        {guideTipVisible && (
+          <GuideTip
+            variant="fixed"
+            title={t.guide.buildTitle}
+            body={t.guide.buildBody}
+            dismissLabel={t.guide.gotIt}
+            onDismiss={() => setShowGuideTip(false)}
+          />
         )}
 
         {showCeremony && (
@@ -261,10 +303,10 @@ export default function Build() {
             }}
           >
             <Confetti />
-            <h2 style={{ fontSize: 26, margin: 0, letterSpacing: '0.04em' }}>
+            <h2 style={{ fontSize: 'var(--fs-hero)', margin: 0, letterSpacing: '0.04em' }}>
               {t.build.ceremonyTitle(getBlueprintName(blueprint.id, lang))}
             </h2>
-            <p style={{ color: 'var(--ink-2)', margin: 0, fontSize: 14 }}>
+            <p style={{ color: 'var(--ink-2)', margin: 0, fontSize: 'var(--fs-subhead)' }}>
               {t.build.ceremonySubtitle(total)}
             </p>
             <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
@@ -284,10 +326,29 @@ export default function Build() {
                 <IconCamera size={16} />
                 <span>{t.build.polaroidBtn}</span>
               </button>
-              {nextChoice && (
-                <button className="btn" onClick={() => chooseBlueprint(nextChoice.id)}>
-                  {t.build.nextTargetPrompt(getBlueprintName(nextChoice.id, lang))}
-                </button>
+              {allBlueprintsDone ? (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '5px 12px',
+                    borderRadius: 999,
+                    fontSize: 'var(--fs-small)',
+                    color: 'var(--ink-2)',
+                    background: 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                  }}
+                  title={t.build.allDoneHint(blueprintOrder.length)}
+                >
+                  <IconSparkle size={13} style={{ color: 'var(--accent)' }} />
+                  {t.build.allDoneBadge}
+                </span>
+              ) : (
+                nextChoice && (
+                  <button className="btn" onClick={() => chooseBlueprint(nextChoice.id)}>
+                    {t.build.nextTargetPrompt(getBlueprintName(nextChoice.id, lang))}
+                  </button>
+                )
               )}
               <button className="btn ghost" onClick={() => setCeremonyShown(true)}>
                 {t.common.close}

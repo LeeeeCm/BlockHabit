@@ -61,7 +61,7 @@ function getMasterGain(ctx: AudioContext): GainNode {
   if (!masterGainRef || masterGainRef.ctx !== ctx) {
     const gain = ctx.createGain()
     gain.gain.value = masterVolume / 100
-    gain.connect(getMasterGain(ctx))
+    gain.connect(ctx.destination)
     masterGainRef = { ctx, gain }
   }
   return masterGainRef.gain
@@ -252,6 +252,50 @@ export function playCelebrationSound(): void {
     osc.start(startTime)
     osc.stop(startTime + 1.25)
   })
+  })
+}
+
+/**
+ * 提醒铃声（Reminder Chime）：
+ * 两次温和的木琴双音上行（E5→A5），提示「该开始了」而不惊扰；
+ * 遵循全局静音与主音量设置
+ */
+export function playReminderChime(): void {
+  void withAudioContext((ctx) => {
+    const notes = [659.25, 880.0, 659.25, 880.0] // E5 A5 E5 A5
+    const onset = [0, 0.12, 0.42, 0.54]
+
+    notes.forEach((freq, idx) => {
+      const start = ctx.currentTime + onset[idx]
+
+      const osc = ctx.createOscillator()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(freq, start)
+
+      const overtone = ctx.createOscillator()
+      overtone.type = 'sine'
+      overtone.frequency.setValueAtTime(freq * 2, start)
+
+      const gain = ctx.createGain()
+      gain.gain.setValueAtTime(0.001, start)
+      gain.gain.linearRampToValueAtTime(0.18, start + 0.015)
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.5)
+
+      const overtoneGain = ctx.createGain()
+      overtoneGain.gain.setValueAtTime(0.001, start)
+      overtoneGain.gain.linearRampToValueAtTime(0.06, start + 0.01)
+      overtoneGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.3)
+
+      osc.connect(gain)
+      gain.connect(getMasterGain(ctx))
+      overtone.connect(overtoneGain)
+      overtoneGain.connect(getMasterGain(ctx))
+
+      osc.start(start)
+      osc.stop(start + 0.55)
+      overtone.start(start)
+      overtone.stop(start + 0.35)
+    })
   })
 }
 

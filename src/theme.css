@@ -15,16 +15,36 @@
   --line: #e8e8e8;
   --accent: #f5b301;
   --accent-ink: #0a0a0a;
+  /* C3 彩色填充上的文字（白字在中低明度填充上不达标，统一用暗墨） */
+  --on-accent: #0a0a0a;
+  --on-success: #0a0a0a;
+  --on-danger: #0a0a0a;
+  /* C3 彩色文字专用（在 surface 上满足 WCAG AA 4.5:1；填充与图标仍用 --accent/--progress-*） */
+  --accent-text: rgb(152, 111, 1);
+  --success-text: rgb(23, 136, 65);
   --overlay: rgba(0, 0, 0, 0.38);
+  /* D7 字号阶梯（8 档，语义命名；正文与控件不再出现 .5 档） */
+  --fs-caption: 11px;
+  --fs-small: 12px;
+  --fs-body: 13px;
+  --fs-subhead: 14px;
+  --fs-title: 16px;
+  --fs-heading: 18px;
+  --fs-display: 20px;
+  --fs-hero: 24px;
+  /* D9：全站唯一的背景模糊档位（原 3 处各写一套：14px/180%、12px/130%、14px 无饱和） */
+  --backdrop-filter: blur(14px) saturate(120%);
   /* 危险操作红（删除等） */
   --danger: #e5484d;
   --danger-ink: #ffffff;
   /* 进度三色：未完成灰 / 进行中蓝 / 已完成绿 */
   --progress-blue: #3b82f6;
   --progress-green: #22c55e;
-  /* 等距积木三面（亮色）：强对比突出立体感 */
+  /* 等距积木四面（亮色）：顶/左/右/幽灵。缺右脸与幽灵会让 canvas 渐变抛异常白屏 */
   --block-top: #f4f4f4;
   --block-left: #c9c9c9;
+  --block-right: #8a8a8a;
+  --block-ghost: #dcdcdc;
   /* 统一积木美学字体体系：
    * 英文统一为 Rubik（为 3D 魔方与立方体积木定制的微倒角几何体）
    * 中文统一为 阿里妈妈数黑体（机械感、方块积木结构、硬朗切角，比黄油体更具积木与机械感）
@@ -41,7 +61,7 @@
   --r-pill: 999px;
 
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: var(--fs-title);
   line-height: 1.55;
   color: var(--ink);
   background: var(--bg);
@@ -50,19 +70,26 @@
 
 :root[data-theme='dark'] {
   --bg: #0a0a0a;
+  /* 显式重声明：此前靠继承 :root，导致「墨黑主题的 accent」在令牌表里是空白 */
+  --accent: #f5b301;
   --surface: #171717;
   --ink: #fafafa;
   --ink-2: #9a9a9a;
   --line: #2b2b2b;
   --accent-ink: #0a0a0a;
+  --on-accent: #0a0a0a;
+  --on-success: #0a0a0a;
+  --on-danger: #0a0a0a;
+  --accent-text: #f5b301;
+  --success-text: #34d274;
   --danger: #ff6369;
   --danger-ink: #0a0a0a;
   --progress-blue: #4e9eff;
   --progress-green: #34d274;
   --block-top: #424242;
-  --block-left: #282828;
-  --block-right: #0f0f0f;
-  --block-ghost: #1e1e1e;
+  --block-left: #303030;
+  --block-right: #1c1c1c;
+  --block-ghost: #262626;
   --overlay: rgba(0, 0, 0, 0.65);
 }
 
@@ -74,6 +101,12 @@
   --line: #e7e2d7;
   --accent: #c25e3e;
   --accent-ink: #ffffff;
+  /* 燕麦陶土：accent 填充偏暗，文字用暗墨更清晰（4.68:1）；success/danger 底色更深，保留白字（4.59 / 4.83:1） */
+  --on-accent: #0a0a0a;
+  --on-success: #ffffff;
+  --on-danger: #ffffff;
+  --accent-text: rgb(187, 90, 59);
+  --success-text: #3a835b;
   --danger: #dc2626;
   --danger-ink: #ffffff;
   --progress-blue: #3b7a99;
@@ -93,6 +126,11 @@
   --line: #cbd5e1;
   --accent: #0284c7;
   --accent-ink: #ffffff;
+  --on-accent: #0a0a0a;
+  --on-success: #0a0a0a;
+  --on-danger: #0a0a0a;
+  --accent-text: rgb(2, 124, 187);
+  --success-text: rgb(12, 135, 94);
   --danger: #ef4444;
   --danger-ink: #ffffff;
   --progress-blue: #38bdf8;
@@ -166,7 +204,7 @@ textarea {
 
 ::selection {
   background: var(--accent);
-  color: var(--accent-ink);
+  color: var(--on-accent);
 }
 
 /* 全局包豪斯极简细滑滚动条：杜绝溢出圆角，轨隙内收 */
@@ -196,4 +234,57 @@ textarea {
 * {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--ink) 20%, transparent) transparent;
+}
+
+/* ==================== 键盘可达性（C2） ==================== */
+/* 焦点环是全应用唯一一种"额外的可见线条"：只用 --ink，符合 A4「留白与细线」的语言，
+ * 不新增颜色；outline-offset 让环落在元素外侧的页面底色上，因此在任何底色上都可见。 */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* ==================== 动效令牌 + 减少动态偏好（C1） ==================== */
+/* 令牌先于代码：新动效一律引用这里的时长/缓动，禁止在组件里写魔法数字。 */
+:root {
+  /* 时长阶梯（D3）：7 档覆盖历史 17 个字面值，相邻档差 ≥40ms 以保证可感知区分。
+   * 2xs 按压/微反馈 · xs 悬停 · sm/md 展开收起 · lg 面板进出 · xl 大块移动 · scene 氛围动画 */
+  --dur-2xs: 80ms;
+  --dur-xs: 140ms;
+  --dur-sm: 180ms;
+  --dur-md: 220ms;
+  --dur-lg: 300ms;
+  --dur-xl: 460ms;
+  --dur-scene: 1150ms;
+  /* 缓动（3 档 + CSS 默认）：default = 原生 ease（历史主用）· out = 快出慢停 · bounce = 轻微回弹 · standard = 线性偏出 */
+  --ease-default: ease;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-2xs: 0ms;
+    --dur-xs: 0ms;
+    --dur-sm: 0ms;
+    --dur-md: 0ms;
+    --dur-lg: 0ms;
+    --dur-xl: 0ms;
+    --dur-scene: 0ms;
+  }
+
+  /* 兜底：既有代码里散落的 transition/animation 一并降级（D3 收口后再改为纯令牌驱动） */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

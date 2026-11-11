@@ -5,6 +5,7 @@ import type { AppState } from '../types'
 import { DEFAULT_WEBDAV_CONFIG, type SyncStatus, type WebDavConfig } from './types'
 import { fetchRemoteState, pushRemoteState, WebDavError } from './webdav'
 import { mergeAppState } from './merge'
+import { serializeState } from '../store/serializeState'
 
 const CONFIG_STORAGE_KEY = 'blockhabit_webdav_config'
 
@@ -25,12 +26,25 @@ function toErrorCode(err: unknown): SyncErrorCode {
   return 'network'
 }
 
+/**
+ * B1：实际落盘的配置。
+ * rememberPassword=false 时绝不把密码写进 localStorage（密码只留在内存），
+ * 避免"关了开关但密码还在磁盘上"的假安全。
+ */
+export function persistableWebDavConfig(config: WebDavConfig): WebDavConfig {
+  if (config.rememberPassword === false) return { ...config, password: '' }
+  return config
+}
+
 export function loadWebDavConfig(): WebDavConfig {
   if (typeof localStorage === 'undefined') return { ...DEFAULT_WEBDAV_CONFIG }
   try {
     const raw = localStorage.getItem(CONFIG_STORAGE_KEY)
     if (!raw) return { ...DEFAULT_WEBDAV_CONFIG }
-    return { ...DEFAULT_WEBDAV_CONFIG, ...JSON.parse(raw) }
+    const merged: WebDavConfig = { ...DEFAULT_WEBDAV_CONFIG, ...JSON.parse(raw) }
+    // 旧配置可能遗留密码但已显式关闭记住：读取时同样丢弃，不把密码带进内存之外的任何地方
+    if (merged.rememberPassword === false) return { ...merged, password: '' }
+    return merged
   } catch {
     return { ...DEFAULT_WEBDAV_CONFIG }
   }
@@ -39,28 +53,14 @@ export function loadWebDavConfig(): WebDavConfig {
 export function saveWebDavConfig(config: WebDavConfig): void {
   if (typeof localStorage === 'undefined') return
   try {
-    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config))
+    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(persistableWebDavConfig(config)))
   } catch (err) {
     console.error('Failed to save WebDAV config', err)
   }
 }
 
 function buildLocalState(): AppState {
-  const store = useAppStore.getState()
-  return {
-    schemaVersion: 2,
-    habits: store.habits,
-    checkIns: store.checkIns,
-    builds: store.builds,
-    activeBlueprintId: store.activeBlueprintId,
-    completedBlueprintIds: store.completedBlueprintIds,
-    settings: store.settings,
-    dayClaims: store.dayClaims,
-    deletedDayClaims: store.deletedDayClaims ?? [],
-    repairBricks: store.repairBricks,
-    showcasePlacements: store.showcasePlacements,
-    foundationNotes: store.foundationNotes,
-  }
+  return serializeState(useAppStore.getState())
 }
 
 /** 拉取远端 → 迁移/校验为当前 schema；失败抛 SyncFlowError */
@@ -94,12 +94,17 @@ export function useSync() {
   const configSaveTimer = useRef<number | undefined>(undefined)
 
   // 配置防抖落盘：WebDAV 表单逐键输入不立即写 localStorage（密码等敏感信息减少落盘频次）
+  // B1：关闭"记住密码"时立即落盘（而不是等防抖），确保磁盘上的旧密码马上被清掉。
   const updateConfig = useCallback((patch: Partial<WebDavConfig>) => {
     setConfigState((prev) => {
       const next = { ...prev, ...patch }
       if (typeof window !== 'undefined') {
         window.clearTimeout(configSaveTimer.current)
-        configSaveTimer.current = window.setTimeout(() => saveWebDavConfig(next), 800)
+        if (patch.rememberPassword === false) {
+          saveWebDavConfig(next)
+        } else {
+          configSaveTimer.current = window.setTimeout(() => saveWebDavConfig(next), 800)
+        }
       }
       return next
     })

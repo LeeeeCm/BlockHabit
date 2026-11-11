@@ -110,6 +110,7 @@ export function BlockDropModal({
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="drop-modal-title"
       tabIndex={-1}
       className={`drop-overlay${closing ? ' closing' : ''}`}
       onMouseDown={(e) => {
@@ -130,7 +131,7 @@ export function BlockDropModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <span
               style={{
-                fontSize: 12,
+                fontSize: 'var(--fs-small)',
                 fontWeight: 700,
                 color: 'var(--accent-ink)',
                 background: 'var(--accent)',
@@ -142,8 +143,9 @@ export function BlockDropModal({
               {t.blockDrop.plusOne}
             </span>
             <span
+              id="drop-modal-title"
               style={{
-                fontSize: 14,
+                fontSize: 'var(--fs-subhead)',
                 fontWeight: 600,
                 color: 'var(--ink)',
                 whiteSpace: 'nowrap',
@@ -155,13 +157,14 @@ export function BlockDropModal({
             </span>
           </div>
 
+
           <button
             className="btn ghost"
             onClick={triggerClose}
             title={t.blockDrop.skip}
             style={{
               padding: '4px 12px',
-              fontSize: 12,
+              fontSize: 'var(--fs-small)',
               borderRadius: 999,
               flexShrink: 0,
               marginLeft: 12,
@@ -173,6 +176,13 @@ export function BlockDropModal({
             </span>
           </button>
         </div>
+
+        {/* F1：首块专属说明（放在标题栏下方整行，避免挤进标题 flex 行） */}
+        {placedCount === 1 && (
+          <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', lineHeight: 1.6, padding: '10px 20px 0' }}>
+            {t.blockDrop.firstBlockHint}
+          </div>
+        )}
 
         {/* 3D 单块掉落舞台 */}
         <div style={{ height: 240, position: 'relative', background: 'var(--bg)' }}>
@@ -249,7 +259,7 @@ export function BlockDropModal({
               <button
                 type="button"
                 className="btn primary"
-                style={{ padding: '6px 14px', fontSize: 12, borderRadius: 'var(--r-sm)' }}
+                style={{ padding: '6px 14px', fontSize: 'var(--fs-small)', borderRadius: 'var(--r-sm)' }}
                 disabled={engraved}
                 onClick={handleEngraveSubmit}
               >
@@ -267,7 +277,7 @@ export function BlockDropModal({
               justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: 8,
-              fontSize: 12.5,
+              fontSize: 'var(--fs-body)',
             }}
           >
             <span style={{ fontWeight: 600 }}>{getBlueprintName(blueprint.id, lang)}</span>
@@ -289,7 +299,7 @@ export function BlockDropModal({
                 height: '100%',
                 background: complete ? 'var(--progress-green)' : 'var(--ink)',
                 borderRadius: 999,
-                transition: 'width 0.4s ease',
+                transition: 'width var(--dur-xl) var(--ease-default)',
               }}
             />
           </div>

@@ -23,7 +23,7 @@ export function BottomTabBar({
   const tabs: Array<{ id: MobileTab; label: string; icon: React.ReactNode }> = [
     {
       id: 'today',
-      label: t.nav?.today ?? '今日',
+      label: t.nav.today,
       icon: (
         <span style={{ position: 'relative', display: 'inline-flex' }}>
           <IconToday size={22} />
@@ -47,7 +47,7 @@ export function BottomTabBar({
     },
     {
       id: 'build',
-      label: t.nav?.build ?? '建造',
+      label: t.nav.build,
       icon: (
         <span style={{ position: 'relative', display: 'inline-flex' }}>
           <IconBuild size={22} />
@@ -59,7 +59,7 @@ export function BottomTabBar({
                 position: 'absolute',
                 bottom: -2,
                 right: -6,
-                fontSize: 9,
+                fontSize: 'var(--fs-caption)',
                 fontWeight: 700,
                 color: 'var(--accent)',
                 lineHeight: 1,
@@ -73,12 +73,12 @@ export function BottomTabBar({
     },
     {
       id: 'showcase',
-      label: t.nav?.showcase ?? '展台',
+      label: t.nav.showcase,
       icon: <IconShowcase size={22} />,
     },
     {
       id: 'stats',
-      label: t.nav?.stats ?? '统计',
+      label: t.nav.stats,
       icon: <IconStats size={22} />,
     },
   ]
@@ -137,7 +137,7 @@ export function BottomTabBar({
               padding: '6px 4px 7px',
               margin: '0 4px',
               color: active ? 'var(--ink)' : 'var(--ink-2)',
-              transition: 'background 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.16s ease, transform 0.12s ease',
+              transition: 'background var(--dur-md) var(--ease-out), color var(--dur-sm) var(--ease-default), transform var(--dur-xs) var(--ease-default)',
               position: 'relative',
               userSelect: 'none',
               WebkitTapHighlightColor: 'transparent',
@@ -146,7 +146,7 @@ export function BottomTabBar({
             <span
               style={{
                 transform: active ? 'scale(1.08)' : 'scale(1)',
-                transition: 'transform 0.15s ease',
+                transition: 'transform var(--dur-xs) var(--ease-default)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -154,7 +154,7 @@ export function BottomTabBar({
             >
               {tab.icon}
             </span>
-            <span style={{ fontSize: 11, fontWeight: active ? 600 : 500 }}>
+            <span style={{ fontSize: 'var(--fs-caption)', fontWeight: active ? 600 : 500 }}>
               {tab.label}
             </span>
             {active && (
@@ -167,7 +167,7 @@ export function BottomTabBar({
                   height: 2.5,
                   borderRadius: 999,
                   background: 'var(--accent)',
-                  transition: 'width 0.2s ease',
+                  transition: 'width var(--dur-md) var(--ease-default)',
                 }}
               />
             )}

@@ -1,0 +1,49 @@
+name: CI
+
+# F5：把「人肉跑」的三个门禁变成机器门禁
+#   1) 类型检查（tsc --noEmit）
+#   2) 单元测试（vitest run）
+#   3) 设计台账（design:check：记录登记 / 状态机 / 未审批删除）
+#   4) 版本号一致性（package.json / tauri.conf.json / Cargo.toml，C4 零依赖项）
+# 任一失败即红灯；不产出安装包（发布走手动 workflow，见后续 F6）。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck · test · design-check
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # design:check 会对照 git HEAD 检测「未审批删除」，需要完整历史
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Version consistency
+        run: npm run check:versions
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Design ledger guard
+        run: npm run design:check

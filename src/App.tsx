@@ -1,19 +1,36 @@
-import { clearCubeSpriteCache } from './render/iso'
-import { useEffect, useRef, useState, type ComponentType } from 'react'
-import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window'
+import { clearCubeSpriteCache } from './render/isoCube'
+import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react'
+import { useTransient } from './platform/useTransient'
+import { currentMonitor, getCurrentWindow, LogicalPosition, LogicalSize, primaryMonitor } from '@tauri-apps/api/window'
 import { listen } from '@tauri-apps/api/event'
-import { initPersistence, useAppStore, forceFlush } from './store/appStore'
+import { initPersistence, useAppStore, forceFlush, persistenceReady, isDemoMode } from './store/appStore'
+import { cacheAppearance } from './platform/appearance'
 import { pickAdapter } from './storage'
 import { setSoundMuted, setVolume } from './audio/sound'
 import { getBlueprint } from './logic/blueprints'
 import { useTimerStore } from './store/timerStore'
+import {
+  planFocusNotifications,
+  trayPhaseFor,
+  trayStatusFor,
+  type TrayFocusPhase,
+} from './logic/focusSession'
+import { useReminderStore } from './store/reminderStore'
 import { getBlueprintName, useI18n } from './i18n'
 import Today from './pages/Today'
 import Build from './pages/Build'
 import Showcase from './pages/Showcase'
 import Stats from './pages/Stats'
+
+// D-20261110-056 追加修正：页面用 React.lazy 会带来首次切页 ~300ms 的 Suspense 延迟提交
+// （见 .tmp-perf/report.md §5）；改为静态 import，换取切页即时。只有迷你摆件仍懒加载
+// （它只在迷你模式出现，且静态依赖 BuildScene）。
+const MiniDeskToy = lazy(() =>
+  import('./components/MiniDeskToy').then((m) => ({ default: m.MiniDeskToy })),
+)
 import { SettingsDialog } from './components/SettingsDialog'
-import { MiniDeskToy } from './components/MiniDeskToy'
+import { ReminderWatcher } from './components/ReminderWatcher'
+import { ReminderDialog } from './components/ReminderDialog'
 import {
   IconCheck,
   IconBuild,
@@ -29,55 +46,84 @@ import {
 } from './components/Icons'
 import logoUrl from './assets/logo-mark.svg'
 import { usePlatform } from './platform'
+import { notify } from './platform/notify'
 import { BottomTabBar, type MobileTab } from './components/BottomTabBar'
 import { habitMetOnDay } from './logic/checkin'
 import { useTodayKey } from './logic/useTodayKey'
+import {
+  MINI_PRESETS,
+  clampMiniPosition,
+  defaultMiniPosition,
+  loadWindowLayout,
+  saveWindowLayout,
+  type MiniSize,
+} from './platform/miniWindow'
 
 type Tab = MobileTab
 
 const inTauri =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
-/** 倒计时到点提醒：全局监听，toast + 系统通知 */
+/**
+ * 专注相位（摆件 / 托盘共用）：只有存在会话时才按 1s 心跳；
+ * 相位判定抽到纯函数 trayPhaseFor（ready 优先于 focusing），
+ * 返回值只在相位变化时改变，调用方可以把它放进 effect 依赖而不触发每秒副作用。
+ */
+function useFocusPhase(): TrayFocusPhase {
+  const sessions = useTimerStore((s) => s.sessions)
+  const hasSession = Object.keys(sessions).length > 0
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!hasSession) return
+    const timer = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(timer)
+  }, [hasSession])
+  if (!hasSession) return null
+  return trayPhaseFor(sessions, now)
+}
+
+/**
+ * 专注到点提醒（B2 / D-20261110-064）：
+ * - 绝对时间判定（应用隐藏/最小化/退出都不暂停）；
+ * - 到点只提醒一次，并且 **先把 notifiedAt 落盘再弹**：重启后不重复通知；
+ * - 顺带 prune：已删除/已归档习惯的会话、超过 TTL 的过期会话都清掉；
+ * - 不自动打卡（数据诚实），确认落块在摆件/今日页由用户完成。
+ */
 function TimerWatcher() {
   const { t } = useI18n()
-  const sessions = useTimerStore((s) => s.sessions)
-  const [toast, setToast] = useState<string | null>(null)
-  const notified = useRef<Set<string>>(new Set())
+  const habits = useAppStore((s) => s.habits)
+  const [toast, showToast] = useTransient<string>(5200)
+  // 长生命周期 interval 里读最新引用：语言/习惯变化不需要重建定时器
+  const toastRef = useRef(showToast)
+  toastRef.current = showToast
+  const tRef = useRef(t)
+  tRef.current = t
+  const habitsRef = useRef(habits)
+  habitsRef.current = habits
 
   useEffect(() => {
-    if (Object.keys(sessions).length === 0) {
-      notified.current.clear()
-      return
-    }
-    // 清理已结束的旧 session 标记，防止同一习惯下次计时被永久静音
-    const activeKeys = new Set(Object.entries(sessions).map(([id, s]) => `${id}_${s.startedAt}`))
-    for (const key of Array.from(notified.current)) {
-      if (!activeKeys.has(key)) {
-        notified.current.delete(key)
+    const scan = () => {
+      const now = Date.now()
+      const currentHabits = habitsRef.current
+      const activeIds = new Set(currentHabits.filter((h) => !h.archivedAt).map((h) => h.id))
+      useTimerStore.getState().prune(activeIds, now)
+      // 通知计划是纯函数（logic/focusSession）：只有 ready 且未提醒的会话才进计划，
+      // 这里只负责「先落盘 → 再弹」的副作用顺序。
+      const plans = planFocusNotifications(useTimerStore.getState().sessions, now, activeIds)
+      for (const plan of plans) {
+        const habit = currentHabits.find((h) => h.id === plan.habitId)
+        if (!habit) continue
+        // 先落盘再去弹：即使进程立刻被杀，重开也不会重复通知
+        useTimerStore.getState().markNotified(plan.habitId, plan.notifiedAt)
+        const msg = tRef.current.focusCompanion.notificationBody(habit.name)
+        toastRef.current(msg, 5200)
+        void notify('BlockHabit', msg)
       }
     }
-
-    const timer = setInterval(() => {
-      const nowMs = Date.now()
-      for (const [id, s] of Object.entries(sessions)) {
-        const sessionKey = `${id}_${s.startedAt}`
-        if (nowMs - s.startedAt >= s.targetMs && !notified.current.has(sessionKey)) {
-          notified.current.add(sessionKey)
-          const name = useAppStore.getState().habits.find((h) => h.id === id)?.name ?? 'Habit'
-          const msg = t.today.timerDoneNotify(name)
-          setToast(msg)
-          try {
-            new Notification('BlockHabit', { body: msg })
-          } catch {
-            /* WebView 未授权系统通知时静默降级为应用内提醒 */
-          }
-          setTimeout(() => setToast(null), 5200)
-        }
-      }
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [sessions, t])
+    scan()
+    const timer = window.setInterval(scan, 1000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   if (!toast) return null
   return (
@@ -98,6 +144,10 @@ function TraySync() {
   const dayClaims = useAppStore((s) => s.dayClaims)
   const builds = useAppStore((s) => s.builds)
   const activeBlueprintId = useAppStore((s) => s.activeBlueprintId)
+  const pendingReminders = useReminderStore((s) => s.pending.length)
+  // 专注相位只随相位变化进 effect 依赖 → tooltip 只在 focusing/ready 切换时 update_tray，
+  // 不做每秒倒计时 IPC（每秒 invoke 会变成高频跨进程调用）
+  const focusPhase = useFocusPhase()
 
   const day = useTodayKey()
 
@@ -110,22 +160,42 @@ function TraySync() {
     const bp = getBlueprint(activeBlueprintId)
     const placed = builds.filter((b) => b.blueprintId === activeBlueprintId).length
     const bpName = getBlueprintName(activeBlueprintId, lang)
-    const status = claimed
+    let status = claimed
       ? t.tray.tooltipDone
       : `${t.tray.tooltipProgress(done, active.length)} · ${bpName} ${placed}/${bp.blocks.length}`
+    // 有到点提醒待处理时追加提示（回窗即可看到积木风弹窗）
+    if (pendingReminders > 0) {
+      status += ` · ${t.reminder.bannerTitle(pendingReminders)}`
+    }
+    // 专注相位后缀由纯函数拼接（ready 优先于 focusing），便于单测覆盖最终 tooltip 字符串
+    status = trayStatusFor(status, focusPhase, {
+      focusing: t.focusCompanion.focusing,
+      ready: t.focusCompanion.ready,
+    })
     void (async () => {
       const { invoke } = await import('@tauri-apps/api/core')
       await invoke('update_tray', { status })
     })()
-  }, [habits, checkIns, dayClaims, builds, activeBlueprintId, lang, t, day])
+  }, [habits, checkIns, dayClaims, builds, activeBlueprintId, lang, t, day, pendingReminders, focusPhase])
 
   return null
 }
 
 /** 自定义窗口标题栏：拖拽区 + 设置 + 最小化/最大化/关闭（仅 Tauri 环境显示窗口按钮） */
-function TitleBar({ onSettings, onToggleMini }: { onSettings: () => void; onToggleMini: () => void }) {
+function TitleBar({
+  onSettings,
+  onToggleMini,
+  onRequestClose,
+}: {
+  onSettings: () => void
+  onToggleMini: () => void
+  /** 关闭请求（Alt+F4 / 系统关闭 / 标题栏关闭）：由 App 决定是否先退出迷你模式 */
+  onRequestClose: () => void
+}) {
   const { t } = useI18n()
   const [maximized, setMaximized] = useState(false)
+  const onRequestCloseRef = useRef(onRequestClose)
+  onRequestCloseRef.current = onRequestClose
   useEffect(() => {
     if (!inTauri) return
     let disposed = false
@@ -136,10 +206,10 @@ function TitleBar({ onSettings, onToggleMini }: { onSettings: () => void; onTogg
       const unlistenResize = await listen('tauri://resize', async () => {
         setMaximized(await win.isMaximized())
       })
-      // Alt+F4 / 系统关闭请求 → 收进托盘而不是退出
+      // Alt+F4 / 系统关闭请求 → 收进托盘而不是退出（迷你模式下先退出迷你尺寸）
       const unClose = await win.onCloseRequested(async (event) => {
         event.preventDefault()
-        await win.hide()
+        onRequestCloseRef.current()
       })
       if (disposed) {
         unlistenResize()
@@ -161,7 +231,7 @@ function TitleBar({ onSettings, onToggleMini }: { onSettings: () => void; onTogg
     if (!inTauri) return
     const win = getCurrentWindow()
     // 最小化 → 收到任务栏；关闭 → 收进托盘（退出只走托盘菜单）
-    if (action === 'close') await win.hide()
+    if (action === 'close') onRequestClose()
     else if (action === 'min') await win.minimize()
     else await win.toggleMaximize()
   }
@@ -209,7 +279,16 @@ export default function App() {
   })
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [miniMode, setMiniMode] = useState(false)
+  // 提醒「开始打卡」：跳到 Today 并高亮该习惯卡片
+  const [focusHabitId, setFocusHabitId] = useState<string | null>(null)
+  const [reminderToast, showReminderToast] = useTransient<string>(2400)
   const { isMobile } = usePlatform()
+  const hydrated = useAppStore((s) => s.hydrated)
+  const miniWidgetSize = useAppStore((s) => s.settings.miniWidgetSize ?? 'standard')
+  const miniWidgetAlwaysOnTop = useAppStore((s) => s.settings.miniWidgetAlwaysOnTop === true)
+  const updateSettings = useAppStore((s) => s.updateSettings)
+  // 演示模式没有磁盘存档，main.tsx 已同步注入内存态，视作已就绪
+  const ready = hydrated || isDemoMode()
   const habits = useAppStore((s) => s.habits)
   const checkIns = useAppStore((s) => s.checkIns)
   const builds = useAppStore((s) => s.builds)
@@ -226,33 +305,159 @@ export default function App() {
   const buildProgressPercent =
     bp.blocks.length > 0 ? Math.round((placedCount / bp.blocks.length) * 100) : 0
 
-  // 进入迷你模式前的原始窗口尺寸（退出时恢复）
-  const preMiniSizeRef = useRef<{ width: number; height: number } | null>(null)
+  const miniModeRef = useRef(false)
+  miniModeRef.current = miniMode
 
-  async function toggleMini(enable: boolean) {
+  /** 进入/退出迷你摆件（D-20261110-059）：三档 preset + 显式最小尺寸 + 位置钳制 */
+  async function toggleMini(enable: boolean, sizeOverride?: MiniSize) {
+    const size = sizeOverride ?? useAppStore.getState().settings.miniWidgetSize ?? 'standard'
+    const preset = MINI_PRESETS[size]
+    const wasMini = miniModeRef.current
     setMiniMode(enable)
-    if (inTauri) {
-      const win = getCurrentWindow()
-      if (enable) {
-        // 记录原始窗口尺寸（outerSize 是物理像素，换算为逻辑像素供恢复用）
-        const size = await win.outerSize()
-        const f = await win.scaleFactor()
-        preMiniSizeRef.current = { width: Math.round(size.width / f), height: Math.round(size.height / f) }
-        await win.setSize(new LogicalSize(260, 380))
-        await win.setAlwaysOnTop(true)
-        await win.setResizable(false)
+    if (!inTauri) {
+      updateSettings(enable ? { enableMiniWidget: true, miniWidgetSize: size } : { enableMiniWidget: false })
+      return
+    }
+    const win = getCurrentWindow()
+    if (enable) {
+      if (!wasMini) {
+        // 记录主窗尺寸/位置（逻辑像素），退出时恢复
+        const outer = await win.outerSize()
+        const pos = await win.outerPosition().catch(() => null)
+        const f = (await win.scaleFactor()) || 1
+        const layout = loadWindowLayout()
+        saveWindowLayout({
+          ...layout,
+          main: {
+            w: Math.round(outer.width / f),
+            h: Math.round(outer.height / f),
+            ...(pos ? { x: Math.round(pos.x / f), y: Math.round(pos.y / f) } : {}),
+          },
+        })
+      }
+      // 显式最小尺寸契约：先 setMinSize 再 setSize，不依赖 tauri.conf 的 900×600 隐式行为
+      await win.setMinSize(new LogicalSize(preset.w, preset.h)).catch(() => {})
+      await win.setSize(new LogicalSize(preset.w, preset.h))
+      const monitor = (await currentMonitor().catch(() => null)) ?? (await primaryMonitor().catch(() => null))
+      let point = loadWindowLayout().mini ?? null
+      if (monitor) {
+        const f = monitor.scaleFactor || 1
+        const area = {
+          x: monitor.workArea.position.x / f,
+          y: monitor.workArea.position.y / f,
+          width: monitor.workArea.size.width / f,
+          height: monitor.workArea.size.height / f,
+        }
+        point = clampMiniPosition(point ?? defaultMiniPosition(area, preset), area, preset)
+        await win.setPosition(new LogicalPosition(point.x, point.y)).catch(() => {})
+      } else if (point) {
+        await win.setPosition(new LogicalPosition(point.x, point.y)).catch(() => {})
+      }
+      await win
+        .setAlwaysOnTop(useAppStore.getState().settings.miniWidgetAlwaysOnTop === true)
+        .catch(() => {})
+      await win.setResizable(false)
+      saveWindowLayout({ ...loadWindowLayout(), mini: point ?? undefined })
+      updateSettings({ enableMiniWidget: true, miniWidgetSize: size })
+    } else {
+      const main = loadWindowLayout().main ?? { w: 1100, h: 760 }
+      await win.setResizable(true)
+      await win.setMinSize(new LogicalSize(900, 600)).catch(() => {})
+      await win.setSize(new LogicalSize(main.w, main.h))
+      await win.setAlwaysOnTop(false)
+      if (main.x !== undefined && main.y !== undefined) {
+        await win.setPosition(new LogicalPosition(main.x, main.y)).catch(() => {})
       } else {
-        const prev = preMiniSizeRef.current
-        await win.setSize(new LogicalSize(prev?.width ?? 1100, prev?.height ?? 760))
-        preMiniSizeRef.current = null
-        await win.setAlwaysOnTop(false)
-        await win.setResizable(true)
         await win.center()
       }
+      updateSettings({ enableMiniWidget: false })
     }
   }
+
+  /** 摆件置顶开关：设置持久化 + 当前窗口即时生效 */
+  function toggleMiniPin() {
+    const next = !useAppStore.getState().settings.miniWidgetAlwaysOnTop
+    updateSettings({ miniWidgetAlwaysOnTop: next })
+    if (inTauri && miniModeRef.current) void getCurrentWindow().setAlwaysOnTop(next).catch(() => {})
+  }
+
+  // 摆件使用中改尺寸：即时应用到当前窗口（不经过进入/退出流程）
+  useEffect(() => {
+    if (!inTauri || !miniModeRef.current) return
+    const win = getCurrentWindow()
+    const preset = MINI_PRESETS[miniWidgetSize]
+    void (async () => {
+      await win.setMinSize(new LogicalSize(preset.w, preset.h)).catch(() => {})
+      await win.setSize(new LogicalSize(preset.w, preset.h))
+    })()
+  }, [miniWidgetSize])
+
+  // 摆件使用中切换置顶：即时应用
+  useEffect(() => {
+    if (!inTauri || !miniModeRef.current) return
+    void getCurrentWindow().setAlwaysOnTop(miniWidgetAlwaysOnTop).catch(() => {})
+  }, [miniWidgetAlwaysOnTop])
+
+  // 摆件拖动后持久化位置（独立验证 P2-2）：节流 400ms，只存设备本地
+  useEffect(() => {
+    if (!inTauri || !miniMode) return
+    const win = getCurrentWindow()
+    let timer: number | undefined
+    let disposed = false
+    const persistPosition = async () => {
+      const f = (await win.scaleFactor().catch(() => 1)) || 1
+      const pos = await win.outerPosition().catch(() => null)
+      if (!pos || disposed) return
+      const layout = loadWindowLayout()
+      saveWindowLayout({
+        ...layout,
+        mini: { x: Math.round(pos.x / f), y: Math.round(pos.y / f) },
+      })
+    }
+    const schedule = () => {
+      if (timer) window.clearTimeout(timer)
+      timer = window.setTimeout(() => void persistPosition(), 400)
+    }
+    const unlistenPromise = win.onMoved(schedule)
+    return () => {
+      disposed = true
+      if (timer) window.clearTimeout(timer)
+      void unlistenPromise.then((unlisten) => unlisten()).catch(() => {})
+    }
+  }, [miniMode])
+
+  /**
+   * A10：窗口关闭请求。
+   * 迷你悬浮件是不可调整大小的 260×380 置顶窗，如果直接隐藏，下次从托盘唤起仍卡在迷你尺寸。
+   * 因此迷你模式下关闭 = 先退出迷你模式（恢复尺寸/可调整），再收进托盘。
+   */
+  async function handleWindowCloseRequest(): Promise<void> {
+    if (!inTauri) return
+    const win = getCurrentWindow()
+    if (miniModeRef.current) {
+      await toggleMini(false)
+    }
+    await win.hide()
+  }
+
   useEffect(() => {
     void initPersistence(pickAdapter())
+  }, [])
+  // 常驻悬浮件：hydration 完成后按设置自动进入迷你模式（手动退出时写回 false，下次不再自启）
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      await persistenceReady
+      if (cancelled) return
+      if (useAppStore.getState().settings.enableMiniWidget === true && !miniMode) {
+        void toggleMini(true)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // 仅挂载时判定一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   // 静音开关持久化：settings.soundMuted 单向驱动音频引擎
   const soundMutedSetting = useAppStore((s) => s.settings.soundMuted)
@@ -274,6 +479,10 @@ export default function App() {
   useEffect(() => {
     document.documentElement.lang = langSetting
   }, [langSetting])
+  // 回写首帧缓存（main.tsx 在 React 挂载前读取），消除下次启动的主题/语言闪变
+  useEffect(() => {
+    cacheAppearance(themeSetting, langSetting)
+  }, [themeSetting, langSetting])
   useEffect(() => {
     if (!inTauri) return
     void import('@tauri-apps/api/event').then(({ emit }) => emit('theme-changed', themeSetting))
@@ -300,6 +509,10 @@ export default function App() {
 
   // 存档来自更高版本：本会话挂起持久化，提示用户升级
   const needsUpgrade = useAppStore((s) => s.needsUpgrade)
+  // 读档失败：本会话已挂起持久化（避免空态覆盖真实存档），必须让用户知道
+  const loadFailed = useAppStore((s) => s.loadFailed)
+  // 存档损坏：原文已备份，必须以空态启动但提示用户
+  const dataCorrupt = useAppStore((s) => s.dataCorrupt)
 
   // 托盘退出握手：Rust 发起退出 → 前端 flush 存档 → 确认 → Rust 退出（1.5s 超时强退兜底）
   useEffect(() => {
@@ -352,19 +565,47 @@ export default function App() {
     ['showcase', t.nav.showcase, IconShowcase],
     ['stats', t.nav.stats, IconStats],
   ]
+  // 水合门（D-20261110-056）：读档完成前不渲染空态，避免「空态一闪 → 真实习惯」的闪变
+  if (!ready) {
+    return <div className="app" aria-busy="true" />
+  }
+
   if (miniMode) {
+    // 浏览器预览没有真实窗口，用预设尺寸居中模拟，便于开发/验收三档视觉；Tauri 下铺满真实窗口
+    const preview = MINI_PRESETS[miniWidgetSize]
     return (
-      <div className="app" style={{ height: '100vh', padding: 0 }}>
-        <MiniDeskToy
-          onExpand={() => void toggleMini(false)}
-          onClose={async () => {
-            if (inTauri) {
-              await getCurrentWindow().hide()
-            } else {
-              void toggleMini(false)
-            }
-          }}
-        />
+      <div
+        className="app"
+        style={{
+          height: '100vh',
+          padding: 0,
+          background: 'var(--bg)',
+          display: inTauri ? 'block' : 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div
+          style={
+            inTauri
+              ? { height: '100vh' }
+              : { width: preview.w, height: preview.h, maxWidth: '100vw', maxHeight: '100vh' }
+          }
+        >
+          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg)' }} />}>
+            <MiniDeskToy
+              size={miniWidgetSize}
+              pinned={miniWidgetAlwaysOnTop}
+              onTogglePin={toggleMiniPin}
+              onExpand={() => void toggleMini(false)}
+              onClose={async () => {
+                // 关闭 = 先恢复主窗再收托盘，避免下次从托盘唤起仍卡在迷你尺寸
+                await toggleMini(false)
+                if (inTauri) await getCurrentWindow().hide()
+              }}
+            />
+          </Suspense>
+        </div>
       </div>
     )
   }
@@ -392,7 +633,7 @@ export default function App() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img src={logoUrl} alt="BlockHabit" width={24} height={24} />
-            <span style={{ fontSize: 16, fontWeight: 700, fontFamily: "'Rubik', sans-serif" }}>
+            <span style={{ fontSize: 'var(--fs-title)', fontWeight: 700, fontFamily: "'Rubik', sans-serif" }}>
               {tabs.find(([id]) => id === tab)?.[1] ?? 'BlockHabit'}
             </span>
           </div>
@@ -407,15 +648,27 @@ export default function App() {
           </button>
         </header>
       ) : (
-        <TitleBar onSettings={() => setSettingsOpen(true)} onToggleMini={() => void toggleMini(true)} />
+        <TitleBar
+          onSettings={() => setSettingsOpen(true)}
+          onToggleMini={() => void toggleMini(true, miniWidgetSize)}
+          onRequestClose={() => void handleWindowCloseRequest()}
+        />
       )}
       {inTauri && <TraySync />}
       <TimerWatcher />
+      <ReminderWatcher />
       <main
         className={`content ${isMobile ? 'mobile-content-area' : ''}`}
         style={isMobile ? { paddingTop: 12 } : undefined}
       >
-        {tab === 'today' && <Today onCelebrate={() => setTab('build')} />}
+        {tab === 'today' && (
+          <Today
+            onCelebrate={() => setTab('build')}
+            onGoBuild={() => setTab('build')}
+            focusHabitId={focusHabitId}
+            onFocusConsumed={() => setFocusHabitId(null)}
+          />
+        )}
         {tab === 'build' && <Build />}
         {tab === 'showcase' && <Showcase />}
         {tab === 'stats' && <Stats />}
@@ -429,8 +682,13 @@ export default function App() {
         />
       ) : (
         <nav className="tabbar">
-          {tabs.map(([id, label, Icon]) => (
-            <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
+          {tabs.map(([id, label, Icon], index) => (
+            <button
+              key={id}
+              className={tab === id ? 'active' : ''}
+              title={t.common.shortcut(label, String(index + 1))}
+              onClick={() => setTab(id)}
+            >
               <Icon size={21} />
               {label}
             </button>
@@ -445,7 +703,27 @@ export default function App() {
       {saveErrorVisible && (
         <div className="toast" style={{ zIndex: 2000 }}>{t.settings.saveFailedToast}</div>
       )}
+      {loadFailed && (
+        <div className="toast" style={{ zIndex: 2000, whiteSpace: 'normal', maxWidth: '80vw' }}>
+          {t.settings.loadFailedToast}
+        </div>
+      )}
+      {dataCorrupt && (
+        <div className="toast" style={{ zIndex: 2000, whiteSpace: 'normal', maxWidth: '80vw' }}>
+          {t.settings.corruptRecoveredToast}
+        </div>
+      )}
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
+      <ReminderDialog
+        onStart={(habitId) => {
+          setTab('today')
+          setFocusHabitId(habitId)
+        }}
+        onToast={(text) => {
+          showReminderToast(text, 2400)
+        }}
+      />
+      {reminderToast && <div className="toast">{reminderToast}</div>}
     </div>
   )
 }

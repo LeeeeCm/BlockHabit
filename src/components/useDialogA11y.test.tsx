@@ -1,4 +1,4 @@
-import { act } from 'react'
+import { act, useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useDialogA11y, type DialogA11yOptions } from './useDialogA11y'
@@ -11,6 +11,21 @@ function TestDialog(props: DialogA11yOptions) {
       <button id="btn1">Button 1</button>
       <input id="input1" />
       <button id="btn2">Button 2</button>
+    </div>
+  )
+}
+
+function AutoFocusDialog(props: DialogA11yOptions) {
+  const { ref } = useDialogA11y(props)
+  const inputRef = useRef<HTMLInputElement>(null)
+  // 子组件 effect 先于父组件 effect 执行：模拟 React autoFocus 在 commit 阶段已把焦点放进面板
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+  if (!props.open) return null
+  return (
+    <div ref={ref} role="dialog" aria-modal="true" tabIndex={-1}>
+      <input id="auto-input" ref={inputRef} />
     </div>
   )
 }
@@ -100,6 +115,17 @@ describe('useDialogA11y hook', () => {
     expect(shiftTabEvent.defaultPrevented).toBe(true)
     expect(document.activeElement).toBe(btn2)
 
+    act(() => {
+      root.unmount()
+    })
+  })
+
+  it('不抢走面板内已聚焦的输入框（C6：autoFocus 保留）', () => {
+    const root = createRoot(container)
+    act(() => {
+      root.render(<AutoFocusDialog open={true} onClose={vi.fn()} />)
+    })
+    expect(document.activeElement?.id).toBe('auto-input')
     act(() => {
       root.unmount()
     })

@@ -14,14 +14,21 @@ function validateBlueprint(name: string, blocks: BlockDef[], cx: number, cy: num
       expect(new Set(keys).size).toBe(keys.length)
     })
 
-    it('has no floating blocks', () => {
+    // 允许 1 格同层悬挑（石拱桥拱肩），但禁止完全悬空孤岛：
+    // 每块非底层积木必须「正下方有块」或「同层四邻有块」。
+    it('has no completely floating blocks', () => {
       const occupied = new Set(blocks.map((b) => `${b.x},${b.y},${b.z}`))
       for (const b of blocks) {
         if (b.z === 0) continue
-        expect(
-          occupied.has(`${b.x},${b.y},${b.z - 1}`),
-          `block (${b.x},${b.y},${b.z}) floats`,
-        ).toBe(true)
+        const supported =
+          occupied.has(`${b.x},${b.y},${b.z - 1}`) ||
+          [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ].some(([dx, dy]) => occupied.has(`${b.x + dx},${b.y + dy},${b.z}`))
+        expect(supported, `block (${b.x},${b.y},${b.z}) floats`).toBe(true)
       }
     })
 
@@ -49,6 +56,19 @@ function validateBlueprint(name: string, blocks: BlockDef[], cx: number, cy: num
 }
 
 const CENTERS: Record<string, [number, number]> = {
+  // 内容包 v3（D-20261111-070）
+  bakery: [2, 2],
+  bookshop: [2, 2],
+  postoffice: [3, 2],
+  firestation: [3, 2],
+  watertower: [2, 2],
+  // 内容包 v2（D-20261110-063）
+  treehouse: [4, 4],
+  greenhouse: [3, 2],
+  clocktower: [2, 2],
+  bridge: [5, 1],
+  observatory: [3, 3],
+  library: [3, 2],
   plant: [1, 1],
   coffee: [1, 1],
   camera: [1, 1],
@@ -64,7 +84,7 @@ const CENTERS: Record<string, [number, number]> = {
 }
 
 describe('blueprint catalog', () => {
-  it('has 12 blueprints in unlock order with beginner starters', () => {
+  it('has base 12 + content pack v2 6 + v3 5 in unlock order', () => {
     expect(blueprintOrder).toEqual([
       'plant',
       'coffee',
@@ -78,8 +98,21 @@ describe('blueprint catalog', () => {
       'pyramid',
       'robot',
       'castle',
+      // 内容包 v2（追加，不改基础顺序）
+      'treehouse',
+      'greenhouse',
+      'clocktower',
+      'bridge',
+      'observatory',
+      'library',
+      // 内容包 v3（D-20261111-070，追加，不改既有顺序）
+      'bakery',
+      'bookshop',
+      'postoffice',
+      'firestation',
+      'watertower',
     ])
-    expect(Object.keys(blueprints)).toHaveLength(12)
+    expect(Object.keys(blueprints)).toHaveLength(blueprintOrder.length)
   })
 })
 

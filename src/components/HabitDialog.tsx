@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Habit, HabitFrequency, HabitKind, HabitPeriod } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useI18n } from '../i18n'
+import { suggestedReminderStart } from '../logic/reminderScheduler'
+import { playSnapSound } from '../audio/sound'
 import { IconClose, IconOptional, IconRequired } from './Icons'
 import { triggerHaptic, usePlatform } from '../platform'
 import { BottomSheet } from './BottomSheet'
 import { useDialogA11y } from './useDialogA11y'
+import { ConfirmDialog } from './ConfirmDialog'
 interface Props {
   habit?: Habit
   onClose: () => void
@@ -21,7 +24,7 @@ function FieldLabel({ required, optionalText, children }: { required?: boolean; 
       {!required && (
         <span
           style={{
-            fontSize: 10.5,
+            fontSize: 'var(--fs-caption)',
             border: '1px solid var(--line)',
             borderRadius: 999,
             padding: '1px 7px',
@@ -32,6 +35,45 @@ function FieldLabel({ required, optionalText, children }: { required?: boolean; 
         </span>
       )}
     </label>
+  )
+}
+
+/** "HH:mm" + 分钟步进 → 下一个合法 "HH:mm"（分钟按 15 分钟栅格回绕） */
+function shiftHHmm(value: string, dHour: number, dMinute: number): string {
+  const [h, m] = value.split(':').map(Number)
+  const nh = (((h + dHour) % 24) + 24) % 24
+  const nm = ((((m + dMinute) % 60) + 60) % 60)
+  return `${String(nh).padStart(2, '0')}:${String(nm).padStart(2, '0')}`
+}
+
+/** "HH:mm" + n 分钟 → "HH:mm"，封顶 23:59（跨午夜不支持） */
+export function plusMinutes(value: string, n: number): string {
+  const [h, m] = value.split(':').map(Number)
+  const total = Math.min(23 * 60 + 59, h * 60 + m + n)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
+/** 积木风时间步进器：小时 ±1 / 分钟 ±15，方块按钮带咬合音效 */
+function TimeStepper({ value, onChange, ariaLabel }: { value: string; onChange: (v: string) => void; ariaLabel: string }) {
+  const [hh, mm] = value.split(':')
+  const step = (dHour: number, dMinute: number) => {
+    playSnapSound()
+    onChange(shiftHHmm(value, dHour, dMinute))
+  }
+  return (
+    <div className="time-stepper" role="group" aria-label={ariaLabel}>
+      <div className="ts-part">
+        <button type="button" className="ts-btn" aria-label={`${ariaLabel} -1h`} onClick={() => step(-1, 0)}>−</button>
+        <span className="ts-num">{hh}</span>
+        <button type="button" className="ts-btn" aria-label={`${ariaLabel} +1h`} onClick={() => step(1, 0)}>+</button>
+      </div>
+      <span className="ts-colon">:</span>
+      <div className="ts-part">
+        <button type="button" className="ts-btn" aria-label={`${ariaLabel} -15m`} onClick={() => step(0, -15)}>−</button>
+        <span className="ts-num">{mm}</span>
+        <button type="button" className="ts-btn" aria-label={`${ariaLabel} +15m`} onClick={() => step(0, 15)}>+</button>
+      </div>
+    </div>
   )
 }
 
@@ -55,8 +97,41 @@ export function HabitDialog({ habit, onClose }: Props) {
   )
   const [times, setTimes] = useState(habit?.frequency.type === 'weekly' ? habit.frequency.times : 3)
   const [period, setPeriod] = useState<HabitPeriod>(habit?.period ?? 'any')
+  const [reminderOn, setReminderOn] = useState(Boolean(habit?.reminder))
+  const [remStart, setRemStart] = useState(
+    habit?.reminder?.start ?? suggestedReminderStart(habit?.period ?? 'any', new Date()),
+  )
+  const [remEnd, setRemEnd] = useState<string | null>(habit?.reminder?.end ?? null)
   const [minutes, setMinutes] = useState(habit?.targetMinutes ? String(habit.targetMinutes) : '25')
   const [note, setNote] = useState(habit?.note ?? '')
+  /**
+   * F1 下半：把「时段 / 提醒 / 分类 / 备注」四组选填项默认折叠。
+   * 编辑一个已经填过这些字段的习惯时自动展开，避免「看不见但还在」的困惑。
+   */
+  const [moreOpen, setMoreOpen] = useState(
+    Boolean(habit?.period && habit.period !== 'any') ||
+      Boolean(habit?.reminder) ||
+      Boolean(habit?.category) ||
+      Boolean(habit?.note),
+  )
+
+  // C9：关闭保护 —— 表单有任何改动时，Esc / 点遮罩 / 取消 / 右上角 × 都要先确认，
+  // 避免半填的习惯信息被一次误触清空（同为破坏性操作，与撤销打卡的保护级别对齐）。
+  const formSnapshot = JSON.stringify({
+    kind, name, targetValue, unit, step, category, freqMode, customDays, times, period,
+    reminderOn, remStart, remEnd, minutes, note,
+  })
+  const initialSnapshotRef = useRef<string | null>(null)
+  if (initialSnapshotRef.current === null) initialSnapshotRef.current = formSnapshot
+  const dirty = formSnapshot !== initialSnapshotRef.current
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
+  const requestClose = () => {
+    if (!dirty) {
+      onClose()
+      return
+    }
+    setDiscardConfirmOpen(true)
+  }
 
   const editing = Boolean(habit)
   const minutesNum = parseInt(minutes, 10)
@@ -66,11 +141,13 @@ export function HabitDialog({ habit, onClose }: Props) {
   const stepNum = parseInt(step, 10)
   const stepValid = Number.isFinite(stepNum) && stepNum >= 1
   const freqValid = freqMode !== 'custom' || customDays.length > 0
+  const reminderValid = !reminderOn || !remEnd || remEnd > remStart
   const canSave =
     Boolean(name.trim()) &&
     freqValid &&
+    reminderValid &&
     (kind === 'instant' || (kind === 'focus' && minutesValid) || (kind === 'counter' && targetValValid && stepValid))
-  const { ref: dialogRef } = useDialogA11y({ open: true, onClose })
+  const { ref: dialogRef } = useDialogA11y({ open: true, onClose: requestClose, enabled: !discardConfirmOpen })
 
   function save() {
     const trimmed = name.trim()
@@ -84,6 +161,7 @@ export function HabitDialog({ habit, onClose }: Props) {
     const extra = {
       kind,
       period,
+      reminder: reminderOn ? { start: remStart, end: remEnd ?? undefined } : undefined,
       targetMinutes: kind === 'focus' && minutesValid ? minutesNum : undefined,
       targetValue: kind === 'counter' && targetValValid ? targetValNum : undefined,
       unit: kind === 'counter' ? (unit.trim() || undefined) : undefined,
@@ -116,7 +194,7 @@ export function HabitDialog({ habit, onClose }: Props) {
           {t.habitDialog.archiveBtn}
         </button>
       )}
-      <button className="btn ghost" onClick={onClose}>
+      <button className="btn ghost" onClick={requestClose}>
         {t.common.cancel}
       </button>
       <button className="btn primary" disabled={!canSave} onClick={save}>
@@ -191,7 +269,7 @@ export function HabitDialog({ habit, onClose }: Props) {
                 <button
                   type="button"
                   className="btn ghost"
-                  style={{ fontSize: 11.5, padding: '3px 8px', borderRadius: 999 }}
+                  style={{ fontSize: 'var(--fs-small)', padding: '3px 8px', borderRadius: 999 }}
                   onClick={() => setCustomDays([1, 2, 3, 4, 5])}
                 >
                   {t.habitDialog.selectWorkdays}
@@ -199,7 +277,7 @@ export function HabitDialog({ habit, onClose }: Props) {
                 <button
                   type="button"
                   className="btn ghost"
-                  style={{ fontSize: 11.5, padding: '3px 8px', borderRadius: 999 }}
+                  style={{ fontSize: 'var(--fs-small)', padding: '3px 8px', borderRadius: 999 }}
                   onClick={() => setCustomDays([6, 7])}
                 >
                   {t.habitDialog.selectWeekends}
@@ -207,7 +285,7 @@ export function HabitDialog({ habit, onClose }: Props) {
                 <button
                   type="button"
                   className="btn ghost"
-                  style={{ fontSize: 11.5, padding: '3px 8px', borderRadius: 999 }}
+                  style={{ fontSize: 'var(--fs-small)', padding: '3px 8px', borderRadius: 999 }}
                   onClick={() => setCustomDays([1, 2, 3, 4, 5, 6, 7])}
                 >
                   {t.habitDialog.selectAll}
@@ -234,10 +312,10 @@ export function HabitDialog({ habit, onClose }: Props) {
                         border: active ? '1.5px solid var(--ink)' : '1px solid var(--line)',
                         background: active ? 'var(--ink)' : 'var(--bg)',
                         color: active ? 'var(--bg)' : 'var(--ink-2)',
-                        fontSize: 13,
+                        fontSize: 'var(--fs-body)',
                         fontWeight: active ? 700 : 400,
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease',
+                        transition: 'all var(--dur-xs) var(--ease-default)',
                       }}
                     >
                       {label}
@@ -246,7 +324,7 @@ export function HabitDialog({ habit, onClose }: Props) {
                 })}
               </div>
               {customDays.length === 0 && (
-                <div style={{ fontSize: 11.5, color: 'var(--danger)', marginTop: 4 }}>
+                <div style={{ fontSize: 'var(--fs-small)', color: 'var(--danger)', marginTop: 4 }}>
                   {t.habitDialog.selectAtLeastOne}
                 </div>
               )}
@@ -260,24 +338,125 @@ export function HabitDialog({ habit, onClose }: Props) {
                 min={1}
                 max={7}
                 value={times}
+                aria-label={t.habitDialog.timesPerWeek(times)}
                 onChange={(e) => setTimes(Number(e.target.value))}
-                style={{ accentColor: 'var(--progress-green)', flex: 1 }}
+                style={{ accentColor: 'var(--ink)', flex: 1 }}
               />
-              <span style={{ fontSize: 13, minWidth: 60, textAlign: 'right' }}>{t.habitDialog.timesPerWeek(times)}</span>
+              <span style={{ fontSize: 'var(--fs-body)', minWidth: 60, textAlign: 'right' }}>{t.habitDialog.timesPerWeek(times)}</span>
             </div>
           )}
         </div>
 
-        <div className="field">
-          <FieldLabel optionalText={t.common.optional}>{t.habitDialog.periodLabel}</FieldLabel>
-          <div className="seg">
-            {(['any', 'morning', 'afternoon', 'evening'] as const).map((p) => (
+        {/* F1 下半：选填项默认折叠，首屏只留「名称 / 频率 / 目标」 */}
+        <button
+          type="button"
+          className="btn ghost"
+          aria-expanded={moreOpen}
+          onClick={() => setMoreOpen((v) => !v)}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '8px 12px',
+            borderRadius: 'var(--r-md)',
+            fontSize: 'var(--fs-small)',
+            color: 'var(--ink-2)',
+          }}
+        >
+          <span>{moreOpen ? t.habitDialog.fewerSettings : t.habitDialog.moreSettings}</span>
+          <span aria-hidden="true" style={{ display: 'inline-flex', transition: 'transform var(--dur-xs) var(--ease-default)', transform: moreOpen ? 'rotate(180deg)' : 'none' }}>
+            ⌄
+          </span>
+        </button>
+
+        {moreOpen && (
+          <>
+            <div className="field">
+              <FieldLabel optionalText={t.common.optional}>{t.habitDialog.periodLabel}</FieldLabel>
+              <div className="seg">
+                {(['any', 'morning', 'afternoon', 'evening'] as const).map((p) => (
               <button key={p} className={period === p ? 'active' : ''} onClick={() => setPeriod(p)}>
                 {t.today.periods[p]}
               </button>
             ))}
           </div>
         </div>
+
+        <div className="field">
+          <FieldLabel optionalText={t.common.optional}>{t.habitDialog.reminderLabel}</FieldLabel>
+          <div className="seg">
+            <button
+              type="button"
+              className={!reminderOn ? 'active' : ''}
+              onClick={() => setReminderOn(false)}
+            >
+              {t.habitDialog.reminderOff}
+            </button>
+            <button
+              type="button"
+              className={reminderOn ? 'active' : ''}
+              onClick={() => {
+                setReminderOn(true)
+                // 首次开启时按当前时段给建议时刻（编辑已有提醒则保留原值）
+                if (!habit?.reminder && !remEnd) {
+                  setRemStart(suggestedReminderStart(period, new Date()))
+                }
+              }}
+            >
+              {t.habitDialog.reminderOn}
+            </button>
+          </div>
+          {reminderOn && (
+            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 'var(--fs-body)', color: 'var(--ink-2)', width: 48, flexShrink: 0 }}>
+                  {t.habitDialog.reminderStart}
+                </span>
+                <TimeStepper value={remStart} onChange={setRemStart} ariaLabel={t.habitDialog.reminderStart} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 'var(--fs-body)', color: 'var(--ink-2)', width: 48, flexShrink: 0 }}>
+                  {t.habitDialog.reminderEnd}
+                </span>
+                {remEnd ? (
+                  <>
+                    <TimeStepper value={remEnd} onChange={setRemEnd} ariaLabel={t.habitDialog.reminderEnd} />
+                    <button
+                      type="button"
+                      className="btn ghost"
+                      style={{ fontSize: 'var(--fs-caption)', padding: '2px 8px', borderRadius: 999 }}
+                      title={t.common.cancel}
+                      onClick={() => setRemEnd(null)}
+                    >
+                      ×
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    style={{ fontSize: 'var(--fs-small)', padding: '3px 10px', borderRadius: 999 }}
+                    onClick={() => setRemEnd(plusMinutes(remStart, 90))}
+                  >
+                    + {t.habitDialog.reminderEnd}
+                  </button>
+                )}
+              </div>
+              <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', lineHeight: 1.5 }}>
+                {t.habitDialog.reminderHint}
+              </div>
+              {remEnd && remEnd <= remStart && (
+                <div style={{ fontSize: 'var(--fs-small)', color: 'var(--danger)' }}>
+                  {t.habitDialog.reminderEndInvalid}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+          </>
+        )}
 
         {kind === 'focus' && (
           <div className="field">
@@ -292,7 +471,7 @@ export function HabitDialog({ habit, onClose }: Props) {
                 onChange={(e) => setMinutes(e.target.value)}
                 style={{ width: 110 }}
               />
-              <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{t.habitDialog.durationUnit}</span>
+              <span style={{ fontSize: 'var(--fs-body)', color: 'var(--ink-2)' }}>{t.habitDialog.durationUnit}</span>
             </div>
           </div>
         )}
@@ -316,7 +495,7 @@ export function HabitDialog({ habit, onClose }: Props) {
                 onChange={(e) => setUnit(e.target.value)}
                 style={{ width: 70 }}
               />
-              <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+              <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
                 {t.habitDialog.counterStep}:
               </span>
               <input
@@ -331,6 +510,8 @@ export function HabitDialog({ habit, onClose }: Props) {
           </div>
         )}
 
+        {moreOpen && (
+          <>
         <div className="field">
           <FieldLabel optionalText={t.common.optional}>{t.habitDialog.categoryLabel}</FieldLabel>
           <input
@@ -348,35 +529,57 @@ export function HabitDialog({ habit, onClose }: Props) {
             onChange={(e) => setNote(e.target.value)}
           />
         </div>
+          </>
+        )}
 
     </>
   )
 
+  const discardDialog = discardConfirmOpen ? (
+    <ConfirmDialog
+      title={t.habitDialog.discardTitle}
+      message={t.habitDialog.discardMsg}
+      confirmLabel={t.habitDialog.discardAction}
+      cancelLabel={t.common.cancel}
+      danger
+      onConfirm={() => {
+        setDiscardConfirmOpen(false)
+        onClose()
+      }}
+      onCancel={() => setDiscardConfirmOpen(false)}
+    />
+  ) : null
+
   if (isMobile) {
     return (
-      <BottomSheet open={true} onClose={onClose} title={title} footer={footerContent}>
-        {formContent}
-      </BottomSheet>
+      <>
+        <BottomSheet open={true} onClose={requestClose} title={title} footer={footerContent}>
+          {formContent}
+        </BottomSheet>
+        {discardDialog}
+      </>
     )
   }
 
   return (
-    <div
-      ref={dialogRef}
-      role="dialog"
-      aria-modal="true"
-      tabIndex={-1}
-      className="overlay"
-      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    <>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="habit-dialog-title"
+        tabIndex={-1}
+        className="overlay"
+      onMouseDown={(e) => e.target === e.currentTarget && requestClose()}
     >
       <div className="dialog habit-dialog" onMouseDown={(e) => e.stopPropagation()} style={{ width: 460, maxWidth: '92vw' }}>
         <div className="dialog-header">
-          <h3>{title}</h3>
+          <h3 id="habit-dialog-title">{title}</h3>
           <button
             className="icon-btn"
             onClick={() => {
               triggerHaptic('light')
-              onClose()
+              requestClose()
             }}
             title={t.common.close}
           >
@@ -390,6 +593,8 @@ export function HabitDialog({ habit, onClose }: Props) {
 
         {footerContent}
       </div>
-    </div>
+      </div>
+      {discardDialog}
+    </>
   )
 }

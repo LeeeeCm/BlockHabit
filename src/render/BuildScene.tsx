@@ -2,7 +2,6 @@ import { useEffect, useRef, useCallback, useState, useMemo } from 'react'
 import type { BlockDef, Blueprint, CheckIn, MicroMood, PlacedBlock } from '../types'
 import {
   DEFAULT_ISO_CONFIG,
-  STUD_H,
   drawCube,
   followResize,
   isPointInsideCube,
@@ -10,7 +9,17 @@ import {
   rotateCoord,
   worldToScreen,
 } from './iso'
-import { drawGroundBase, drawEcoProps } from './iso'
+import { drawGroundBase, drawGroundShadow, drawEcoProps } from './iso'
+import { blendBounds, framingWeight, measureBounds } from './framing'
+import { computeFitView } from './sceneCamera'
+import {
+  BLOCK_T,
+  DROP_MS,
+  animState,
+  cascadeState,
+  planCascade,
+  type CascadePlan,
+} from './sceneMotion'
 import { currentStreakWithResilience } from '../logic/streak'
 import { ecoStageFor } from '../logic/eco'
 import { useAppStore } from '../store/appStore'
@@ -23,7 +32,8 @@ import {
   type TouchGestureState,
 } from './touchGesture'
 import { triggerHaptic } from '../platform'
-import { IconMood, IconStar } from '../components/Icons'
+import { prefersReducedMotion } from '../platform/dom'
+import { BrickInspectPopover } from '../components/BrickInspectPopover'
 interface Props {
   blueprint: Blueprint
   placedCount: number
@@ -38,78 +48,6 @@ interface Props {
 }
 
 /** 新块下落总时长：慢落 + 果冻回弹 */
-const DROP_MS = 1350
-const DROP_FALL_FRAC = 0.42
-
-/** 级联时每块的总时长（快落 + 果冻） */
-const BLOCK_T = 640
-const CASCADE_FALL_FRAC = 0.53
-/** 同层积木完全同时下落（无层内错峰） */
-const LAYER_STAGGER = 0
-/** 下一层在前一层落地、回弹进行到该比例后开始下落 */
-const LAYER_OVERLAP = 0.55
-
-const easeInCubic = (t: number) => t * t * t
-
-/**
- * 果冻回弹（挤压拉伸守体积：压 Y 时胀 X）：
- * t=0 最扁 → 回弹拉高 → 衰减振荡，伴随一次小跳
- */
-function jelly(t: number): { z: number; sx: number; sy: number } {
-  const w = -0.34 * Math.cos(t * Math.PI * 3) * (1 - t)
-  const hop = 0.55 * Math.max(0, Math.sin(Math.PI * t * 2)) * (1 - t)
-  return { z: hop, sx: 1 - w * 0.85, sy: 1 + w }
-}
-
-/** 新块动画时间线：加速下落 → 果冻 */
-function animState(p: number): { z: number; sx: number; sy: number } {
-  if (p < DROP_FALL_FRAC) {
-    const t = easeInCubic(p / DROP_FALL_FRAC)
-    return { z: 7 * (1 - t), sx: 1, sy: 1 }
-  }
-  return jelly((p - DROP_FALL_FRAC) / (1 - DROP_FALL_FRAC))
-}
-
-/** 级联单块时间线（更快更硬朗的果冻） */
-function cascadeState(elapsed: number): { z: number; sx: number; sy: number; done: boolean } {
-  const e = elapsed / BLOCK_T
-  if (e >= 1) return { z: 0, sx: 1, sy: 1, done: true }
-  if (e < CASCADE_FALL_FRAC) {
-    const t = easeInCubic(e / CASCADE_FALL_FRAC)
-    return { z: 4.5 * (1 - t), sx: 1, sy: 1, done: false }
-  }
-  const j = jelly((e - CASCADE_FALL_FRAC) / (1 - CASCADE_FALL_FRAC))
-  return { ...j, done: false }
-}
-
-interface CascadePlan {
-  start: number
-  starts: number[]
-  total: number
-}
-
-/** 逐层级联：底层先落，回弹过半后上一层再落（层内微错峰，落在已就位的下层上） */
-function planCascade(blocks: Array<{ z: number }>, count: number): CascadePlan {
-  const fall = BLOCK_T * CASCADE_FALL_FRAC
-  const jellyDur = BLOCK_T * (1 - CASCADE_FALL_FRAC)
-  const starts: number[] = []
-  let layerStart = 0
-  let layerZ = blocks[0]?.z ?? 0
-  let idxInLayer = 0
-  for (let i = 0; i < count; i++) {
-    const z = blocks[i].z
-    if (z !== layerZ) {
-      layerStart += fall + jellyDur * LAYER_OVERLAP
-      layerZ = z
-      idxInLayer = 0
-    }
-    starts.push(layerStart + idxInLayer * LAYER_STAGGER)
-    idxInLayer++
-  }
-  const total = (starts[count - 1] ?? 0) + BLOCK_T
-  return { start: performance.now(), starts, total }
-}
-
 export function BuildScene({
   blueprint,
   placedCount,
@@ -256,6 +194,11 @@ export function BuildScene({
 
     const cfg = DEFAULT_ISO_CONFIG
     drawGroundBase(ctx, bp.blocks, cfg, palette, rot, cx, cy)
+    // 接触阴影跟随已放置积木的脚印（开荒期不应出现比建筑大几圈的阴影）
+    const placedBlocks = cubes
+      .filter((c) => c.i < pc)
+      .map((c) => ({ x: c.b.x, y: c.b.y }))
+    drawGroundShadow(ctx, placedBlocks, cfg, palette, rot, cx, cy)
     // 植被 back 层：左/右侧灌木（积木之前绘制，被建筑自然遮挡、只在侧面探出）
     drawEcoProps(ctx, bp.blocks, cfg, palette, rot, cx, cy, stateRef.current.ecoStage, 'back')
 
@@ -295,10 +238,18 @@ export function BuildScene({
 
       const faceOpts = {
         type: b.type,
-        color: isGlowXRay ? '#f59e0b' : b.color,
+        color: isGlowXRay ? palette.accent : b.color,
         noStuds: aboveIdx !== undefined && aboveLanded,
         hasNote,
         starred,
+        // B1：连击里程碑奖励块 —— 由 iso.ts:672 的分支绘制点缀色顶面描边（此前从未被传入过）
+        // B5：奖励块两个等级——全勤（来自 __day__ 的 DayClaim）双环，连击里程碑单环
+        bonus: Boolean(meta?.pb?.bonus),
+        bonusTier: meta?.pb?.bonus
+          ? meta.pb.fromHabitId === '__day__'
+            ? ('attendance' as const)
+            : ('streak' as const)
+          : undefined,
         ghost: isGhostXRay,
         highlight: isHovered || isGlowXRay || Boolean(isNew && !animating),
       }
@@ -557,73 +508,45 @@ export function BuildScene({
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    /** 模型（含地基余量、凸点、块身）在等距平面坐标中的可见包围盒 */
-    const sceneBounds = () => {
-      const { blueprint: bp, rotation: rot } = stateRef.current
-      const cfg = DEFAULT_ISO_CONFIG
-      let minBx = Infinity, maxBx = -Infinity, minBy = Infinity, maxBy = -Infinity
+    /** 整座蓝图的中心：旋转轴必须固定，否则取景范围变化时模型会横向漂移 */
+    const blueprintCenter = (): { cx: number; cy: number } => {
+      const { blueprint: bp } = stateRef.current
+      let minBx = Infinity
+      let maxBx = -Infinity
+      let minBy = Infinity
+      let maxBy = -Infinity
       for (const b of bp.blocks) {
         minBx = Math.min(minBx, b.x)
         maxBx = Math.max(maxBx, b.x)
         minBy = Math.min(minBy, b.y)
         maxBy = Math.max(maxBy, b.y)
       }
-      const cx = Math.round((minBx + maxBx) / 2)
-      const cy = Math.round((minBy + maxBy) / 2)
-
-      let minX = Infinity
-      let maxX = -Infinity
-      let minY = Infinity
-      let maxY = -Infinity
-      for (const b of bp.blocks) {
-        const { rx, ry } = rotateCoord(b.x, b.y, cx, cy, rot)
-        minX = Math.min(minX, rx)
-        maxX = Math.max(maxX, rx)
-        minY = Math.min(minY, ry)
-        maxY = Math.max(maxY, ry)
-      }
-      // 地基范围框四角（含 0.6 格余量）必须完整可见
-      const corners: Array<[number, number]> = [
-        [minX - 0.6, minY - 0.6],
-        [maxX + 0.6, minY - 0.6],
-        [maxX + 0.6, maxY + 0.6],
-        [minX - 0.6, maxY + 0.6],
-      ]
-      const xs: number[] = []
-      const ys: number[] = []
-      for (const b of bp.blocks) {
-        const { rx, ry } = rotateCoord(b.x, b.y, cx, cy, rot)
-        const { sx, sy } = worldToScreen(rx, ry, b.z, cfg)
-        xs.push(sx + cfg.tileW / 2, sx - cfg.tileW / 2)
-        ys.push(sy + cfg.tileH / 2 + cfg.blockH, sy - cfg.tileH / 2 - STUD_H)
-      }
-      for (const [x, y] of corners) {
-        const { sx, sy } = worldToScreen(x, y, 0, cfg)
-        xs.push(sx + cfg.tileW / 2, sx - cfg.tileW / 2)
-        ys.push(sy)
-      }
-      return {
-        minX: Math.min(...xs),
-        maxX: Math.max(...xs),
-        minY: Math.min(...ys),
-        maxY: Math.max(...ys),
-      }
+      return { cx: Math.round((minBx + maxBx) / 2), cy: Math.round((minBy + maxBy) / 2) }
+    }
+    /**
+     * 取景包围盒（D10）：开荒期只框住「已放置的积木」，让第一块就有存在感；
+     * 随进度用 smoothstep 平滑过渡到整座蓝图（含地基虚线），建成期能看到全貌。
+     * 此前一律按整蓝图取景，3/190 块时模型只占画面 30–45%。
+     */
+    const sceneBounds = () => {
+      const { blueprint: bp, rotation: rot, placedCount: pc } = stateRef.current
+      const { cx, cy } = blueprintCenter()
+      const all = measureBounds(bp.blocks, cx, cy, rot)
+      if (pc <= 0) return { bounds: all, allBounds: all }
+      const placed = measureBounds(bp.blocks.slice(0, pc), cx, cy, rot)
+      const bounds = blendBounds(placed, all, framingWeight(pc, bp.blocks.length))
+      return { bounds, allBounds: all }
     }
     const fitView = () => {
-      const { minX, maxX, minY, maxY } = sceneBounds()
-      const w = canvas.clientWidth
-      const h = canvas.clientHeight
-      const PAD = 48
-      const scale = Math.min(
-        (w - PAD * 2) / (maxX - minX),
-        (h - PAD * 2) / (maxY - minY),
-        2,
-      )
+      const { bounds, allBounds } = sceneBounds()
+      // E5：取景数学抽到 sceneCamera；D10 的两条上限仍在纯函数里
       viewRef.current = {
-        scale,
-        panX: w / 2 - ((minX + maxX) / 2) * scale,
-        // 中心偏下：整体下移约 6% 视口高度
-        panY: h * 0.56 - ((minY + maxY) / 2) * scale,
+        ...computeFitView({
+          bounds,
+          allBounds,
+          width: canvas.clientWidth,
+          height: canvas.clientHeight,
+        }),
         fitted: true,
       }
     }
@@ -638,13 +561,13 @@ export function BuildScene({
       if (!interactedRef.current) {
         fitView()
       } else if (prev && (prev.w !== w || prev.h !== h)) {
-        const { minX, maxX, minY, maxY } = sceneBounds()
+        const { bounds } = sceneBounds()
         viewRef.current = {
           ...followResize(
             viewRef.current,
             { w: prev.w, h: prev.h },
             { w, h },
-            { x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
+            { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 },
           ),
           fitted: viewRef.current.fitted,
         }
@@ -675,11 +598,14 @@ export function BuildScene({
   // 状态变化重绘：新块 → 慢落果冻；每次进入建造页 → 逐层级联
   // （依赖不含 draw/onAnimated：弹窗打字、微状态切换不会重置动画计时）
   useEffect(() => {
+    // 无障碍（A5）：系统要求减少动态效果时，不播慢落/级联，积木直接落位并立刻回调
+    const reduced = prefersReducedMotion()
     if (animateIndex != null && animateIndex === placedCount - 1 && placedCount > 0) {
       cascadeRef.current = null
-      animRef.current = { index: animateIndex, start: performance.now() }
+      animRef.current = reduced ? null : { index: animateIndex, start: performance.now() }
+      if (reduced) onAnimatedRef.current?.()
     } else if (placedCount > 0 && !animRef.current) {
-      cascadeRef.current = planCascade(stateRef.current.blueprint.blocks, placedCount)
+      cascadeRef.current = reduced ? null : planCascade(stateRef.current.blueprint.blocks, placedCount)
     }
     drawRef.current()
   }, [placedCount, animateIndex])
@@ -854,61 +780,11 @@ export function BuildScene({
         style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
       />
       {hoveredBlock && interactiveInspect && (
-        <div
-          className="brick-inspect-popover"
-          style={{
-            position: 'absolute',
-            left: Math.min(
-              (canvasRef.current?.clientWidth ?? 400) - 280,
-              Math.max(12, hoveredBlock.x + 14),
-            ),
-            top: Math.min(
-              (canvasRef.current?.clientHeight ?? 400) - 150,
-              Math.max(12, hoveredBlock.y - 36),
-            ),
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>
-              {t.reflections.brickInspectTitle(hoveredBlock.index)}
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              {hoveredBlock.starred && <IconStar size={12} filled style={{ color: 'var(--accent)', flexShrink: 0 }} />}
-              {hoveredBlock.mood && (
-                <span
-                  style={{
-                    fontSize: 10,
-                    padding: '2px 6px',
-                    borderRadius: 999,
-                    background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
-                    color: 'var(--ink)',
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3,
-                  }}
-                >
-                  <IconMood mood={hoveredBlock.mood} size={11} style={{ flexShrink: 0 }} />
-                  <span>{t.microMood[hoveredBlock.mood]}</span>
-                </span>
-              )}
-            </div>
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 6 }}>
-            {t.reflections.brickInspectFrom(hoveredBlock.habitName, hoveredBlock.date || '—')}
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: 'var(--ink)',
-              lineHeight: 1.45,
-              fontStyle: hoveredBlock.note ? 'normal' : 'italic',
-              opacity: hoveredBlock.note ? 0.95 : 0.6,
-            }}
-          >
-            {hoveredBlock.note || t.reflections.brickInspectNoNote}
-          </div>
-        </div>
+        <BrickInspectPopover
+          block={hoveredBlock}
+          containerWidth={canvasRef.current?.clientWidth ?? 400}
+          containerHeight={canvasRef.current?.clientHeight ?? 400}
+        />
       )}
     </div>
   )

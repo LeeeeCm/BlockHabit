@@ -87,10 +87,15 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             None,
         ))
+        // D-20261111-069：手动检查更新（默认构建不发起请求；发布链路由人类配置）
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(QuitGate(AtomicBool::new(false)))
         .invoke_handler(tauri::generate_handler![update_tray, tray_menu, confirm_quit])
         .setup(|app| {
