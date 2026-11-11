@@ -138,4 +138,51 @@ export const BLUEPRINT_COLOR_PLAN: Record<string, BlueprintColorPlan> = {
     roles: { base: '#94a3b8', wall: '#b4533c', column: '#475569', roof: '#334155', trim: '#64748b', door: '#78350f', window: '#d97706', lamp: '#f59e0b' },
     minRatio: 0.25,
   },
+  // 内容包 v3（D-20261111-070）：城市与生活续章 5 座，全部复用既有批准 24 色
+  bakery: {
+    roles: { base: '#94a3b8', brick: '#b4533c', timber: '#78350f', plaster: '#f1f5f9', roof: '#334155', window: '#d97706', sign: '#f59e0b' },
+    minAccentRatio: 0.2,
+  },
+  bookshop: {
+    roles: {
+      base: '#94a3b8',
+      brick: '#b4533c',
+      plaster: '#f1f5f9',
+      timber: '#854d0e',
+      door: '#78350f',
+      roof: '#334155',
+      chimney: '#64748b',
+      window: '#d97706',
+    },
+    minAccentRatio: 0.2,
+  },
+  postoffice: {
+    roles: { base: '#94a3b8', wall: '#e2e8f0', roof: '#334155', trim: '#b4533c', door: '#78350f', glass: '#0284c7', lamp: '#f59e0b' },
+    minAccentRatio: 0.08,
+  },
+  firestation: {
+    roles: {
+      base: '#94a3b8',
+      wall: '#64748b',
+      roof: '#334155',
+      trim: '#b4533c',
+      door: '#78350f',
+      window: '#d97706',
+      signal: '#e11d48',
+    },
+    minAccentRatio: 0.08,
+  },
+  watertower: {
+    roles: {
+      base: '#94a3b8',
+      leg: '#475569',
+      brace: '#78350f',
+      deck: '#64748b',
+      tank: '#cbd5e1',
+      roof: '#334155',
+      glass: '#0284c7',
+      lamp: '#f59e0b',
+    },
+    minAccentRatio: 0.08,
+  },
 }

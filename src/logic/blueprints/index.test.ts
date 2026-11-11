@@ -6,8 +6,8 @@ import { blueprintOrder, blueprints, getBlueprint } from './index'
  * getBlueprint 的「未知 id 回落」是 A7（脏数据不白屏）的实现细节，必须锁住。
  */
 describe('blueprints 注册表', () => {
-  it('全部蓝图（基础 12 + 内容包 6）按 order 注册，id 与键一致', () => {
-    expect(blueprintOrder).toHaveLength(18)
+  it('全部蓝图（基础 12 + 内容包 v2 6 + v3 5）按 order 注册，id 与键一致', () => {
+    expect(blueprintOrder).toHaveLength(23)
     for (const id of blueprintOrder) {
       expect(blueprints[id]).toBeDefined()
       expect(blueprints[id].id).toBe(id)

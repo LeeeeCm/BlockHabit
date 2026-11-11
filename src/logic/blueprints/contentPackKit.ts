@@ -2,10 +2,11 @@ import { CONTENT_PACKS, CONTENT_VERSION, type ContentPack } from './manifest'
 import { blueprints, blueprintOrder } from './index'
 
 /**
- * 内容包脚手架（C3 / D-20261110-063 的 v3 准备）。
+ * 内容包校验 / 规划脚手架（C3 / D-20261110-063 与 D-20261111-070）。
  *
- * 本模块只提供「校验 / 规划」纯函数，**不含任何建筑数据**：未获人类确认的新内容包
- * 不得写入 generators.ts（建筑数据属设计性资产，见 AGENTS §2）。未来实现 v3 时：
+ * 本模块只提供纯函数，**不含任何建筑数据**：未获人类确认的新内容包不得写入
+ * generators.ts（建筑数据属设计性资产，见 AGENTS §2）。v3（5 座 / 500 块）已按
+ * D-20261111-070 落地；本模块继续为下一批 v4 复用：
  *   1. 先新增 approved 设计记录（主题 / 座数 / 块数 / 节奏）；
  *   2. 用 validateContentPackDraft 校验候选包（id 唯一、版本单调、追加在既有 order 之后）；
  *   3. 再写 generators 与 i18n 名称。

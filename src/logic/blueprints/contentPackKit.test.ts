@@ -54,10 +54,17 @@ describe('contentPackKit：纯函数', () => {
     expect(packBlockCount(['a', 'missing'], { a: 100 })).toBe(100)
   })
 
-  it('真实注册表可统计 18 座块数', () => {
+  it('真实注册表可统计 23 座 / 2485 块（v3 已落地）', () => {
     const counts = countRegisteredBlocks()
-    expect(Object.keys(counts).length).toBe(18)
-    expect(Object.values(counts).reduce((a, b) => a + b, 0)).toBe(1985)
+    expect(Object.keys(counts).length).toBe(23)
+    expect(Object.values(counts).reduce((a, b) => a + b, 0)).toBe(2485)
+    // 真实注册表上 v3 五座的块数与 CONTENT_VERSION 一致
+    expect(counts.bakery).toBe(98)
+    expect(counts.bookshop).toBe(104)
+    expect(counts.postoffice).toBe(92)
+    expect(counts.firestation).toBe(112)
+    expect(counts.watertower).toBe(94)
+    expect(nextContentVersion()).toBe(4)
   })
 })
 
@@ -68,11 +75,12 @@ describe('contentPackKit：validateContentPackDraft', () => {
   })
 
   it('已发布包默认上下文：候选包含既有蓝图会被拒绝', () => {
-    const result = validateContentPackDraft({ id: 'v3', version: 3, blueprintIds: ['plant'] })
+    // 默认注册表已到 v3（23 座），下一个合法版本是 4
+    const result = validateContentPackDraft({ id: 'v4', version: nextContentVersion(), blueprintIds: ['plant'] })
     expect(result.ok).toBe(false)
     expect(result.errors.join('\n')).toMatch(/已在既有内容包中：plant/)
     expect(result.errors.join('\n')).toMatch(/不得包含既有蓝图/)
-    // version 3 正是默认 CONTENT_VERSION(2) 的 next，不应报版本错误（其余规则错误一次性返回）
+    // version = nextContentVersion() 正是默认 CONTENT_VERSION(3) 的 next，不应报版本错误（其余规则错误一次性返回）
     expect(result.errors.join('\n')).not.toMatch(/version 必须为/)
   })
 

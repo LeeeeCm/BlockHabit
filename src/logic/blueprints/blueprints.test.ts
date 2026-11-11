@@ -56,6 +56,12 @@ function validateBlueprint(name: string, blocks: BlockDef[], cx: number, cy: num
 }
 
 const CENTERS: Record<string, [number, number]> = {
+  // 内容包 v3（D-20261111-070）
+  bakery: [2, 2],
+  bookshop: [2, 2],
+  postoffice: [3, 2],
+  firestation: [3, 2],
+  watertower: [2, 2],
   // 内容包 v2（D-20261110-063）
   treehouse: [4, 4],
   greenhouse: [3, 2],
@@ -78,7 +84,7 @@ const CENTERS: Record<string, [number, number]> = {
 }
 
 describe('blueprint catalog', () => {
-  it('has base 12 + content pack v2 6 in unlock order', () => {
+  it('has base 12 + content pack v2 6 + v3 5 in unlock order', () => {
     expect(blueprintOrder).toEqual([
       'plant',
       'coffee',
@@ -99,6 +105,12 @@ describe('blueprint catalog', () => {
       'bridge',
       'observatory',
       'library',
+      // 内容包 v3（D-20261111-070，追加，不改既有顺序）
+      'bakery',
+      'bookshop',
+      'postoffice',
+      'firestation',
+      'watertower',
     ])
     expect(Object.keys(blueprints)).toHaveLength(blueprintOrder.length)
   })

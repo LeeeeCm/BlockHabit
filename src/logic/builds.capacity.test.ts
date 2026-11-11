@@ -47,9 +47,9 @@ describe('rebuildBuilds 容量钳制', () => {
     expect(builds.map((b) => b.index)).toEqual(Array.from({ length: capacity }, (_, i) => i))
   })
 
-  it('容量表覆盖全部蓝图（基础 12 + 内容包 6，自动派生）', () => {
+  it('容量表覆盖全部蓝图（基础 12 + 内容包 v2 6 + v3 5，自动派生）', () => {
     expect(Object.keys(BLUEPRINT_CAPACITY)).toHaveLength(blueprintOrder.length)
-    expect(blueprintOrder.length).toBe(18)
+    expect(blueprintOrder.length).toBeGreaterThanOrEqual(23)
   })
 })
 

@@ -19,6 +19,14 @@ import {
   makeTreehouseBlueprint,
   makeWindmillBlueprint,
 } from './generators'
+// 内容包 v3（D-20261111-070）：5 座生成器在 generatorsV3.ts（generators.ts 已近 800 行上限）
+import {
+  makeBakeryBlueprint,
+  makeBookshopBlueprint,
+  makeFirestationBlueprint,
+  makePostofficeBlueprint,
+  makeWatertowerBlueprint,
+} from './generatorsV3'
 
 export const plantBlueprint = makePlantBlueprint()
 export const coffeeBlueprint = makeCoffeeBlueprint()
@@ -39,6 +47,12 @@ export const clocktowerBlueprint = makeClocktowerBlueprint()
 export const bridgeBlueprint = makeBridgeBlueprint()
 export const observatoryBlueprint = makeObservatoryBlueprint()
 export const libraryBlueprint = makeLibraryBlueprint()
+// 内容包 v3（D-20261111-070）：城市与生活续章 5 座，一律追加在 v2 之后
+export const bakeryBlueprint = makeBakeryBlueprint()
+export const bookshopBlueprint = makeBookshopBlueprint()
+export const postofficeBlueprint = makePostofficeBlueprint()
+export const firestationBlueprint = makeFirestationBlueprint()
+export const watertowerBlueprint = makeWatertowerBlueprint()
 /** 图鉴/解锁顺序（后者必须等前者落成） */
 export const blueprintOrder: string[] = [
   'plant',
@@ -60,6 +74,12 @@ export const blueprintOrder: string[] = [
   'bridge',
   'observatory',
   'library',
+  // 内容包 v3
+  'bakery',
+  'bookshop',
+  'postoffice',
+  'firestation',
+  'watertower',
 ]
 
 export const blueprints: Record<string, Blueprint> = {
@@ -81,6 +101,11 @@ export const blueprints: Record<string, Blueprint> = {
   bridge: bridgeBlueprint,
   observatory: observatoryBlueprint,
   library: libraryBlueprint,
+  bakery: bakeryBlueprint,
+  bookshop: bookshopBlueprint,
+  postoffice: postofficeBlueprint,
+  firestation: firestationBlueprint,
+  watertower: watertowerBlueprint,
 }
 
 /**
