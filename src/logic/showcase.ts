@@ -2,6 +2,19 @@ import type { BlockDef, Blueprint, ShowcasePlacement } from '../types'
 
 export const SHOWCASE_GRID_SIZE = 26
 
+/**
+ * 装饰模式解锁（D-20261111-068）：completedBlueprintIds 覆盖 blueprintOrder 全部才解锁。
+ * 蓝图总数动态取自传入的顺序表（内容包扩容后自动跟随），禁止硬编码数量。
+ */
+export function isDecorationUnlocked(
+  completedIds: readonly string[],
+  blueprintOrder: readonly string[],
+): boolean {
+  if (blueprintOrder.length === 0) return false
+  const completed = new Set(completedIds)
+  return blueprintOrder.every((id) => completed.has(id))
+}
+
 export interface ModelFootprint {
   width: number
   depth: number
@@ -32,6 +45,63 @@ export function getModelFootprint(blocks: BlockDef[]): ModelFootprint {
   }
 }
 
+/** 把任意整数旋转步进归一化到 0/1/2/3 象限（负数、超过一圈也能收敛） */
+export function normalizeRotation(rotation: number): number {
+  return ((Math.trunc(rotation) % 4) + 4) % 4
+}
+
+/**
+ * 90° 象限旋转的整数格点坐标（D-20261111-068）：
+ * 先做纯 90° 旋转（(x,y)->(y,-x) 等），再把包围盒平移归一化到 minX/minY=0，
+ * 使旋转后的模型仍能以落位格点（gridX/gridY）为左上角参与碰撞与渲染。
+ * 返回值与输入等长、顺序一致（只含 x/y，z / type / color 由调用方保留）。
+ */
+export function rotateBlockCoords(
+  blocks: readonly BlockDef[],
+  rotation: number,
+): Array<{ x: number; y: number }> {
+  const q = normalizeRotation(rotation)
+  const rotated = blocks.map((b) => {
+    switch (q) {
+      case 1:
+        return { x: b.y, y: -b.x }
+      case 2:
+        return { x: -b.x, y: -b.y }
+      case 3:
+        return { x: -b.y, y: b.x }
+      default:
+        return { x: b.x, y: b.y }
+    }
+  })
+  if (rotated.length === 0) return rotated
+  let minX = Infinity
+  let minY = Infinity
+  for (const p of rotated) {
+    if (p.x < minX) minX = p.x
+    if (p.y < minY) minY = p.y
+  }
+  return rotated.map((p) => ({ x: p.x - minX, y: p.y - minY }))
+}
+
+/**
+ * 旋转后的占地足迹：90°/270° 宽深互换；归一化后 minX/minY 恒为 0。
+ * 空模型按 1×1 处理（与 getModelFootprint 一致）。
+ */
+export function getRotatedFootprint(
+  blocks: readonly BlockDef[],
+  rotation: number,
+): ModelFootprint {
+  const coords = rotateBlockCoords(blocks, rotation)
+  if (coords.length === 0) return { width: 1, depth: 1, minX: 0, minY: 0 }
+  let maxX = 0
+  let maxY = 0
+  for (const p of coords) {
+    if (p.x > maxX) maxX = p.x
+    if (p.y > maxY) maxY = p.y
+  }
+  return { width: maxX + 1, depth: maxY + 1, minX: 0, minY: 0 }
+}
+
 export interface BoundingBox {
   x: number
   y: number
@@ -52,17 +122,22 @@ export function isAABBOverlapping(a: BoundingBox, b: BoundingBox): boolean {
   )
 }
 
-/** 校验模型是否可以在指定网格位置放置（无重叠且不超出展台边界） */
+/**
+ * 校验模型是否可以在指定网格位置放置（无重叠且不超出展台边界）。
+ * rotations 为装饰模式的「本次会话 90° 象限」表（蓝图 id → 0/1/2/3，默认空 = 现状），
+ * 目标与其它模型的占地均按各自当前旋转计算。
+ */
 export function canPlaceModel(
   target: { blueprintId: string; gridX: number; gridY: number },
   existing: ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,
   gridSize: number = SHOWCASE_GRID_SIZE,
+  rotations: Record<string, number> = {},
 ): boolean {
   const bp = blueprintsMap[target.blueprintId]
   if (!bp) return false
 
-  const targetFp = getModelFootprint(bp.blocks)
+  const targetFp = getRotatedFootprint(bp.blocks, rotations[target.blueprintId] ?? 0)
   const targetBox: BoundingBox = {
     x: target.gridX,
     y: target.gridY,
@@ -85,7 +160,7 @@ export function canPlaceModel(
     if (p.blueprintId === target.blueprintId) continue
     const otherBp = blueprintsMap[p.blueprintId]
     if (!otherBp) continue
-    const otherFp = getModelFootprint(otherBp.blocks)
+    const otherFp = getRotatedFootprint(otherBp.blocks, rotations[p.blueprintId] ?? 0)
     const otherBox: BoundingBox = {
       x: p.gridX,
       y: p.gridY,
@@ -95,6 +170,51 @@ export function canPlaceModel(
     if (isAABBOverlapping(targetBox, otherBox)) {
       return false
     }
+  }
+
+  return true
+}
+
+/**
+ * 装饰模式旋转前置校验（D-20261111-068，纯函数）：
+ * 旋转后的占地（宽深互换）不超出 SHOWCASE_GRID_SIZE，且不与其它模型 AABB 重叠。
+ * 其它模型按其当前会话旋转计算；非法则调用方不应用旋转并提示 rotateBlocked。
+ * 落位格点（gridX/gridY）保持不变——归一化到 minX/minY=0 后仍以该格点为左上角。
+ */
+export function canRotatePlacement(
+  blueprintId: string,
+  gridX: number,
+  gridY: number,
+  nextRotation: number,
+  existing: readonly ShowcasePlacement[],
+  blueprintsMap: Record<string, Blueprint>,
+  rotations: Record<string, number> = {},
+  gridSize: number = SHOWCASE_GRID_SIZE,
+): boolean {
+  const bp = blueprintsMap[blueprintId]
+  if (!bp) return false
+
+  const fp = getRotatedFootprint(bp.blocks, nextRotation)
+  const box: BoundingBox = { x: gridX, y: gridY, width: fp.width, depth: fp.depth }
+
+  // 1. 边界检测：旋转后必须完整容纳在展台网格内
+  if (box.x < 0 || box.y < 0 || box.x + box.width > gridSize || box.y + box.depth > gridSize) {
+    return false
+  }
+
+  // 2. 碰撞检测：与其它已摆放模型的当前旋转占地不得重叠
+  for (const p of existing) {
+    if (p.blueprintId === blueprintId) continue
+    const otherBp = blueprintsMap[p.blueprintId]
+    if (!otherBp) continue
+    const otherFp = getRotatedFootprint(otherBp.blocks, rotations[p.blueprintId] ?? 0)
+    const otherBox: BoundingBox = {
+      x: p.gridX,
+      y: p.gridY,
+      width: otherFp.width,
+      depth: otherFp.depth,
+    }
+    if (isAABBOverlapping(box, otherBox)) return false
   }
 
   return true

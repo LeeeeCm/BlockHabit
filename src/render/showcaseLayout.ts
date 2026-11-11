@@ -1,5 +1,11 @@
 import type { Blueprint, ShowcasePlacement } from '../types'
-import { getModelFootprint, type ModelFootprint } from '../logic/showcase'
+import {
+  getModelFootprint,
+  getRotatedFootprint,
+  normalizeRotation,
+  rotateBlockCoords,
+  type ModelFootprint
+} from '../logic/showcase'
 import { worldToScreen, type IsoConfig } from './iso'
 
 /**
@@ -92,20 +98,64 @@ export function buildFootprintMap(
 }
 
 /**
+ * 渲染用的 90° 象限旋转块（D-20261111-068）：
+ * 整数格点旋转 + bbox 归一化到 minX/minY=0，z/type/color 与数组顺序原样保留
+ * （顺序 = PlacedBlock.index，连击奖励标记仍能对上）。
+ * rotation=0（或空实现）时直接返回原数组引用，调用方的旧输出逐字节不变。
+ */
+export function rotateBlocksForRender(
+  blocks: Blueprint['blocks'],
+  rotation: number = 0
+): Blueprint['blocks'] {
+  if (blocks.length === 0) return blocks
+  if (normalizeRotation(rotation) === 0) return blocks
+  const coords = rotateBlockCoords(blocks, rotation)
+  return blocks.map((b, i) => ({ ...b, x: coords[i].x, y: coords[i].y }))
+}
+
+/**
+ * 蓝图在「本次会话旋转」下的足迹表（D-20261111-068）：
+ * rotations 为空 / 全 0 时与 buildFootprintMap 完全一致；90°/270° 宽深互换。
+ */
+export function buildRotatedFootprintMap(
+  blueprintsMap: Record<string, Blueprint>,
+  rotations: Record<string, number> = {}
+): Map<string, ModelFootprint> {
+  const map = new Map<string, ModelFootprint>()
+  for (const [id, bp] of Object.entries(blueprintsMap)) {
+    const rotation = rotations[id] ?? 0
+    map.set(
+      id,
+      normalizeRotation(rotation) === 0
+        ? getModelFootprint(bp.blocks)
+        : getRotatedFootprint(bp.blocks, rotation)
+    )
+  }
+  return map
+}
+
+/**
  * 静态排序列表：所有模型按当前落位展开并按画家算法排好序。
  * 拖拽时只与被拖模型做双有序归并，不再每帧全量重建 + 全量排序。
+ * rotations 为空时输出与旧实现完全一致（rot=0 直接走原 footprint / 原块数组）。
  */
 export function collectSortedCubes(
   placements: ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,
-  footprintMap: Map<string, ModelFootprint>
+  footprintMap: Map<string, ModelFootprint>,
+  rotations: Record<string, number> = {}
 ): RenderCube[] {
   const cubes: RenderCube[] = []
   for (const p of placements) {
     const bp = blueprintsMap[p.blueprintId]
     if (!bp) continue
-    const fp = footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks)
-    bp.blocks.forEach((b, index) => {
+    const rotation = normalizeRotation(rotations[p.blueprintId] ?? 0)
+    const blocks = rotateBlocksForRender(bp.blocks, rotation)
+    const fp =
+      rotation === 0
+        ? (footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks))
+        : getModelFootprint(blocks)
+    blocks.forEach((b, index) => {
       cubes.push({
         worldX: p.gridX + (b.x - fp.minX),
         worldY: p.gridY + (b.y - fp.minY),
@@ -121,20 +171,26 @@ export function collectSortedCubes(
   return cubes
 }
 
-/** 已落位模型的偏移积木坐标（阴影/植被绘制与命中检测共用） */
+/** 已落位模型的偏移积木坐标（阴影/植被绘制与命中检测共用；rotations 为空时与旧实现一致） */
 export function buildOffsetBlocksMap(
   placements: ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,
-  footprintMap: Map<string, ModelFootprint>
+  footprintMap: Map<string, ModelFootprint>,
+  rotations: Record<string, number> = {}
 ): Map<string, Array<{ x: number; y: number }>> {
   const map = new Map<string, Array<{ x: number; y: number }>>()
   for (const p of placements) {
     const bp = blueprintsMap[p.blueprintId]
     if (!bp) continue
-    const fp = footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks)
+    const rotation = normalizeRotation(rotations[p.blueprintId] ?? 0)
+    const blocks = rotateBlocksForRender(bp.blocks, rotation)
+    const fp =
+      rotation === 0
+        ? (footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks))
+        : getModelFootprint(blocks)
     map.set(
       p.blueprintId,
-      bp.blocks.map((b) => ({ x: p.gridX + (b.x - fp.minX), y: p.gridY + (b.y - fp.minY) }))
+      blocks.map((b) => ({ x: p.gridX + (b.x - fp.minX), y: p.gridY + (b.y - fp.minY) }))
     )
   }
   return map

@@ -11,7 +11,7 @@ import {
 } from './iso'
 import {
   canPlaceModel,
-  getModelFootprint,
+  getRotatedFootprint,
   screenToGroundIso,
   SHOWCASE_GRID_SIZE,
 } from '../logic/showcase'
@@ -20,8 +20,10 @@ import {
   buildBaseGeometry,
   buildFootprintMap,
   buildOffsetBlocksMap,
+  buildRotatedFootprintMap,
   collectSortedCubes,
   compareCubes,
+  rotateBlocksForRender,
   type RenderCube,
 } from './showcaseLayout'
 import { ecoStageFor } from '../logic/eco'
@@ -42,7 +44,16 @@ interface Props {
   blueprintsMap: Record<string, Blueprint>
   onUpdatePlacement: (blueprintId: string, gridX: number, gridY: number) => boolean
   onSelectModel?: (blueprintId: string) => void
+  /** 装饰模式（D-20261111-068）：蓝图 → 本次会话 90° 象限（0/1/2/3），不落盘；默认空 = 现状 */
+  rotations?: Record<string, number>
+  /** 装饰模式：微生态植被重排种子（确定性伪随机）；默认 0 = 现状逐像素一致 */
+  ecoSeed?: number
+  /** 装饰模式：当前选中模型（高亮）；默认 null = 现状 */
+  selectedId?: string | null
 }
+
+/** 稳定空表：默认旋转不开时保持引用不变，静态派生 memo 不会因每次渲染新建对象而失效 */
+const EMPTY_ROTATIONS: Record<string, number> = {}
 
 
 interface DragState {
@@ -67,6 +78,9 @@ export function ShowcaseScene({
   blueprintsMap,
   onUpdatePlacement,
   onSelectModel,
+  rotations = EMPTY_ROTATIONS,
+  ecoSeed = 0,
+  selectedId = null,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const viewRef = useRef({ scale: 0.9, panX: 0, panY: 0, fitted: false })
@@ -116,29 +130,43 @@ export function ShowcaseScene({
 
   const placementsRef = useRef(placements)
   placementsRef.current = placements
+  // 装饰模式的会话态（旋转/植被种子/选中）：用 ref 供事件与绘制闭包读取，避免重绑监听
+  const rotationsRef = useRef(rotations)
+  rotationsRef.current = rotations
+  const ecoSeedRef = useRef(ecoSeed)
+  ecoSeedRef.current = ecoSeed
+  const selectedIdRef = useRef<string | null>(selectedId)
+  selectedIdRef.current = selectedId
 
   // 1. 静态实木沙盘底托曲线采样点（E5：纯几何搬到 showcaseLayout，按 cfg/G 记忆）
   const baseGeometry = useMemo(() => buildBaseGeometry(cfg, G), [cfg, G])
 
   // 2. 蓝图模型包围盒尺寸缓存
   const footprintMap = useMemo(() => buildFootprintMap(blueprintsMap), [blueprintsMap])
+  // 2.5 装饰模式（D-20261111-068）：本次会话旋转下的蓝图足迹表（阴影/植被/命中/拖拽共用）。
+  //     rotations 为空时与 footprintMap 完全一致，静态路径行为不变。
+  const rotatedFootprintMap = useMemo(
+    () => buildRotatedFootprintMap(blueprintsMap, rotations),
+    [blueprintsMap, rotations],
+  )
   // 3. 静态排序列表：所有模型按当前落位展开并排好序；拖拽时仅与"被拖模型"双有序归并，
   //    不再每帧全量重建 + 全量排序（ref 承载保持 draw 引用稳定，不触发监听重绑）
   const sortedStaticCubes = useMemo(
-    () => collectSortedCubes(placements, blueprintsMap, footprintMap),
-    [placements, blueprintsMap, footprintMap],
+    () => collectSortedCubes(placements, blueprintsMap, footprintMap, rotations),
+    [placements, blueprintsMap, footprintMap, rotations],
   )
   const sortedStaticCubesRef = useRef(sortedStaticCubes)
   sortedStaticCubesRef.current = sortedStaticCubes
 
   // E2：命中检测用的 footprint 表与「带落位偏移的积木列表」都是 placements 的纯派生，
   // 每帧/每次 pointermove 重算会让已落成模型 × 每座块数（当前最大 190 块）次迭代白跑。
-  const footprintRef = useRef(footprintMap)
-  footprintRef.current = footprintMap
-  // 已落位模型的偏移积木坐标（阴影与植被绘制、命中检测共用；placements 不变时引用不变）
+  // D-20261111-068：命中/拖拽校验用「带会话旋转」的足迹表（默认空表 = 原 footprint）。
+  const footprintRef = useRef(rotatedFootprintMap)
+  footprintRef.current = rotatedFootprintMap
+  // 已落位模型的偏移积木坐标（阴影与植被绘制、命中检测共用；placements/rotations 不变时引用不变）
   const offsetBlocksMap = useMemo(
-    () => buildOffsetBlocksMap(placements, blueprintsMap, footprintMap),
-    [placements, blueprintsMap, footprintMap],
+    () => buildOffsetBlocksMap(placements, blueprintsMap, footprintMap, rotations),
+    [placements, blueprintsMap, footprintMap, rotations],
   )
   const offsetBlocksRef = useRef(offsetBlocksMap)
   offsetBlocksRef.current = offsetBlocksMap
@@ -266,8 +294,8 @@ export function ShowcaseScene({
       for (const p of placementsRef.current) {
         const offsetBlocks = offsetBlocksRef.current.get(p.blueprintId)
         if (!offsetBlocks) continue
-        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'back')
-        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'front')
+        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'back', ecoSeedRef.current)
+        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'front', ecoSeedRef.current)
       }
     }
 
@@ -276,7 +304,9 @@ export function ShowcaseScene({
     if (drag) {
       const bp = blueprintsMap[drag.blueprintId]
       if (bp) {
-        const fp = getModelFootprint(bp.blocks)
+        const fp =
+          footprintRef.current.get(bp.id) ??
+          getRotatedFootprint(bp.blocks, rotationsRef.current[drag.blueprintId] ?? 0)
         const gx0 = drag.currentGx
         const gy0 = drag.currentGy
         const gx1 = gx0 + fp.width
@@ -318,10 +348,14 @@ export function ShowcaseScene({
       drawList = staticCubes
     } else {
       const bp = blueprintsMap[drag.blueprintId]
-      const fp = bp ? footprintMap.get(bp.id) ?? getModelFootprint(bp.blocks) : null
+      const dragRotation = rotationsRef.current[drag.blueprintId] ?? 0
+      const dragBlocks = bp ? rotateBlocksForRender(bp.blocks, dragRotation) : null
+      const fp = bp
+        ? footprintRef.current.get(bp.id) ?? getRotatedFootprint(bp.blocks, dragRotation)
+        : null
       const dragCubes: RenderCube[] = []
-      if (bp && fp) {
-        for (const b of bp.blocks) {
+      if (bp && fp && dragBlocks) {
+        for (const b of dragBlocks) {
           dragCubes.push({
             worldX: drag.currentGx + (b.x - fp.minX),
             worldY: drag.currentGy + (b.y - fp.minY),
@@ -362,7 +396,8 @@ export function ShowcaseScene({
     // 绘制所有积木
     for (const { worldX, worldY, worldZ, block, blueprintId, isDragging, index } of drawList) {
       const { sx: px, sy: py } = worldToScreen(worldX, worldY, worldZ, cfg)
-      const isHovered = hoveredIdRef.current === blueprintId && !drag
+      const isHovered =
+        (hoveredIdRef.current === blueprintId || selectedIdRef.current === blueprintId) && !drag
       const bonusTier = index !== undefined ? bonusRef.current.get(blueprintId)?.[index] : undefined
     const isBonus = bonusTier !== undefined
       drawCube(ctx, px, py + cfg.tileH / 2, cfg, palette, {
@@ -380,6 +415,10 @@ export function ShowcaseScene({
   useEffect(() => {
     draw()
   }, [placements, draw])
+  // 装饰模式会话态（旋转/植被种子/选中）变化时重绘
+  useEffect(() => {
+    draw()
+  }, [rotations, ecoSeed, selectedId, draw])
   // 初始化与自适应窗口大小
   useEffect(() => {
     const canvas = canvasRef.current
@@ -443,7 +482,9 @@ export function ShowcaseScene({
         const bp = blueprintsMap[p.blueprintId]
         if (!bp) continue
         // 命中检测每次 pointermove 都会跑；footprint 是纯派生值，用 memo 缓存而非重算
-        const fp = footprintRef.current.get(bp.id) ?? getModelFootprint(bp.blocks)
+        const fp =
+          footprintRef.current.get(bp.id) ??
+          getRotatedFootprint(bp.blocks, rotationsRef.current[p.blueprintId] ?? 0)
         const { gx, gy } = screenToGroundIso(worldPx, worldPy, cfg.tileW, cfg.tileH)
         if (
           gx >= p.gridX - 0.4 &&
@@ -616,7 +657,9 @@ export function ShowcaseScene({
         const p = curPlacements[i]
         const bp = blueprintsMap[p.blueprintId]
         if (!bp) continue
-        const fp = getModelFootprint(bp.blocks)
+        const fp =
+          footprintRef.current.get(bp.id) ??
+          getRotatedFootprint(bp.blocks, rotationsRef.current[p.blueprintId] ?? 0)
         const { gx, gy } = screenToGroundIso(worldPx, worldPy, cfg.tileW, cfg.tileH)
         if (
           gx >= p.gridX - 0.4 &&
@@ -670,7 +713,10 @@ export function ShowcaseScene({
         }
         const { gx, gy } = screenToGroundIso(worldPx, worldPy, cfg.tileW, cfg.tileH)
         const bp = blueprintsMap[drag.blueprintId]
-        const fp = bp ? getModelFootprint(bp.blocks) : { width: 1, depth: 1 }
+        const dragRotation = rotationsRef.current[drag.blueprintId] ?? 0
+        const fp = bp
+          ? footprintRef.current.get(bp.id) ?? getRotatedFootprint(bp.blocks, dragRotation)
+          : { width: 1, depth: 1 }
 
         // 磁吸对齐至整数网格坐标
         const targetGx = Math.max(0, Math.min(G - fp.width, Math.round(gx - fp.width / 2)))
@@ -683,6 +729,7 @@ export function ShowcaseScene({
           placementsRef.current,
           blueprintsMap,
           G,
+          rotationsRef.current,
         )
         canvas.style.cursor = drag.isValid ? 'grabbing' : 'not-allowed'
         draw()
