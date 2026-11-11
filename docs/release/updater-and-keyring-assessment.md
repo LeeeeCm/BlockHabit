@@ -12,7 +12,7 @@
 
 | 结论 | 事项 | 依据 |
 | --- | --- | --- |
-| **现在可做（零依赖、零网络）** | ① 版本号一致性校验（package.json / tauri.conf.json / Cargo.toml 三处必须相同）；② 把"检查更新"做成手动入口的 UI 设计记录（仅设计，不接插件）；③ 签名密钥生成演练（生成到仓库外，**不提交**）；④ 本评估文档与 C6 真机验收清单 | §3.4 / §3.5 |
+| **现在可做（零依赖、零网络）** | ① 版本号一致性校验（package.json / tauri.conf.json / Cargo.toml 三处必须相同）——**已实现**：`scripts/check-versions.mjs` + `npm run check:versions` + CI 门禁 + 6 例单测；② 把"检查更新"做成手动入口的 UI 设计记录（仅设计，不接插件）——**已出记录 D-20261111-069（proposed）**；③ 签名密钥生成演练（生成到仓库外，**不提交**）——仅文档步骤；④ 本评估文档与 C6 真机验收清单——已交付 | §3.4 / §3.5 |
 | **需人类批准** | ① 新增依赖 `tauri-plugin-updater` + `tauri-plugin-process`（Rust + npm）；② 生成并保管 updater 签名密钥（丢失即永久失去对已安装用户的更新能力）；③ 发布端点（HTTPS 静态 JSON：对象存储 / CDN / GitHub Releases）与域名；④ CI release workflow 与 secrets；⑤ 是否允许"启动自动检查"（涉及唯一新增联网行为）；⑥ Windows Authenticode 代码签名证书预算（可选但强烈建议） | §3.2 / §3.3 / §3.6 |
 | **暂不做** | ① 默认静默自动下载安装（违背本地优先的"主路径不强制联网"）；② 灰度/百分比发布、分桶；③ 自动降级（Tauri 默认只升不降）；④ 更新成功率遥测 | §3.3 / §3.6 |
 | **keyring：现在可做** | 关闭"记住密码"时密码不落盘（`rememberPassword=false`，本轮并发改动已在工作区实现，非本任务产出） | §4.2 方案 A |
@@ -124,9 +124,10 @@
 
 ### 3.6 现在可做 / 需批准 / 暂不做（自动更新）
 
-**现在可做（本轮未实施，仅方案）**
-- 版本号一致性检查脚本或 CI 步骤（三处版本相同才允许发布）——可在 `package.json` scripts 增加，但本轮不改脚本（避免并发冲突），建议 Lead 排期。
-- 手动"检查更新"入口的交互/文案设计记录（先设计，不接插件）。
+**现在可做（2026-11-11 续作状态）**
+- 版本号一致性检查：**已实现** `scripts/check-versions.mjs`（解析 package.json / tauri.conf.json / Cargo.toml 的 [package].version；`--json` 可用），`npm run check:versions` 已接入 CI；`scripts/check-versions.test.mjs` 6 例覆盖一致/不一致/缺失/解析边界。
+- 手动"检查更新"入口：**已出设计记录 D-20261111-069（proposed）**——版本与更新行、idle/checking/up-to-date/available/error 状态机、无自动检查/无静默下载、未启用发布链路时诚实禁用；依赖获批后再实现，本轮不写实现代码。
+- 签名密钥生成演练：仅文档步骤（§3.2），未生成密钥、未提交任何密钥材料。
 - 签名密钥生成演练（本机生成到仓库外，验证流程；**不生成正式密钥、不提交**）。
 - C6 真机验收清单中的更新验收项（见 `docs/release/real-device-acceptance.md`）。
 

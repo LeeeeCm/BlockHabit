@@ -158,14 +158,14 @@
 
 ## 10. 2026-11-11 第九轮收尾状态（发布候选）
 
-- **Git**：分支 `chore/release-prep`，共 20 条提交（8 条历轮成果基线 + 12 条 B/C 收尾），未 push、未打 tag、未改版本号（0.2.0）；工作区干净（仅 .gitignore 忽略项）。
+- **Git**：分支 `chore/release-prep`，共 23 条提交（8 条历轮成果基线 + 15 条 B/C 收尾与续作），未 push、未打 tag、未改版本号（0.2.0）；工作区干净（仅 .gitignore 忽略项）。
 - **B 类技术收尾**：B1 WebDAV 取消/rememberPassword/密码 DOM 缓解；B2 年鉴 modelStage + 复制降级；B3 SettingsDialog 拆分（740 行）+ 档案 manifest 版本语义；B4 专注今日入口/多会话/通知托盘可测化；B5 建筑档案移动端/落盘日/性能；B6 测试工程卫生。以上均已实现并补测试，见 CHANGELOG 第九轮。
 - **C 类产品/发布增强**：C2 设置页「内容路线」（AboutPanel）已上线；C1 自由装饰模式仅新增 **D-20261111-068 proposed**（按规则暂停实现，等待人类确认）；C4 自动更新/签名/keyring 评估（依赖/密钥/端点均标「需人类批准」）；C3 内容包 v3 发布评估（未生产内容，等待人类定主题/规模）；C5 性能基线复测通过；C6 真机验收清单已交付。
-- **台账现状**：68 条记录（9 条 approved：D-059…D-067；59 条 proposed，其中 D-052…D-058 等已实现待审、D-068 未实现待确认）。
+- **台账现状**：69 条记录（9 条 approved：D-059…D-067；60 条 proposed，其中 D-052…D-058 等已实现待审、D-068/D-069 未实现待确认）。
 - **待人类处理**：
-  1. 审核 D-068 自由装饰模式（proposed）；批准后才实现。
-  2. C4：是否批准新增 updater/process 依赖、生成并保管签名密钥、发布端点/CI secrets、Windows 代码签名预算；keyring 是否批准 keyring crate 依赖。未批准前保持现状（rememberPassword 不落盘已实现）。
-  3. C3：确认下一批内容包主题/座数/块数/节奏后，再新增 approved 记录与内容。
+  1. 审核 D-068 自由装饰模式、D-069 手动检查更新入口（均 proposed）；批准后才实现。
+  2. C4：**零依赖项已完成**（版本号一致性门禁 `npm run check:versions` + CI；手动检查更新设计记录 D-069）；仍需批准：新增 updater/process 依赖、生成并保管签名密钥、发布端点/CI secrets、Windows 代码签名预算、keyring 是否批准 Rust keyring crate。未批准前保持现状（rememberPassword 不落盘已实现）。
+  3. C3：**校验脚手架已交付**（`contentPackKit.ts` + 12 例，未生产内容）；确认下一批内容包主题/座数/块数/节奏后，再新增 approved 记录与内容。
   4. C6：按 `docs/release/real-device-acceptance.md` 在真实 Windows 设备执行多屏/HiDPI、A4 落盘/reveal、三服务商 WebDAV、25 分钟专注+通知+托盘、100 块时间线。
   5. 其余 59 条 proposed 记录按 REVIEW-QUEUE §1–§9 分组审核。
 - **独立验证**：verifier **PASS（P0=0 / P1=0）**，P2 两项已处置（单条中间提交不可编译的主题切片限制 + 行数口径/再拆 archiveZip），P3 三项已修正/记录；报告 `.tmp-verify-final/report.md`（不提交产物）。

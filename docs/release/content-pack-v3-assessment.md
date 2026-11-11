@@ -72,6 +72,8 @@
 
 ## 4. 脚手架需要改哪里（文件 + 接口）
 
+> **2026-11-11 续作**：本轮已交付「校验/规划」脚手架 `src/logic/blueprints/contentPackKit.ts` —— `validateContentPackDraft`（id 唯一、version=nextContentVersion、蓝图必须追加、座数 4–6、每座 80–120 块、整包 400–600 块，规则可覆盖）、`planAppendedOrder` / `packBlockCount` / `existingPackBlueprintIds` / `nextContentVersion`；`contentPackKit.test.ts` 12 例（用合成注册表，不新增任何建筑数据）。**仍未生产内容、未改 CONTENT_VERSION、未改 generators.ts**；确认主题/规模后按本节清单实施。
+
 > 顺序：设计记录 approved → `generators.ts` → `palette.ts` → `index.ts` → `manifest.ts` → i18n（Lead）→ 测试/文档。以下为实施清单，本轮**未改**。
 
 ### 4.1 `src/logic/blueprints/manifest.ts`

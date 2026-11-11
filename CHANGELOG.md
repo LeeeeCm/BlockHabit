@@ -3,6 +3,27 @@
 本项目遵循「每次改动都能追到一条设计记录」的约定：每条变更下方的 `D-YYYYMMDD-NNN` 指向
 `design/records/` 里对应的记录（含背景、方案、取舍与验收证据）。
 
+## [未发布] — 2026-11-11（第九轮补充：C4 零依赖项 + C3 内容包脚手架 + D-069）
+
+在第九轮发布候选基础上，继续推进「依赖与人类决策之前就能做」的零依赖收尾。**未新增依赖、未生产内容、未改视觉语言/存储格式/版本号。**
+
+### C4 自动更新/签名/keyring（零依赖部分，2a87fb1）
+
+- 新增 `scripts/check-versions.mjs`：校验 package.json / tauri.conf.json / Cargo.toml `[package].version` 三处一致（`--json` 可机读），`npm run check:versions` 已接入 CI（Version consistency 步骤）；`scripts/check-versions.test.mjs` 6 例覆盖一致/不一致/缺失/Cargo 解析边界。**未生成签名密钥、未改发布链路。**
+- 新增设计记录 **D-20261111-069（proposed）**「手动检查更新入口」：版本与更新行、idle/checking/up-to-date/available/error 状态机、无自动检查/无静默下载、未启用发布链路时诚实禁用；依赖/签名/端点获批后再实现，本轮不写实现代码。
+- keyring 维持「rememberPassword 不落盘（B1 已实现）；OS keychain 需人类批准 Rust 依赖」。
+
+### C3 下一批内容包脚手架（2f30844）
+
+- 新增 `src/logic/blueprints/contentPackKit.ts`：`validateContentPackDraft`（id 唯一、version=nextContentVersion、蓝图必须追加、座数 4–6、每座 80–120 块、整包 400–600 块，规则可覆盖）、`planAppendedOrder` / `packBlockCount` / `existingPackBlueprintIds` / `nextContentVersion`；纯函数、可注入合成注册表。
+- `contentPackKit.test.ts` 12 例（含真实注册表 18 座/1985 块断言）。**未生产任何建筑数据、未改 generators.ts、未改 CONTENT_VERSION**；内容主题/规模仍待人类确认。
+
+### 验证（2026-11-11 续作）
+
+- `npx tsc --noEmit` 0 错；`npm test` **102 文件 / 1008 用例全绿**（新增 2 个测试文件 18 例）；`npm run design:check` **69 条记录通过**（新增 D-069）；`npm run format:check`、`npm run check:versions` 通过；`npm run build` 成功（主入口仍 414.61KB / gzip 127.44KB——脚手架未被运行路径引用）。
+- 独立 verifier 结论（前 20 条提交）仍适用；上述续作改动为纯增量、不触碰运行路径，门禁已复跑。
+- 仍 blocked：C1（D-068 待审核）、C4 依赖/签名/端点/密钥、C3 内容主题与规模确认、C6 真机验收。
+
 ## [未发布] — 2026-11-11（第九轮：Git 整理 + B 类技术收尾 + C 类发布增强 → 发布候选）
 
 本轮按用户目标做三件事：先把历轮未提交成果整理成可回滚的 Git 基线（任务 A），再完成 B1–B6
