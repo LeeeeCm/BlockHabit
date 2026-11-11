@@ -1,0 +1,24 @@
+# 统一文本换行：仓库内文本文件一律 LF（Windows 检出同样保持 LF）。
+# 原因：CRLF 会让 design:check 的 front-matter 解析、vitest 快照与 Prettier 门禁在
+# Windows 检出/合并后出现平台相关失败；仓库 blob 已为 LF，这里固定检出行为。
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.icns binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.mp3 binary
+*.wav binary
+*.zip binary
+*.pdf binary
+*.exe binary
+*.dll binary
+*.node binary
+*.jar binary
