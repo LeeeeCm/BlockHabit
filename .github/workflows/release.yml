@@ -51,8 +51,24 @@ jobs:
             throw "版本不一致：package.json=$v，输入=${{ inputs.version }}。请先把三处版本改一致并提交。"
           }
 
+      - name: Verify updater config
+        shell: pwsh
+        run: |
+          $conf = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          $u = $conf.plugins.updater
+          if (-not $u.pubkey -or $u.pubkey.Trim() -eq '') {
+            throw "plugins.updater.pubkey 为空：请按 docs/release/release-runbook.md 填入签名公钥。"
+          }
+          if (-not $u.endpoints -or $u.endpoints.Count -eq 0) {
+            throw "plugins.updater.endpoints 为空：请填入 latest.json 的公开 HTTPS 地址。"
+          }
+          if (-not $env:TAURI_SIGNING_PRIVATE_KEY) {
+            throw "缺少 TAURI_SIGNING_PRIVATE_KEY secret。"
+          }
+
       - name: Build signed bundle
         env:
+          VITE_UPDATER_ENABLED: '1'
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri build -- --config src-tauri/tauri.release.conf.json

@@ -47,6 +47,10 @@ npx tauri signer generate -w <仓库外路径>/blockhabit.key
 `src-tauri/tauri.release.conf.json`（`bundle.createUpdaterArtifacts: true`），由 release workflow 通过
 `tauri build --config src-tauri/tauri.release.conf.json` 使用。
 
+发布构建还必须设置 `VITE_UPDATER_ENABLED=1`（release workflow 已内置）：前端据此启用「检查更新」；
+未设置时即使填了密钥/端点，安装包里的按钮仍是安全禁用态。workflow 在构建前会校验
+`plugins.updater.pubkey`、`endpoints` 与私钥 secret 非空，缺失会直接失败而不是产出坏包。
+
 ## 2. 发布步骤
 
 1. 合并到 `main`，确认门禁全绿（workflow 会再跑一遍）。
@@ -54,8 +58,8 @@ npx tauri signer generate -w <仓库外路径>/blockhabit.key
 3. GitHub → Actions → **Release** → Run workflow，填写：
    - `version`：与构建文件一致的 x.y.z
    - `notes`：发布说明（写入 Release 与 latest.json）
-4. Workflow 会：跑门禁 → 校验版本输入 → 带签名构建 NSIS/MSI → 创建 GitHub Release（`v<version>`）
-   → 生成并上传 `latest.json`。
+4. Workflow 会：跑门禁 → 校验版本输入 → **校验 pubkey/endpoints/私钥** → 带 `VITE_UPDATER_ENABLED=1`
+   签名构建 NSIS/MSI → 创建 GitHub Release（`v<version>`）→ 生成并上传 `latest.json`。
 5. 按 `docs/release/real-device-acceptance.md` 的 **T6** 验收：
    - 旧版本打开 设置 → 内容路线 → 版本与更新 → 检查更新
    - 发现新版本 → 下载并安装 → 重启后数据/设置/WebDAV 配置不丢

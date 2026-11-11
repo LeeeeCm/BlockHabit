@@ -19,7 +19,7 @@
 
 ### 发布链路脚手架（C4，代码就绪；凭证仍待人类）
 
-- 新增 `.github/workflows/release.yml`：手动触发（workflow_dispatch），跑 tsc/test/design/format/check:versions，校验输入版本与构建文件一致，带 `TAURI_SIGNING_PRIVATE_KEY` 构建签名包，创建 GitHub Release 并生成/上传 `latest.json`。
+- 新增 `.github/workflows/release.yml`：手动触发（workflow_dispatch），跑 tsc/test/design/format/check:versions，校验输入版本与三处构建文件一致、**校验 pubkey/endpoints/私钥 secret 非空**，带 `VITE_UPDATER_ENABLED=1` 与 `TAURI_SIGNING_PRIVATE_KEY` 构建签名包，创建 GitHub Release 并生成/上传 `latest.json`。
 - 新增 `src-tauri/tauri.release.conf.json`：发布专用 `createUpdaterArtifacts: true`（本地默认构建不受影响，开发者无需密钥）。
 - 新增 `scripts/make-latest-json.mjs`：Tauri updater latest.json 纯数据组装 + 校验（version/https/signature/platform），8 例单测；已纳入 `format:check`。
 - 新增 `docs/release/release-runbook.md`：密钥生成/保管、pubkey 与 endpoints 填写、Actions secrets、发布步骤、T6 验收、回滚、私有仓库需公开或 CDN 的明确限制、`on_before_exit` 前置项。
