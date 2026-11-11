@@ -93,6 +93,9 @@ pub fn run() {
             MacosLauncher::LaunchAgent,
             None,
         ))
+        // D-20261111-069：手动检查更新（默认构建不发起请求；发布链路由人类配置）
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(QuitGate(AtomicBool::new(false)))
         .invoke_handler(tauri::generate_handler![update_tray, tray_menu, confirm_quit])
         .setup(|app| {

@@ -29,6 +29,8 @@
     "@tauri-apps/plugin-http": "^2.8.3",
     "@tauri-apps/plugin-notification": "^2.5.1",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.14.1",
     "misans": "^4.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

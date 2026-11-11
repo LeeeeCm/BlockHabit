@@ -12,7 +12,7 @@
 
 | 结论 | 事项 | 依据 |
 | --- | --- | --- |
-| **现在可做（零依赖、零网络）** | ① 版本号一致性校验（package.json / tauri.conf.json / Cargo.toml 三处必须相同）——**已实现**：`scripts/check-versions.mjs` + `npm run check:versions` + CI 门禁 + 6 例单测；② 把"检查更新"做成手动入口的 UI 设计记录（仅设计，不接插件）——**已出记录 D-20261111-069（proposed）**；③ 签名密钥生成演练（生成到仓库外，**不提交**）——仅文档步骤；④ 本评估文档与 C6 真机验收清单——已交付 | §3.4 / §3.5 |
+| **现在可做（零依赖、零网络）** | ① 版本号一致性校验（package.json / tauri.conf.json / Cargo.toml 三处必须相同）——**已实现**：`scripts/check-versions.mjs` + `npm run check:versions` + CI 门禁 + 6 例单测；② 把"检查更新"做成手动入口的 UI 设计记录——**D-20261111-069 已 approved，并已完成依赖/插件/UI 骨架（见 §1.5）**；③ 签名密钥生成演练（生成到仓库外，**不提交**）——仅文档步骤；④ 本评估文档与 C6 真机验收清单——已交付 | §3.4 / §3.5 |
 | **需人类批准** | ① 新增依赖 `tauri-plugin-updater` + `tauri-plugin-process`（Rust + npm）；② 生成并保管 updater 签名密钥（丢失即永久失去对已安装用户的更新能力）；③ 发布端点（HTTPS 静态 JSON：对象存储 / CDN / GitHub Releases）与域名；④ CI release workflow 与 secrets；⑤ 是否允许"启动自动检查"（涉及唯一新增联网行为）；⑥ Windows Authenticode 代码签名证书预算（可选但强烈建议） | §3.2 / §3.3 / §3.6 |
 | **暂不做** | ① 默认静默自动下载安装（违背本地优先的"主路径不强制联网"）；② 灰度/百分比发布、分桶；③ 自动降级（Tauri 默认只升不降）；④ 更新成功率遥测 | §3.3 / §3.6 |
 | **keyring：现在可做** | 关闭"记住密码"时密码不落盘（`rememberPassword=false`，本轮并发改动已在工作区实现，非本任务产出） | §4.2 方案 A |
@@ -20,6 +20,66 @@
 | **keyring：暂不做** | Tauri 官方 Stronghold（需用户再记一个主密码，解决不了"记住密码"的体验目标，且体积/复杂度更高）；浏览器预览的 keychain（无此能力） | §4.3 |
 
 **一句话结论**：自动更新在技术上完全可行，但当前仓库**没有 git remote、没有 release workflow、没有签名密钥、没有发布端点**，且按规则不能擅自加依赖——因此本轮只能给出方案与验收清单，落地需人类逐项批准。keyring 同理：先用"不落盘"缓解，OS keychain 等批准后再做，**不要在本轮直接改存储格式**。
+
+---
+
+## 1.5 实施状态（2026-11-11 C4 续作，D-20261111-069 approved 后）
+
+> 本节是状态更新，不改变 §2–§5 的历史评估正文；未实施项继续如实标注，不写完成态。
+
+### 1.5.1 已落地（代码骨架，可编译可测）
+
+| 项 | 内容 | 位置 |
+| --- | --- | --- |
+| 依赖（前端） | `@tauri-apps/plugin-updater@2.14.1`、`@tauri-apps/plugin-process@2.4.0`；**未改** `package.json` 的 version | `package.json` / `package-lock.json` |
+| 依赖（Rust） | `tauri-plugin-updater = "2"`（锁 2.14.1）、`tauri-plugin-process = "2"`（锁 2.4.0） | `src-tauri/Cargo.toml` / `Cargo.lock` |
+| 插件注册 | `.plugin(tauri_plugin_updater::Builder::new().build())`、`.plugin(tauri_plugin_process::init())` | `src-tauri/src/lib.rs` |
+| 权限 | `updater:default`（check/download/install/downloadAndInstall）、`process:default`（exit/restart） | `src-tauri/capabilities/default.json` |
+| 配置占位 | `plugins.updater = { pubkey: "", endpoints: [], windows.installMode: "passive" }`。空值可用：updater 2.14.1 的 `Config` 反序列化接受空 `pubkey: String` / 空 `endpoints: Vec<Url>`，因此**不需要伪造占位公钥**。`bundle.createUpdaterArtifacts` **故意未开启**——没有签名私钥时开启会让构建失败，待人类提供密钥后再改 | `src-tauri/tauri.conf.json` |
+| 前端适配层 | `isUpdaterEnabled()`（`VITE_UPDATER_ENABLED==='1'` 且 Tauri 运行时）、`checkForUpdate()` 四态判别联合、`installUpdate()`（进度回调 + 非 Windows relaunch）、`discardPendingUpdate()`；插件一律动态 `import()` | `src/platform/updater.ts` |
+| UI | 设置 → 内容路线/关于 → 「版本与更新」行：idle/checking/latest/available/error；未启用时按钮禁用并显示诚实说明；取消只忽略迟到结果（插件无 abort API），不误报失败 | `src/components/AboutPanel.tsx`（i18n key 由 Lead 提供） |
+| 测试 | `src/platform/updater.test.ts` 9 例：默认构建不 import 插件/不发请求、四态映射、安装进度、错误脱敏、句柄释放、未检查安装；`src/components/AboutPanel.test.tsx` 原 3 例 + 新增 6 例 | — |
+
+**默认构建的网络纪律（已验证）**：不设置 `VITE_UPDATER_ENABLED` 时，`isUpdaterEnabled()` 恒为 false，`checkForUpdate()` 在 import 插件之前直接返回 `disabled`；浏览器预览同样禁用。只有显式设置 `VITE_UPDATER_ENABLED=1`、运行在 Tauri 内、且由用户点击「检查更新」，才会访问 `plugins.updater.endpoints`。
+
+**门禁结果（2026-11-11）**：`npx tsc --noEmit` 0 错误；`npx vitest run src/components/AboutPanel.test.tsx src/platform/updater.test.ts` 全绿；`npm run tauri build -- --no-bundle` 实测结果见 §1.5.3。
+
+### 1.5.2 仍 blocked（必须由人类提供，缺一不可）
+
+1. **签名密钥生成与保管**（当前 `pubkey` 为空、`createUpdaterArtifacts` 未开启）：
+   - 在**仓库外**的安全目录生成（示例 `<安全目录>/blockhabit.key`）：
+     ```bash
+     npx tauri signer generate -w <仓库外路径>/blockhabit.key
+     ```
+     命令会提示设置私钥密码并输出公钥；密码可留空但不建议。**不要把生成物放进仓库**。
+   - 公钥全文（单行内容，**不是文件路径**）填入 `src-tauri/tauri.conf.json` → `plugins.updater.pubkey`。
+   - 私钥只通过 CI secrets `TAURI_SIGNING_PRIVATE_KEY`（内容或绝对路径）与 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 注入；**绝不入库、不提交、不放 `.env`**（Tauri 不读 `.env`）。
+   - 离线备份至少两份并明确责任人；私钥丢失 = 已安装用户永久失去更新通道（除非提前实现 runtime pubkey 轮换）。
+2. **发布端点 URL**：HTTPS 静态 `latest.json` 的托管位置（对象存储 / CDN / GitHub Releases）与域名；确定后填入 `plugins.updater.endpoints`（支持 `{{target}}` / `{{arch}}` / `{{current_version}}`），生产强制 TLS。空数组时插件 `check()` 会报"无端点"，但默认构建的 UI 不会触发它。
+3. **`latest.json` 托管与生成**：包含 `version` / `pub_date` / `notes` / `platforms["windows-x86_64"].{url,signature}`；签名值取自 `tauri build` 产出的 `.sig`；建议用 `tauri-apps/tauri-action` 自动生成并上传。
+4. **CI release workflow 与 secrets**：仓库当前无 remote、无 tag、无 release workflow；需人类创建 remote / 托管位置、`release.yml`（手动触发）、secrets（签名私钥/密码）、发布权限。`bundle.createUpdaterArtifacts` 待密钥就绪后再改为 `true`；**发布构建还必须设置 `VITE_UPDATER_ENABLED=1`**（否则即使配好 pubkey/endpoints，前端仍按安全默认值禁用更新入口）。
+5. **Windows Authenticode 代码签名证书**（可选但建议）：与 updater 的 minisign 签名是两件事；不做也能更新，但用户会看到 SmartScreen 警告。
+6. **启用前必须补的代码项（当前有意未做）**：Windows 更新安装会以 `std::process::exit(0)` 退出应用，需在 Rust `on_before_exit` 里接现有退出握手（`app-quit-requested` + `QuitGate`，最多等 1.5s）保证存档落盘；并做真机验收（旧版本 → 检查 → 下载 → 安装 → 重启 → 版本变化；篡改 signature 必须拒绝；断网诚实报错）。发布端点接通前无法端到端验证，故本轮只保留骨架。
+7. **是否允许"启动自动检查"**：仍默认否（手动入口），需人类显式决定。
+
+### 1.5.3 验证记录
+
+- `npx tsc --noEmit`：0 错误。
+- `npx vitest run src/components/AboutPanel.test.tsx src/platform/updater.test.ts`：全绿（计数见 `.tmp-c4/report.md`）。
+- `npm run tauri build -- --no-bundle`：**成功**（退出码 0；前端 `tsc && vite build` 通过，Rust release 编译 `Finished release profile [optimized] target(s) in 2m17s`，编译包含 `tauri-plugin-updater v2.14.1` 与 `tauri-plugin-process v2.4.0`，产出 `src-tauri/target/release/blockhabit.exe`）。原始日志 `.tmp-c4/tauri-build.log`。
+- 四主题（light/dark/oat/fog）× zh/en 关于页截图（未配置发布链路 = disabled 诚实态）：`.tmp-c4/about-<theme>-<lang>.png`（8 张）。
+- 启用态 / 检查失败态 UI 验证：用 `VITE_UPDATER_ENABLED=1` 的**临时前端构建** + 浏览器注入伪造 Tauri internals（仅验证 UI 状态机，不代表真实发布链路；真实端到端必须按 §3.7 在接好端点/密钥后真机验收）→ `.tmp-c4/about-enabled-harness-zh.png`、`about-error-harness-zh.png`、`about-error-harness-en.png`。
+- 网络证据：preview 页面请求全部为 `localhost:1453` 静态资源，无任何外部发布端点/最新版本请求（`.tmp-c4/network-requests.txt`）；单测同时断言默认构建未 import updater 插件。
+- 未生成签名密钥、未提交任何密钥材料、未伪造发布端点。
+
+### 1.5.4 keyring 状态（只做设计 + 迁移方案，方向已批准、实施 pending）
+
+人类已批准**方向**（用 OS keychain 替代明文 localStorage 密码），但按分阶段落地：
+
+- **本轮不改**：不接 `keyring` crate / 社区插件、不加 npm 依赖、不改存储格式（不新增 `credentialStore` 字段）、不改 `useSync` 读写路径。
+- **现有可用缓解**：`rememberPassword=false`（方案 A）不落盘；由并发改动实现（非本轮产出）。
+- **待人类批准后才做**：方案 B（Rust `keyring` crate + 自定义 command + `src/platform/credentials.ts`）与迁移/回滚，步骤见 §4.4；批准前保持 localStorage 明文默认行为（本机、无账号）。
+- 结论：**方向 approved、实施 pending**；§4.4 的阶段 0–6 不得当作已完成。
 
 ---
 
@@ -126,19 +186,19 @@
 
 **现在可做（2026-11-11 续作状态）**
 - 版本号一致性检查：**已实现** `scripts/check-versions.mjs`（解析 package.json / tauri.conf.json / Cargo.toml 的 [package].version；`--json` 可用），`npm run check:versions` 已接入 CI；`scripts/check-versions.test.mjs` 6 例覆盖一致/不一致/缺失/解析边界。
-- 手动"检查更新"入口：**已出设计记录 D-20261111-069（proposed）**——版本与更新行、idle/checking/up-to-date/available/error 状态机、无自动检查/无静默下载、未启用发布链路时诚实禁用；依赖获批后再实现，本轮不写实现代码。
+- 手动"检查更新"入口：**D-20261111-069 已 approved**；本轮已交付依赖/插件/UI/适配层骨架与测试（见 §1.5.1），未配置发布链路时默认构建诚实禁用、不发请求；签名密钥/端点/`latest.json`/CI secrets/Windows 代码签名仍 blocked（§1.5.2）。
 - 签名密钥生成演练：仅文档步骤（§3.2），未生成密钥、未提交任何密钥材料。
 - 签名密钥生成演练（本机生成到仓库外，验证流程；**不生成正式密钥、不提交**）。
 - C6 真机验收清单中的更新验收项（见 `docs/release/real-device-acceptance.md`）。
 
-**需人类批准（blocked）**
-- [ ] 新增 `tauri-plugin-updater` + `tauri-plugin-process`（Rust + npm）。
-- [ ] 生成正式签名密钥对并确定保管/备份责任人（丢失即断更）。
-- [ ] 发布端点：HTTPS 静态 JSON 的托管位置（对象存储/CDN/GitHub Releases）与域名。
-- [ ] CI release workflow 与 secrets 管理；仓库 remote/发布权限。
-- [ ] 是否允许启动自动检查（默认建议关）。
-- [ ] Windows Authenticode 证书预算与类型（可选）。
-- [ ] 设置页"检查更新"UI 的设计记录与 i18n key（Lead 独占写入）。
+**需人类批准 / 人类提供（blocked；依赖与 UI 方向已于 2026-11-11 获批）**
+- [x] 新增 `tauri-plugin-updater` + `tauri-plugin-process`（Rust + npm）——人类已批准，本轮已落地（§1.5.1）。
+- [ ] 生成正式签名密钥对并确定保管/备份责任人（丢失即断更）——**仍 blocked**，步骤见 §1.5.2 第 1 条。
+- [ ] 发布端点：HTTPS 静态 JSON 的托管位置（对象存储/CDN/GitHub Releases）与域名——**仍 blocked**。
+- [ ] CI release workflow 与 secrets 管理；仓库 remote/发布权限——**仍 blocked**。
+- [ ] 是否允许启动自动检查（默认建议关）——**仍 blocked**。
+- [ ] Windows Authenticode 证书预算与类型（可选）——**仍 blocked**。
+- [x] 设置页"检查更新"UI 的设计记录与 i18n key（Lead 独占写入）——D-20261111-069 已 approved、key 已加、UI 已实现（§1.5.1）。
 
 **暂不做**
 - 默认静默自动下载安装；灰度/百分比发布；自动降级；更新成功率遥测。
@@ -210,14 +270,14 @@
 
 ## 5. 给人类的决策清单
 
-- [ ] 自动更新：是否批准新增 `tauri-plugin-updater` + `tauri-plugin-process`？
-- [ ] 自动更新：是否允许"启动自动检查"？默认建议关（手动入口）。
-- [ ] 发布端点：选 GitHub Releases / 对象存储 / 自建？域名与访问控制？
-- [ ] 签名密钥：谁生成、谁保管、离线备份放哪？是否接受"私钥丢失即断更"？
-- [ ] Windows 代码签名：是否购买证书（OV/EV/Azure）？预算？
-- [ ] keyring：是否批准 Rust `keyring` crate（方案 B）？还是先只做方案 A？
-- [ ] keyring：迁移时是否立即清除 legacy 明文（推荐）？
-- [ ] 设置页"检查更新"/"记住密码"UI：是否先出设计记录再实现？
+- [x] 自动更新：是否批准新增 `tauri-plugin-updater` + `tauri-plugin-process`？——2026-11-11 人类已批准（依赖已落地，骨架见 §1.5）。
+- [ ] 自动更新：是否允许"启动自动检查"？默认建议关（手动入口）——**仍待决定**。
+- [ ] 发布端点：选 GitHub Releases / 对象存储 / 自建？域名与访问控制？——**仍待人类提供**。
+- [ ] 签名密钥：谁生成、谁保管、离线备份放哪？是否接受"私钥丢失即断更"？——**仍待人类提供**。
+- [ ] Windows 代码签名：是否购买证书（OV/EV/Azure）？预算？——**仍待决定（可选）**。
+- [ ] keyring：是否批准 Rust `keyring` crate（方案 B）？还是先只做方案 A？——**方向已批准、依赖未批（实施 pending）**。
+- [ ] keyring：迁移时是否立即清除 legacy 明文（推荐）？——**仍待决定**。
+- [x] 设置页"检查更新"/"记住密码"UI：是否先出设计记录再实现？——D-20261111-069 已 approved 并实现骨架。
 
 ---
 
