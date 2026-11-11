@@ -297,3 +297,4 @@
 - 本评估未运行 `npm run tauri build`（并发改动多，且不影响结论）；未生成密钥、未申请证书、未创建发布端点、未安装依赖。
 - 未验证真实更新链路（需要打包 + 托管 + 旧版本安装），属于 C6 真机验收项（条件：C4 批准后）。
 - 并发改动（`rememberPassword`、诊断取消、AboutPanel）未提交，本评估不把它们当作已完成交付；落地时以 Lead 最终提交为准。
+> 2026-11-12 补充：本节所述发布链路脚手架已落地 —— `.github/workflows/release.yml`（手动触发、门禁/版本校验/签名构建/Release/latest.json）、`src-tauri/tauri.release.conf.json`（createUpdaterArtifacts）、`scripts/make-latest-json.mjs`（+8 例测试）与 `docs/release/release-runbook.md`（密钥/端点/secrets/验收/回滚/私有仓库限制）。仍未就绪：签名私钥、pubkey/endpoints 实际值、CI secrets、on_before_exit 存档握手、仓库公开或 CDN 托管。

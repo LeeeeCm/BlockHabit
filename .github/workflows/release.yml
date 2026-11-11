@@ -1,0 +1,92 @@
+name: Release
+
+# C4 发布链路脚手架（D-20261111-069 / D-20261112-071）：手动触发，标签/签名密钥/端点就绪前不会自动运行。
+# 前置条件与验收步骤见 docs/release/release-runbook.md；私钥只进 Actions secrets，绝不提交。
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号（x.y.z，必须与 package.json / tauri.conf.json / Cargo.toml 一致）'
+        required: true
+      notes:
+        description: '发布说明（写入 GitHub Release 与 latest.json，可空）'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      RELEASE_TAG: v${{ inputs.version }}
+      RELEASE_NOTES: ${{ inputs.notes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Gates
+        run: |
+          npx tsc --noEmit
+          npm test
+          npm run design:check
+          npm run check:versions
+          npm run format:check
+
+      - name: Verify version input matches build files
+        shell: pwsh
+        run: |
+          $v = node -p "require('./package.json').version"
+          if ("$v" -ne "${{ inputs.version }}") {
+            throw "版本不一致：package.json=$v，输入=${{ inputs.version }}。请先把三处版本改一致并提交。"
+          }
+
+      - name: Build signed bundle
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npm run tauri build -- --config src-tauri/tauri.release.conf.json
+
+      - name: Locate artifacts
+        id: artifacts
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "src-tauri/target/release/bundle/nsis/*-setup.exe" | Select-Object -First 1
+          if (-not $exe) { throw "未找到 NSIS setup.exe" }
+          $sig = Get-Item "$($exe.FullName).sig" -ErrorAction SilentlyContinue
+          if (-not $sig) { throw "未找到签名文件 .sig；确认 createUpdaterArtifacts 与签名密钥已配置" }
+          $msi = Get-ChildItem "src-tauri/target/release/bundle/msi/*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
+          "exe=$($exe.FullName)" >> $env:GITHUB_OUTPUT
+          "exeName=$($exe.Name)" >> $env:GITHUB_OUTPUT
+          "sig=$($sig.FullName)" >> $env:GITHUB_OUTPUT
+          if ($msi) { "msi=$($msi.FullName)" >> $env:GITHUB_OUTPUT }
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = @("${{ steps.artifacts.outputs.exe }}", "${{ steps.artifacts.outputs.sig }}")
+          if ("${{ steps.artifacts.outputs.msi }}") { $assets += "${{ steps.artifacts.outputs.msi }}" }
+          gh release create "$env:RELEASE_TAG" $assets --title "BlockHabit ${{ inputs.version }}" --notes "$env:RELEASE_NOTES"
+
+      - name: Generate latest.json
+        shell: pwsh
+        run: |
+          node scripts/make-latest-json.mjs --version "${{ inputs.version }}" --signature-file "${{ steps.artifacts.outputs.sig }}" --url "https://github.com/${{ github.repository }}/releases/download/$env:RELEASE_TAG/${{ steps.artifacts.outputs.exeName }}" --notes "$env:RELEASE_NOTES" --out latest.json
+
+      - name: Upload latest.json
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$env:RELEASE_TAG" latest.json --clobber

@@ -13,7 +13,7 @@
     "design:check": "node scripts/design-ledger.mjs",
     "design:fix": "node scripts/design-ledger.mjs --fix",
     "check:versions": "node scripts/check-versions.mjs",
-    "format:check": "prettier --check .prettierrc.json vite.config.ts \"src/render/{isoColor,isoGeometry,isoCube,isoGround,sceneMotion,sceneCamera,showcaseLayout,framing}.ts\" \"src/logic/{blockHints,builds,repairBricks}.ts\" \"src/platform/{useTransient,http,diagnostics,updater,updater.test}.ts\" \"src/logic/blueprints/{generatorsV3,contentPackKit,contentPackKit.test}.ts\" \"src/pages/Showcase.test.tsx\" \"src/storage/backups.ts\" \"src/components/BrickInspectPopover.tsx\" \"scripts/{check-versions,check-versions.test}.mjs\"",
+    "format:check": "prettier --check .prettierrc.json vite.config.ts \"src/render/{isoColor,isoGeometry,isoCube,isoGround,sceneMotion,sceneCamera,showcaseLayout,framing}.ts\" \"src/logic/{blockHints,builds,repairBricks}.ts\" \"src/platform/{useTransient,http,diagnostics,updater,updater.test}.ts\" \"src/logic/blueprints/{generatorsV3,contentPackKit,contentPackKit.test}.ts\" \"src/pages/Showcase.test.tsx\" \"src/storage/backups.ts\" \"src/components/BrickInspectPopover.tsx\" \"scripts/{check-versions,check-versions.test,make-latest-json,make-latest-json.test}.mjs\"",
     "format": "prettier --write ."
   },
   "dependencies": {
