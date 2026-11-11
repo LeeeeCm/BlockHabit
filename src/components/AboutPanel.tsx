@@ -30,12 +30,15 @@ type UpdateUiState =
   | { kind: 'checking' }
   | { kind: 'latest'; checkedAt: Date }
   | { kind: 'available'; version: string; body?: string; installing: boolean }
-  | { kind: 'error' }
+  | { kind: 'error'; detail?: string }
+
+/** 语言 → BCP 47 locale（避免内联 lang 三元，AGENTS §3.4） */
+const LOCALE_BY_LANG: Record<Language, string> = { zh: 'zh-CN', en: 'en-US' }
 
 /** 检查时间：本地短时间即可（不写时区，避免过度承诺） */
 function formatCheckedAt(date: Date, lang: Language): string {
   try {
-    return date.toLocaleTimeString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+    return date.toLocaleTimeString(LOCALE_BY_LANG[lang], {
       hour: '2-digit',
       minute: '2-digit'
     })
@@ -56,7 +59,7 @@ function toUiState(result: UpdateCheckResult): UpdateUiState {
     case 'available':
       return { kind: 'available', version: result.version, body: result.body, installing: false }
     case 'error':
-      return { kind: 'error' }
+      return { kind: 'error', detail: result.error.message }
     case 'disabled':
       return { kind: 'idle' }
   }
@@ -86,6 +89,8 @@ export function AboutPanel() {
 
   const updateEnabled = isUpdaterEnabled()
   const [updateState, setUpdateState] = useState<UpdateUiState>({ kind: 'idle' })
+  /** 错误详情复制反馈：idle / copied / failed（失败时提示手动选择文本） */
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   /** 请求代次：取消/卸载后递增，迟到的检查结果一律丢弃（不误报失败） */
   const requestToken = useRef(0)
   const mounted = useRef(true)
@@ -101,6 +106,7 @@ export function AboutPanel() {
 
   const handleCheck = async (): Promise<void> => {
     const token = ++requestToken.current
+    setCopyState('idle')
     setUpdateState({ kind: 'checking' })
     const result = await checkForUpdate()
     if (!mounted.current || token !== requestToken.current) {
@@ -114,6 +120,7 @@ export function AboutPanel() {
   const handleCancel = (): void => {
     // 插件请求无法真正中止：递增代次后，晚到的结果会被 handleCheck 丢弃。
     requestToken.current += 1
+    setCopyState('idle')
     setUpdateState({ kind: 'idle' })
   }
 
@@ -123,7 +130,8 @@ export function AboutPanel() {
     const result = await installUpdate()
     if (!mounted.current) return
     // Windows 上安装成功后应用会被安装器退出并重启；其它平台由适配层 relaunch。
-    if (result.status === 'error' || result.status === 'disabled') setUpdateState({ kind: 'error' })
+    if (result.status === 'error') setUpdateState({ kind: 'error', detail: result.error.message })
+    else if (result.status === 'disabled') setUpdateState({ kind: 'error' })
     else setUpdateState({ kind: 'idle' })
   }
 
@@ -151,6 +159,17 @@ export function AboutPanel() {
     statusDetail = updateState.body ? truncate(updateState.body, 240) : null
   } else if (updateState.kind === 'error') {
     statusText = t.settings.updateError
+    statusDetail = updateState.detail ?? null
+  }
+
+  const handleCopyDetail = async (): Promise<void> => {
+    if (!statusDetail) return
+    try {
+      await navigator.clipboard.writeText(statusDetail)
+      setCopyState('copied')
+    } catch {
+      setCopyState('failed')
+    }
   }
 
   const updateButtonLabel =
@@ -231,10 +250,26 @@ export function AboutPanel() {
                     fontSize: 'var(--fs-caption)',
                     lineHeight: 1.6,
                     marginTop: 2,
-                    whiteSpace: 'pre-wrap'
+                    whiteSpace: 'pre-wrap',
+                    userSelect: 'text'
                   }}
                 >
                   {statusDetail}
+                </div>
+              )}
+              {updateState.kind === 'error' && statusDetail && (
+                <div style={{ marginTop: 4 }}>
+                  <button
+                    className="btn ghost"
+                    onClick={() => void handleCopyDetail()}
+                    style={{ padding: '2px 8px', fontSize: 'var(--fs-caption)' }}
+                  >
+                    {copyState === 'copied'
+                      ? t.settings.updateCopied
+                      : copyState === 'failed'
+                        ? t.settings.updateCopyFailed
+                        : t.settings.updateCopyDetail}
+                  </button>
                 </div>
               )}
             </div>

@@ -432,6 +432,9 @@ export interface TranslationSchema {
     updateDisabled: string
     updateError: string
     updateCheckedAt: (time: string) => string
+    updateCopyDetail: string
+    updateCopied: string
+    updateCopyFailed: string
     /** D4：实验性开关组（默认折叠） */
     labTitle: string
     /** D4：声音分组（音效开关 + 音量） */

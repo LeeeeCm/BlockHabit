@@ -186,13 +186,18 @@ describe('AboutPanel：版本与更新（D-20261111-069）', () => {
     expect(updaterMock.install).toHaveBeenCalledTimes(1)
   })
 
-  it('点击检查失败 → 显示失败，不伪装成已是最新', async () => {
+  it('点击检查失败 → 显示失败与脱敏详情，可复制，不伪装成已是最新', async () => {
     updaterMock.enabled = true
     updaterMock.check.mockResolvedValue({
       status: 'error',
       error: { code: 'check-failed', message: 'Error: boom' },
       checkedAt: new Date()
     } satisfies UpdateCheckResult)
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true
+    })
     const node = renderAboutNode('zh')
 
     await act(async () => {
@@ -201,8 +206,15 @@ describe('AboutPanel：版本与更新（D-20261111-069）', () => {
 
     const text = node.textContent ?? ''
     expect(text).toContain('检查失败')
+    expect(text).toContain('Error: boom')
     expect(text).not.toContain('已是最新版本')
     expect(findButton(node, '检查更新')?.disabled).toBe(false)
+
+    await act(async () => {
+      findButton(node, '复制错误详情')?.click()
+    })
+    expect(writeText).toHaveBeenCalledWith('Error: boom')
+    expect(findButton(node, '已复制')).toBeDefined()
   })
 
   it('取消检查：忽略迟到结果，不误报失败', async () => {
