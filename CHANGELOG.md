@@ -45,7 +45,7 @@ D-20261111-068（自由装饰模式）与 D-20261111-069（手动检查更新）
 - Lead 门禁：`npx tsc --noEmit` 0 错；`npm test` **104 文件 / 1090 用例全绿**；`npm run design:check` **70 条记录通过**；`npm run format:check`、`npm run check:versions` 通过；`npm run build` 成功（主入口 426.10KB / gzip 130.28KB，新增内容与更新入口 +11.5KB raw/+2.8KB gzip，无新运行时依赖除已批准的 updater/process）。
 - 第十轮独立 verifier：**PASS**（P0=0；P1=1 设计台账未提交 → 随第十轮 docs 提交消除；P2=2 已修复：更新失败详情脱敏可复制 / 内联 lang 三元改映射表；P3=6 记录为已知限制，见发布报告 §6）。verifier 亲测 tsc 0、104/1090、design 70、build 425.82/130.22、tauri build exit 0、内容包独立脚本 23/2485 + 旧 18 座 0 mismatch、浏览器四主题/移动端/装饰/更新禁用态 0 page error。
 - `npm run tauri build -- --no-bundle` 成功（含 updater/process 插件）。
-- 本轮完成后将 `chore/release-prep` 合并到 `main`（`--no-ff`，不 push、不打 tag）。
+- 已以 `--no-ff` 将 `chore/release-prep` 合并到 `main`（merge commit 8f85837，不 push、不打 tag）；随后 `4a4dfcb` 增加 `.gitattributes` 统一文本 LF，修复 Windows 检出 CRLF 导致 `design:check`/Prettier 在 main 工作区失败的问题。
 
 ## [未发布] — 2026-11-11（第九轮补充：C4 零依赖项 + C3 内容包脚手架 + D-069）
 

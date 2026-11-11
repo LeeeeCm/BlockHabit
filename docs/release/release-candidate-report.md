@@ -3,7 +3,7 @@
 - 基线：`main` @ 90d0180（63 条历史提交，本轮由分支合并，不 push、不打 tag）
 - 工作分支：`chore/release-prep`，共 **30 条提交**（本报告所在提交为最后一条 docs 提交）
 - 结论：**发布候选可用**。Lead 门禁全绿；第九轮独立 verifier PASS（前 20 条提交）；第十轮独立 verifier 状态见 §5。
-- 人类决策：2026-11-11「批准你的所有内容，继续完成，合并 main」→ D-068/D-069 转 approved 并实现、新增 D-070 approved 并实现；本地 main 以 `--no-ff` 合并。
+- 人类决策：2026-11-11「批准你的所有内容，继续完成，合并 main」→ D-068/D-069 转 approved 并实现、新增 D-070 approved 并实现；本地 main 以 `--no-ff` 合并（merge commit `8f85837`），随后 `4a4dfcb` 以 `.gitattributes` 统一 LF 换行（修复 Windows 检出 CRLF 导致的门禁平台差异）。
 - 性质：本地优先、无账号、无遥测；除已批准的 updater/process 外无新增依赖；不改视觉语言；版本仍 0.2.0。
 
 ## 1. 提交清单（main..HEAD）

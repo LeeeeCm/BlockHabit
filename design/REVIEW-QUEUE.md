@@ -173,7 +173,7 @@
 ## 11. 2026-11-11 第十轮：人类批准项全部落地（发布候选完成）
 
 - **人类决策（LeeCM）**：「批准你的所有内容，继续完成，合并 main」。据此 D-068（自由装饰模式）与 D-069（手动检查更新）由 proposed → approved 并实现；新增 D-20261111-070（内容包 v3：5 座 / 500 块 / CONTENT_VERSION=3）approved 并实现。
-- **Git**：分支 `chore/release-prep` 在第九轮 23 条基础上新增 5 条（i18n、自由装饰模式、内容包 v3、updater 骨架、第十轮文档），共 **28 条**；随后 `--no-ff` 合并到 `main`（不 push、不打 tag、版本仍 0.2.0）。工作区干净。
+- **Git**：分支 `chore/release-prep` 在第九轮 23 条基础上新增 5 条（i18n、自由装饰模式、内容包 v3、updater 骨架、第十轮文档），共 **30 条**；随后 `--no-ff` 合并到 `main`（merge commit 8f85837；随后 4a4dfcb 增加 .gitattributes 统一 LF；不 push、不打 tag、版本仍 0.2.0）。工作区干净。
 - **C1 自由装饰模式**：全落成后展台解锁装饰模式；会话内 90° 旋转（整数格点、宽深互换、越界/碰撞回退）+ 换一组植被；旋转/植被只存 React state（不写存档/settings/schema，重启复原）；移动端 44px、四主题 zh/en、reduced-motion 验证；已知限制：store 落位二次校验仍按基础 footprint（旋转仅会话态），极端拖拽回弹但无数据损坏。
 - **C3 内容包 v3**：bakery 98 / bookshop 104 / postoffice 92 / firestation 112 / watertower 94 = 500 块 → 全量 **23 座 / 2485 块**；既有 18 座 FNV 指纹锁定零改动；颜色全部复用批准 24 色板；兼容矩阵升 v4；独立 data-check 141 断言 PASS。
 - **C4 手动检查更新**：updater/process 依赖与插件骨架、AboutPanel「版本与更新」行（默认构建安全禁用并诚实说明）、零外部网络请求（单测 + 抓包）；签名密钥/发布端点/latest.json/CI secrets/代码签名/on_before_exit 存档握手仍 **blocked（人类提供后按 C4 文档 §3.7 验收）**；keyring 仍为设计+迁移方案（未接依赖、未改存储格式）。
