@@ -4,7 +4,8 @@ name: CI
 #   1) 类型检查（tsc --noEmit）
 #   2) 单元测试（vitest run）
 #   3) 设计台账（design:check：记录登记 / 状态机 / 未审批删除）
-# 三者任一失败即红灯；不产出安装包（发布走手动 workflow，见后续 F6）。
+#   4) 版本号一致性（package.json / tauri.conf.json / Cargo.toml，C4 零依赖项）
+# 任一失败即红灯；不产出安装包（发布走手动 workflow，见后续 F6）。
 
 on:
   push:
@@ -34,6 +35,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Version consistency
+        run: npm run check:versions
 
       - name: Typecheck
         run: npx tsc --noEmit
