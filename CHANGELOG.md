@@ -74,6 +74,18 @@
   `git log -p` 做密钥/token/私钥/个人邮箱扫描，结论：无敏感信息。
 - 版本 0.2.0 → **0.2.1**（`package.json` / `tauri.conf.json` / `Cargo.toml` + `Cargo.lock` 同步）。
 
+### 发布结果（已实测）
+
+- **Release `v0.2.1` 已存在**：<https://github.com/LeeeeCm/BlockHabit/releases/tag/v0.2.1>（非 draft / 非 prerelease / 即 latest），
+  tag → `8ac03c9`。
+- 资产：`BlockHabit_0.2.1_x64-setup.exe`（9,300,439 B，sha256 `0dc798f4…`，与 GitHub 记录的 digest 一致）、
+  `.exe.sig`（420 B，与 latest.json 的 signature 逐字节相同）、`BlockHabit_0.2.1_x64_en-US.msi`（11,276,288 B）、`latest.json`（1,044 B）。
+- `latest.json` 公网可访问（`releases/latest/download/latest.json` HTTP 200），version=0.2.1、url 指向 v0.2.1 资产。
+- 签名结构性校验：把 pubkey 与 .sig 解码后比对 minisign key id，均为 `c38f798bd203ed59` —— 签名确实由配置里那把公钥对应的私钥签出。
+- CI 绿：`36c5d34`、`fae5a0b`、`8ac03c9` 三次 push 的 CI 均 success（含新增 Format check / Production build）。
+- 首次 Release 触发在 `Verify updater config` 失败（该步骤未注入 secrets 环境变量），已在 `fae5a0b` 修复后重跑成功。
+- 未覆盖：真实「旧版本 → 检查更新 → 安装 → 重启」闭环需真机执行，见 `docs/release/real-device-acceptance.md` §6（T6）。
+
 ### 验证
 
 - `npx tsc --noEmit` 0 错；`npm test` **108 文件 / 1124 用例全绿**；`design:check` **73 条**；

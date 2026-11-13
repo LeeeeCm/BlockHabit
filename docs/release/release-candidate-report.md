@@ -162,3 +162,61 @@ npm run tauri build -- --no-bundle
 | 个人身份 | 提交邮箱 `git log --all --pretty=%ae` | 仅 `leecm@blockhabit.local`（本地占位，非真实邮箱） |
 | 跟踪树隐私 | `git grep` 匹配 gmail/qq/163/outlook/手机号 | 仅学术论文 URL 与 Cargo.lock 校验和，无个人信息 |
 | 生成物 | 跟踪文件中最大的 8 个 | 最大为 `scripts/fixtures/demo-state.json`（184KB **合成**演示数据，habits/checkIns 为空） |
+
+## 11. 发布结果（2026-11-14 实测，Release 已存在）
+
+### 11.1 流水线
+
+| 项 | 值 |
+| --- | --- |
+| Release workflow run | [43502649192](https://github.com/LeeeeCm/BlockHabit/actions/runs/43502649192) — **success**（首次 43502110013 在 `Verify updater config` 失败，原因：该步骤没注入 secrets 环境变量；已在 `fae5a0b` 修复并补密码非空校验） |
+| CI（8ac03c9） | [43503581531](https://github.com/LeeeeCm/BlockHabit/actions/runs/43503581531) — **success**（含新增的 Format check / Production build 两步） |
+| Release | <https://github.com/LeeeeCm/BlockHabit/releases/tag/v0.2.1>（非 draft / 非 prerelease / 即 latest） |
+| tag → commit | `v0.2.1` → `8ac03c9`（二进制构建自 `fae5a0b`；两者差异**只有** docs 与 `useSync.ts` 注释，见 `git diff fae5a0b 8ac03c9 --stat`） |
+
+### 11.2 资产与公网可访问性（本机实测）
+
+| 资产 | 大小 | 校验 |
+| --- | --- | --- |
+| `BlockHabit_0.2.1_x64-setup.exe` | 9,300,439 B | 公网下载 HTTP 200；sha256 `0dc798f451bc46a65c8cb8be7f8c4d51f2b6705e6d924527cbc805d8870f849b`，与 GitHub assets API 记录的 digest **完全一致** |
+| `BlockHabit_0.2.1_x64-setup.exe.sig` | 420 B | 内容与 `latest.json.platforms["windows-x86_64"].signature` **逐字节相同** |
+| `BlockHabit_0.2.1_x64_en-US.msi` | 11,276,288 B | 同一 Release 资产 |
+| `latest.json` | 1,044 B | `https://github.com/LeeeeCm/BlockHabit/releases/latest/download/latest.json` **HTTP 200**（跟随重定向到 release-assets），内容自洽 |
+
+`latest.json` 实际内容（节选）：
+
+```json
+{
+  "version": "0.2.1",
+  "notes": "0.2.1：58 条设计记录批量审核；…",
+  "pub_date": "2026-11-13T20:41:52Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6…",
+      "url": "https://github.com/LeeeeCm/BlockHabit/releases/download/v0.2.1/BlockHabit_0.2.1_x64-setup.exe"
+    }
+  }
+}
+```
+
+### 11.3 签名与公钥配对（本机结构性校验）
+
+把 `plugins.updater.pubkey`（base64 → minisign 公钥文本）与 Release 上的 `.sig`（base64 → minisign 签名文本）解码后比对 key id：
+
+```
+pub alg: Ed | keyid: c38f798bd203ed59
+sig alg: ED | keyid: c38f798bd203ed59     ← 完全一致
+KEYID MATCH: true
+```
+
+即 **签名产物确实由配置里那把公钥对应的私钥签出**，不是「随便签了个东西」。算法位分别是 `Ed`（公钥）/ `ED`（预哈希签名），符合 Tauri updater 约定。
+
+> 未覆盖：真正的「旧版本 → 检查更新 → 下载 → 校验 → 安装 → 重启」闭环需要安装桌面应用后人工执行，
+> 见 `real-device-acceptance.md` §6 T6；本报告只证明**发布侧**（资产、清单、签名、公网可达）全部就绪。
+
+### 11.4 一次性修掉的发布侧坑
+
+1. `Verify updater config` 步骤检查 `$env:TAURI_SIGNING_PRIVATE_KEY` 却没在 `env` 里注入 secret → 必然空值。
+   已注入两个 secrets（只做非空判断，不打印），并补 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 非空校验。
+2. 本地复现时设 `TAURI_SIGNING_PRIVATE_KEY_PATH` 会报「A public key has been found, but no private key」——
+   bundler 只认 `TAURI_SIGNING_PRIVATE_KEY`（内容）。已写进 runbook §1.3。
