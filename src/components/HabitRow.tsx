@@ -19,7 +19,7 @@ import {
   IconPin,
   IconStar,
   IconTodo,
-  IconTrash,
+  IconTrash
 } from './Icons'
 interface Props {
   habit: Habit
@@ -36,7 +36,6 @@ interface Props {
   /** DOM 锚点 id（提醒「开始打卡」跳转后滚动+高亮定位用） */
   domId?: string
 }
-
 
 /** 周频习惯本周是否已无法达标（剩余天数 < 还需次数） */
 function weekMissed(habit: Habit, weekCount: number, day: string): boolean {
@@ -68,7 +67,7 @@ export const HabitRow = memo(function HabitRow({
   onEdit,
   onNoteSaved,
   resilienceProtected,
-  domId,
+  domId
 }: Props) {
   const { isMobile } = usePlatform()
   const { t } = useI18n()
@@ -78,7 +77,7 @@ export const HabitRow = memo(function HabitRow({
   const togglePinHabit = useAppStore((s) => s.togglePinHabit)
   const recordCheckInNote = useAppStore((s) => s.recordCheckInNote)
   const { todayCheckIns, todayCheckIn, counterVal, weekCount } = useAppStore((s) =>
-    selectHabitCheckInSlice(s.checkIns, habit, day),
+    selectHabitCheckInSlice(s.checkIns, habit, day)
   )
   const session = useTimerStore((s) => s.sessions[habit.id])
   const startTimer = useTimerStore((s) => s.start)
@@ -142,7 +141,8 @@ export const HabitRow = memo(function HabitRow({
     if (habit.frequency.type === 'daily') return t.today.freqDaily
     if (habit.frequency.type === 'weekly') return t.today.freqWeekly(habit.frequency.times)
     const days = habit.frequency.days
-    if (days.length === 5 && [1, 2, 3, 4, 5].every((d) => days.includes(d))) return t.today.freqWeekdays
+    if (days.length === 5 && [1, 2, 3, 4, 5].every((d) => days.includes(d)))
+      return t.today.freqWeekdays
     if (days.length === 2 && [6, 7].every((d) => days.includes(d))) return t.today.freqWeekends
     if (days.length === 7) return t.today.freqDaily
     return t.today.freqCustom(days.map((d) => t.common.weekdaysShort[d - 1]))
@@ -157,7 +157,7 @@ export const HabitRow = memo(function HabitRow({
       ? t.today.targetMinutes(habit.targetMinutes ?? 25)
       : isCounter
         ? `${targetVal} ${habit.unit ?? ''}`
-        : t.today.instantCheckIn,
+        : t.today.instantCheckIn
   ]
     .filter(Boolean)
     .join(' · ')
@@ -265,7 +265,7 @@ export const HabitRow = memo(function HabitRow({
           ? 'color-mix(in srgb, var(--progress-green) 7%, var(--surface))'
           : running || ended
             ? 'color-mix(in srgb, var(--progress-blue) 7%, var(--surface))'
-            : undefined,
+            : undefined
       }}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('button')) return
@@ -304,7 +304,7 @@ export const HabitRow = memo(function HabitRow({
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'transform var(--dur-lg) var(--ease-bounce)',
-            transform: pulse ? 'scale(1.25) rotate(90deg)' : 'scale(1) rotate(0deg)',
+            transform: pulse ? 'scale(1.25) rotate(90deg)' : 'scale(1) rotate(0deg)'
           }}
         >
           {done ? (
@@ -322,7 +322,7 @@ export const HabitRow = memo(function HabitRow({
             className={`card-action${habit.pinned ? ' active' : ''}`}
             style={{
               ...(habit.pinned ? { color: 'var(--accent)' } : undefined),
-              ...(isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined),
+              ...(isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined)
             }}
             title={habit.pinned ? t.today.unpinHabit : t.today.pinHabit}
             aria-label={habit.pinned ? t.today.unpinHabit : t.today.pinHabit}
@@ -363,12 +363,30 @@ export const HabitRow = memo(function HabitRow({
         </div>
       </div>
 
-      <div style={{ fontSize: 'var(--fs-title)', fontWeight: 600, lineHeight: 1.35, marginTop: 6, wordBreak: 'break-word' }}>
+      <div
+        style={{
+          fontSize: 'var(--fs-title)',
+          fontWeight: 600,
+          lineHeight: 1.35,
+          marginTop: 6,
+          wordBreak: 'break-word'
+        }}
+      >
         {habit.name}
       </div>
       <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginTop: 4 }}>{meta}</div>
       {habit.note ? (
-        <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', opacity: 0.75, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div
+          style={{
+            fontSize: 'var(--fs-small)',
+            color: 'var(--ink-2)',
+            opacity: 0.75,
+            marginTop: 4,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
           {habit.note}
         </div>
       ) : null}
@@ -377,7 +395,14 @@ export const HabitRow = memo(function HabitRow({
 
       {isCounter && (
         <div style={{ marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--fs-small)' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: 'var(--fs-small)'
+            }}
+          >
             <span style={{ fontWeight: 600, color: done ? 'var(--progress-green)' : 'var(--ink)' }}>
               {counterVal} / {targetVal} {habit.unit ?? ''}
             </span>
@@ -402,7 +427,7 @@ export const HabitRow = memo(function HabitRow({
                 style={{
                   ...(isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : {}),
                   opacity: counterVal <= 0 ? 0.4 : 1,
-                  cursor: counterVal <= 0 ? 'not-allowed' : 'pointer',
+                  cursor: counterVal <= 0 ? 'not-allowed' : 'pointer'
                 }}
               >
                 -{stepVal} {habit.unit ?? ''}
@@ -425,7 +450,9 @@ export const HabitRow = memo(function HabitRow({
         <div style={{ marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
           {editingNote ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
                 <div className="micro-mood-group">
                   {(['energetic', 'hard', 'spark', 'calm'] as MicroMood[]).map((m) => (
                     <button
@@ -495,7 +522,10 @@ export const HabitRow = memo(function HabitRow({
                 gap: 6,
                 padding: '3px 6px',
                 borderRadius: 'var(--r-sm)',
-                background: todayCheckIn?.note || todayCheckIn?.mood ? 'color-mix(in srgb, var(--ink) 3%, transparent)' : 'transparent',
+                background:
+                  todayCheckIn?.note || todayCheckIn?.mood
+                    ? 'color-mix(in srgb, var(--ink) 3%, transparent)'
+                    : 'transparent'
               }}
               title={t.reflections.brickInspectEditHint}
             >
@@ -513,10 +543,14 @@ export const HabitRow = memo(function HabitRow({
                     fontWeight: 600,
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 4,
+                    gap: 4
                   }}
                 >
-                  <IconMood mood={todayCheckIn.mood as MicroMood} size={11} style={{ flexShrink: 0 }} />
+                  <IconMood
+                    mood={todayCheckIn.mood as MicroMood}
+                    size={11}
+                    style={{ flexShrink: 0 }}
+                  />
                   <span>{t.microMood[todayCheckIn.mood as MicroMood]}</span>
                 </span>
               )}
@@ -536,13 +570,17 @@ export const HabitRow = memo(function HabitRow({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: 8,
+              gap: 8
             }}
           >
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
               <span
                 className="big-num"
-                style={{ fontSize: 'var(--fs-display)', color: 'var(--progress-blue)', lineHeight: 1 }}
+                style={{
+                  fontSize: 'var(--fs-display)',
+                  color: 'var(--progress-blue)',
+                  lineHeight: 1
+                }}
               >
                 {fmtRemaining(session ? session.startedAt + sessionTargetMs - now : 0)}
               </span>
@@ -555,7 +593,9 @@ export const HabitRow = memo(function HabitRow({
               {progressRatio >= 0.8 ? (
                 <button
                   className="pill-action success"
-                  style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
+                  style={
+                    isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined
+                  }
                   onClick={(e) => {
                     e.stopPropagation()
                     performCheckIn(actualMinutes)
@@ -567,7 +607,9 @@ export const HabitRow = memo(function HabitRow({
               ) : progressRatio >= 0.2 ? (
                 <button
                   className="pill-action"
-                  style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
+                  style={
+                    isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined
+                  }
                   onClick={(e) => {
                     e.stopPropagation()
                     setShowEarlyConfirm((v) => !v)
@@ -601,7 +643,7 @@ export const HabitRow = memo(function HabitRow({
                 background: 'color-mix(in srgb, var(--ink) 5%, transparent)',
                 borderRadius: 'var(--r-md)',
                 fontSize: 'var(--fs-small)',
-                animation: 'pop-in var(--dur-xs) var(--ease-out)',
+                animation: 'pop-in var(--dur-xs) var(--ease-out)'
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -611,14 +653,22 @@ export const HabitRow = memo(function HabitRow({
               <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                 <button
                   className="pill-action"
-                  style={{ fontSize: 'var(--fs-caption)', padding: isMobile ? '10px 14px' : '3px 10px', ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined) }}
+                  style={{
+                    fontSize: 'var(--fs-caption)',
+                    padding: isMobile ? '10px 14px' : '3px 10px',
+                    ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined)
+                  }}
                   onClick={() => setShowEarlyConfirm(false)}
                 >
                   {t.common.cancel}
                 </button>
                 <button
                   className="pill-action success"
-                  style={{ fontSize: 'var(--fs-caption)', padding: isMobile ? '10px 14px' : '3px 10px', ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined) }}
+                  style={{
+                    fontSize: 'var(--fs-caption)',
+                    padding: isMobile ? '10px 14px' : '3px 10px',
+                    ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined)
+                  }}
                   onClick={() => performCheckIn(actualMinutes)}
                 >
                   {t.today.earlyFinish}
@@ -635,10 +685,12 @@ export const HabitRow = memo(function HabitRow({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 8,
+            gap: 8
           }}
         >
-          <span style={{ fontSize: 'var(--fs-body)', color: 'var(--progress-blue)', fontWeight: 600 }}>
+          <span
+            style={{ fontSize: 'var(--fs-body)', color: 'var(--progress-blue)', fontWeight: 600 }}
+          >
             {t.today.timingTooltip}
           </span>
           <button
@@ -650,7 +702,7 @@ export const HabitRow = memo(function HabitRow({
             style={{
               background: 'var(--progress-green)',
               color: 'var(--surface)',
-              ...(isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined),
+              ...(isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined)
             }}
           >
             {t.common.complete}
@@ -679,7 +731,7 @@ export const HabitRow = memo(function HabitRow({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 8,
+            gap: 8
           }}
         >
           <span
@@ -694,7 +746,7 @@ export const HabitRow = memo(function HabitRow({
                   ? 'color-mix(in srgb, var(--ink) 4%, transparent)'
                   : 'var(--bg)',
               border: done ? 'none' : '1px solid var(--line)',
-              cursor: done ? 'pointer' : 'default',
+              cursor: done ? 'pointer' : 'default'
             }}
             onClick={(e) => {
               if (done) {
@@ -702,18 +754,14 @@ export const HabitRow = memo(function HabitRow({
                 setShowUndoConfirm(true)
               }
             }}
-            title={
-              done
-                ? t.today.undoTooltip
-                : isRestDay
-                  ? t.today.restDay
-                  : undefined
-            }
+            title={done ? t.today.undoTooltip : isRestDay ? t.today.restDay : undefined}
           >
             {done ? t.today.completedPill : isRestDay ? t.today.restDay : t.today.checkInTooltip}
           </span>
           {streak > 0 && (
-            <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>{t.stats.currentStreak(streak)}</span>
+            <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
+              {t.stats.currentStreak(streak)}
+            </span>
           )}
         </div>
       )}

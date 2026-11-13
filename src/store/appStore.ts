@@ -13,7 +13,7 @@ import type {
   PlacedBlock,
   ShowcasePlacement,
   Theme,
-  UndoResult,
+  UndoResult
 } from '../types'
 import { canCheckIn, canClaimDay, habitMetOnDay } from '../logic/checkin'
 import { REPAIR_MAX, refreshMonthlyAllowance, repairBricksForStreak } from '../logic/repairBricks'
@@ -24,7 +24,7 @@ import {
   liveCheckInsView,
   buildsMatchFacts,
   removeBlocksAndCompact,
-  BLUEPRINT_CAPACITY,
+  BLUEPRINT_CAPACITY
 } from '../logic/builds'
 import { blueprints, getBlueprint } from '../logic/blueprints'
 import { canPlaceModel, findNextAvailablePlacement } from '../logic/showcase'
@@ -45,7 +45,7 @@ function reconcileCompletion(
   affectedBpIds: Set<string>,
   nextBuilds: PlacedBlock[],
   completedBlueprintIds: string[],
-  showcase: ShowcasePlacement[],
+  showcase: ShowcasePlacement[]
 ): { completed: string[]; showcase: ShowcasePlacement[] } {
   let completed = completedBlueprintIds
   let nextShowcase = showcase
@@ -88,14 +88,14 @@ function defaultState(): AppState {
       miniWidgetSize: 'standard',
       miniWidgetAlwaysOnTop: false,
       enableGyroscope: false,
-      enableXRayInspection: false,
+      enableXRayInspection: false
     },
     dayClaims: [],
     deletedDayClaims: [],
     repairBricks: 0,
     showcasePlacements: [],
     foundationNotes: {},
-    reminderLog: {},
+    reminderLog: {}
   }
 }
 
@@ -103,7 +103,22 @@ interface AppActions {
   addHabit(name: string, frequency: Habit['frequency'], extra?: HabitExtra): Habit
   updateHabit(
     id: string,
-    patch: Partial<Pick<Habit, 'name' | 'frequency' | 'period' | 'reminder' | 'targetMinutes' | 'targetValue' | 'unit' | 'step' | 'category' | 'pinned' | 'note'>>,
+    patch: Partial<
+      Pick<
+        Habit,
+        | 'name'
+        | 'frequency'
+        | 'period'
+        | 'reminder'
+        | 'targetMinutes'
+        | 'targetValue'
+        | 'unit'
+        | 'step'
+        | 'category'
+        | 'pinned'
+        | 'note'
+      >
+    >
   ): void
   archiveHabit(id: string): void
   /** 永久删除习惯及其打卡记录 */
@@ -113,12 +128,24 @@ interface AppActions {
   /** 置顶/取消置顶习惯 */
   togglePinHabit(id: string): void
   /** 记录或修改某次打卡的笔记/随笔反思及微状态、星标（mood 为 null 时清除微状态） */
-  recordCheckInNote(checkInId: string, note: string, mood?: MicroMood | null, starred?: boolean): void
+  recordCheckInNote(
+    checkInId: string,
+    note: string,
+    mood?: MicroMood | null,
+    starred?: boolean
+  ): void
   toggleCheckInStar(checkInId: string): void
   /** 记录蓝图落成奠基石铭言 */
   setFoundationNote(blueprintId: string, noteText: string): void
   /** 单个任务打卡：记录完成，并为当前蓝图掉落 1 块积木（支持计数步进与随笔笔记、微状态、星标） */
-  checkIn(habitId: string, actualMinutes?: number, note?: string, counterDelta?: number, mood?: MicroMood, starred?: boolean): CheckInResult
+  checkIn(
+    habitId: string,
+    actualMinutes?: number,
+    note?: string,
+    counterDelta?: number,
+    mood?: MicroMood,
+    starred?: boolean
+  ): CheckInResult
   uncheckIn(habitId: string, day?: string): UndoResult
   /** 每日大满贯打卡：全部任务完成后领取额外里程碑奖励积木 */
   checkInDay(): ClaimDayResult
@@ -197,11 +224,11 @@ export function applyDemoCastleState(): void {
       index: i,
       placedAt: new Date(Date.now() - (N - i) * 86_400_000).toISOString(),
       fromHabitId: '__day__',
-      bonus: false,
+      bonus: false
     })),
     completedBlueprintIds: ['castle'],
     // 演示模式不读盘：直接视作已水合，避免启动水合门挡住演示页（D-20261110-056）
-    hydrated: true,
+    hydrated: true
   })
 }
 
@@ -216,7 +243,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       frequency,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      ...extra,
+      ...extra
     }
     set((s) => ({ habits: [...s.habits, habit] }))
     return habit
@@ -225,8 +252,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   updateHabit(id, patch) {
     set((s) => ({
       habits: s.habits.map((h) =>
-        h.id === id ? { ...h, ...patch, updatedAt: new Date().toISOString() } : h,
-      ),
+        h.id === id ? { ...h, ...patch, updatedAt: new Date().toISOString() } : h
+      )
     }))
     requestFlushNow()
   },
@@ -236,16 +263,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       habits: s.habits.map((h) =>
         h.id === id && !h.archivedAt
           ? { ...h, archivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
-          : h,
-      ),
+          : h
+      )
     }))
   },
 
   restoreHabit(id) {
     set((s) => ({
       habits: s.habits.map((h) =>
-        h.id === id ? { ...h, archivedAt: undefined, updatedAt: new Date().toISOString() } : h,
-      ),
+        h.id === id ? { ...h, archivedAt: undefined, updatedAt: new Date().toISOString() } : h
+      )
     }))
   },
 
@@ -253,14 +280,18 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const { habits, checkIns, builds, completedBlueprintIds, dayClaims } = get()
     const remainingCheckIns = checkIns.filter((c) => c.habitId !== id)
     const affectedBpIds = new Set(
-      builds.filter((b) => b.fromHabitId === id).map((b) => b.blueprintId),
+      builds.filter((b) => b.fromHabitId === id).map((b) => b.blueprintId)
     )
-    const nextBuilds = rebuildBuilds(liveCheckInsView(remainingCheckIns), dayClaims, BLUEPRINT_CAPACITY)
+    const nextBuilds = rebuildBuilds(
+      liveCheckInsView(remainingCheckIns),
+      dayClaims,
+      BLUEPRINT_CAPACITY
+    )
     const { completed: nextCompleted, showcase: nextShowcase } = reconcileCompletion(
       affectedBpIds,
       nextBuilds,
       completedBlueprintIds,
-      get().showcasePlacements ?? [],
+      get().showcasePlacements ?? []
     )
     // 清理该习惯的提醒处置记录，避免 reminderLog 随习惯删除无限增长
     const reminderLog = { ...(get().reminderLog ?? {}) }
@@ -273,7 +304,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       builds: nextBuilds,
       completedBlueprintIds: nextCompleted,
       showcasePlacements: nextShowcase,
-      reminderLog,
+      reminderLog
     })
     requestFlushNow()
   },
@@ -281,8 +312,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   togglePinHabit(id) {
     set((s) => ({
       habits: s.habits.map((h) =>
-        h.id === id ? { ...h, pinned: !h.pinned, updatedAt: new Date().toISOString() } : h,
-      ),
+        h.id === id ? { ...h, pinned: !h.pinned, updatedAt: new Date().toISOString() } : h
+      )
     }))
   },
 
@@ -293,30 +324,36 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           ? {
               ...c,
               note: note.trim() || undefined,
-              mood: mood === null ? undefined : (mood !== undefined ? mood : c.mood),
-              starred: starred !== undefined ? starred : c.starred,
+              mood: mood === null ? undefined : mood !== undefined ? mood : c.mood,
+              starred: starred !== undefined ? starred : c.starred
             }
-          : c,
-      ),
+          : c
+      )
     }))
   },
   toggleCheckInStar(checkInId) {
     set((s) => ({
-      checkIns: s.checkIns.map((c) =>
-        c.id === checkInId ? { ...c, starred: !c.starred } : c,
-      ),
+      checkIns: s.checkIns.map((c) => (c.id === checkInId ? { ...c, starred: !c.starred } : c))
     }))
   },
   setFoundationNote(blueprintId, noteText) {
     set((s) => ({
       foundationNotes: {
         ...(s.foundationNotes ?? {}),
-        [blueprintId]: noteText.trim(),
-      },
+        [blueprintId]: noteText.trim()
+      }
     }))
   },
   checkIn(habitId, actualMinutes, note, counterDelta, mood, starred): CheckInResult {
-    const { habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, repairBricks, showcasePlacements } = get()
+    const {
+      habits,
+      checkIns,
+      builds,
+      activeBlueprintId,
+      completedBlueprintIds,
+      repairBricks,
+      showcasePlacements
+    } = get()
     const day = todayKey()
     const verdict = canCheckIn(habits, checkIns, habitId, day)
     if (!verdict.ok) return { bonus: false, complete: false, reason: verdict.reason }
@@ -349,7 +386,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     // 连击里程碑奖励（B1）：本次打卡后该习惯的连续天数每满 7 天，掉落的这块积木变为点缀色 bonus 块。
     // currentStreak 只按「习惯 × 日期」计数，与打卡记录的其它字段无关，故用最小占位记录参与计算。
     const streakAfter = habit
-      ? currentStreak(habit, [...checkIns, { id: blockId, habitId, date: day, at: '' } as CheckIn], new Date())
+      ? currentStreak(
+          habit,
+          [...checkIns, { id: blockId, habitId, date: day, at: '' } as CheckIn],
+          new Date()
+        )
       : 0
     const isBonus = Boolean(slot) && awardBlock(streakAfter)
     // F8：连击每满 30 天额外奖励 1 块修复积木（与月度额度独立叠加）
@@ -365,8 +406,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           index: placedCount,
           placedAt: new Date().toISOString(),
           fromHabitId: habitId,
-          bonus: isBonus,
-        },
+          bonus: isBonus
+        }
       ]
       const nowComplete = isComplete(blueprint.blocks, placedCount + 1)
       complete = !wasComplete && nowComplete
@@ -374,7 +415,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         nextCompleted = [...completedBlueprintIds, activeBlueprintId]
         nextRepair = Math.min(REPAIR_MAX, nextRepair + 1) // 落成奖励 1 块修复积木（F8 上限放宽到 4 块）
         if (!nextPlacements.some((p) => p.blueprintId === activeBlueprintId)) {
-          const placement = findNextAvailablePlacement(activeBlueprintId, nextPlacements, blueprints)
+          const placement = findNextAvailablePlacement(
+            activeBlueprintId,
+            nextPlacements,
+            blueprints
+          )
           // 展台已满：跳过自动上展台（不阻塞落成）
           if (placement) nextPlacements = [...nextPlacements, placement]
         }
@@ -395,7 +440,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       note: note?.trim() || undefined,
       mood,
       starred,
-      bonus: isBonus ? true : undefined,
+      bonus: isBonus ? true : undefined
     }
 
     set({
@@ -403,7 +448,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       builds: nextBuilds,
       completedBlueprintIds: nextCompleted,
       repairBricks: nextRepair,
-      showcasePlacements: nextPlacements,
+      showcasePlacements: nextPlacements
     })
     requestFlushNow()
     return { placed: slot ?? undefined, bonus: isBonus, complete, checkInId: entry.id }
@@ -412,7 +457,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   uncheckIn(habitId, day) {
     const { habits, checkIns, builds, dayClaims, completedBlueprintIds } = get()
     const targetDay = day ?? todayKey()
-    const targetCheckIns = checkIns.filter((c) => !c.deletedAt && c.habitId === habitId && c.date === targetDay)
+    const targetCheckIns = checkIns.filter(
+      (c) => !c.deletedAt && c.habitId === habitId && c.date === targetDay
+    )
     if (targetCheckIns.length === 0) {
       return { ok: false, habitId, reason: 'no-checkin' }
     }
@@ -420,9 +467,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const nowIso = new Date().toISOString()
     // 墓碑化打卡（不物理删除）：同步合并时删除胜出，防止撤销被并集复活
     const targetIds = new Set(targetCheckIns.map((c) => c.id))
-    const nextCheckIns = checkIns.map((c) => (targetIds.has(c.id) ? { ...c, deletedAt: nowIso } : c))
+    const nextCheckIns = checkIns.map((c) =>
+      targetIds.has(c.id) ? { ...c, deletedAt: nowIso } : c
+    )
     const removedBlockIds = new Set(
-      targetCheckIns.map((c) => c.placedBlockId).filter((id): id is string => Boolean(id)),
+      targetCheckIns.map((c) => c.placedBlockId).filter((id): id is string => Boolean(id))
     )
     const removedBlock = removedBlockIds.size > 0
 
@@ -467,7 +516,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       affectedBpIds,
       nextBuilds,
       completedBlueprintIds,
-      get().showcasePlacements ?? [],
+      get().showcasePlacements ?? []
     )
 
     set({
@@ -476,7 +525,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       completedBlueprintIds: nextCompleted,
       dayClaims: nextClaims,
       deletedDayClaims: nextDeletedClaims,
-      showcasePlacements: nextShowcase,
+      showcasePlacements: nextShowcase
     })
     requestFlushNow()
 
@@ -514,12 +563,12 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       id: uid(),
       habitId,
       date,
-      at: new Date().toISOString(),
+      at: new Date().toISOString()
     }
     set({
       checkIns: [...checkIns, entry],
       repairBricks: count - 1,
-      repairBrickMonth: allowance.month,
+      repairBrickMonth: allowance.month
     })
     requestFlushNow()
     return { ok: true }
@@ -528,7 +577,13 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   updateShowcasePlacement(blueprintId, gridX, gridY, rotations) {
     const { showcasePlacements } = get()
     const placements = showcasePlacements ?? []
-    const ok = canPlaceModel({ blueprintId, gridX, gridY }, placements, blueprints, undefined, rotations)
+    const ok = canPlaceModel(
+      { blueprintId, gridX, gridY },
+      placements,
+      blueprints,
+      undefined,
+      rotations
+    )
     if (!ok) return false
     const next = placements.some((p) => p.blueprintId === blueprintId)
       ? placements.map((p) => (p.blueprintId === blueprintId ? { blueprintId, gridX, gridY } : p))
@@ -538,7 +593,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
   checkInDay(): ClaimDayResult {
-    const { habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, dayClaims, repairBricks, showcasePlacements } = get()
+    const {
+      habits,
+      checkIns,
+      builds,
+      activeBlueprintId,
+      completedBlueprintIds,
+      dayClaims,
+      repairBricks,
+      showcasePlacements
+    } = get()
     const day = todayKey()
     // 全勤判定基于有效打卡（排除墓碑），防止"打卡→领块→撤销→再领"刷块
     const verdict = canClaimDay(habits, liveCheckInsView(checkIns), dayClaims, day)
@@ -570,8 +634,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           index: placedCount,
           placedAt: claimAt,
           fromHabitId: '__day__',
-          bonus: true, // 全勤专属奖励块自带高亮/点缀
-        },
+          bonus: true // 全勤专属奖励块自带高亮/点缀
+        }
       ]
       const nowComplete = isComplete(blueprint.blocks, placedCount + 1)
       complete = !wasComplete && nowComplete
@@ -579,7 +643,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         nextCompleted = [...completedBlueprintIds, activeBlueprintId]
         nextRepair = Math.min(2, nextRepair + 1)
         if (!nextPlacements.some((p) => p.blueprintId === activeBlueprintId)) {
-          const placement = findNextAvailablePlacement(activeBlueprintId, nextPlacements, blueprints)
+          const placement = findNextAvailablePlacement(
+            activeBlueprintId,
+            nextPlacements,
+            blueprints
+          )
           // 展台已满：跳过自动上展台（不阻塞落成）
           if (placement) nextPlacements = [...nextPlacements, placement]
         }
@@ -588,14 +656,14 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
     const nextClaims: DayClaim[] = [
       ...dayClaims,
-      { date: day, claimedAt: claimAt, blockId, blueprintId: activeBlueprintId },
+      { date: day, claimedAt: claimAt, blockId, blueprintId: activeBlueprintId }
     ]
     set({
       dayClaims: nextClaims,
       builds: nextBuilds,
       completedBlueprintIds: nextCompleted,
       repairBricks: nextRepair,
-      showcasePlacements: nextPlacements,
+      showcasePlacements: nextPlacements
     })
     requestFlushNow()
     return { placed: slot ?? undefined, bonus: isStreakBonus, complete }
@@ -611,8 +679,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set({
       reminderLog: {
         ...(reminderLog ?? {}),
-        [habitId]: { date: todayKey(), action: 'skipped' },
-      },
+        [habitId]: { date: todayKey(), action: 'skipped' }
+      }
     })
   },
   updateSettings(patch) {
@@ -645,7 +713,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     } catch {
       return false
     }
-  },
+  }
 }))
 
 /** 启动时恢复状态并挂载防抖持久化（StrictMode 下可能调用两次，需幂等） */
@@ -672,14 +740,21 @@ export async function initPersistence(adapter: StorageAdapter): Promise<void> {
       // 此时若照常订阅持久化，用户第一次交互就会把默认空态写回磁盘、永久覆盖真实存档。
       suspendPersistence = true
       useAppStore.setState({ hydrated: true, loadFailed: true })
-      if (typeof console !== 'undefined') console.warn('[persistence] 读档失败，已挂起自动保存：', res.detail)
+      if (typeof console !== 'undefined')
+        console.warn('[persistence] 读档失败，已挂起自动保存：', res.detail)
     } else if (res.corruptRecovered) {
       // 存档损坏已备份：照常以空态启动（可继续保存新数据），但必须提示原档去向
       useAppStore.setState({ hydrated: true, dataCorrupt: true })
     } else if (res.state) {
       const saved = res.state
-      const lang = saved.settings.language ?? (typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en')
-      useAppStore.setState({ ...saved, settings: { ...saved.settings, language: lang }, hydrated: true })
+      const lang =
+        saved.settings.language ??
+        (typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en')
+      useAppStore.setState({
+        ...saved,
+        settings: { ...saved.settings, language: lang },
+        hydrated: true
+      })
     } else {
       useAppStore.setState({ hydrated: true })
     }

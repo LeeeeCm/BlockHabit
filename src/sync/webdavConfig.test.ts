@@ -14,7 +14,7 @@ function rawConfig(): WebDavConfig {
     endpoint: 'https://cloud.example.com/remote.php/dav/files/me/BlockHabit/',
     username: 'me',
     password: 'app-password-123',
-    enabled: true,
+    enabled: true
   }
 }
 
@@ -51,7 +51,7 @@ describe('WebDAV 配置落盘 / rememberPassword', () => {
   it('读取旧配置时若已关闭记住密码，则丢弃磁盘上的遗留密码', () => {
     localStorage.setItem(
       KEY,
-      JSON.stringify({ ...rawConfig(), rememberPassword: false, password: 'legacy-password' }),
+      JSON.stringify({ ...rawConfig(), rememberPassword: false, password: 'legacy-password' })
     )
     const loaded = loadWebDavConfig()
     expect(loaded.rememberPassword).toBe(false)
@@ -64,7 +64,7 @@ describe('WebDAV 配置落盘 / rememberPassword', () => {
     expect(persisted.password).toBe('')
     expect(config.password).toBe('app-password-123')
     expect(persistableWebDavConfig({ ...rawConfig(), rememberPassword: true }).password).toBe(
-      'app-password-123',
+      'app-password-123'
     )
   })
 })

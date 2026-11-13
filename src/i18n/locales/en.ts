@@ -12,7 +12,7 @@ const MONTH_NAMES = [
   'Sep',
   'Oct',
   'Nov',
-  'Dec',
+  'Dec'
 ]
 
 export const en: TranslationSchema = {
@@ -35,17 +35,17 @@ export const en: TranslationSchema = {
     weekdayLabel: (w) => w,
     timeMinutes: (m) => `${m} min`,
     dismiss: 'Dismiss sheet',
-    shortcut: (label, key) => `${label} (${key})`,
+    shortcut: (label, key) => `${label} (${key})`
   },
   a11y: {
     unfinishedHabits: 'Unfinished habits',
-    bottomNav: 'Bottom navigation',
+    bottomNav: 'Bottom navigation'
   },
   nav: {
     today: 'Today',
     build: 'Build',
     showcase: 'Showcase',
-    stats: 'Stats',
+    stats: 'Stats'
   },
   titlebar: {
     settings: 'Settings',
@@ -53,7 +53,7 @@ export const en: TranslationSchema = {
     minimize: 'Minimize',
     maximize: 'Maximize',
     restore: 'Restore',
-    close: 'Close',
+    close: 'Close'
   },
   today: {
     emptyHint: (bp) =>
@@ -71,7 +71,7 @@ export const en: TranslationSchema = {
       any: 'Any Time',
       morning: 'Morning',
       afternoon: 'Afternoon',
-      evening: 'Evening',
+      evening: 'Evening'
     },
     restDay: 'Rest Day',
     resilienceContinuation: 'Streak protected · resumed after rest',
@@ -109,26 +109,29 @@ export const en: TranslationSchema = {
       bonusHabitName: 'Daily All-Clear',
       deletedHabitName: 'Deleted habit',
       claimBtn: 'Claim Bonus',
-      claimed: 'Claimed',
+      claimed: 'Claimed'
     },
     view3dModel: 'View 3D Model in Build page',
     filterAll: 'All',
     activeCompleteNoBlock: 'This blueprint is complete — head to Build to start the next one',
-    allBlueprintsDone: 'All blueprints are complete — check-ins are still recorded, but no new bricks drop',
+    allBlueprintsDone:
+      'All blueprints are complete — check-ins are still recorded, but no new bricks drop',
     startJourney: 'Begin Your Voxel Journey',
     onboardingStep1Title: 'Create your first habit',
-    onboardingStep1Body: 'Start with something that takes 30 seconds: a glass of water, a page of a book.',
+    onboardingStep1Body:
+      'Start with something that takes 30 seconds: a glass of water, a page of a book.',
     onboardingStep2Title: 'Check in once',
     onboardingStep2Body: 'Your first brick drops onto the desk, at the place that day belongs to.',
     onboardingStep3Title: 'Watch it grow',
-    onboardingStep3Body: 'One more day, one more brick. When the desk is full, the next piece begins.',
+    onboardingStep3Body:
+      'One more day, one more brick. When the desk is full, the next piece begins.',
     onboardingSeeBuild: 'See the build page',
     inRestPeriod: 'Weathering (Check in to resume)',
     unpinHabit: 'Unpin',
     pinHabit: 'Pin to top',
     addReflectionPlaceholder: 'Add reflection note...',
     focusedMinutes: (min) => `Focused ${min} min`,
-    timerDoneNotify: (name) => `"${name}" focus completed! Click card to check in`,
+    timerDoneNotify: (name) => `"${name}" focus completed! Click card to check in`
   },
   blockDrop: {
     plusOne: '+1 Block',
@@ -136,7 +139,8 @@ export const en: TranslationSchema = {
     skip: 'Skip (Esc)',
     progress: (p, t, pct) => `Progress ${p} / ${t} blocks (${pct}%)`,
     completedBlueprint: (name) => `"${name}" Completed!`,
-    firstBlockHint: 'Your first brick — it now sits on the desk in the Build page, and every brick after it will stack up beside it.',
+    firstBlockHint:
+      'Your first brick — it now sits on the desk in the Build page, and every brick after it will stack up beside it.'
   },
   build: {
     blocksCount: (p, t) => `${p} / ${t} blocks`,
@@ -146,7 +150,8 @@ export const en: TranslationSchema = {
     rotCw: 'Rotate 90° CW',
     nextTargetPrompt: (name) => `Next building target: ${name}`,
     allDoneBadge: 'All complete',
-    allDoneHint: (total) => `All ${total} blueprints are complete. Check-ins are still recorded, but there are no new bricks to drop; you can revisit any blueprint or rearrange models on the Showcase page.`,
+    allDoneHint: (total) =>
+      `All ${total} blueprints are complete. Check-ins are still recorded, but there are no new bricks to drop; you can revisit any blueprint or rearrange models on the Showcase page.`,
     startBuildBtn: 'Start Building',
     ceremonyTitle: (name) => `"${name}" Completed!`,
     ceremonySubtitle: (total) => `Built with ${total} discipline blocks`,
@@ -159,10 +164,10 @@ export const en: TranslationSchema = {
     ambientHint: 'Time-aware ambient lighting: blocks shift with dawn and dusk',
     xray: {
       toggleTooltip: 'Toggle X-Ray Inspection',
-      btn: 'X-Ray',
+      btn: 'X-Ray'
     },
     foundationGuide: (name) =>
-      `The dashed border marks the foundation for "${name}".\nComplete check-ins in "Today" to drop blocks layer by layer.`,
+      `The dashed border marks the foundation for "${name}".\nComplete check-ins in "Today" to drop blocks layer by layer.`
   },
   showcase: {
     title: 'Showcase Island',
@@ -179,7 +184,7 @@ export const en: TranslationSchema = {
     rotateRight: 'Rotate right 90°',
     rotateBlocked: 'Rotation would overlap another model — reverted',
     ecoReshuffle: 'Reshuffle greenery',
-    ecoReshuffled: 'Greenery reshuffled (this session only)',
+    ecoReshuffled: 'Greenery reshuffled (this session only)'
   },
   stats: {
     title: 'Stats',
@@ -203,8 +208,7 @@ export const en: TranslationSchema = {
     repairBeforeCreationToast: 'Cannot repair a date before this habit was created',
     repairFailToast: 'Repair failed, please try again',
     repairLimitToast: 'You can only backfill within the past 30 days',
-    repairNoBricksToast:
-      'No repair blocks available. Complete a full building to earn 1!',
+    repairNoBricksToast: 'No repair blocks available. Complete a full building to earn 1!',
     heatmapDone: 'Completed',
     heatmapLabel: '13-week completion calendar (arrow keys to move, Home/End for week edges)',
     heatmapRepair: 'Click to repair',
@@ -225,12 +229,12 @@ export const en: TranslationSchema = {
       bestStreak: 'Best',
       totalCheckIns: 'Total',
       hours: (h) => `${h}h`,
-      minutes: (m) => `${m}m`,
+      minutes: (m) => `${m}m`
     },
     recentReflections: 'Recent Reflections',
     exportMd: 'Export MD',
     allMoods: 'All Moods',
-    loadMoreReflections: (cur, total) => `Load More (${cur}/${total})`,
+    loadMoreReflections: (cur, total) => `Load More (${cur}/${total})`
   },
   habitDialog: {
     newTitle: 'New Habit',
@@ -266,7 +270,8 @@ export const en: TranslationSchema = {
     reminderOn: 'On',
     reminderStart: 'Start',
     reminderEnd: 'End',
-    reminderHint: 'Get reminded at the start time; with an end time, expect one nudge near the deadline',
+    reminderHint:
+      'Get reminded at the start time; with an end time, expect one nudge near the deadline',
     reminderEndInvalid: 'End time must be after start time',
     durationLabel: 'Target Duration',
     durationUnit: 'minutes',
@@ -274,7 +279,7 @@ export const en: TranslationSchema = {
     fewerSettings: 'Hide more settings',
     noteLabel: 'Note',
     notePlaceholder: 'Why do you want to build this habit?',
-    archiveBtn: 'Archive',
+    archiveBtn: 'Archive'
   },
   gallery: {
     title: 'Blueprint Gallery',
@@ -282,13 +287,12 @@ export const en: TranslationSchema = {
     inProgress: 'In Progress',
     locked: 'Locked',
     completePreviousFirst: 'Please complete the previous building first',
-    totalBlocks: (total) => `${total} blocks`,
+    totalBlocks: (total) => `${total} blocks`
   },
   polaroid: {
     modalTitle: 'Building Memorial Polaroid',
     cardTitle: (name) => `"${name}"`,
-    cardDetails: (blocks, date) =>
-      `Built with ${blocks} blocks · Completion Memorial · ${date}`,
+    cardDetails: (blocks, date) => `Built with ${blocks} blocks · Completion Memorial · ${date}`,
     savePng: 'Save PNG',
     copyImage: 'Copy Image',
     copiedToast: 'Copied Polaroid card to clipboard!',
@@ -300,7 +304,7 @@ export const en: TranslationSchema = {
     modalTitleBack: 'Builder Journal (Back)',
     flipTooltip: 'Flip Card',
     viewFront: 'View Front',
-    viewBack: 'View Back (Journal)',
+    viewBack: 'View Back (Journal)'
   },
   settings: {
     title: 'Settings',
@@ -343,7 +347,8 @@ export const en: TranslationSchema = {
       providerJianguoyun: 'Jianguoyun',
       providerSynology: 'Synology',
       providerGeneric: 'Generic',
-      appPasswordHint: 'Use an app password, not your login password (login passwords fail when two-factor authentication is enabled).',
+      appPasswordHint:
+        'Use an app password, not your login password (login passwords fail when two-factor authentication is enabled).',
       testButton: 'Test connection',
       testing: 'Checking...',
       testSuccess: 'Connection works. Ready to sync.',
@@ -354,24 +359,34 @@ export const en: TranslationSchema = {
       stageAuth: 'Authentication',
       stageReadWrite: 'Read and write',
       stageCleanup: 'Cleanup',
-      diagnoseAuthHint: 'Authentication failed: check the username and app password. Accounts with two-factor authentication must use an app password.',
-      diagnoseTlsHint: 'Untrusted certificate: verify the server address, or contact the server administrator.',
-      diagnoseDirHint: 'Target folder does not exist: create a BlockHabit folder on the server and try again.',
-      diagnoseHttpHint: 'Only https addresses are supported (http is blocked by the app security policy).',
-      browserTestHint: 'Connection check runs in the desktop app (the browser preview is limited by CORS).',
+      diagnoseAuthHint:
+        'Authentication failed: check the username and app password. Accounts with two-factor authentication must use an app password.',
+      diagnoseTlsHint:
+        'Untrusted certificate: verify the server address, or contact the server administrator.',
+      diagnoseDirHint:
+        'Target folder does not exist: create a BlockHabit folder on the server and try again.',
+      diagnoseHttpHint:
+        'Only https addresses are supported (http is blocked by the app security policy).',
+      browserTestHint:
+        'Connection check runs in the desktop app (the browser preview is limited by CORS).',
       copyError: 'Copy error details',
       copiedToast: 'Copied',
       cancelTest: 'Cancel test',
       testCancelled: 'Connection check cancelled',
-      testCancelledCleanupFail: 'Cancelled; the temporary file may not have been cleaned up — run the check again to clean it up.',
+      testCancelledCleanupFail:
+        'Cancelled; the temporary file may not have been cleaned up — run the check again to clean it up.',
       rememberPassword: 'Remember password',
       rememberPasswordOn: 'Remember',
       rememberPasswordOff: "Don't remember",
-      rememberPasswordHintOn: 'The password is stored on this device (separate from your archive) so auto-sync keeps working after a restart.',
-      rememberPasswordHintOff: 'The password is kept only in memory for this run; re-enter it after restarting to sync.',
-      rememberPasswordHintOs: 'Saved in Windows Credential Manager — neither the archive nor the config file contains your password.',
+      rememberPasswordHintOn:
+        'The password is stored on this device (separate from your archive) so auto-sync keeps working after a restart.',
+      rememberPasswordHintOff:
+        'The password is kept only in memory for this run; re-enter it after restarting to sync.',
+      rememberPasswordHintOs:
+        'Saved in Windows Credential Manager — neither the archive nor the config file contains your password.',
       passwordStoredPlaceholder: 'Saved — leave blank to keep using it',
-      passwordKeepHint: 'A password is saved. Leave blank to keep it, or type a new one to replace it.',
+      passwordKeepHint:
+        'A password is saved. Leave blank to keep it, or type a new one to replace it.'
     },
     shortcutsDetail: '1~4 Switch Tabs · Ctrl/Cmd+N New Habit · Esc Close Dialog',
     soundLabel: 'Procedural Audio (Web Audio Synthesized)',
@@ -418,7 +433,7 @@ export const en: TranslationSchema = {
       cors: 'Blocked by cross-origin policy: in the browser preview (npm run dev), requests are subject to CORS and standard WebDAV servers (e.g. Nextcloud) do not send CORS headers by default. The desktop app uses a native HTTP channel and is not affected; retry in the desktop app, or move data with Export / Import JSON.',
       conflict: 'Sync conflict after retry. Please sync again in a moment',
       noCollection: 'WebDAV directory does not exist on the server',
-      http: 'Server returned an error. Check the WebDAV path',
+      http: 'Server returned an error. Check the WebDAV path'
     },
     assetSummaryTitle: 'Discipline Asset Summary',
     assetSummaryDetail: (habits, buildings) =>
@@ -445,7 +460,8 @@ export const en: TranslationSchema = {
     updateLatest: 'You are up to date',
     updateAvailable: (version) => `New version available: ${version}`,
     updateDownload: 'Download & install',
-    updateDisabled: 'Update channel is not configured yet (signing key and release endpoint required)',
+    updateDisabled:
+      'Update channel is not configured yet (signing key and release endpoint required)',
     updateError: 'Check failed. Please try again later.',
     updateCheckedAt: (time) => `Last checked ${time}`,
     updateCopyDetail: 'Copy error details',
@@ -454,11 +470,13 @@ export const en: TranslationSchema = {
     labTitle: 'Lab',
     soundGroupTitle: 'Sound',
     diagnosticsLabel: 'Diagnostics',
-    diagnosticsHint: 'Export a local diagnostics text: crash log, data volume, frame sampling. Generated on this device, never uploaded.',
+    diagnosticsHint:
+      'Export a local diagnostics text: crash log, data volume, frame sampling. Generated on this device, never uploaded.',
     diagnosticsExport: 'Export diagnostics',
     diagnosticsToast: 'Diagnostics exported to your downloads folder',
     diagnosticsFailToast: 'Export failed, please try again',
-    reminderAutostartHint: 'Reminders only work while the app is running. To be reminded after closing it, enable auto-start and let it stay in the background.',
+    reminderAutostartHint:
+      'Reminders only work while the app is running. To be reminded after closing it, enable auto-start and let it stay in the background.',
     ambientLightingLabel: 'Time-Adaptive Lighting',
     ambientLightingOn: 'Dynamic',
     ambientLightingOff: 'Fixed',
@@ -466,7 +484,8 @@ export const en: TranslationSchema = {
     gentleDecayLabel: 'Resilience (Anti-Streak Anxiety)',
     gentleDecayOn: 'Gentle Decay',
     gentleDecayOff: 'Hardcore',
-    gentleDecayHint: 'Missed days frost blocks with mist without streak-shaming; clear by checking in',
+    gentleDecayHint:
+      'Missed days frost blocks with mist without streak-shaming; clear by checking in',
     ecoPropsLabel: 'Voxel Micro-Ecosystem',
     ecoPropsOn: 'Living Flora',
     ecoPropsOff: 'Pure Blocks',
@@ -496,11 +515,12 @@ export const en: TranslationSchema = {
     miniAlwaysOnTopLabel: 'Float above other windows',
     miniAlwaysOnTopOn: 'On',
     miniAlwaysOnTopOff: 'Off',
-    miniAlwaysOnTopHint: 'When on, the widget floats above other windows. You can turn it off anytime.',
+    miniAlwaysOnTopHint:
+      'When on, the widget floats above other windows. You can turn it off anytime.',
     reminderToggleLabel: 'Habit Reminders',
     reminderToggleOn: 'On',
     reminderToggleOff: 'Do Not Disturb',
-    reminderToggleHint: 'Nudge you at the scheduled time (app must be running)',
+    reminderToggleHint: 'Nudge you at the scheduled time (app must be running)'
   },
   reminder: {
     startBody: (name) => `Time to start "${name}"`,
@@ -517,7 +537,7 @@ export const en: TranslationSchema = {
     skipBtn: 'Skip today',
     skippedToast: "Won't remind you about this habit today",
     bannerTitle: (count) => `${count} habit${count > 1 ? 's' : ''} waiting to start`,
-    bannerHint: 'The bricks are waiting',
+    bannerHint: 'The bricks are waiting'
   },
   mini: {
     expandTooltip: 'Expand Window',
@@ -528,7 +548,7 @@ export const en: TranslationSchema = {
     habitCheckInTip: (name) => `Click to complete "${name}"`,
     todayLabel: 'Today',
     nextMilestone: (blueprint, remaining) => `${remaining} blocks to finish "${blueprint}"`,
-    doubleClickHint: 'Double-click the title to expand',
+    doubleClickHint: 'Double-click the title to expand'
   },
   blueprints: {
     plant: 'Potted Plant',
@@ -553,25 +573,25 @@ export const en: TranslationSchema = {
     bookshop: 'Old Bookshop',
     postoffice: 'Post Office',
     firestation: 'Fire Station',
-    watertower: 'Water Tower',
+    watertower: 'Water Tower'
   },
   tray: {
     tooltipDone: 'All check-ins completed today',
     tooltipProgress: (done, total) => `Today's progress ${done}/${total}`,
     openMain: 'Open Main Window',
-    quit: 'Quit',
+    quit: 'Quit'
   },
   errorBoundary: {
     title: 'Something went wrong',
     body: 'The interface hit an unexpected error. Your data is stored locally and is safe — reload to continue.',
     reload: 'Reload',
-    export: 'Export diagnostics',
+    export: 'Export diagnostics'
   },
   microMood: {
     energetic: 'Energy',
     hard: 'Grit',
     spark: 'Spark',
-    calm: 'Calm',
+    calm: 'Calm'
   },
   reflections: {
     engravePlaceholder: "Note today's micro-win or obstacle overcome...",
@@ -580,7 +600,8 @@ export const en: TranslationSchema = {
     starTooltip: 'Mark as featured inscription',
     unstarTooltip: 'Unmark featured',
     foundationModalTitle: 'Building Complete · Foundation Inscription',
-    foundationPrompt: 'Congratulations! All blocks are placed. Pick or write a dedication inscribed on the foundation base:',
+    foundationPrompt:
+      'Congratulations! All blocks are placed. Pick or write a dedication inscribed on the foundation base:',
     foundationPlaceholder: 'Dedication for this building...',
     foundationSave: 'Engrave Foundation Stone',
     foundationSavedToast: 'Foundation inscription permanently engraved',
@@ -598,7 +619,7 @@ export const en: TranslationSchema = {
     exportSuccessToast: 'Markdown Chronicle copied to clipboard',
     pickFromReflections: 'Pick from construction reflections:',
     clickToUseDedication: 'Click to use as dedication',
-    echoFromHabit: (name) => `— from "${name}"`,
+    echoFromHabit: (name) => `— from "${name}"`
   },
   poster: {
     modalTitle: 'Monthly Bauhaus Discipline Poster',
@@ -621,7 +642,7 @@ export const en: TranslationSchema = {
     metricBlocksAdded: 'Blocks Added',
     metricStreak: 'Streak',
     defaultQuote: '"Every brick clicked builds something lasting."',
-    builderRecord: (date) => `BUILDER · ${date}`,
+    builderRecord: (date) => `BUILDER · ${date}`
   },
   /** Daily brief (D-20261110-052) */
   todayBrief: {
@@ -630,14 +651,14 @@ export const en: TranslationSchema = {
       morning: 'Good morning',
       noon: 'Midday',
       afternoon: 'Good afternoon',
-      evening: 'Good evening',
+      evening: 'Good evening'
     },
     idle: (total) => `${total} ${total > 1 ? 'things' : 'thing'} today. One at a time.`,
     inProgress: (done, total, pending) => `Done ${done}/${total} · ${pending} to go.`,
     milestone: (blueprint, remaining) => `${remaining} blocks to finish "${blueprint}"`,
     nextReady: (blueprint) => `Next up: "${blueprint}"`,
     startFirst: 'Start with one',
-    viewBuild: 'View the build',
+    viewBuild: 'View the build'
   },
   /** Habit templates (D-20261110-053) */
   templates: {
@@ -648,7 +669,7 @@ export const en: TranslationSchema = {
     walk: 'Walk',
     sleep: 'Sleep early',
     ledger: 'Log expense',
-    created: (name) => `Created "${name}". Tap the card to check in.`,
+    created: (name) => `Created "${name}". Tap the card to check in.`
   },
   /** Page tips (D-20261110-054) */
   guide: {
@@ -661,7 +682,7 @@ export const en: TranslationSchema = {
     gotIt: 'Got it',
     replayTitle: 'Page tips',
     replay: 'Show page tips again',
-    replayToast: 'Page tips will appear again next time',
+    replayToast: 'Page tips will appear again next time'
   },
   /** Evening wrap-up reminder (D-20261110-055) */
   eveningNudge: {
@@ -670,11 +691,13 @@ export const en: TranslationSchema = {
     settingsTime: 'Reminder time',
     settingsTimeNote: 'Works while the app is running',
     consentTitle: 'Want a daily wrap-up reminder?',
-    consentBody: (time) => `Defaults to ${time}. Only when habits are still open. You can turn it off anytime.`,
+    consentBody: (time) =>
+      `Defaults to ${time}. Only when habits are still open. You can turn it off anytime.`,
     consentEnable: 'Enable reminder',
     consentLater: 'Not now',
     enabledToast: 'Evening reminder enabled',
-    notificationBody: (pending) => `${pending} ${pending > 1 ? 'habits are' : 'habit is'} still open. Time to wrap up.`,
+    notificationBody: (pending) =>
+      `${pending} ${pending > 1 ? 'habits are' : 'habit is'} still open. Time to wrap up.`
   },
   /** Yearbook (D-20261110-060) */
   yearbook: {
@@ -696,7 +719,7 @@ export const en: TranslationSchema = {
       months: 'Twelve months',
       buildings: 'Building timeline',
       shape: 'Shape of time',
-      quote: 'One note from the year',
+      quote: 'One note from the year'
     },
     metrics: {
       checkIns: 'Check-ins',
@@ -705,7 +728,7 @@ export const en: TranslationSchema = {
       allClear: 'All-clear days',
       longestStreak: 'Longest streak',
       focusHours: 'Focus hours',
-      notes: 'Notes',
+      notes: 'Notes'
     },
     topHabits: 'Most checked-in',
     busiestPeriod: 'Most active period',
@@ -718,13 +741,14 @@ export const en: TranslationSchema = {
     monthsLegendHigh: 'More',
     markdownHeading: (year) => `BlockHabit Yearbook · ${year}`,
     streakDays: (n) => `${n} days`,
-    focusHoursValue: (n) => `${n} h`,
+    focusHoursValue: (n) => `${n} h`
   },
   /** Archive pack (D-20261110-062) */
   archive: {
     title: 'Complete archive',
     exportBtn: 'Export complete archive',
-    exportHint: 'Bundle data, a README and completed building images into a local folder; nothing is uploaded and no WebDAV credentials are included.',
+    exportHint:
+      'Bundle data, a README and completed building images into a local folder; nothing is uploaded and no WebDAV credentials are included.',
     preparing: 'Preparing archive...',
     progress: (done, total) => `${done}/${total} generated`,
     success: 'Archive created',
@@ -734,7 +758,7 @@ export const en: TranslationSchema = {
     partialRetry: 'Retry',
     openDir: 'Open archive',
     browserZipHint: 'Browser preview downloads a single ZIP file',
-    contents: 'Includes README, manifest, state JSON, checksums and building images',
+    contents: 'Includes README, manifest, state JSON, checksums and building images'
   },
   /** Building archive (D-20261110-065) */
   buildingArchive: {
@@ -743,7 +767,13 @@ export const en: TranslationSchema = {
     completedAt: (date) => `Completed ${date}`,
     unknownDate: 'Unknown',
     nth: (n) => `No. ${n}`,
-    metrics: { blocks: 'Blocks', days: 'Days', topHabit: 'Top habit', perfectDays: 'All-clear days', bonusBlocks: 'Bonus blocks' },
+    metrics: {
+      blocks: 'Blocks',
+      days: 'Days',
+      topHabit: 'Top habit',
+      perfectDays: 'All-clear days',
+      bonusBlocks: 'Bonus blocks'
+    },
     timeline: 'Timeline',
     firstBlock: 'First block',
     lastBlock: 'Last block',
@@ -756,12 +786,13 @@ export const en: TranslationSchema = {
     empty: 'This building is not complete yet',
     close: 'Close',
     topHabitValue: (name, blocks) => `${name} · ${blocks} blocks`,
-    daysValue: (days) => `${days} days`,
+    daysValue: (days) => `${days} days`
   },
   /** Focus companion (D-20261110-064) */
   focusCompanion: {
     start: 'Start focus',
-    startHint: 'Start from Today or the desk toy; timing keeps running on real time even if the app is closed.',
+    startHint:
+      'Start from Today or the desk toy; timing keeps running on real time even if the app is closed.',
     focusing: 'Focusing',
     ready: 'Time is up; confirm to place the block',
     remaining: (text) => `${text} left`,
@@ -772,6 +803,6 @@ export const en: TranslationSchema = {
     gaveUp: 'Gave up; nothing was checked in',
     persistedHint: 'Timing uses real time; reopening the app shows the current state',
     notificationBody: (name) => `Focus time for "${name}" is up. Confirm to place the block.`,
-    moreSessions: (n) => (n === 1 ? '1 more focus session' : `${n} more focus sessions`),
-  },
+    moreSessions: (n) => (n === 1 ? '1 more focus session' : `${n} more focus sessions`)
+  }
 }

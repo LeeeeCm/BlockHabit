@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { STATE_KEY, createLocalStorageAdapter, loadAndMigrate, normalizeState, prepareImport, sanitizeState } from './adapter'
+import {
+  STATE_KEY,
+  createLocalStorageAdapter,
+  loadAndMigrate,
+  normalizeState,
+  prepareImport,
+  sanitizeState
+} from './adapter'
 import { serializeState } from '../store/serializeState'
 import { mergeAppState } from '../sync/merge'
 import {
@@ -7,7 +14,7 @@ import {
   CONTENT_PACK_V3_IDS,
   CONTENT_VERSION,
   isFutureContentVersion,
-  normalizeContentVersion,
+  normalizeContentVersion
 } from '../logic/blueprints/manifest'
 import type { AppState } from '../types'
 
@@ -21,7 +28,7 @@ function baseState(overrides: Partial<AppState> = {}): AppState {
     completedBlueprintIds: [],
     settings: { theme: 'light', language: 'zh' },
     dayClaims: [],
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -69,9 +76,18 @@ describe('内容版本门（B1 兼容矩阵，v2 → v3）', () => {
     const future = {
       ...baseState(),
       contentVersion: 4,
-      builds: [{ id: 'b1', blueprintId: 'future-tower', index: 0, placedAt: '2026-11-10T00:00:00.000Z', fromHabitId: 'h1', bonus: false }],
+      builds: [
+        {
+          id: 'b1',
+          blueprintId: 'future-tower',
+          index: 0,
+          placedAt: '2026-11-10T00:00:00.000Z',
+          fromHabitId: 'h1',
+          bonus: false
+        }
+      ],
       completedBlueprintIds: ['future-tower'],
-      activeBlueprintId: 'future-tower',
+      activeBlueprintId: 'future-tower'
     }
     const loaded = loadAndMigrate(future)
     expect(loaded.state).toBeNull()
@@ -91,28 +107,35 @@ describe('内容版本门（B1 兼容矩阵，v2 → v3）', () => {
     const loaded = loadAndMigrate({ ...baseState(), contentVersion: 1 })
     expect(loaded.state?.contentVersion).toBe(CONTENT_VERSION)
     expect(serializeState(loaded.state!).contentVersion).toBe(CONTENT_VERSION)
-    expect(prepareImport({ ...baseState(), contentVersion: 1 })?.contentVersion).toBe(CONTENT_VERSION)
+    expect(prepareImport({ ...baseState(), contentVersion: 1 })?.contentVersion).toBe(
+      CONTENT_VERSION
+    )
   })
 
   it('同版本存档正常加载且内容版本保留', () => {
     const loaded = loadAndMigrate({ ...baseState(), contentVersion: CONTENT_VERSION })
     expect(loaded.state?.contentVersion).toBe(CONTENT_VERSION)
-    expect(normalizeState(baseState({ contentVersion: CONTENT_VERSION })).contentVersion).toBe(CONTENT_VERSION)
+    expect(normalizeState(baseState({ contentVersion: CONTENT_VERSION })).contentVersion).toBe(
+      CONTENT_VERSION
+    )
   })
 
   it('双端合并：contentVersion 取较高值，不因旧端写低', () => {
-    const merged = mergeAppState(
-      baseState({ contentVersion: 3 }),
-      baseState({ contentVersion: 4 }),
-    )
+    const merged = mergeAppState(baseState({ contentVersion: 3 }), baseState({ contentVersion: 4 }))
     expect(merged.contentVersion).toBe(4)
     const mergedOld = mergeAppState(baseState({ contentVersion: CONTENT_VERSION }), baseState())
     expect(mergedOld.contentVersion).toBe(CONTENT_VERSION)
     // 双端都是显式旧版本时也不能把合并结果写低（真实路径已被 normalize，这里防御 API 误用）
-    const bothOld = mergeAppState(baseState({ contentVersion: 1 }), baseState({ contentVersion: 1 }))
+    const bothOld = mergeAppState(
+      baseState({ contentVersion: 1 }),
+      baseState({ contentVersion: 1 })
+    )
     expect(bothOld.contentVersion).toBe(CONTENT_VERSION)
     // v3 客户端与 v2 客户端合并：取 3，不能回落到 2
-    const v3WithV2 = mergeAppState(baseState({ contentVersion: 3 }), baseState({ contentVersion: 2 }))
+    const v3WithV2 = mergeAppState(
+      baseState({ contentVersion: 3 }),
+      baseState({ contentVersion: 2 })
+    )
     expect(v3WithV2.contentVersion).toBe(3)
   })
 

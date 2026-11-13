@@ -23,13 +23,13 @@ describe('全量创新特性单元与边界测试 (Innovations Test Suite)', () 
         enableEcoProps: true,
         soundMaterial: 'classic',
         enableGyroscope: false,
-        enableXRayInspection: false,
+        enableXRayInspection: false
       },
       dayClaims: [],
       repairBricks: 0,
       showcasePlacements: [],
       foundationNotes: {},
-      hydrated: true,
+      hydrated: true
     })
   })
 
@@ -38,14 +38,19 @@ describe('全量创新特性单元与边界测试 (Innovations Test Suite)', () 
       id: 'h-meditate',
       name: '正念冥想',
       frequency: { type: 'daily' },
-      createdAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z'
     }
 
     it('经典硬核模式下 (enableGentleDecay=false)，昨日断卡连胜直接归零', () => {
       const today = new Date('2026-03-25T12:00:00.000Z')
       const dDayBefore = addDays(today, -2) // 2026-03-23
       const checkIns: CheckIn[] = [
-        { id: 'c1', habitId: 'h-meditate', date: dateKey(dDayBefore), at: `${dateKey(dDayBefore)}T08:00:00.000Z` },
+        {
+          id: 'c1',
+          habitId: 'h-meditate',
+          date: dateKey(dDayBefore),
+          at: `${dateKey(dDayBefore)}T08:00:00.000Z`
+        }
       ]
 
       const status = currentStreakWithResilience(dailyHabit, checkIns, today, false)
@@ -58,8 +63,18 @@ describe('全量创新特性单元与边界测试 (Innovations Test Suite)', () 
       const dDayBefore = addDays(today, -2) // 2026-03-23
       const dThreeDaysAgo = addDays(today, -3) // 2026-03-22
       const checkIns: CheckIn[] = [
-        { id: 'c0', habitId: 'h-meditate', date: dateKey(dThreeDaysAgo), at: `${dateKey(dThreeDaysAgo)}T08:00:00.000Z` },
-        { id: 'c1', habitId: 'h-meditate', date: dateKey(dDayBefore), at: `${dateKey(dDayBefore)}T08:00:00.000Z` },
+        {
+          id: 'c0',
+          habitId: 'h-meditate',
+          date: dateKey(dThreeDaysAgo),
+          at: `${dateKey(dThreeDaysAgo)}T08:00:00.000Z`
+        },
+        {
+          id: 'c1',
+          habitId: 'h-meditate',
+          date: dateKey(dDayBefore),
+          at: `${dateKey(dDayBefore)}T08:00:00.000Z`
+        }
       ]
 
       const status = currentStreakWithResilience(dailyHabit, checkIns, today, true)
@@ -74,10 +89,20 @@ describe('全量创新特性单元与边界测试 (Innovations Test Suite)', () 
       const dDayBefore = addDays(today, -2)
       const dThreeDaysAgo = addDays(today, -3)
       const checkIns: CheckIn[] = [
-        { id: 'c0', habitId: 'h-meditate', date: dateKey(dThreeDaysAgo), at: `${dateKey(dThreeDaysAgo)}T08:00:00.000Z` },
-        { id: 'c1', habitId: 'h-meditate', date: dateKey(dDayBefore), at: `${dateKey(dDayBefore)}T08:00:00.000Z` },
+        {
+          id: 'c0',
+          habitId: 'h-meditate',
+          date: dateKey(dThreeDaysAgo),
+          at: `${dateKey(dThreeDaysAgo)}T08:00:00.000Z`
+        },
+        {
+          id: 'c1',
+          habitId: 'h-meditate',
+          date: dateKey(dDayBefore),
+          at: `${dateKey(dDayBefore)}T08:00:00.000Z`
+        },
         // 今日打卡
-        { id: 'c-today', habitId: 'h-meditate', date: todayStr, at: `${todayStr}T08:00:00.000Z` },
+        { id: 'c-today', habitId: 'h-meditate', date: todayStr, at: `${todayStr}T08:00:00.000Z` }
       ]
 
       const status = currentStreakWithResilience(dailyHabit, checkIns, today, true)

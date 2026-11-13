@@ -18,7 +18,7 @@ const THEMES: Array<{ selector: string; label: string }> = [
   { selector: ':root', label: '纸白' },
   { selector: ":root[data-theme='dark']", label: '墨黑' },
   { selector: ":root[data-theme='oat']", label: '燕麦' },
-  { selector: ":root[data-theme='fog']", label: '雾灰' },
+  { selector: ":root[data-theme='fog']", label: '雾灰' }
 ]
 const TOKENS = ['--block-top', '--block-left', '--block-right', '--block-ghost']
 

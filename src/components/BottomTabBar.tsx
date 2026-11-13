@@ -16,7 +16,7 @@ export function BottomTabBar({
   currentTab,
   onChange,
   hasUnfinishedToday,
-  buildProgressPercent,
+  buildProgressPercent
 }: BottomTabBarProps) {
   const { t } = useI18n()
 
@@ -38,12 +38,12 @@ export function BottomTabBar({
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: 'var(--accent)',
+                background: 'var(--accent)'
               }}
             />
           )}
         </span>
-      ),
+      )
     },
     {
       id: 'build',
@@ -62,25 +62,25 @@ export function BottomTabBar({
                 fontSize: 'var(--fs-caption)',
                 fontWeight: 700,
                 color: 'var(--accent)',
-                lineHeight: 1,
+                lineHeight: 1
               }}
             >
               {buildProgressPercent}%
             </span>
           )}
         </span>
-      ),
+      )
     },
     {
       id: 'showcase',
       label: t.nav.showcase,
-      icon: <IconShowcase size={22} />,
+      icon: <IconShowcase size={22} />
     },
     {
       id: 'stats',
       label: t.nav.stats,
-      icon: <IconStats size={22} />,
-    },
+      icon: <IconStats size={22} />
+    }
   ]
 
   return (
@@ -104,7 +104,7 @@ export function BottomTabBar({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
-        zIndex: 90,
+        zIndex: 90
       }}
     >
       {tabs.map((tab) => {
@@ -130,17 +130,20 @@ export function BottomTabBar({
               alignItems: 'center',
               justifyContent: 'center',
               gap: 3,
-              background: active ? 'color-mix(in srgb, var(--ink) 4.5%, transparent)' : 'transparent',
+              background: active
+                ? 'color-mix(in srgb, var(--ink) 4.5%, transparent)'
+                : 'transparent',
               borderRadius: 14,
               border: 'none',
               cursor: 'pointer',
               padding: '6px 4px 7px',
               margin: '0 4px',
               color: active ? 'var(--ink)' : 'var(--ink-2)',
-              transition: 'background var(--dur-md) var(--ease-out), color var(--dur-sm) var(--ease-default), transform var(--dur-xs) var(--ease-default)',
+              transition:
+                'background var(--dur-md) var(--ease-out), color var(--dur-sm) var(--ease-default), transform var(--dur-xs) var(--ease-default)',
               position: 'relative',
               userSelect: 'none',
-              WebkitTapHighlightColor: 'transparent',
+              WebkitTapHighlightColor: 'transparent'
             }}
           >
             <span
@@ -149,7 +152,7 @@ export function BottomTabBar({
                 transition: 'transform var(--dur-xs) var(--ease-default)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifyContent: 'center'
               }}
             >
               {tab.icon}
@@ -167,7 +170,7 @@ export function BottomTabBar({
                   height: 2.5,
                   borderRadius: 999,
                   background: 'var(--accent)',
-                  transition: 'width var(--dur-md) var(--ease-default)',
+                  transition: 'width var(--dur-md) var(--ease-default)'
                 }}
               />
             )}

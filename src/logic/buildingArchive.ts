@@ -167,10 +167,7 @@ export function completionDateOf(state: BuildingArchiveState, blueprintId: strin
  * 口径与 completionDateOf / yearbook.completionDateOf 完全一致：块数达蓝图容量 → max(placedAt)
  * 的本地日期；未落成 / 未知蓝图 / 时间戳全部损坏 → null（不伪造日期，展示层回退「不可考」）。
  */
-export function completionDateOfBuilds(
-  builds: PlacedBlock[],
-  blueprintId: string,
-): string | null {
+export function completionDateOfBuilds(builds: PlacedBlock[], blueprintId: string): string | null {
   const ms = completionMsOfBuilds(builds, blueprintId)
   return ms === null ? null : dateKey(new Date(ms))
 }
@@ -183,9 +180,7 @@ export function listArchiveBuildings(state: BuildingArchiveState): string[] {
     const ms = completionMsOf(state, id)
     if (ms !== null) completed.push({ id, ms })
   }
-  completed.sort(
-    (a, b) => b.ms - a.ms || (orderIndex.get(a.id) ?? 0) - (orderIndex.get(b.id) ?? 0),
-  )
+  completed.sort((a, b) => b.ms - a.ms || (orderIndex.get(a.id) ?? 0) - (orderIndex.get(b.id) ?? 0))
   return completed.map((entry) => entry.id)
 }
 
@@ -195,7 +190,7 @@ export function listArchiveBuildings(state: BuildingArchiveState): string[] {
  */
 export function blockMetaIndex(
   state: BuildingArchiveState,
-  blueprintId: string,
+  blueprintId: string
 ): Map<number, ArchiveBlockMeta> {
   const index = new Map<number, ArchiveBlockMeta>()
   const ciByPlacedBlockId = new Map<string, CheckIn>()
@@ -212,7 +207,9 @@ export function blockMetaIndex(
 }
 
 /** 关键块锚点：首块 / 25% / 50% / 75% / 末块，按块序位去重升序 */
-function milestoneAnchors(capacity: number): Array<{ index: number; kind: MilestoneKind; percent?: number }> {
+function milestoneAnchors(
+  capacity: number
+): Array<{ index: number; kind: MilestoneKind; percent?: number }> {
   if (capacity <= 0) return []
   const fractions = [0, 0.25, 0.5, 0.75, 1]
   const picked = new Map<number, number>()
@@ -225,14 +222,14 @@ function milestoneAnchors(capacity: number): Array<{ index: number; kind: Milest
     .map(([index, percent]) => ({
       index,
       kind: index === 0 ? 'first' : index === capacity - 1 ? 'last' : 'percent',
-      percent: index === 0 || index === capacity - 1 ? undefined : percent,
+      percent: index === 0 || index === capacity - 1 ? undefined : percent
     }))
 }
 
 function buildMilestones(
   state: BuildingArchiveState,
   blueprintId: string,
-  capacity: number,
+  capacity: number
 ): ArchiveMilestone[] {
   const meta = blockMetaIndex(state, blueprintId)
   return milestoneAnchors(capacity).map((anchor) => {
@@ -253,15 +250,12 @@ function buildMilestones(
       note: ci?.note?.trim() ? ci.note.trim() : undefined,
       mood: ci?.mood,
       starred: ci?.starred === true,
-      checkInId: ci?.id,
+      checkInId: ci?.id
     }
   })
 }
 
-function buildNotes(
-  state: BuildingArchiveState,
-  blueprintId: string,
-): ArchiveNoteEntry[] {
+function buildNotes(state: BuildingArchiveState, blueprintId: string): ArchiveNoteEntry[] {
   const indexByBlockId = new Map<string, number>()
   for (const pb of state.builds) {
     if (pb.blueprintId === blueprintId && !pb.deletedAt) indexByBlockId.set(pb.id, pb.index)
@@ -281,10 +275,13 @@ function buildNotes(
       habitName: habitMap.get(ci.habitId) ?? '',
       note: text,
       mood: ci.mood,
-      starred: ci.starred === true,
+      starred: ci.starred === true
     })
   }
-  notes.sort((a, b) => a.date.localeCompare(b.date) || a.index - b.index || a.checkInId.localeCompare(b.checkInId))
+  notes.sort(
+    (a, b) =>
+      a.date.localeCompare(b.date) || a.index - b.index || a.checkInId.localeCompare(b.checkInId)
+  )
   return notes
 }
 
@@ -300,11 +297,13 @@ function buildTopHabits(state: BuildingArchiveState, blocks: PlacedBlock[]): Arc
       habitId,
       name: habitMap.get(habitId)?.name ?? '',
       count,
-      createdAt: habitMap.get(habitId)?.createdAt ?? '',
+      createdAt: habitMap.get(habitId)?.createdAt ?? ''
     }))
     .sort(
       (a, b) =>
-        b.count - a.count || a.createdAt.localeCompare(b.createdAt) || a.habitId.localeCompare(b.habitId),
+        b.count - a.count ||
+        a.createdAt.localeCompare(b.createdAt) ||
+        a.habitId.localeCompare(b.habitId)
     )
     .slice(0, 3)
     .map(({ habitId, name, count }) => ({ habitId, name, count }))
@@ -316,7 +315,7 @@ function buildTopHabits(state: BuildingArchiveState, blocks: PlacedBlock[]): Arc
  */
 export function buildBuildingArchive(
   state: BuildingArchiveState,
-  blueprintId: string,
+  blueprintId: string
 ): BuildingArchive {
   const blueprint = blueprints[blueprintId]
   const capacity = blueprint ? blueprint.blocks.length : 0
@@ -325,18 +324,20 @@ export function buildBuildingArchive(
   const completionMs = completed ? completionMsOf(state, blueprintId) : null
   const completedAt = completionMs === null ? null : dateKey(new Date(completionMs))
   const firstPlacedAt = completed
-    ? blocks
+    ? (blocks
         .map((block) => localDateKeyOfIso(block.placedAt))
         .filter((key): key is string => key !== null)
-        .sort()[0] ?? null
+        .sort()[0] ?? null)
     : blocks.length > 0
-      ? blocks
+      ? (blocks
           .map((block) => localDateKeyOfIso(block.placedAt))
           .filter((key): key is string => key !== null)
-          .sort()[0] ?? null
+          .sort()[0] ?? null)
       : null
   const days =
-    completed && completedAt && firstPlacedAt ? Math.max(0, dayDiff(completedAt, firstPlacedAt)) : null
+    completed && completedAt && firstPlacedAt
+      ? Math.max(0, dayDiff(completedAt, firstPlacedAt))
+      : null
 
   const completedAsc = [...blueprintOrder]
     .map((id) => ({ id, ms: completionMsOf(state, id) }))
@@ -363,10 +364,9 @@ export function buildBuildingArchive(
     milestones: completed ? buildMilestones(state, blueprintId, capacity) : [],
     notes: completed ? buildNotes(state, blueprintId) : [],
     foundationNote: state.foundationNotes?.[blueprintId]?.trim() || undefined,
-    archivedAtUnknown:
-      !completed && (state.completedBlueprintIds ?? []).includes(blueprintId),
+    archivedAtUnknown: !completed && (state.completedBlueprintIds ?? []).includes(blueprintId),
     ordinal: ordinalIndex >= 0 ? ordinalIndex + 1 : null,
-    totalCompleted: completedAsc.length,
+    totalCompleted: completedAsc.length
   }
   return archive
 }

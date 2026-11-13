@@ -34,8 +34,7 @@ installGlobalErrorHandlers()
 // 首帧外观（C8）：React 挂载前先套用上次的主题/语言，消除暗色/燕麦/雾灰主题的启动闪白
 applyCachedAppearance()
 
-const inTauri =
-  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 const isTrayMenu = inTauri && getCurrentWindow().label === 'tray-menu'
 if (isTrayMenu) {
@@ -58,5 +57,5 @@ if (import.meta.env.DEV) {
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <ErrorBoundary variant={isTrayMenu ? 'tray' : 'full'}>
     <React.StrictMode>{isTrayMenu ? <TrayMenu /> : <App />}</React.StrictMode>
-  </ErrorBoundary>,
+  </ErrorBoundary>
 )

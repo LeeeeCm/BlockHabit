@@ -4,7 +4,7 @@ import { blueprints } from '../logic/blueprints'
 import {
   buildBuildingArchive,
   type ArchiveMilestone,
-  type BuildingArchiveState,
+  type BuildingArchiveState
 } from '../logic/buildingArchive'
 import { zh } from '../i18n/locales/zh'
 import { en } from '../i18n/locales/en'
@@ -17,7 +17,7 @@ import {
   archivePngFileName,
   drawArchiveCard,
   drawArchiveStage,
-  renderArchiveCardCanvas,
+  renderArchiveCardCanvas
 } from './buildingArchiveCanvas'
 
 /**
@@ -39,7 +39,7 @@ function createFakeContext(): { ctx: CanvasRenderingContext2D; calls: RecordedCa
     measureText: (text: string) => ({ width: String(text).length * 7 }),
     createLinearGradient: () => gradient,
     createRadialGradient: () => gradient,
-    getTransform: () => ({ a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 }),
+    getTransform: () => ({ a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 })
   }
   const proxy = new Proxy(target, {
     get(obj, prop) {
@@ -52,7 +52,7 @@ function createFakeContext(): { ctx: CanvasRenderingContext2D; calls: RecordedCa
     set(obj, prop, value) {
       obj[prop as string] = value
       return true
-    },
+    }
   })
   return { ctx: proxy as unknown as CanvasRenderingContext2D, calls }
 }
@@ -77,7 +77,7 @@ function plantBlocks(over: Record<number, Partial<PlacedBlock>> = {}): PlacedBlo
     placedAt: atLocal('2026-03-0' + (index + 1)),
     fromHabitId: 'h1',
     bonus: false,
-    ...over[index],
+    ...over[index]
   }))
 }
 
@@ -88,7 +88,7 @@ function makeState(over: Partial<BuildingArchiveState> = {}): BuildingArchiveSta
     habits: [habit('h1', '晨间冥想')],
     foundationNotes: {},
     completedBlueprintIds: ['plant'],
-    ...over,
+    ...over
   }
 }
 
@@ -102,7 +102,7 @@ function milestone(over: Partial<ArchiveMilestone> = {}): ArchiveMilestone {
     habitId: 'h1',
     habitName: '晨间冥想',
     bonus: false,
-    ...over,
+    ...over
   }
 }
 
@@ -142,20 +142,26 @@ describe('画布尺寸契约', () => {
 
 describe('关键块文案（纯函数，zh/en 齐全）', () => {
   it('首块 / 中间百分比 / 末块标签', () => {
-    expect(archiveMilestoneLabel(zh, milestone({ kind: 'first' }))).toBe(zh.buildingArchive.firstBlock)
+    expect(archiveMilestoneLabel(zh, milestone({ kind: 'first' }))).toBe(
+      zh.buildingArchive.firstBlock
+    )
     expect(archiveMilestoneLabel(zh, milestone({ kind: 'percent', percent: 50 }))).toBe('50%')
-    expect(archiveMilestoneLabel(zh, milestone({ kind: 'last' }))).toBe(zh.buildingArchive.lastBlock)
-    expect(archiveMilestoneLabel(en, milestone({ kind: 'last' }))).toBe(en.buildingArchive.lastBlock)
+    expect(archiveMilestoneLabel(zh, milestone({ kind: 'last' }))).toBe(
+      zh.buildingArchive.lastBlock
+    )
+    expect(archiveMilestoneLabel(en, milestone({ kind: 'last' }))).toBe(
+      en.buildingArchive.lastBlock
+    )
   })
 
   it('习惯名回退：全勤块 / 已删除习惯 / 无打卡关联，不伪造名字', () => {
     expect(archiveMilestoneHabitName(zh, milestone())).toBe('晨间冥想')
     expect(
-      archiveMilestoneHabitName(zh, milestone({ habitName: '', fromHabitId: '__day__' })),
+      archiveMilestoneHabitName(zh, milestone({ habitName: '', fromHabitId: '__day__' }))
     ).toBe(zh.today.fullCard.bonusHabitName)
-    expect(
-      archiveMilestoneHabitName(zh, milestone({ habitName: '', checkInId: 'c1' })),
-    ).toBe(zh.today.fullCard.deletedHabitName)
+    expect(archiveMilestoneHabitName(zh, milestone({ habitName: '', checkInId: 'c1' }))).toBe(
+      zh.today.fullCard.deletedHabitName
+    )
     expect(archiveMilestoneHabitName(zh, milestone({ habitName: '' }))).toBe('—')
   })
 })
@@ -193,19 +199,19 @@ describe('绘制契约', () => {
             date: '2026-03-01',
             at: atLocal('2026-03-01'),
             placedBlockId: 'plant-0',
-            note: '第一块，窗外有雨。',
-          } satisfies CheckIn,
+            note: '第一块，窗外有雨。'
+          } satisfies CheckIn
         ],
-        foundationNotes: { plant: '从一颗种子开始。' },
+        foundationNotes: { plant: '从一颗种子开始。' }
       }),
-      'plant',
+      'plant'
     )
     await drawArchiveCard(canvas, {
       archive,
       blueprint: blueprints.plant,
       blueprintName: zh.blueprints.plant,
       t: zh,
-      lang: 'zh',
+      lang: 'zh'
     })
     expect(canvas.width).toBe(ARCHIVE_CARD.width * ARCHIVE_CARD.dpr)
     expect(canvas.height).toBe(ARCHIVE_CARD.height * ARCHIVE_CARD.dpr)
@@ -232,7 +238,7 @@ describe('绘制契约', () => {
       blueprint: blueprints.plant,
       blueprintName: zh.blueprints.plant,
       t: zh,
-      lang: 'zh',
+      lang: 'zh'
     })
     const texts = fake.calls
       .filter((call) => call.name === 'fillText')
@@ -248,7 +254,7 @@ describe('绘制契约', () => {
       blueprint: blueprints.plant,
       blueprintName: en.blueprints.plant,
       t: en,
-      lang: 'en',
+      lang: 'en'
     })
     expect(canvas.dataset.testid).toBe('archive-card-canvas')
     expect(canvas.width).toBe(ARCHIVE_CARD.width * ARCHIVE_CARD.dpr)

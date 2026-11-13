@@ -24,7 +24,7 @@ const focusHabit: Habit = {
   frequency: { type: 'daily' },
   kind: 'focus',
   targetMinutes: TARGET_MINUTES,
-  createdAt: '2026-09-01T00:00:00.000Z',
+  createdAt: '2026-09-01T00:00:00.000Z'
 }
 
 const zh = getTranslation('zh')
@@ -43,7 +43,7 @@ function renderRow() {
         root.unmount()
       })
       container.remove()
-    },
+    }
   }
 }
 
@@ -60,7 +60,7 @@ describe('HabitRow 专注会话同步（B4 回归）', () => {
       activeBlueprintId: 'plant',
       completedBlueprintIds: [],
       settings: { theme: 'light', language: 'zh' },
-      dayClaims: [],
+      dayClaims: []
     })
   })
 
@@ -104,7 +104,7 @@ describe('HabitRow 专注会话同步（B4 回归）', () => {
     const text = container.textContent ?? ''
     expect(text).toContain(zh.today.timingTooltip)
     const confirm = [...container.querySelectorAll('button')].find(
-      (button) => button.textContent === zh.common.complete,
+      (button) => button.textContent === zh.common.complete
     )
     expect(confirm).toBeTruthy()
     unmount()

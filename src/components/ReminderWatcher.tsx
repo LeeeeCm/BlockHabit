@@ -51,7 +51,7 @@ export function ReminderWatcher() {
           remindersEnabled: enabled,
           metToday,
           skippedToday,
-          track: reminderStore.tracks[habit.id],
+          track: reminderStore.tracks[habit.id]
         })
         // 仅在轨迹实际变化时写回，避免空转 tick 触发订阅重渲染
         const prev = reminderStore.tracks[habit.id]
@@ -72,7 +72,7 @@ export function ReminderWatcher() {
             stage: result.notify.stage,
             start: habit.reminder.start,
             end: habit.reminder.end,
-            firedAt: Date.now(),
+            firedAt: Date.now()
           })
           playReminderChime()
           const body =
@@ -87,7 +87,8 @@ export function ReminderWatcher() {
       // 剪枝：提醒被移除/已归档/已达标的待展示条目自动清出（打卡后弹窗自然消失）
       for (const item of useReminderStore.getState().pending) {
         const habit = store.habits.find((h) => h.id === item.habitId)
-        const stillRelevant = habit && !habit.archivedAt && habit.reminder && !habitMetOnDay(habit, store.checkIns, day)
+        const stillRelevant =
+          habit && !habit.archivedAt && habit.reminder && !habitMetOnDay(habit, store.checkIns, day)
         if (!stillRelevant) {
           useReminderStore.getState().dismiss(item.habitId)
         }
@@ -104,10 +105,12 @@ export function ReminderWatcher() {
           remindersEnabled: enabled,
           pendingCount,
           day,
-          lastNudgedDay: getLastNudgedDay(),
+          lastNudgedDay: getLastNudgedDay()
         })
         const focused =
-          typeof document !== 'undefined' && document.visibilityState === 'visible' && document.hasFocus()
+          typeof document !== 'undefined' &&
+          document.visibilityState === 'visible' &&
+          document.hasFocus()
         if (decision.fire && !focused) {
           markNudged(day)
           void notify('BlockHabit', t.eveningNudge.notificationBody(decision.pendingCount))

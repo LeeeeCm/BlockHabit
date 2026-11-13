@@ -10,7 +10,7 @@ import {
   rotateBlockCoords,
   findNextAvailablePlacement,
   screenToGroundIso,
-  SHOWCASE_GRID_SIZE,
+  SHOWCASE_GRID_SIZE
 } from './showcase'
 import { blueprints } from './blueprints'
 import type { BlockDef, Blueprint, ShowcasePlacement } from '../types'
@@ -19,7 +19,7 @@ describe('showcase collision & layout logic', () => {
   it('getModelFootprint calculates width and depth from blocks', () => {
     const blocks: BlockDef[] = [
       { x: 2, y: 3, z: 0, type: 'basic' },
-      { x: 4, y: 5, z: 1, type: 'basic' },
+      { x: 4, y: 5, z: 1, type: 'basic' }
     ]
     const fp = getModelFootprint(blocks)
     expect(fp.width).toBe(3) // 4 - 2 + 1
@@ -46,24 +46,57 @@ describe('showcase collision & layout logic', () => {
   it('canPlaceModel rejects out-of-bounds placements', () => {
     const existing: ShowcasePlacement[] = []
     // 仙人掌 3x3，放在 (SHOWCASE_GRID_SIZE - 1, SHOWCASE_GRID_SIZE - 1) 超出网格边界
-    expect(canPlaceModel({ blueprintId: 'plant', gridX: SHOWCASE_GRID_SIZE - 1, gridY: SHOWCASE_GRID_SIZE - 1 }, existing, blueprints, SHOWCASE_GRID_SIZE)).toBe(false)
-    expect(canPlaceModel({ blueprintId: 'plant', gridX: -1, gridY: 0 }, existing, blueprints, SHOWCASE_GRID_SIZE)).toBe(false)
-    expect(canPlaceModel({ blueprintId: 'plant', gridX: 0, gridY: 0 }, existing, blueprints, SHOWCASE_GRID_SIZE)).toBe(true)
+    expect(
+      canPlaceModel(
+        { blueprintId: 'plant', gridX: SHOWCASE_GRID_SIZE - 1, gridY: SHOWCASE_GRID_SIZE - 1 },
+        existing,
+        blueprints,
+        SHOWCASE_GRID_SIZE
+      )
+    ).toBe(false)
+    expect(
+      canPlaceModel(
+        { blueprintId: 'plant', gridX: -1, gridY: 0 },
+        existing,
+        blueprints,
+        SHOWCASE_GRID_SIZE
+      )
+    ).toBe(false)
+    expect(
+      canPlaceModel(
+        { blueprintId: 'plant', gridX: 0, gridY: 0 },
+        existing,
+        blueprints,
+        SHOWCASE_GRID_SIZE
+      )
+    ).toBe(true)
   })
 
   it('canPlaceModel rejects collisions between multiple models', () => {
     // 仙人掌 3x3 位于 (2, 2)
     const existing: ShowcasePlacement[] = [{ blueprintId: 'plant', gridX: 2, gridY: 2 }]
     // 试图在 (3, 3) 放置咖啡杯 (3x3) -> 发生碰撞
-    expect(canPlaceModel({ blueprintId: 'coffee', gridX: 3, gridY: 3 }, existing, blueprints, SHOWCASE_GRID_SIZE)).toBe(false)
+    expect(
+      canPlaceModel(
+        { blueprintId: 'coffee', gridX: 3, gridY: 3 },
+        existing,
+        blueprints,
+        SHOWCASE_GRID_SIZE
+      )
+    ).toBe(false)
     // 放在 (6, 2) 无碰撞通过
-    expect(canPlaceModel({ blueprintId: 'coffee', gridX: 6, gridY: 2 }, existing, blueprints, SHOWCASE_GRID_SIZE)).toBe(true)
+    expect(
+      canPlaceModel(
+        { blueprintId: 'coffee', gridX: 6, gridY: 2 },
+        existing,
+        blueprints,
+        SHOWCASE_GRID_SIZE
+      )
+    ).toBe(true)
   })
 
   it('findNextAvailablePlacement automatically finds non-overlapping spots', () => {
-    const existing: ShowcasePlacement[] = [
-      { blueprintId: 'plant', gridX: 1, gridY: 1 },
-    ]
+    const existing: ShowcasePlacement[] = [{ blueprintId: 'plant', gridX: 1, gridY: 1 }]
     const p = findNextAvailablePlacement('coffee', existing, blueprints, SHOWCASE_GRID_SIZE)
     expect(p).not.toBeNull()
     expect(canPlaceModel(p!, existing, blueprints, SHOWCASE_GRID_SIZE)).toBe(true)
@@ -138,23 +171,23 @@ describe('90° 象限旋转几何（整数格点 + bbox 归一化）', () => {
     expect(rotateBlockCoords(blocks, 0)).toEqual([
       { x: 0, y: 0 },
       { x: 1, y: 0 },
-      { x: 2, y: 0 },
+      { x: 2, y: 0 }
     ])
     // 90°：三点变成同列，minY=-2 归一化后 y=2/1/0
     expect(rotateBlockCoords(blocks, 1)).toEqual([
       { x: 0, y: 2 },
       { x: 0, y: 1 },
-      { x: 0, y: 0 },
+      { x: 0, y: 0 }
     ])
     expect(rotateBlockCoords(blocks, 2)).toEqual([
       { x: 2, y: 0 },
       { x: 1, y: 0 },
-      { x: 0, y: 0 },
+      { x: 0, y: 0 }
     ])
     expect(rotateBlockCoords(blocks, 3)).toEqual([
       { x: 0, y: 0 },
       { x: 0, y: 1 },
-      { x: 0, y: 2 },
+      { x: 0, y: 2 }
     ])
   })
 
@@ -209,7 +242,10 @@ describe('canRotatePlacement（旋转前校验：越界 / 邻居 AABB）', () =>
   })
 
   it('旋转后超出 SHOWCASE_GRID_SIZE 则拒绝', () => {
-    const tall5 = synth('tall5', Array.from({ length: 5 }, (_, i) => block(0, i)))
+    const tall5 = synth(
+      'tall5',
+      Array.from({ length: 5 }, (_, i) => block(0, i))
+    )
     const map = { tall5 }
     const x = SHOWCASE_GRID_SIZE - 1
     const existing: ShowcasePlacement[] = [{ blueprintId: 'tall5', gridX: x, gridY: 0 }]
@@ -217,7 +253,10 @@ describe('canRotatePlacement（旋转前校验：越界 / 邻居 AABB）', () =>
     expect(canRotatePlacement('tall5', x, 0, 0, existing, map, {})).toBe(true)
     expect(canRotatePlacement('tall5', x, 0, 1, existing, map, {})).toBe(false)
     // 贴底边同理：5×1 的 wide5 旋转成 1×5 后 y+5 越界
-    const wide5 = synth('wide5', Array.from({ length: 5 }, (_, i) => block(i, 0)))
+    const wide5 = synth(
+      'wide5',
+      Array.from({ length: 5 }, (_, i) => block(i, 0))
+    )
     const mapBottom = { wide5 }
     const y = SHOWCASE_GRID_SIZE - 1
     const atBottom: ShowcasePlacement[] = [{ blueprintId: 'wide5', gridX: 0, gridY: y }]
@@ -229,7 +268,7 @@ describe('canRotatePlacement（旋转前校验：越界 / 邻居 AABB）', () =>
     // wide(3×1) 在 (2,2)，邻居 tall(1×3) 在 (0,2)：互不接触
     const existing: ShowcasePlacement[] = [
       { blueprintId: 'wide', gridX: 2, gridY: 2 },
-      { blueprintId: 'tall', gridX: 0, gridY: 2 },
+      { blueprintId: 'tall', gridX: 0, gridY: 2 }
     ]
     // 邻居 0°：tall 占 x∈[0,1)，wide 转 90° 后占 x∈[2,3) → 不重叠，允许
     expect(canRotatePlacement('wide', 2, 2, 1, existing, synthMap, {})).toBe(true)
@@ -247,13 +286,25 @@ describe('canPlaceModel 的会话旋转参数（拖拽校验复用）', () => {
     const existing: ShowcasePlacement[] = [{ blueprintId: 'tall', gridX: 0, gridY: 2 }]
     // tall 0°：占 x=0 一列，与 wide 在 x=2 不冲突
     expect(
-      canPlaceModel({ blueprintId: 'wide', gridX: 2, gridY: 2 }, existing, synthMap, SHOWCASE_GRID_SIZE, {}),
+      canPlaceModel(
+        { blueprintId: 'wide', gridX: 2, gridY: 2 },
+        existing,
+        synthMap,
+        SHOWCASE_GRID_SIZE,
+        {}
+      )
     ).toBe(true)
     // tall 转 90°：变 3×1 占 x∈[0,3)，与 wide 的 x∈[2,5) 重叠
     expect(
-      canPlaceModel({ blueprintId: 'wide', gridX: 2, gridY: 2 }, existing, synthMap, SHOWCASE_GRID_SIZE, {
-        tall: 1,
-      }),
+      canPlaceModel(
+        { blueprintId: 'wide', gridX: 2, gridY: 2 },
+        existing,
+        synthMap,
+        SHOWCASE_GRID_SIZE,
+        {
+          tall: 1
+        }
+      )
     ).toBe(false)
   })
 })

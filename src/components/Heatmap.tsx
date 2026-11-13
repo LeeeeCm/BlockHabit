@@ -53,7 +53,11 @@ export function Heatmap({ habits, checkIns, weeks = 13, habitId, cell, onDayClic
     const today = startOfDay(new Date())
     const thisMonday = new Date(today)
     thisMonday.setDate(thisMonday.getDate() - ((thisMonday.getDay() + 6) % 7))
-    const cols: Array<{ key: string; month: string; days: Array<{ key: string; ratio: number; future: boolean }> }> = []
+    const cols: Array<{
+      key: string
+      month: string
+      days: Array<{ key: string; ratio: number; future: boolean }>
+    }> = []
     let lastMonth = ''
     for (let w = weeks - 1; w >= 0; w--) {
       const monday = addDays(thisMonday, -7 * w)
@@ -66,7 +70,7 @@ export function Heatmap({ habits, checkIns, weeks = 13, habitId, cell, onDayClic
         return {
           key,
           ratio: ratioOf(key),
-          future: date > today,
+          future: date > today
         }
       })
       cols.push({ key: dateKey(monday), month: monthLabel, days })
@@ -92,7 +96,11 @@ export function Heatmap({ habits, checkIns, weeks = 13, habitId, cell, onDayClic
     if (i < 0) return
     const weekStart = Math.floor(i / 7) * 7
     const next =
-      delta === 'home' ? allKeys[weekStart] : delta === 'end' ? allKeys[weekStart + 6] : allKeys[i + delta]
+      delta === 'home'
+        ? allKeys[weekStart]
+        : delta === 'end'
+          ? allKeys[weekStart + 6]
+          : allKeys[i + delta]
     if (!next) return
     setFocusKey(next)
     cellRefs.current.get(next)?.focus()
@@ -114,7 +122,14 @@ export function Heatmap({ habits, checkIns, weeks = 13, habitId, cell, onDayClic
       <div style={{ display: 'flex', gap: GAP, justifyContent: 'center' }}>
         {columns.map((col) => (
           <div key={col.key} style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
-            <div style={{ height: 16, fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
+            <div
+              style={{
+                height: 16,
+                fontSize: 'var(--fs-caption)',
+                color: 'var(--ink-2)',
+                whiteSpace: 'nowrap'
+              }}
+            >
               {col.month}
             </div>
             {col.days.map((d) => {
@@ -141,9 +156,11 @@ export function Heatmap({ habits, checkIns, weeks = 13, habitId, cell, onDayClic
                     height: CELL,
                     borderRadius: Math.max(4, Math.round(CELL * 0.28)),
                     background: cellColor(d.ratio, d.future),
-                    border: d.future ? 'none' : '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
+                    border: d.future
+                      ? 'none'
+                      : '1px solid color-mix(in srgb, var(--ink) 8%, transparent)',
                     cursor: clickable ? 'pointer' : 'default',
-                    padding: 0,
+                    padding: 0
                   }}
                 />
               )

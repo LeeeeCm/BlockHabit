@@ -44,11 +44,11 @@ describe('useDialogA11y hook', () => {
 
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
       configurable: true,
-      get: () => 100,
+      get: () => 100
     })
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
       configurable: true,
-      get: () => 40,
+      get: () => 40
     })
   })
 
@@ -109,7 +109,7 @@ describe('useDialogA11y hook', () => {
       key: 'Tab',
       shiftKey: true,
       bubbles: true,
-      cancelable: true,
+      cancelable: true
     })
     window.dispatchEvent(shiftTabEvent)
     expect(shiftTabEvent.defaultPrevented).toBe(true)

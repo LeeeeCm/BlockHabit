@@ -8,7 +8,7 @@ import {
   downloadBlobFile,
   revealArchivePath,
   runArchiveExport,
-  type ArchiveProgress,
+  type ArchiveProgress
 } from '../storage/archive'
 import { renderBuildingPng } from '../render/archiveCanvas'
 import { loadWebDavConfig } from '../sync/useSync'
@@ -56,7 +56,7 @@ export function ArchiveExportPanel() {
         secrets: [loadWebDavConfig().password],
         signal: controller.signal,
         onProgress: setProgress,
-        renderBuilding: renderBuildingPng,
+        renderBuilding: renderBuildingPng
       })
       if (response.ok && response.mode === 'browser') {
         downloadBlobFile(response.filename, response.zip, 'application/zip')
@@ -66,7 +66,7 @@ export function ArchiveExportPanel() {
           kind: 'desktop',
           dir: response.dir,
           readmePath: response.readmePath,
-          bytes: response.bytes,
+          bytes: response.bytes
         })
       } else if (response.cancelled) {
         setResult({ kind: 'cancelled' })
@@ -134,10 +134,24 @@ export function ArchiveExportPanel() {
           </button>
         )}
       </div>
-      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 4, lineHeight: 1.5 }}>
+      <div
+        style={{
+          fontSize: 'var(--fs-caption)',
+          color: 'var(--ink-2)',
+          marginTop: 4,
+          lineHeight: 1.5
+        }}
+      >
         {hint}
       </div>
-      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 2, lineHeight: 1.5 }}>
+      <div
+        style={{
+          fontSize: 'var(--fs-caption)',
+          color: 'var(--ink-2)',
+          marginTop: 2,
+          lineHeight: 1.5
+        }}
+      >
         {t.archive.contents}
       </div>
     </div>

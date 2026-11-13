@@ -5,7 +5,7 @@ import {
   animState,
   cascadeState,
   jelly,
-  planCascade,
+  planCascade
 } from './sceneMotion'
 
 /**
@@ -88,6 +88,7 @@ describe('planCascade（逐层级联规划）', () => {
   it('starts 单调不减，且 count 决定长度', () => {
     const plan = planCascade([{ z: 0 }, { z: 0 }, { z: 1 }, { z: 2 }], 4)
     expect(plan.starts).toHaveLength(4)
-    for (let i = 1; i < plan.starts.length; i++) expect(plan.starts[i]).toBeGreaterThanOrEqual(plan.starts[i - 1])
+    for (let i = 1; i < plan.starts.length; i++)
+      expect(plan.starts[i]).toBeGreaterThanOrEqual(plan.starts[i - 1])
   })
 })

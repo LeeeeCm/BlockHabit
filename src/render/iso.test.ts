@@ -13,7 +13,7 @@ import {
   pointInPoly,
   isPointInsideCube,
   type IsoConfig,
-  type IsoPalette,
+  type IsoPalette
 } from './iso'
 describe('worldToScreen', () => {
   const c: IsoConfig = { tileW: 64, tileH: 32, blockH: 24 }
@@ -78,7 +78,12 @@ describe('followResize', () => {
 
   it('窗口等比放大：视图等比放大，模型中心相对位置不变', () => {
     // 模型中心（等距原点）在 (100, 50) → 放大后仍在窗口 10%、6.25% 处
-    const next = followResize({ scale: 1, panX: 100, panY: 50 }, { w: 1000, h: 800 }, { w: 2000, h: 1600 }, origin)
+    const next = followResize(
+      { scale: 1, panX: 100, panY: 50 },
+      { w: 1000, h: 800 },
+      { w: 2000, h: 1600 },
+      origin
+    )
     expect(next.scale).toBe(2)
     expect(next.panX).toBe(200)
     expect(next.panY).toBe(100)
@@ -103,9 +108,19 @@ describe('followResize', () => {
   })
 
   it('缩放钳制在 [0.3, 3]，与滚轮缩放一致', () => {
-    const up = followResize({ scale: 2.9, panX: 0, panY: 0 }, { w: 1000, h: 1000 }, { w: 3000, h: 3000 }, origin)
+    const up = followResize(
+      { scale: 2.9, panX: 0, panY: 0 },
+      { w: 1000, h: 1000 },
+      { w: 3000, h: 3000 },
+      origin
+    )
     expect(up.scale).toBe(3)
-    const down = followResize({ scale: 0.4, panX: 0, panY: 0 }, { w: 3000, h: 3000 }, { w: 1000, h: 1000 }, origin)
+    const down = followResize(
+      { scale: 0.4, panX: 0, panY: 0 },
+      { w: 3000, h: 3000 },
+      { w: 1000, h: 1000 },
+      origin
+    )
     expect(down.scale).toBeCloseTo(0.3)
   })
 })
@@ -118,7 +133,7 @@ describe('deriveShading (v3 光照比例)', () => {
     ghost: '',
     line: '',
     accent: '',
-    ink: '#0a0a0a',
+    ink: '#0a0a0a'
   }
 
   it('anchors each face CSS variable as the brightest edge', () => {
@@ -181,10 +196,14 @@ describe('deriveShadingForColor', () => {
   })
 })
 
-
 describe('hit testing', () => {
   it('pointInPoly correctly detects point inside quad', () => {
-    const poly: Array<[number, number]> = [[0, 0], [10, 0], [10, 10], [0, 10]]
+    const poly: Array<[number, number]> = [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10]
+    ]
     expect(pointInPoly(5, 5, poly)).toBe(true)
     expect(pointInPoly(15, 5, poly)).toBe(false)
     expect(pointInPoly(-2, 5, poly)).toBe(false)

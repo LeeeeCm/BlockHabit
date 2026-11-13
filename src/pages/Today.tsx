@@ -21,7 +21,18 @@ import { HabitDialog } from '../components/HabitDialog'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { BlockDropModal } from '../components/BlockDropModal'
 import { playCelebrationSound } from '../audio/sound'
-import { IconBuild, IconCheck, IconEcho, IconInProgress, IconMoodHard, IconPlus, IconRestore, IconSparkle, IconToday, IconTrash } from '../components/Icons'
+import {
+  IconBuild,
+  IconCheck,
+  IconEcho,
+  IconInProgress,
+  IconMoodHard,
+  IconPlus,
+  IconRestore,
+  IconSparkle,
+  IconToday,
+  IconTrash
+} from '../components/Icons'
 import { triggerHaptic, usePlatform } from '../platform'
 import { ensureNotifyPermission } from '../platform/notify'
 
@@ -56,7 +67,9 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
   const reopenReminders = useReminderStore((s) => s.reopen)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Habit | null>(null)
-  const [nudgeConsent, setNudgeConsentState] = useState<NudgeConsent | null>(() => getNudgeConsent())
+  const [nudgeConsent, setNudgeConsentState] = useState<NudgeConsent | null>(() =>
+    getNudgeConsent()
+  )
   const [toast, setTransientToast] = useTransient<{ text: string; accent?: boolean }>(2400)
   const [showArchive, setShowArchive] = useState(false)
   const [archDelete, setArchDelete] = useState<Habit | null>(null)
@@ -109,7 +122,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
   }, [active, selectedCat])
   const metCount = useMemo(
     () => active.filter((h) => habitMetOnDay(h, checkIns, day)).length,
-    [active, checkIns, day],
+    [active, checkIns, day]
   )
 
   const grouped = useMemo(() => {
@@ -134,9 +147,9 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
         builds,
         activeBlueprintId,
         targetHabits: filteredActive,
-        completedBlueprintIds,
+        completedBlueprintIds
       }),
-    [now, day, habits, checkIns, builds, activeBlueprintId, filteredActive, completedBlueprintIds],
+    [now, day, habits, checkIns, builds, activeBlueprintId, filteredActive, completedBlueprintIds]
   )
   const hasAnyCheckIn = useMemo(() => checkIns.some((c) => !c.deletedAt), [checkIns])
 
@@ -144,7 +157,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
     const candidates = checkIns.filter((c) => !c.deletedAt && c.date < day && c.note?.trim())
     if (candidates.length === 0) return null
     const dayOfYear = Math.floor(
-      (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
+      (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
     )
     return candidates[dayOfYear % candidates.length]
   }, [checkIns, day])
@@ -163,7 +176,10 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
   const focusStartHabit =
     Object.keys(focusSessions).length > 0
       ? null
-      : (filteredActive.find((h) => h.kind === 'focus' && Boolean(h.targetMinutes) && canCheckInHabit(h, checkIns, day).ok) ?? null)
+      : (filteredActive.find(
+          (h) =>
+            h.kind === 'focus' && Boolean(h.targetMinutes) && canCheckInHabit(h, checkIns, day).ok
+        ) ?? null)
 
   // 仍待处理的到点提醒（打卡/跳过/移除提醒后自动从横幅消失，与调度器剪枝同口径）
   const activeReminders = useMemo(
@@ -172,7 +188,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
         const h = habits.find((x) => x.id === item.habitId)
         return h !== undefined && !h.archivedAt && !habitMetOnDay(h, checkIns, day)
       }),
-    [pendingReminders, habits, checkIns, day],
+    [pendingReminders, habits, checkIns, day]
   )
 
   /** 滚动到某张习惯卡并脉冲高亮：提醒跳转与今日简报「开始第一个」共用同一套定位 */
@@ -181,7 +197,8 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
     const el = document.getElementById(`habit-${id}`)
     if (!el) return
     const reduceMotion =
-      typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' })
     el.classList.add('habit-focus-flash')
     setTimeout(() => el.classList.remove('habit-focus-flash'), 2600)
@@ -211,7 +228,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
       addHabit(name, templateFrequency(), { period: template.period })
       showToast(t.templates.created(name), true)
     },
-    [t, addHabit],
+    [t, addHabit]
   )
 
   const handleNudgeEnable = useCallback(() => {
@@ -236,7 +253,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
           habitName: h.name,
           placedCount: placedCountRef.current + 1,
           complete: true,
-          checkInId: res.checkInId,
+          checkInId: res.checkInId
         })
         playCelebrationSound()
       } else if (res.placed) {
@@ -244,7 +261,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
           habitName: h.name,
           placedCount: placedCountRef.current + 1,
           complete: false,
-          checkInId: res.checkInId,
+          checkInId: res.checkInId
         })
       } else {
         // F2：没有掉块时必须说清原因，而不是让用户以为「积木丢了」。
@@ -253,7 +270,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
           completedBlueprints: completedBlueprintIds.length,
           blueprintTotal: blueprintOrder.length,
           placedCount: placedCountRef.current,
-          activeBlueprintBlocks: getBlueprint(activeBlueprintId).blocks.length,
+          activeBlueprintBlocks: getBlueprint(activeBlueprintId).blocks.length
         })
         showToast(
           reason === 'all-blueprints-complete'
@@ -261,13 +278,13 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
             : reason === 'active-blueprint-complete'
               ? t.today.activeCompleteNoBlock
               : t.today.checkedInToast(h.name),
-          reason !== 'normal',
+          reason !== 'normal'
         )
       }
       // B1：连击每满 7 天掉落的积木是点缀色奖励块 —— 让用户知道这块为什么不一样
       if (res.bonus) showToast(t.today.streakBonusToast(7), true)
     },
-    [t, completedBlueprintIds, activeBlueprintId],
+    [t, completedBlueprintIds, activeBlueprintId]
   )
 
   const handleEdit = useCallback((h: Habit) => {
@@ -291,13 +308,22 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-
   return (
-    <div className="today-page-container" style={{ padding: '24px 24px 80px', maxWidth: 720, margin: '0 auto' }}>
+    <div
+      className="today-page-container"
+      style={{ padding: '24px 24px 80px', maxWidth: 720, margin: '0 auto' }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: 'var(--fs-hero)', margin: 0 }}>
           {t.common.monthDay(now.getMonth() + 1, now.getDate())}
-          <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-subhead)', marginLeft: 10, fontWeight: 400 }}>
+          <span
+            style={{
+              color: 'var(--ink-2)',
+              fontSize: 'var(--fs-subhead)',
+              marginLeft: 10,
+              fontWeight: 400
+            }}
+          >
             {t.common.weekdayLabel(t.common.weekdays[now.getDay()])}
           </span>
         </h1>
@@ -316,12 +342,14 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
               alignItems: 'center',
               gap: 6,
               border: '1px solid var(--line)',
-              background: 'var(--surface)',
+              background: 'var(--surface)'
             }}
             title={t.today.view3dModel}
           >
             <IconBuild size={15} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-            <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{getBlueprintName(blueprint.id, lang)}</span>
+            <span style={{ fontWeight: 600, color: 'var(--ink)' }}>
+              {getBlueprintName(blueprint.id, lang)}
+            </span>
             <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-caption)' }}>
               {placedCount}/{total} ({percent}%)
             </span>
@@ -332,7 +360,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
               fontSize: 'var(--fs-body)',
               border: '1px solid var(--line)',
               borderRadius: 999,
-              padding: '4px 12px',
+              padding: '4px 12px'
             }}
           >
             {metCount} / {active.length}
@@ -365,14 +393,46 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
             startTimer(focusStartHabit.id, (focusStartHabit.targetMinutes ?? 25) * 60_000)
             showToast(t.focusCompanion.focusing)
           }}
-          style={{ width: '100%', margin: '14px 0 6px', padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 'var(--r-md)', background: 'var(--surface)', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', cursor: 'pointer', minHeight: isMobile ? 48 : undefined }}
+          style={{
+            width: '100%',
+            margin: '14px 0 6px',
+            padding: '12px 16px',
+            border: '1px solid var(--line)',
+            borderRadius: 'var(--r-md)',
+            background: 'var(--surface)',
+            color: 'var(--ink)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            textAlign: 'left',
+            cursor: 'pointer',
+            minHeight: isMobile ? 48 : undefined
+          }}
         >
           <IconInProgress size={18} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
           <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 'var(--fs-small)', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {t.focusCompanion.start} · {focusStartHabit.name} · {t.today.targetMinutes(focusStartHabit.targetMinutes ?? 25)}
+            <span
+              style={{
+                fontSize: 'var(--fs-small)',
+                fontWeight: 600,
+                color: 'var(--ink)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {t.focusCompanion.start} · {focusStartHabit.name} ·{' '}
+              {t.today.targetMinutes(focusStartHabit.targetMinutes ?? 25)}
             </span>
-            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span
+              style={{
+                fontSize: 'var(--fs-caption)',
+                color: 'var(--ink-2)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
               {t.focusCompanion.startHint}
             </span>
           </span>
@@ -383,7 +443,15 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
       )}
 
       {categories.length > 0 && (
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, margin: '14px 0 10px' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            overflowX: 'auto',
+            paddingBottom: 4,
+            margin: '14px 0 10px'
+          }}
+        >
           <button
             className={`pill-action${selectedCat === null ? ' success' : ''}`}
             style={{ fontSize: 'var(--fs-small)', padding: '3px 11px' }}
@@ -423,12 +491,24 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 12,
-            animation: 'pop-in var(--dur-md) var(--ease-bounce)',
+            animation: 'pop-in var(--dur-md) var(--ease-bounce)'
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 'var(--fs-subhead)', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <IconCheck size={16} style={{ color: 'var(--accent)', strokeWidth: 2.2, flexShrink: 0 }} />
+            <div
+              style={{
+                fontWeight: 700,
+                fontSize: 'var(--fs-subhead)',
+                color: 'var(--ink)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              <IconCheck
+                size={16}
+                style={{ color: 'var(--accent)', strokeWidth: 2.2, flexShrink: 0 }}
+              />
               <span>{t.today.fullCard.title}</span>
             </div>
             <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginTop: 2 }}>
@@ -446,7 +526,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
                 background: 'var(--accent)',
                 color: 'var(--accent-ink)',
                 borderColor: 'var(--accent)',
-                flexShrink: 0,
+                flexShrink: 0
               }}
               onClick={() => {
                 triggerHaptic('medium')
@@ -464,12 +544,17 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
                   return
                 }
                 playCelebrationSound()
-                showToast(res.bonus ? `${t.today.fullCard.claimToast} ${t.today.fullCard.claimBonusToast}` : t.today.fullCard.claimToast, true)
+                showToast(
+                  res.bonus
+                    ? `${t.today.fullCard.claimToast} ${t.today.fullCard.claimBonusToast}`
+                    : t.today.fullCard.claimToast,
+                  true
+                )
                 if (res.complete) {
                   setDropModal({
                     habitName: t.today.fullCard.bonusHabitName,
                     placedCount: placedCount + 1,
-                    complete: true,
+                    complete: true
                   })
                 }
               }}
@@ -480,8 +565,26 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
               </span>
             </button>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: 'var(--fs-small)', color: 'var(--progress-green)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                flexShrink: 0,
+                flexWrap: 'wrap',
+                justifyContent: 'flex-end'
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 'var(--fs-small)',
+                  color: 'var(--progress-green)',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4
+                }}
+              >
                 <IconCheck size={14} />
                 <span>{t.today.fullCard.claimed}</span>
               </span>
@@ -503,17 +606,36 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
       )}
       {echoEntry && (
         <div className="echo-capsule-bar" style={{ marginTop: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--fs-caption)', color: 'var(--accent)', fontWeight: 700 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 'var(--fs-caption)',
+              color: 'var(--accent)',
+              fontWeight: 700
+            }}
+          >
             <IconEcho size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span>
               {t.reflections.echoTitle} · {t.reflections.echoDaysAgo(echoDaysAgo)}
             </span>
           </div>
-          <div style={{ fontSize: 'var(--fs-body)', color: 'var(--ink)', fontStyle: 'italic', marginTop: 2, lineHeight: 1.5 }}>
+          <div
+            style={{
+              fontSize: 'var(--fs-body)',
+              color: 'var(--ink)',
+              fontStyle: 'italic',
+              marginTop: 2,
+              lineHeight: 1.5
+            }}
+          >
             “{echoEntry.note}”
           </div>
           <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 2 }}>
-            {t.reflections.echoFromHabit(habits.find((h) => h.id === echoEntry.habitId)?.name || '—')}
+            {t.reflections.echoFromHabit(
+              habits.find((h) => h.id === echoEntry.habitId)?.name || '—'
+            )}
           </div>
         </div>
       )}
@@ -530,21 +652,49 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
           onKeyDown={(e) => e.key === 'Enter' && reopenReminders()}
         >
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 'var(--fs-subhead)', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div
+              style={{
+                fontWeight: 700,
+                fontSize: 'var(--fs-subhead)',
+                color: 'var(--ink)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
               <span aria-hidden="true" style={{ display: 'inline-flex', color: 'var(--ink-2)' }}>
                 <IconMoodHard size={14} />
               </span>
               <span>{t.reminder.bannerTitle(activeReminders.length)}</span>
             </div>
-            <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div
+              style={{
+                fontSize: 'var(--fs-small)',
+                color: 'var(--ink-2)',
+                marginTop: 2,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
               {activeReminders.map((r) => r.name).join(' · ')} — {t.reminder.bannerHint}
             </div>
           </div>
-          <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-heading)', flexShrink: 0 }} aria-hidden="true">›</span>
+          <span
+            style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-heading)', flexShrink: 0 }}
+            aria-hidden="true"
+          >
+            ›
+          </span>
         </div>
       )}
 
-      <div style={{ height: categories.length > 0 || (metCount === active.length && active.length > 0) ? 6 : 18 }} />
+      <div
+        style={{
+          height:
+            categories.length > 0 || (metCount === active.length && active.length > 0) ? 6 : 18
+        }}
+      />
       {active.length === 0 ? (
         <div
           className="card"
@@ -558,7 +708,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
             gap: 10,
             borderRadius: 'var(--r-lg)',
             background: 'color-mix(in srgb, var(--surface) 96%, var(--ink))',
-            border: '1px dashed var(--line)',
+            border: '1px dashed var(--line)'
           }}
         >
           <div
@@ -571,7 +721,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
               alignItems: 'center',
               justifyContent: 'center',
               color: 'var(--accent)',
-              marginBottom: 2,
+              marginBottom: 2
             }}
           >
             <IconToday size={24} />
@@ -579,7 +729,15 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
           <div style={{ fontSize: 'var(--fs-title)', fontWeight: 700, color: 'var(--ink)' }}>
             {t.today.startJourney}
           </div>
-          <div style={{ fontSize: 'var(--fs-body)', color: 'var(--ink-2)', maxWidth: 380, lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+          <div
+            style={{
+              fontSize: 'var(--fs-body)',
+              color: 'var(--ink-2)',
+              maxWidth: 380,
+              lineHeight: 1.6,
+              whiteSpace: 'pre-line'
+            }}
+          >
             {t.today.emptyHint(getBlueprintName(blueprint.id, lang))}
           </div>
           {/* F1 首启三步引导：把「打卡 → 掉积木 → 拼成作品」这条主线讲清楚 */}
@@ -591,13 +749,13 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
               width: '100%',
               maxWidth: 420,
               marginTop: 6,
-              textAlign: 'left',
+              textAlign: 'left'
             }}
           >
             {[
               { n: '01', title: t.today.onboardingStep1Title, body: t.today.onboardingStep1Body },
               { n: '02', title: t.today.onboardingStep2Title, body: t.today.onboardingStep2Body },
-              { n: '03', title: t.today.onboardingStep3Title, body: t.today.onboardingStep3Body },
+              { n: '03', title: t.today.onboardingStep3Title, body: t.today.onboardingStep3Body }
             ].map((step) => (
               <div key={step.n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <span
@@ -608,20 +766,34 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
                     letterSpacing: 0.5,
                     color: 'var(--ink-2)',
                     marginTop: 3,
-                    minWidth: 18,
+                    minWidth: 18
                   }}
                 >
                   {step.n}
                 </span>
                 <div>
-                  <div style={{ fontSize: 'var(--fs-body)', fontWeight: 600, color: 'var(--ink)' }}>{step.title}</div>
-                  <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', lineHeight: 1.6 }}>{step.body}</div>
+                  <div style={{ fontSize: 'var(--fs-body)', fontWeight: 600, color: 'var(--ink)' }}>
+                    {step.title}
+                  </div>
+                  <div
+                    style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', lineHeight: 1.6 }}
+                  >
+                    {step.body}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
           <HabitTemplates onPick={handleTemplatePick} />
-          <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 10,
+              marginTop: 10,
+              flexWrap: 'wrap',
+              justifyContent: 'center'
+            }}
+          >
             <button
               className="btn primary"
               style={{
@@ -630,7 +802,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                fontSize: 'var(--fs-body)',
+                fontSize: 'var(--fs-body)'
               }}
               onClick={() => {
                 triggerHaptic('light')
@@ -666,14 +838,19 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
                   fontSize: 'var(--fs-small)',
                   color: 'var(--ink-2)',
                   letterSpacing: '0.14em',
-                  margin: '4px 2px 10px',
+                  margin: '4px 2px 10px'
                 }}
               >
                 {t.today.periods[p]}
               </div>
               <div className="habit-grid">
                 {list.map((h) => {
-                  const streakInfo = currentStreakWithResilience(h, checkIns, now, enableGentleDecay)
+                  const streakInfo = currentStreakWithResilience(
+                    h,
+                    checkIns,
+                    now,
+                    enableGentleDecay
+                  )
                   // 完成态 = 今日有打卡 且 达标（counter 未满目标不亮绿勾；周频达标但今日未打卡不算完成）
                   const doneToday =
                     checkIns.some((c) => !c.deletedAt && c.habitId === h.id && c.date === day) &&
@@ -708,25 +885,37 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
             title={showArchive ? t.today.collapse : t.today.expand}
           >
             <span>{t.today.archivedCount(archived.length)}</span>
-            <span style={{ fontSize: 'var(--fs-caption)' }}>{showArchive ? t.today.collapse : t.today.expand}</span>
+            <span style={{ fontSize: 'var(--fs-caption)' }}>
+              {showArchive ? t.today.collapse : t.today.expand}
+            </span>
           </button>
           {showArchive && (
             <div className="archive-list">
               {archived.map((h) => (
                 <div key={h.id} className="archive-row">
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 'var(--fs-subhead)', color: 'var(--ink-2)' }}>{h.name}</div>
-                    <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', opacity: 0.7 }}>
+                    <div style={{ fontSize: 'var(--fs-subhead)', color: 'var(--ink-2)' }}>
+                      {h.name}
+                    </div>
+                    <div
+                      style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', opacity: 0.7 }}
+                    >
                       {h.frequency.type === 'daily'
                         ? t.today.freqDaily
                         : h.frequency.type === 'weekly'
                           ? t.today.freqWeekly(h.frequency.times)
-                          : t.today.freqCustom(h.frequency.days.map((d) => t.common.weekdaysShort[d - 1]))}
+                          : t.today.freqCustom(
+                              h.frequency.days.map((d) => t.common.weekdaysShort[d - 1])
+                            )}
                       {h.targetMinutes ? ` · ${t.common.timeMinutes(h.targetMinutes)}` : ''}
                       {h.targetValue ? ` · ${h.targetValue} ${h.unit ?? ''}` : ''}
                     </div>
                   </div>
-                  <button className="archive-act" title={t.common.restore} onClick={() => restoreHabit(h.id)}>
+                  <button
+                    className="archive-act"
+                    title={t.common.restore}
+                    onClick={() => restoreHabit(h.id)}
+                  >
                     <IconRestore size={16} />
                     {t.common.restore}
                   </button>

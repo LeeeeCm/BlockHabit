@@ -26,7 +26,7 @@ function validateBlueprint(name: string, blocks: BlockDef[], cx: number, cy: num
             [1, 0],
             [-1, 0],
             [0, 1],
-            [0, -1],
+            [0, -1]
           ].some(([dx, dy]) => occupied.has(`${b.x + dx},${b.y + dy},${b.z}`))
         expect(supported, `block (${b.x},${b.y},${b.z}) floats`).toBe(true)
       }
@@ -80,7 +80,7 @@ const CENTERS: Record<string, [number, number]> = {
   monument: [3, 3],
   pyramid: [4, 4],
   robot: [3, 1],
-  castle: [4, 4],
+  castle: [4, 4]
 }
 
 describe('blueprint catalog', () => {
@@ -110,7 +110,7 @@ describe('blueprint catalog', () => {
       'bookshop',
       'postoffice',
       'firestation',
-      'watertower',
+      'watertower'
     ])
     expect(Object.keys(blueprints)).toHaveLength(blueprintOrder.length)
   })

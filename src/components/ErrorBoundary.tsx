@@ -59,7 +59,7 @@ function ErrorFallback({ variant }: ErrorFallbackProps) {
         padding: isTray ? 12 : 24,
         color: 'var(--ink)',
         // 托盘窗口是透明窗口：兜底卡片自己撑起 surface，不重复铺底色
-        background: isTray ? 'transparent' : 'var(--bg)',
+        background: isTray ? 'transparent' : 'var(--bg)'
       }}
     >
       <div
@@ -78,7 +78,7 @@ function ErrorFallback({ variant }: ErrorFallbackProps) {
           background: 'var(--surface)',
           border: '1px solid var(--line)',
           borderRadius: isTray ? 'var(--r-md)' : 'var(--r-lg)',
-          overflow: 'hidden',
+          overflow: 'hidden'
         }}
       >
         <h1
@@ -87,7 +87,7 @@ function ErrorFallback({ variant }: ErrorFallbackProps) {
             fontSize: isTray ? 13 : 20,
             fontWeight: 700,
             lineHeight: 1.3,
-            color: 'var(--ink)',
+            color: 'var(--ink)'
           }}
         >
           {t.errorBoundary.title}
@@ -98,7 +98,7 @@ function ErrorFallback({ variant }: ErrorFallbackProps) {
             maxWidth: isTray ? undefined : 320,
             fontSize: isTray ? 10.5 : 13,
             lineHeight: isTray ? 1.5 : 1.55,
-            color: 'var(--ink-2)',
+            color: 'var(--ink-2)'
           }}
         >
           {t.errorBoundary.body}
@@ -111,7 +111,7 @@ function ErrorFallback({ variant }: ErrorFallbackProps) {
             justifyContent: 'center',
             gap: isTray ? 6 : 10,
             marginTop: isTray ? 1 : 6,
-            width: '100%',
+            width: '100%'
           }}
         >
           <button
@@ -122,7 +122,7 @@ function ErrorFallback({ variant }: ErrorFallbackProps) {
               borderRadius: 'var(--r-pill)',
               fontSize: isTray ? 10.5 : 13.5,
               lineHeight: isTray ? 1.2 : undefined,
-              padding: isTray ? '4px 9px' : undefined,
+              padding: isTray ? '4px 9px' : undefined
             }}
             onClick={handleReload}
           >
@@ -136,7 +136,7 @@ function ErrorFallback({ variant }: ErrorFallbackProps) {
               borderRadius: 'var(--r-pill)',
               fontSize: isTray ? 10.5 : 13.5,
               lineHeight: isTray ? 1.2 : undefined,
-              padding: isTray ? '4px 9px' : undefined,
+              padding: isTray ? '4px 9px' : undefined
             }}
             onClick={handleExport}
           >

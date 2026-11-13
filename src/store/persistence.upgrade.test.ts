@@ -11,7 +11,7 @@ describe('persistence suspension on newer-version archive', () => {
     const saveSpy = vi.fn(() => Promise.resolve())
     const adapter: StorageAdapter = {
       load: async () => ({ state: null, needsUpgrade: true }),
-      save: saveSpy,
+      save: saveSpy
     }
     await initPersistence(adapter)
     useAppStore.setState({ hydrated: true })

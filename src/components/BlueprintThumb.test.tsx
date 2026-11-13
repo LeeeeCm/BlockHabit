@@ -19,7 +19,7 @@ function createFakeContext(): { ctx: CanvasRenderingContext2D; calls: RecordedCa
     measureText: (text: string) => ({ width: String(text).length * 7 }),
     createLinearGradient: () => gradient,
     createRadialGradient: () => gradient,
-    getTransform: () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+    getTransform: () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 })
   }
   const proxy = new Proxy(target, {
     get(obj, prop) {
@@ -32,7 +32,7 @@ function createFakeContext(): { ctx: CanvasRenderingContext2D; calls: RecordedCa
     set(obj, prop, value) {
       obj[prop as string] = value
       return true
-    },
+    }
   })
   return { ctx: proxy as unknown as CanvasRenderingContext2D, calls }
 }
@@ -53,7 +53,7 @@ function renderThumb(element: React.ReactElement) {
     unmount: () => {
       act(() => root.unmount())
       container.remove()
-    },
+    }
   }
 }
 
@@ -105,7 +105,9 @@ describe('BlueprintThumb 剪影态', () => {
   })
 
   it('剪影态：透明底 + 单色绘制（不泄露建筑配色）', () => {
-    const { canvas, unmount } = renderThumb(<BlueprintThumb blueprint={blueprints.plant} silhouette />)
+    const { canvas, unmount } = renderThumb(
+      <BlueprintThumb blueprint={blueprints.plant} silhouette />
+    )
     const el = canvas()
     expect(el.style.background).toBe('transparent')
     expect(el.style.opacity).toBe('0.9')
@@ -119,7 +121,7 @@ describe('BlueprintThumb 剪影态', () => {
       <>
         <BlueprintThumb blueprint={blueprints.plant} />
         <BlueprintThumb blueprint={blueprints.plant} silhouette />
-      </>,
+      </>
     )
     const canvases = Array.from(container.querySelectorAll('canvas'))
     expect(canvases).toHaveLength(2)

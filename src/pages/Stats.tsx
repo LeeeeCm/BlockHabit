@@ -9,7 +9,17 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { GuideTip } from '../components/GuideTip'
 import { MonthlyPosterModal } from '../components/MonthlyPosterModal'
 import { YearbookModal } from '../components/YearbookModal'
-import { IconEcho, IconExport, IconGallery, IconMood, IconNote, IconPoster, IconRepair, IconStar, IconStats } from '../components/Icons'
+import {
+  IconEcho,
+  IconExport,
+  IconGallery,
+  IconMood,
+  IconNote,
+  IconPoster,
+  IconRepair,
+  IconStar,
+  IconStats
+} from '../components/Icons'
 import { useI18n } from '../i18n'
 import { triggerHaptic } from '../platform'
 import { hasSeenTip, markTipSeen } from '../platform/guideTips'
@@ -37,7 +47,11 @@ export default function Stats() {
     setVisibleCount(25)
   }, [filterHabitId, filterMood, onlyStarred, searchQuery])
 
-  const [repairTarget, setRepairTarget] = useState<{ habitId: string; habitName: string; date: string } | null>(null)
+  const [repairTarget, setRepairTarget] = useState<{
+    habitId: string
+    habitName: string
+    date: string
+  } | null>(null)
   // F8：进入统计页结算本月修复积木额度（跨月后打开即生效）
   useEffect(() => {
     refreshRepairAllowance()
@@ -64,22 +78,22 @@ export default function Stats() {
         const hCheckIns = checkIns.filter((c) => c.habitId === h.id)
         const totalMinutes = hCheckIns.reduce(
           (sum, c) => sum + (c.actualMinutes ?? h.targetMinutes ?? 0),
-          0,
+          0
         )
         return {
           habit: h,
           current: currentStreak(h, checkIns, now),
           best: bestStreak(h, checkIns),
           total: hCheckIns.length,
-          totalMinutes,
+          totalMinutes
         }
       }),
-    [active, checkIns, now],
+    [active, checkIns, now]
   )
 
   const grandTotalMinutes = useMemo(
     () => checkIns.reduce((sum, c) => sum + (c.actualMinutes ?? 0), 0),
-    [checkIns],
+    [checkIns]
   )
 
   // 积木历史回响：提取过往（非今日）具有随笔的打卡记录
@@ -87,7 +101,7 @@ export default function Stats() {
     const candidates = checkIns.filter((c) => c.date < today && c.note?.trim())
     if (candidates.length === 0) return null
     const dayOfYear = Math.floor(
-      (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
+      (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
     )
     return candidates[dayOfYear % candidates.length]
   }, [checkIns, today])
@@ -134,7 +148,7 @@ export default function Stats() {
       `> ${t.stats.exportDate}: ${new Date().toISOString().slice(0, 10)} | ${t.stats.exportCount(chronicleItems.length)}`,
       '',
       '---',
-      '',
+      ''
     ]
     for (const item of chronicleItems) {
       const h = habits.find((x) => x.id === item.habitId)
@@ -174,8 +188,18 @@ export default function Stats() {
   }
 
   return (
-    <div className="stats-page-container" style={{ padding: '28px 24px 80px', maxWidth: 680, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+    <div
+      className="stats-page-container"
+      style={{ padding: '28px 24px 80px', maxWidth: 680, margin: '0 auto' }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 12
+        }}
+      >
         <div>
           <h1 style={{ fontSize: 'var(--fs-display)', margin: '0 0 6px' }}>{t.stats.title}</h1>
           <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginBottom: 18 }}>
@@ -196,7 +220,7 @@ export default function Stats() {
               padding: '4px 12px',
               fontSize: 'var(--fs-small)',
               borderRadius: 999,
-              flexShrink: 0,
+              flexShrink: 0
             }}
             onClick={() => {
               triggerHaptic('light')
@@ -217,7 +241,7 @@ export default function Stats() {
               padding: '4px 12px',
               fontSize: 'var(--fs-small)',
               borderRadius: 999,
-              flexShrink: 0,
+              flexShrink: 0
             }}
             onClick={() => {
               triggerHaptic('light')
@@ -240,7 +264,7 @@ export default function Stats() {
               padding: '4px 12px',
               fontSize: 'var(--fs-small)',
               fontWeight: 600,
-              flexShrink: 0,
+              flexShrink: 0
             }}
             title={t.stats.repairBricksTooltip}
           >
@@ -279,17 +303,36 @@ export default function Stats() {
       {/* 积木历史回响时间胶囊 */}
       {echoEntry && (
         <div className="echo-capsule-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--fs-caption)', color: 'var(--accent)', fontWeight: 700 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 'var(--fs-caption)',
+              color: 'var(--accent)',
+              fontWeight: 700
+            }}
+          >
             <IconEcho size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span>
               {t.reflections.echoTitle} · {t.reflections.echoDaysAgo(echoDaysAgo)}
             </span>
           </div>
-          <div style={{ fontSize: 'var(--fs-body)', color: 'var(--ink)', fontStyle: 'italic', marginTop: 2, lineHeight: 1.5 }}>
+          <div
+            style={{
+              fontSize: 'var(--fs-body)',
+              color: 'var(--ink)',
+              fontStyle: 'italic',
+              marginTop: 2,
+              lineHeight: 1.5
+            }}
+          >
             “{echoEntry.note}”
           </div>
           <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 2 }}>
-            {t.reflections.echoFromHabit(habits.find((h) => h.id === echoEntry.habitId)?.name || '—')}
+            {t.reflections.echoFromHabit(
+              habits.find((h) => h.id === echoEntry.habitId)?.name || '—'
+            )}
           </div>
         </div>
       )}
@@ -309,7 +352,9 @@ export default function Stats() {
       {viewMode === 'metrics' ? (
         <div>
           {rows.length === 0 ? (
-            <div style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-subhead)' }}>{t.stats.empty}</div>
+            <div style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-subhead)' }}>
+              {t.stats.empty}
+            </div>
           ) : (
             rows.map(({ habit, current, best, total, totalMinutes }) => (
               <div
@@ -317,7 +362,7 @@ export default function Stats() {
                 className="card"
                 style={{
                   padding: '16px 18px',
-                  marginBottom: 14,
+                  marginBottom: 14
                 }}
               >
                 <div style={{ marginBottom: 14 }}>
@@ -329,7 +374,9 @@ export default function Stats() {
                     weeks={13}
                     onDayClick={(day) => {
                       const todayMs = new Date(today + 'T00:00:00').getTime()
-                      const diffDays = Math.round((todayMs - new Date(day + 'T00:00:00').getTime()) / 86400000)
+                      const diffDays = Math.round(
+                        (todayMs - new Date(day + 'T00:00:00').getTime()) / 86400000
+                      )
                       const already = checkIns.some((c) => c.habitId === habit.id && c.date === day)
                       if (already) return
                       if (diffDays > REPAIR_WINDOW_DAYS || diffDays < 0) {
@@ -354,7 +401,9 @@ export default function Stats() {
                         ? t.today.freqDaily
                         : habit.frequency.type === 'weekly'
                           ? t.today.freqWeekly(habit.frequency.times)
-                          : t.today.freqCustom(habit.frequency.days.map((d) => t.common.weekdaysShort[d - 1]))}
+                          : t.today.freqCustom(
+                              habit.frequency.days.map((d) => t.common.weekdaysShort[d - 1])
+                            )}
                     </div>
                   </div>
                   {totalMinutes > 0 && (
@@ -367,8 +416,16 @@ export default function Stats() {
                       }
                     />
                   )}
-                  <Stat label={t.stats.metric.currentStreak} value={current} accent={current > 0 && current % 7 === 0} />
-                  <Stat label={t.stats.metric.bestStreak} value={best} title={t.stats.bestStreak(best)} />
+                  <Stat
+                    label={t.stats.metric.currentStreak}
+                    value={current}
+                    accent={current > 0 && current % 7 === 0}
+                  />
+                  <Stat
+                    label={t.stats.metric.bestStreak}
+                    value={best}
+                    title={t.stats.bestStreak(best)}
+                  />
                   <Stat label={t.stats.metric.totalCheckIns} value={total} />
                 </div>
 
@@ -379,16 +436,47 @@ export default function Stats() {
                     .slice(0, 3)
                   if (notes.length === 0) return null
                   return (
-                    <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line)' }}>
-                      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginBottom: 6, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <div
+                      style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line)' }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 'var(--fs-caption)',
+                          color: 'var(--ink-2)',
+                          marginBottom: 6,
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5
+                        }}
+                      >
                         <IconNote size={13} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
                         <span>{t.stats.recentReflections}</span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {notes.map((n) => (
-                          <div key={n.id} style={{ fontSize: 'var(--fs-small)', color: 'var(--ink)', display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', flexShrink: 0 }}>{n.date}</span>
-                            <span style={{ minWidth: 0, wordBreak: 'break-word', opacity: 0.88 }}>{n.note}</span>
+                          <div
+                            key={n.id}
+                            style={{
+                              fontSize: 'var(--fs-small)',
+                              color: 'var(--ink)',
+                              display: 'flex',
+                              gap: 8,
+                              alignItems: 'baseline'
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 'var(--fs-caption)',
+                                color: 'var(--ink-2)',
+                                flexShrink: 0
+                              }}
+                            >
+                              {n.date}
+                            </span>
+                            <span style={{ minWidth: 0, wordBreak: 'break-word', opacity: 0.88 }}>
+                              {n.note}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -412,7 +500,7 @@ export default function Stats() {
               border: '1px solid var(--line)',
               borderRadius: 'var(--r-md)',
               padding: '12px 14px',
-              marginBottom: 16,
+              marginBottom: 16
             }}
           >
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -429,13 +517,21 @@ export default function Stats() {
                   background: 'color-mix(in srgb, var(--ink) 2%, transparent)',
                   fontSize: 'var(--fs-body)',
                   color: 'var(--ink)',
-                  outline: 'none',
+                  outline: 'none'
                 }}
               />
               <button
                 className="btn ghost"
                 onClick={handleExportMarkdown}
-                style={{ fontSize: 'var(--fs-small)', padding: '7px 12px', borderRadius: 'var(--r-sm)', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                style={{
+                  fontSize: 'var(--fs-small)',
+                  padding: '7px 12px',
+                  borderRadius: 'var(--r-sm)',
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5
+                }}
                 title={t.reflections.exportMarkdown}
               >
                 <IconExport size={13} style={{ flexShrink: 0 }} />
@@ -454,7 +550,7 @@ export default function Stats() {
                   borderRadius: 'var(--r-sm)',
                   border: '1px solid var(--line)',
                   background: 'var(--surface)',
-                  color: 'var(--ink)',
+                  color: 'var(--ink)'
                 }}
               >
                 <option value="all">{t.reflections.filterAll}</option>
@@ -494,14 +590,20 @@ export default function Stats() {
                   fontSize: 'var(--fs-small)',
                   padding: '3px 10px',
                   color: onlyStarred ? 'var(--accent)' : 'var(--ink-2)',
-                  background: onlyStarred ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined,
+                  background: onlyStarred
+                    ? 'color-mix(in srgb, var(--accent) 12%, transparent)'
+                    : undefined
                 }}
                 onClick={() => {
                   triggerHaptic('selection')
                   setOnlyStarred((v) => !v)
                 }}
               >
-                <IconStar size={12} filled={onlyStarred} style={{ color: onlyStarred ? 'var(--accent)' : 'currentColor' }} />
+                <IconStar
+                  size={12}
+                  filled={onlyStarred}
+                  style={{ color: onlyStarred ? 'var(--accent)' : 'currentColor' }}
+                />
                 <span>{t.reflections.onlyStarred}</span>
               </button>
             </div>
@@ -509,70 +611,95 @@ export default function Stats() {
 
           {/* 列表流 */}
           {chronicleItems.length === 0 ? (
-            <div style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-body)', textAlign: 'center', padding: '36px 0' }}>
+            <div
+              style={{
+                color: 'var(--ink-2)',
+                fontSize: 'var(--fs-body)',
+                textAlign: 'center',
+                padding: '36px 0'
+              }}
+            >
               {t.reflections.emptyChronicle}
             </div>
           ) : (
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {chronicleItems.slice(0, visibleCount).map((item) => {
-                const h = habits.find((x) => x.id === item.habitId)
-                return (
-                  <div key={item.id} className="chronicle-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 'var(--fs-small)', fontWeight: 700, color: 'var(--ink)' }}>
-                          {item.date}
-                        </span>
-                        <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
-                          【{h?.name || '—'}】
-                        </span>
-                        {item.actualMinutes && (
-                          <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>
-                            · {t.stats.metric.minutes(item.actualMinutes)}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {item.mood && (
+                {chronicleItems.slice(0, visibleCount).map((item) => {
+                  const h = habits.find((x) => x.id === item.habitId)
+                  return (
+                    <div key={item.id} className="chronicle-card">
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span
                             style={{
-                              fontSize: 'var(--fs-caption)',
-                              padding: '2px 8px',
-                              borderRadius: 999,
-                              background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
-                              color: 'var(--ink)',
-                              fontWeight: 600,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
+                              fontSize: 'var(--fs-small)',
+                              fontWeight: 700,
+                              color: 'var(--ink)'
                             }}
                           >
-                            <IconMood mood={item.mood} size={11} style={{ flexShrink: 0 }} />
-                            <span>{t.microMood[item.mood]}</span>
+                            {item.date}
                           </span>
-                        )}
-                        <button
-                          type="button"
-                          className={`star-toggle-btn${item.starred ? ' starred' : ''}`}
-                          style={{ padding: '3px 7px' }}
-                          onClick={() => {
-                            triggerHaptic('selection')
-                            toggleCheckInStar(item.id)
-                          }}
-                        >
-                          <IconStar size={13} filled={item.starred} />
-                        </button>
+                          <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
+                            【{h?.name || '—'}】
+                          </span>
+                          {item.actualMinutes && (
+                            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>
+                              · {t.stats.metric.minutes(item.actualMinutes)}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {item.mood && (
+                            <span
+                              style={{
+                                fontSize: 'var(--fs-caption)',
+                                padding: '2px 8px',
+                                borderRadius: 999,
+                                background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
+                                color: 'var(--ink)',
+                                fontWeight: 600,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4
+                              }}
+                            >
+                              <IconMood mood={item.mood} size={11} style={{ flexShrink: 0 }} />
+                              <span>{t.microMood[item.mood]}</span>
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            className={`star-toggle-btn${item.starred ? ' starred' : ''}`}
+                            style={{ padding: '3px 7px' }}
+                            onClick={() => {
+                              triggerHaptic('selection')
+                              toggleCheckInStar(item.id)
+                            }}
+                          >
+                            <IconStar size={13} filled={item.starred} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: 'var(--fs-body)',
+                          color: 'var(--ink)',
+                          lineHeight: 1.55
+                        }}
+                      >
+                        “{item.note}”
                       </div>
                     </div>
-
-                    <div style={{ fontSize: 'var(--fs-body)', color: 'var(--ink)', lineHeight: 1.55 }}>
-                      “{item.note}”
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
               {chronicleItems.length > visibleCount && (
                 <div style={{ textAlign: 'center', marginTop: 12 }}>
                   <button
@@ -612,7 +739,7 @@ export default function Stats() {
                 'no-habit': t.stats.repairNoHabitToast,
                 archived: t.stats.repairArchivedToast,
                 future: t.stats.repairFutureToast,
-                'before-creation': t.stats.repairBeforeCreationToast,
+                'before-creation': t.stats.repairBeforeCreationToast
               }
               showToast(reasonToast[res.reason ?? ''] ?? t.stats.repairFailToast, 2500)
             }
@@ -631,7 +758,7 @@ function Stat({
   label,
   value,
   accent = false,
-  title,
+  title
 }: {
   label: string
   value: number | string
@@ -644,7 +771,7 @@ function Stat({
         style={{
           fontSize: 'var(--fs-heading)',
           fontWeight: 700,
-          color: accent ? 'var(--progress-green)' : 'var(--ink)',
+          color: accent ? 'var(--progress-green)' : 'var(--ink)'
         }}
       >
         {value}

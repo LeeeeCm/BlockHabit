@@ -33,7 +33,7 @@ export function BlockDropModal({
   complete = false,
   checkInId,
   onClose,
-  onEngraved,
+  onEngraved
 }: Props) {
   const { lang, t } = useI18n()
   const recordCheckInNote = useAppStore((s) => s.recordCheckInNote)
@@ -125,7 +125,7 @@ export function BlockDropModal({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px 20px 12px',
-            borderBottom: '1px solid var(--line)',
+            borderBottom: '1px solid var(--line)'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
@@ -137,7 +137,7 @@ export function BlockDropModal({
                 background: 'var(--accent)',
                 padding: '2px 8px',
                 borderRadius: 999,
-                flexShrink: 0,
+                flexShrink: 0
               }}
             >
               {t.blockDrop.plusOne}
@@ -150,13 +150,14 @@ export function BlockDropModal({
                 color: 'var(--ink)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                textOverflow: 'ellipsis'
               }}
             >
-              {complete ? t.blockDrop.completedBlueprint(getBlueprintName(blueprint.id, lang)) : t.blockDrop.completedHabit(habitName)}
+              {complete
+                ? t.blockDrop.completedBlueprint(getBlueprintName(blueprint.id, lang))
+                : t.blockDrop.completedHabit(habitName)}
             </span>
           </div>
-
 
           <button
             className="btn ghost"
@@ -167,7 +168,7 @@ export function BlockDropModal({
               fontSize: 'var(--fs-small)',
               borderRadius: 999,
               flexShrink: 0,
-              marginLeft: 12,
+              marginLeft: 12
             }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -179,7 +180,14 @@ export function BlockDropModal({
 
         {/* F1：首块专属说明（放在标题栏下方整行，避免挤进标题 flex 行） */}
         {placedCount === 1 && (
-          <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', lineHeight: 1.6, padding: '10px 20px 0' }}>
+          <div
+            style={{
+              fontSize: 'var(--fs-small)',
+              color: 'var(--ink-2)',
+              lineHeight: 1.6,
+              padding: '10px 20px 0'
+            }}
+          >
             {t.blockDrop.firstBlockHint}
           </div>
         )}
@@ -206,7 +214,7 @@ export function BlockDropModal({
               paddingLeft: 18,
               paddingRight: 18,
               borderTopWidth: animated ? 1 : 0,
-              pointerEvents: animated ? 'auto' : 'none',
+              pointerEvents: animated ? 'auto' : 'none'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -259,25 +267,42 @@ export function BlockDropModal({
               <button
                 type="button"
                 className="btn primary"
-                style={{ padding: '6px 14px', fontSize: 'var(--fs-small)', borderRadius: 'var(--r-sm)' }}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: 'var(--fs-small)',
+                  borderRadius: 'var(--r-sm)'
+                }}
                 disabled={engraved}
                 onClick={handleEngraveSubmit}
               >
-                {engraved ? <IconCheck size={14} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> : t.reflections.engraveAction}
+                {engraved ? (
+                  <IconCheck
+                    size={14}
+                    style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                  />
+                ) : (
+                  t.reflections.engraveAction
+                )}
               </button>
             </div>
           </div>
         )}
 
         {/* 底部蓝图进度 */}
-        <div style={{ padding: '12px 20px 14px', background: 'var(--surface)', borderTop: '1px solid var(--line)' }}>
+        <div
+          style={{
+            padding: '12px 20px 14px',
+            background: 'var(--surface)',
+            borderTop: '1px solid var(--line)'
+          }}
+        >
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: 8,
-              fontSize: 'var(--fs-body)',
+              fontSize: 'var(--fs-body)'
             }}
           >
             <span style={{ fontWeight: 600 }}>{getBlueprintName(blueprint.id, lang)}</span>
@@ -290,7 +315,7 @@ export function BlockDropModal({
               height: 6,
               background: 'var(--line)',
               borderRadius: 999,
-              overflow: 'hidden',
+              overflow: 'hidden'
             }}
           >
             <div
@@ -299,7 +324,7 @@ export function BlockDropModal({
                 height: '100%',
                 background: complete ? 'var(--progress-green)' : 'var(--ink)',
                 borderRadius: 999,
-                transition: 'width var(--dur-xl) var(--ease-default)',
+                transition: 'width var(--dur-xl) var(--ease-default)'
               }}
             />
           </div>

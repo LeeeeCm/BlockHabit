@@ -25,7 +25,7 @@ export function createBlueprintBuilder() {
     z0: number,
     z1: number,
     type: BlockType = 'basic',
-    color?: string,
+    color?: string
   ) {
     for (let x = x0; x <= x1; x++)
       for (let y = y0; y <= y1; y++)
@@ -63,7 +63,7 @@ export function makeCastleBlueprint(): Blueprint {
       [i, 0],
       [i, 8],
       [0, i],
-      [8, i],
+      [8, i]
     ] as const) {
       b.put(x, y, 0, 'basic', C_WALL)
       b.put(x, y, 1, 'basic', C_WALL)
@@ -75,7 +75,7 @@ export function makeCastleBlueprint(): Blueprint {
       [i, 0],
       [i, 8],
       [0, i],
-      [8, i],
+      [8, i]
     ] as const) {
       if ((x + y) % 2 === 0) b.put(x, y, 2, 'basic', C_UPPER)
     }
@@ -85,7 +85,7 @@ export function makeCastleBlueprint(): Blueprint {
     [0, 0],
     [7, 0],
     [0, 7],
-    [7, 7],
+    [7, 7]
   ] as const) {
     b.fill(tx, tx + 1, ty, ty + 1, 0, 1, 'basic', C_WALL)
     b.fill(tx, tx + 1, ty, ty + 1, 2, 5, 'basic', C_UPPER)
@@ -111,7 +111,7 @@ export function makeCastleBlueprint(): Blueprint {
     [8, 2],
     [8, 6],
     [2, 8],
-    [6, 8],
+    [6, 8]
   ] as const) {
     b.put(x, y, 1, 'window', C_WARM)
   }
@@ -416,10 +416,14 @@ export function makeRocketBlueprint(): Blueprint {
   b.fill(0, 4, 0, 4, 0, 0, 'basic', C_FLAME)
   // 4 枚红舵翼与发动机喷口 (z=1, 2)
   b.fill(1, 3, 1, 3, 1, 2, 'basic', C_METAL)
-  b.put(0, 2, 1, 'basic', C_RED); b.put(4, 2, 1, 'basic', C_RED)
-  b.put(2, 0, 1, 'basic', C_RED); b.put(2, 4, 1, 'basic', C_RED)
-  b.put(0, 2, 2, 'basic', C_RED); b.put(4, 2, 2, 'basic', C_RED)
-  b.put(2, 0, 2, 'basic', C_RED); b.put(2, 4, 2, 'basic', C_RED)
+  b.put(0, 2, 1, 'basic', C_RED)
+  b.put(4, 2, 1, 'basic', C_RED)
+  b.put(2, 0, 1, 'basic', C_RED)
+  b.put(2, 4, 1, 'basic', C_RED)
+  b.put(0, 2, 2, 'basic', C_RED)
+  b.put(4, 2, 2, 'basic', C_RED)
+  b.put(2, 0, 2, 'basic', C_RED)
+  b.put(2, 4, 2, 'basic', C_RED)
   // 圆柱箭体下段 3×3 (z=3, 4)
   b.fill(1, 3, 1, 3, 3, 3, 'basic', C_WHITE)
   b.fill(1, 3, 1, 3, 4, 4, 'basic', C_WHITE)
@@ -464,7 +468,7 @@ export function makeTreehouseBlueprint(): Blueprint {
     [1, 1],
     [7, 1],
     [1, 7],
-    [7, 7],
+    [7, 7]
   ] as const) {
     b.put(x, y, 4, 'basic', C_FOLIAGE)
   }
@@ -505,7 +509,7 @@ export function makeGreenhouseBlueprint(): Blueprint {
     [1, 1],
     [5, 1],
     [1, 3],
-    [5, 3],
+    [5, 3]
   ] as const) {
     b.put(x, y, 1, 'basic', C_FRAME)
     b.put(x, y, 2, 'basic', C_FRAME)
@@ -587,7 +591,7 @@ export function makeBridgeBlueprint(): Blueprint {
     [0, 0],
     [0, 2],
     [10, 0],
-    [10, 2],
+    [10, 2]
   ] as const) {
     b.put(x, y, 1, 'basic', C_RAIL)
     b.put(x, y, 2, 'basic', C_RAIL)

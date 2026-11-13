@@ -8,7 +8,7 @@ import {
   parseColor,
   relativeLuminance,
   withAlpha,
-  type IsoPalette,
+  type IsoPalette
 } from './isoColor'
 
 /**
@@ -55,7 +55,9 @@ describe('adjustLightness', () => {
   it('小于 1 变暗、大于 1 变亮（亮度单调）', () => {
     const base = relativeLuminance('#f5b301')
     expect(relativeLuminance(adjustLightness('#f5b301', 0.5))).toBeLessThan(base)
-    expect(relativeLuminance(adjustLightness('#808080', 1.4))).toBeGreaterThan(relativeLuminance('#808080'))
+    expect(relativeLuminance(adjustLightness('#808080', 1.4))).toBeGreaterThan(
+      relativeLuminance('#808080')
+    )
   })
 
   it('越界时钳制在 [0,1]（白色再亮仍是白、黑色再暗仍是黑）', () => {
@@ -109,7 +111,7 @@ describe('明暗派生', () => {
     ghost: '#f0f0f0',
     line: '#dcdcdc',
     accent: '#f5b301',
-    ink: '#0a0a0a',
+    ink: '#0a0a0a'
   }
 
   it('返回七个面/凸点颜色，且三面亮度递减（顶 > 左 > 右）', () => {

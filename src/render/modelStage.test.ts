@@ -10,7 +10,7 @@ import type { BlockDef } from '../types'
 
 const spies = vi.hoisted(() => ({
   drawCube: vi.fn(),
-  drawGroundBase: vi.fn(),
+  drawGroundBase: vi.fn()
 }))
 
 vi.mock('./iso', async (importOriginal) => {
@@ -18,16 +18,11 @@ vi.mock('./iso', async (importOriginal) => {
   return {
     ...actual,
     drawCube: (...args: unknown[]) => spies.drawCube(...args),
-    drawGroundBase: (...args: unknown[]) => spies.drawGroundBase(...args),
+    drawGroundBase: (...args: unknown[]) => spies.drawGroundBase(...args)
   }
 })
 
-import {
-  DEFAULT_ISO_CONFIG,
-  STUD_H,
-  worldToScreen,
-  type IsoPalette,
-} from './iso'
+import { DEFAULT_ISO_CONFIG, STUD_H, worldToScreen, type IsoPalette } from './iso'
 import {
   fitModelInto,
   measureModelBounds,
@@ -35,7 +30,7 @@ import {
   paintModel,
   paintModelStage,
   prepareModelCanvas,
-  type ModelBounds,
+  type ModelBounds
 } from './modelStage'
 
 const PALETTE: IsoPalette = {
@@ -45,7 +40,7 @@ const PALETTE: IsoPalette = {
   ghost: 'rgba(0,0,0,0.06)',
   line: '#94a3b8',
   accent: '#c25e3e',
-  ink: '#0f172a',
+  ink: '#0f172a'
 }
 
 /** 只记录 transform / save / restore 的假 context：drawCube 已被 mock，不碰真实画布 */
@@ -57,7 +52,7 @@ function createTransformContext() {
     translate: (x: number, y: number) => calls.push({ name: 'translate', args: [x, y] }),
     scale: (x: number, y: number) => calls.push({ name: 'scale', args: [x, y] }),
     setTransform: (...args: number[]) => calls.push({ name: 'setTransform', args }),
-    clearRect: (...args: number[]) => calls.push({ name: 'clearRect', args }),
+    clearRect: (...args: number[]) => calls.push({ name: 'clearRect', args })
   }
   return { ctx: ctx as unknown as CanvasRenderingContext2D, calls }
 }
@@ -71,7 +66,7 @@ function cubeArgs(callIndex: number) {
   return {
     sx: call[1] as number,
     sy: call[2] as number,
-    options: call[5] as Record<string, unknown>,
+    options: call[5] as Record<string, unknown>
   }
 }
 
@@ -200,7 +195,7 @@ describe('paintModel：地基 + 画家排序 + 积木', () => {
     const { ctx } = createTransformContext()
     paintModel(ctx, {
       blocks: [block(0, 0, 0), block(0, 0, 1)],
-      palette: PALETTE,
+      palette: PALETTE
     })
     // 排序后先画 z=0 再画 z=1
     expect(cubeArgs(0).options.noStuds).toBe(true)
@@ -212,7 +207,7 @@ describe('paintModel：地基 + 画家排序 + 积木', () => {
     paintModel(ctx, {
       blocks: [block(0, 0, 0), block(1, 0, 0)],
       palette: PALETTE,
-      bonusByIndex: [false, true],
+      bonusByIndex: [false, true]
     })
     expect(cubeArgs(0).options.bonus).toBe(false)
     expect(cubeArgs(1).options.bonus).toBe(true)
@@ -228,7 +223,7 @@ describe('paintModel：地基 + 画家排序 + 积木', () => {
       blocks: [block(0, 0, 0, { color: '#b45309' })],
       palette: PALETTE,
       spriteScale: 2,
-      ignoreBlockColor: true,
+      ignoreBlockColor: true
     })
     expect(cubeArgs(0).options.spriteScale).toBe(2)
     expect(cubeArgs(0).options.color).toBeUndefined()
@@ -237,7 +232,7 @@ describe('paintModel：地基 + 画家排序 + 积木', () => {
     paintModel(ctx, {
       blocks: [block(0, 0, 0, { color: '#b45309' })],
       palette: PALETTE,
-      spriteScale: 1,
+      spriteScale: 1
     })
     expect(cubeArgs(0).options.spriteScale).toBe(1)
     expect(cubeArgs(0).options.color).toBe('#b45309')
@@ -255,7 +250,7 @@ describe('paintModelStage：fit + painter 一步到位', () => {
       viewport,
       pad: 6,
       maxScale: 0.7,
-      baseline: 0.5,
+      baseline: 0.5
     })
     const expected = fitModelInto(measureModelBounds(blocks), viewport, 6, 0.7, 0.5)
     expect(fit).toEqual(expected)
@@ -276,9 +271,15 @@ describe('paintModelStage：fit + painter 一步到位', () => {
       palette: PALETTE,
       viewport: { x: 0, y: 0, w: 200, h: 200 },
       pad: 10,
-      maxScale: 1,
+      maxScale: 1
     })
-    const expected = fitModelInto(measureModelBounds(full), { x: 0, y: 0, w: 200, h: 200 }, 10, 1, 0.5)
+    const expected = fitModelInto(
+      measureModelBounds(full),
+      { x: 0, y: 0, w: 200, h: 200 },
+      10,
+      1,
+      0.5
+    )
     expect(fit).toEqual(expected)
     expect(spies.drawCube).toHaveBeenCalledTimes(1)
   })

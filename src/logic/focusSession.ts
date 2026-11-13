@@ -47,7 +47,10 @@ export interface FocusView {
 }
 
 /** 规范化延长次数（防御脏存档） */
-export function normalizeExtensions(session: FocusSessionLike, maxExtensions = MAX_EXTENSIONS): number {
+export function normalizeExtensions(
+  session: FocusSessionLike,
+  maxExtensions = MAX_EXTENSIONS
+): number {
   const raw = session.extensions
   if (typeof raw !== 'number' || !Number.isFinite(raw)) return 0
   return Math.max(0, Math.min(maxExtensions, Math.floor(raw)))
@@ -66,7 +69,11 @@ export function viewSession(session: FocusSessionLike, now: number): FocusView {
   const remainingMs = Math.max(0, targetMs - elapsedMs)
   const progress = targetMs > 0 ? Math.min(1, elapsedMs / targetMs) : 1
   const phase: FocusPhase =
-    elapsedMs >= targetMs + SESSION_TTL_MS ? 'expired' : elapsedMs >= targetMs ? 'ready' : 'focusing'
+    elapsedMs >= targetMs + SESSION_TTL_MS
+      ? 'expired'
+      : elapsedMs >= targetMs
+        ? 'ready'
+        : 'focusing'
   return {
     phase,
     elapsedMs,
@@ -75,12 +82,16 @@ export function viewSession(session: FocusSessionLike, now: number): FocusView {
     targetMs,
     progress,
     // 与 HabitRow 的 actualMinutes 口径保持一致（round + 至少 1 分钟）
-    actualMinutes: Math.max(1, Math.round(elapsedMs / 60_000)),
+    actualMinutes: Math.max(1, Math.round(elapsedMs / 60_000))
   }
 }
 
 /** 到点后放置超过 TTL 的会话视为过期（恢复时静默清理） */
-export function isSessionStale(session: FocusSessionLike, now: number, ttlMs = SESSION_TTL_MS): boolean {
+export function isSessionStale(
+  session: FocusSessionLike,
+  now: number,
+  ttlMs = SESSION_TTL_MS
+): boolean {
   const targetMs = effectiveTargetMs(session)
   return Math.max(0, now - session.startedAt) >= targetMs + ttlMs
 }
@@ -92,7 +103,7 @@ export function isSessionStale(session: FocusSessionLike, now: number, ttlMs = S
 export function extendSession(
   session: FocusSessionLike,
   minutes = EXTEND_MINUTES,
-  maxExtensions = MAX_EXTENSIONS,
+  maxExtensions = MAX_EXTENSIONS
 ): { session: FocusSessionLike; extended: boolean } {
   const extensions = normalizeExtensions(session, maxExtensions)
   if (extensions >= maxExtensions || minutes <= 0) {
@@ -100,7 +111,7 @@ export function extendSession(
   }
   return {
     session: { ...session, extensions: extensions + 1, notifiedAt: undefined },
-    extended: true,
+    extended: true
   }
 }
 
@@ -133,9 +144,15 @@ function phaseRank(phase: FocusPhase): number {
 /** 计算多会话展示视图（纯函数；同一 (sessions, now) 永远得到同一结果） */
 export function viewFocusSessions(
   sessions: Record<string, FocusSessionLike>,
-  now: number,
+  now: number
 ): FocusSessionsView {
-  const entries: Array<{ id: string; view: FocusView; rank: number; end: number; startedAt: number }> = []
+  const entries: Array<{
+    id: string
+    view: FocusView
+    rank: number
+    end: number
+    startedAt: number
+  }> = []
   for (const [id, session] of Object.entries(sessions)) {
     const view = viewSession(session, now)
     if (view.phase === 'expired') continue
@@ -144,7 +161,7 @@ export function viewFocusSessions(
       view,
       rank: phaseRank(view.phase),
       end: session.startedAt + view.targetMs,
-      startedAt: session.startedAt,
+      startedAt: session.startedAt
     })
   }
   entries.sort(
@@ -152,13 +169,13 @@ export function viewFocusSessions(
       a.rank - b.rank ||
       a.end - b.end ||
       a.startedAt - b.startedAt ||
-      (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+      (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
   )
   const ordered = entries.map(({ id, view }) => ({ id, view }))
   return {
     ordered,
     primaryId: ordered[0]?.id ?? null,
-    otherCount: Math.max(0, ordered.length - 1),
+    otherCount: Math.max(0, ordered.length - 1)
   }
 }
 
@@ -168,7 +185,7 @@ export function viewFocusSessions(
  */
 export function primarySessionId(
   sessions: Record<string, FocusSessionLike>,
-  now: number,
+  now: number
 ): string | null {
   return viewFocusSessions(sessions, now).primaryId
 }
@@ -191,7 +208,7 @@ export interface FocusNotificationPlan {
 export function planFocusNotifications(
   sessions: Record<string, FocusSessionLike>,
   now: number,
-  validHabitIds: ReadonlySet<string>,
+  validHabitIds: ReadonlySet<string>
 ): FocusNotificationPlan[] {
   const plans: Array<{ habitId: string; notifiedAt: number; end: number }> = []
   for (const [habitId, session] of Object.entries(sessions)) {
@@ -201,7 +218,9 @@ export function planFocusNotifications(
     if (view.phase !== 'ready') continue
     plans.push({ habitId, notifiedAt: now, end: session.startedAt + view.targetMs })
   }
-  plans.sort((a, b) => a.end - b.end || (a.habitId < b.habitId ? -1 : a.habitId > b.habitId ? 1 : 0))
+  plans.sort(
+    (a, b) => a.end - b.end || (a.habitId < b.habitId ? -1 : a.habitId > b.habitId ? 1 : 0)
+  )
   return plans.map(({ habitId, notifiedAt }) => ({ habitId, notifiedAt }))
 }
 
@@ -210,7 +229,7 @@ export type TrayFocusPhase = 'focusing' | 'ready' | null
 
 export function trayPhaseFor(
   sessions: Record<string, FocusSessionLike>,
-  now: number,
+  now: number
 ): TrayFocusPhase {
   const first = viewFocusSessions(sessions, now).ordered[0]
   if (!first) return null
@@ -229,7 +248,7 @@ export interface FocusPhaseLabels {
 export function trayStatusFor(
   base: string,
   phase: TrayFocusPhase,
-  labels: FocusPhaseLabels,
+  labels: FocusPhaseLabels
 ): string {
   if (phase === 'focusing') return `${base} · ${labels.focusing}`
   if (phase === 'ready') return `${base} · ${labels.ready}`

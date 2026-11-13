@@ -6,7 +6,7 @@ import {
   drawCube,
   drawGroundBase,
   paletteFromDocument,
-  worldToScreen,
+  worldToScreen
 } from './iso'
 import {
   fitModelInto,
@@ -15,7 +15,7 @@ import {
   truncateToWidth,
   waitForYearbookFonts,
   wrapTextToWidth,
-  type Rect,
+  type Rect
 } from './yearbookCanvas'
 
 /**
@@ -37,7 +37,12 @@ const FONT_NUM = '"Rubik", "MiSans", sans-serif'
 
 type FontWeight = 400 | 500 | 600 | 700
 
-function setFont(ctx: CanvasRenderingContext2D, weight: FontWeight, size: number, family = FONT_SANS): void {
+function setFont(
+  ctx: CanvasRenderingContext2D,
+  weight: FontWeight,
+  size: number,
+  family = FONT_SANS
+): void {
   ctx.font = `${weight} ${size}px ${family}`
 }
 
@@ -53,7 +58,10 @@ export function archiveMilestoneLabel(t: TranslationSchema, milestone: ArchiveMi
 }
 
 /** 关键块来自哪个习惯（全勤奖励块/已删除习惯有诚实的回退文案） */
-export function archiveMilestoneHabitName(t: TranslationSchema, milestone: ArchiveMilestone): string {
+export function archiveMilestoneHabitName(
+  t: TranslationSchema,
+  milestone: ArchiveMilestone
+): string {
   if (milestone.habitName) return milestone.habitName
   if (milestone.fromHabitId === '__day__') return t.today.fullCard.bonusHabitName
   if (milestone.checkInId) return t.today.fullCard.deletedHabitName
@@ -73,7 +81,7 @@ function drawIsoModel(
   ctx: CanvasRenderingContext2D,
   blueprint: Blueprint,
   bonusByIndex: boolean[],
-  options: IsoStageOptions,
+  options: IsoStageOptions
 ): void {
   const cfg = DEFAULT_ISO_CONFIG
   const isoPalette = paletteFromDocument()
@@ -124,7 +132,7 @@ function drawIsoModel(
       noStuds: above !== undefined,
       bonus: bonusByIndex[index] === true,
       // 画布固定 2x 变换，精灵密度对齐，否则图块面模糊（SURFACES.md 既有范式）
-      spriteScale: 2,
+      spriteScale: 2
     })
   }
   ctx.restore()
@@ -134,7 +142,7 @@ function drawIsoModel(
 export async function drawArchiveStage(
   canvas: HTMLCanvasElement,
   blueprint: Blueprint,
-  bonusByIndex: boolean[],
+  bonusByIndex: boolean[]
 ): Promise<void> {
   await waitForYearbookFonts()
   const { width, height, dpr } = ARCHIVE_STAGE
@@ -151,7 +159,7 @@ export async function drawArchiveStage(
     rect: { x: 0, y: 0, w: width, h: height },
     pad: 28,
     maxScale: 1.6,
-    baseline: 0.56,
+    baseline: 0.56
   })
 }
 
@@ -169,7 +177,7 @@ function drawMetricCell(
   rect: Rect,
   label: string,
   value: string,
-  palette: ReturnType<typeof readYearbookPalette>,
+  palette: ReturnType<typeof readYearbookPalette>
 ): void {
   ctx.fillStyle = palette.surface
   ctx.beginPath()
@@ -188,7 +196,10 @@ function drawMetricCell(
 }
 
 /** 绘制档案卡（物理尺寸 = 逻辑 × DPR） */
-export async function drawArchiveCard(canvas: HTMLCanvasElement, input: ArchiveCardInput): Promise<void> {
+export async function drawArchiveCard(
+  canvas: HTMLCanvasElement,
+  input: ArchiveCardInput
+): Promise<void> {
   await waitForYearbookFonts()
 
   const { width, height, dpr } = ARCHIVE_CARD
@@ -251,7 +262,7 @@ export async function drawArchiveCard(canvas: HTMLCanvasElement, input: ArchiveC
     rect: { x: stage.x + 6, y: stage.y + 6, w: stage.w - 12, h: stage.h - 12 },
     pad: 18,
     maxScale: 1.5,
-    baseline: 0.54,
+    baseline: 0.54
   })
 
   // 3. 数据格（5 项）
@@ -261,16 +272,24 @@ export async function drawArchiveCard(canvas: HTMLCanvasElement, input: ArchiveC
   const cellH = 58
   const daysValue = archive.days === null ? '—' : a.daysValue(archive.days)
   const topHabitValue =
-    archive.topHabit === null ? '—' : a.topHabitValue(archive.topHabit.name || '—', archive.topHabit.count)
+    archive.topHabit === null
+      ? '—'
+      : a.topHabitValue(archive.topHabit.name || '—', archive.topHabit.count)
   const cells: Array<{ label: string; value: string }> = [
     { label: a.metrics.blocks, value: String(archive.totalBlocks) },
     { label: a.metrics.days, value: daysValue },
     { label: a.metrics.topHabit, value: topHabitValue },
     { label: a.metrics.perfectDays, value: String(archive.dayClaimBlocks) },
-    { label: a.metrics.bonusBlocks, value: String(archive.bonusBlocks) },
+    { label: a.metrics.bonusBlocks, value: String(archive.bonusBlocks) }
   ]
   cells.forEach((cell, index) => {
-    drawMetricCell(ctx, { x: M + index * (cellW + gap), y: metricsTop, w: cellW, h: cellH }, cell.label, cell.value, palette)
+    drawMetricCell(
+      ctx,
+      { x: M + index * (cellW + gap), y: metricsTop, w: cellW, h: cellH },
+      cell.label,
+      cell.value,
+      palette
+    )
   })
 
   // 4. 时间线（首块 / 25% / 50% / 75% / 末块）
@@ -308,7 +327,7 @@ export async function drawArchiveCard(canvas: HTMLCanvasElement, input: ArchiveC
     ctx.fillText(
       truncateToWidth(ctx, archiveMilestoneHabitName(t, milestone), innerW - 210),
       M + 208,
-      rowY,
+      rowY
     )
   })
 
@@ -337,7 +356,13 @@ export async function drawArchiveCard(canvas: HTMLCanvasElement, input: ArchiveC
   }
 }
 
-function drawRule(ctx: CanvasRenderingContext2D, x1: number, x2: number, y: number, color: string): void {
+function drawRule(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  x2: number,
+  y: number,
+  color: string
+): void {
   ctx.strokeStyle = color
   ctx.lineWidth = 1
   ctx.beginPath()
@@ -356,7 +381,10 @@ export async function renderArchiveCardCanvas(input: ArchiveCardInput): Promise<
 }
 
 /** 保存档案卡 PNG；返回是否成功 */
-export async function saveArchivePng(canvas: HTMLCanvasElement, blueprintId: string): Promise<boolean> {
+export async function saveArchivePng(
+  canvas: HTMLCanvasElement,
+  blueprintId: string
+): Promise<boolean> {
   if (typeof canvas.toBlob !== 'function') return false
   const blob = await new Promise<Blob | null>((resolve) => {
     try {

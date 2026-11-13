@@ -104,7 +104,11 @@ describe('AboutPanel：内容路线/关于', () => {
   it('数量随蓝图注册表动态变化（无硬编码 18/1985）', () => {
     const extraId = '__about_test_blueprint__'
     blueprintOrder.push(extraId)
-    blueprints[extraId] = { ...plantBlueprint, id: extraId, blocks: plantBlueprint.blocks.slice(0, 3) }
+    blueprints[extraId] = {
+      ...plantBlueprint,
+      id: extraId,
+      blocks: plantBlueprint.blocks.slice(0, 3)
+    }
     try {
       const text = renderAbout('zh')
       const expectedBlocks = blueprintOrder.reduce(

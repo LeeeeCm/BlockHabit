@@ -30,7 +30,7 @@ import {
   utf8Encode,
   verifyStateRoundTrip,
   type ArchiveFs,
-  type ZipEntryInput,
+  type ZipEntryInput
 } from './archive'
 import { ARCHIVE_BUILDING_SIZE, renderBuildingPng } from '../render/archiveCanvas'
 
@@ -44,14 +44,16 @@ import { ARCHIVE_BUILDING_SIZE, renderBuildingPng } from '../render/archiveCanva
 
 const BASE_STATE: AppState = {
   schemaVersion: 2,
-  habits: [{ id: 'h1', name: '读书', frequency: { type: 'daily' }, createdAt: '2026-01-01T08:00:00.000Z' }],
+  habits: [
+    { id: 'h1', name: '读书', frequency: { type: 'daily' }, createdAt: '2026-01-01T08:00:00.000Z' }
+  ],
   checkIns: [],
   builds: [],
   activeBlueprintId: 'plant',
   completedBlueprintIds: [],
   settings: { theme: 'light', language: 'zh' },
   dayClaims: [],
-  deletedDayClaims: [],
+  deletedDayClaims: []
 }
 
 function archiveState(overrides: Partial<AppState> = {}): { state: AppState; stateJson: string } {
@@ -72,7 +74,7 @@ function plantBlocks(overrides: { placedAt?: string; count?: number } = {}): Pla
     index,
     placedAt,
     fromHabitId: 'h1',
-    bonus: false,
+    bonus: false
   }))
 }
 
@@ -137,7 +139,7 @@ function parseZip(bytes: Uint8Array): ParsedZip {
       compressedSize,
       uncompressedSize,
       data: bytes.slice(dataStart, dataStart + compressedSize),
-      localOffset,
+      localOffset
     })
     cursor += 46 + nameLength + extraLength + commentLength
   }
@@ -145,7 +147,9 @@ function parseZip(bytes: Uint8Array): ParsedZip {
 }
 
 async function inflateRaw(bytes: Uint8Array): Promise<Uint8Array> {
-  const stream = new Blob([bytes as unknown as BlobPart]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
+  const stream = new Blob([bytes as unknown as BlobPart])
+    .stream()
+    .pipeThrough(new DecompressionStream('deflate-raw'))
   return new Uint8Array(await new Response(stream).arrayBuffer())
 }
 
@@ -176,13 +180,15 @@ function createMockFs(options: { failWriteAt?: number; collisionOnce?: boolean }
     async writeFile(path: string, bytes: Uint8Array) {
       calls.push('writeFile:' + path)
       writeCount += 1
-      if (options.failWriteAt !== undefined && writeCount === options.failWriteAt) throw new Error('disk full')
+      if (options.failWriteAt !== undefined && writeCount === options.failWriteAt)
+        throw new Error('disk full')
       files.set(path, bytes)
     },
     async writeTextFile(path: string, text: string) {
       calls.push('writeTextFile:' + path)
       writeCount += 1
-      if (options.failWriteAt !== undefined && writeCount === options.failWriteAt) throw new Error('disk full')
+      if (options.failWriteAt !== undefined && writeCount === options.failWriteAt)
+        throw new Error('disk full')
       files.set(path, text)
     },
     async exists(path: string) {
@@ -200,7 +206,7 @@ function createMockFs(options: { failWriteAt?: number; collisionOnce?: boolean }
     },
     async reveal(path: string) {
       calls.push('reveal:' + path)
-    },
+    }
   }
   return { fs, calls, dirs, files }
 }
@@ -219,10 +225,10 @@ describe('crc32 / sha256', () => {
 
   it('SHA-256 已知向量（空串 / abc）', async () => {
     expect(await sha256Hex(new Uint8Array(0))).toBe(
-      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
     )
     expect(await sha256Hex(utf8Encode('abc'))).toBe(
-      'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+      'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
     )
   })
 
@@ -239,7 +245,7 @@ describe('ZIP（STORE + 可选 DEFLATE）', () => {
   const entries: ZipEntryInput[] = [
     { path: 'README.md', bytes: utf8Encode('# 档案包\nBlockHabit') },
     { path: 'data/blockhabit-state.json', bytes: utf8Encode('{"schemaVersion":2}') },
-    { path: 'buildings/01-plant.png', bytes: FAKE_PNG },
+    { path: 'buildings/01-plant.png', bytes: FAKE_PNG }
   ]
 
   it('中央目录/本地头/EOCD 自洽，CRC 与大小正确，UTF-8 文件名标志位', async () => {
@@ -275,9 +281,9 @@ describe('ZIP（STORE + 可选 DEFLATE）', () => {
     if (typeof CompressionStream === 'function' && typeof Response !== 'undefined') {
       try {
         await new Response(
-          new Blob([new Uint8Array([1, 2, 3]) as unknown as BlobPart]).stream().pipeThrough(
-            new CompressionStream('deflate-raw'),
-          ),
+          new Blob([new Uint8Array([1, 2, 3]) as unknown as BlobPart])
+            .stream()
+            .pipeThrough(new CompressionStream('deflate-raw'))
         ).arrayBuffer()
         capable = true
       } catch {
@@ -302,7 +308,7 @@ describe('ZIP（STORE + 可选 DEFLATE）', () => {
     const now = new Date(2026, 10, 10, 20, 34, 12)
     const { time, date } = dosDateTime(now)
     expect((date >> 9) + 1980).toBe(2026)
-    expect(((date >> 5) & 0xf)).toBe(11)
+    expect((date >> 5) & 0xf).toBe(11)
     expect(date & 0x1f).toBe(10)
     expect((time >> 11) & 0x1f).toBe(20)
     expect((time >> 5) & 0x3f).toBe(34)
@@ -338,7 +344,10 @@ describe('completedBuildings', () => {
     expect(completedBuildings(insufficient.state)).toEqual([])
 
     const withTombstone = plantBlocks()
-    withTombstone[withTombstone.length - 1] = { ...withTombstone[withTombstone.length - 1], deletedAt: new Date().toISOString() }
+    withTombstone[withTombstone.length - 1] = {
+      ...withTombstone[withTombstone.length - 1],
+      deletedAt: new Date().toISOString()
+    }
     expect(completedBuildings(archiveState({ builds: withTombstone }).state)).toEqual([])
   })
 
@@ -350,11 +359,11 @@ describe('completedBuildings', () => {
       index,
       placedAt: new Date(2026, 1, 1, 12).toISOString(),
       fromHabitId: 'h1',
-      bonus: false,
+      bonus: false
     }))
     const { state } = archiveState({
       builds: [...plant, ...coffee],
-      foundationNotes: { plant: '  从一颗种子开始。 ', coffee: '每天一杯。' },
+      foundationNotes: { plant: '  从一颗种子开始。 ', coffee: '每天一杯。' }
     })
     const buildings = completedBuildings(state)
     expect(buildings.map((building) => building.blueprintId)).toEqual(['coffee', 'plant'])
@@ -368,7 +377,14 @@ describe('state round-trip 与凭据断言', () => {
   it('导出 JSON 能被 prepareImport 读回且与导出前一致', () => {
     const { state, stateJson } = archiveState({
       builds: plantBlocks(),
-      dayClaims: [{ date: '2026-03-12', claimedAt: '2026-03-12T21:00:00.000Z', blockId: 'b1', blueprintId: 'plant' }],
+      dayClaims: [
+        {
+          date: '2026-03-12',
+          claimedAt: '2026-03-12T21:00:00.000Z',
+          blockId: 'b1',
+          blueprintId: 'plant'
+        }
+      ]
     })
     expect(verifyStateRoundTrip(stateJson, state)).toBe(true)
   })
@@ -387,7 +403,10 @@ describe('state round-trip 与凭据断言', () => {
     expect(assertNoCredentials('{"schemaVersion":2}', [])).toEqual({ ok: true })
     expect(assertNoCredentials('{"password":"hunter2"}', [])).toEqual({ ok: false, reason: 'key' })
     expect(assertNoCredentials('{"note":"token"}', [])).toEqual({ ok: true })
-    expect(assertNoCredentials('{"note":"hunter2"}', ['hunter2'])).toEqual({ ok: false, reason: 'value' })
+    expect(assertNoCredentials('{"note":"hunter2"}', ['hunter2'])).toEqual({
+      ok: false,
+      reason: 'value'
+    })
     expect(assertNoCredentials('{"note":"ab"}', ['ab'])).toEqual({ ok: true })
   })
 
@@ -402,7 +421,10 @@ describe('state round-trip 与凭据断言', () => {
 
 describe('buildArchivePackage', () => {
   async function buildPackage(overrides: Partial<Parameters<typeof buildArchivePackage>[0]> = {}) {
-    const { state, stateJson } = archiveState({ builds: plantBlocks(), foundationNotes: { plant: '从一颗种子开始。' } })
+    const { state, stateJson } = archiveState({
+      builds: plantBlocks(),
+      foundationNotes: { plant: '从一颗种子开始。' }
+    })
     return buildArchivePackage({
       state,
       stateJson,
@@ -411,7 +433,7 @@ describe('buildArchivePackage', () => {
       lang: 'zh',
       buildings: [{ blueprintId: 'plant', png: FAKE_PNG }],
       exportedAt: new Date(Date.UTC(2026, 10, 10, 12, 0, 0)),
-      ...overrides,
+      ...overrides
     })
   }
 
@@ -469,7 +491,7 @@ describe('buildArchivePackage', () => {
     expect(readme).toContain(`appContentVersion: ${CONTENT_VERSION}`)
     expect(readme).toContain('与存档里的 `contentVersion` 无关')
     const buildingsReadme = utf8Decode(
-      result.package.files.find((file) => file.path === 'buildings/README.md')!.bytes,
+      result.package.files.find((file) => file.path === 'buildings/README.md')!.bytes
     )
     expect(buildingsReadme).toContain(getTranslation('zh').blueprints.plant)
     expect(buildingsReadme).toContain(getTranslation('en').blueprints.plant)
@@ -480,7 +502,9 @@ describe('buildArchivePackage', () => {
   it('state JSON 是「导出数据」同款，可被 prepareImport 读回', async () => {
     const result = await buildPackage()
     if (!result.ok) throw new Error('package failed')
-    const stateFile = result.package.files.find((file) => file.path === 'data/blockhabit-state.json')!
+    const stateFile = result.package.files.find(
+      (file) => file.path === 'data/blockhabit-state.json'
+    )!
     const prepared = prepareImport(JSON.parse(utf8Decode(stateFile.bytes)))
     expect(prepared).not.toBeNull()
     expect(completedBuildings(prepared!)).toHaveLength(1)
@@ -501,12 +525,12 @@ describe('buildArchivePackage', () => {
       appVersion: '0.2.0',
       platform: 'browser',
       lang: 'en',
-      buildings: [],
+      buildings: []
     })
     if (!result.ok) throw new Error('package failed')
     expect(result.package.files.some((file) => file.path.startsWith('buildings/0'))).toBe(false)
     const buildingsReadme = utf8Decode(
-      result.package.files.find((file) => file.path === 'buildings/README.md')!.bytes,
+      result.package.files.find((file) => file.path === 'buildings/README.md')!.bytes
     )
     expect(buildingsReadme).toContain('No buildings')
   })
@@ -520,12 +544,19 @@ describe('buildArchivePackage', () => {
       appVersion: '0.2.0',
       platform: 'desktop',
       lang: 'zh',
-      buildings: [],
+      buildings: []
     })
     expect(roundTrip).toEqual({ ok: false, error: 'round-trip' })
 
     const secretState = archiveState({
-      habits: [{ id: 'h1', name: 'hunter2', frequency: { type: 'daily' }, createdAt: '2026-01-01T08:00:00.000Z' }],
+      habits: [
+        {
+          id: 'h1',
+          name: 'hunter2',
+          frequency: { type: 'daily' },
+          createdAt: '2026-01-01T08:00:00.000Z'
+        }
+      ]
     })
     const leaked = await buildArchivePackage({
       state: secretState.state,
@@ -534,7 +565,7 @@ describe('buildArchivePackage', () => {
       platform: 'desktop',
       lang: 'zh',
       buildings: [],
-      secrets: ['hunter2'],
+      secrets: ['hunter2']
     })
     expect(leaked).toEqual({ ok: false, error: 'credentials' })
   })
@@ -552,11 +583,14 @@ describe('manifest 版本语义（archiveFormatVersion / appContentVersion）', 
       platform: 'desktop',
       lang: 'zh',
       buildings: [{ blueprintId: 'plant', png: FAKE_PNG }],
-      exportedAt: new Date(Date.UTC(2026, 10, 10, 12, 0, 0)),
+      exportedAt: new Date(Date.UTC(2026, 10, 10, 12, 0, 0))
     })
     if (!result.ok) throw new Error('package failed')
     const manifestFile = result.package.files.find((file) => file.path === 'manifest.json')!
-    return { pkg: result.package, raw: JSON.parse(utf8Decode(manifestFile.bytes)) as Record<string, unknown> }
+    return {
+      pkg: result.package,
+      raw: JSON.parse(utf8Decode(manifestFile.bytes)) as Record<string, unknown>
+    }
   }
 
   it('新 manifest 写 archiveFormatVersion + appContentVersion，不再写旧 contentVersion 字段', async () => {
@@ -578,7 +612,7 @@ describe('manifest 版本语义（archiveFormatVersion / appContentVersion）', 
       contentVersion: 1,
       exportedAt: '2026-11-10T12:00:00.000Z',
       platform: 'desktop',
-      files: [{ path: 'README.md', bytes: 12, sha256: 'a'.repeat(64) }],
+      files: [{ path: 'README.md', bytes: 12, sha256: 'a'.repeat(64) }]
     }
     const parsed = parseArchiveManifest(legacy)
     expect(parsed).toEqual({
@@ -588,7 +622,7 @@ describe('manifest 版本语义（archiveFormatVersion / appContentVersion）', 
       appContentVersion: CONTENT_VERSION,
       exportedAt: '2026-11-10T12:00:00.000Z',
       platform: 'desktop',
-      files: [{ path: 'README.md', bytes: 12, sha256: 'a'.repeat(64) }],
+      files: [{ path: 'README.md', bytes: 12, sha256: 'a'.repeat(64) }]
     })
   })
 
@@ -606,7 +640,13 @@ describe('manifest 版本语义（archiveFormatVersion / appContentVersion）', 
     expect(parseArchiveManifest(null)).toBeNull()
     expect(parseArchiveManifest({})).toBeNull()
     expect(
-      parseArchiveManifest({ appVersion: '0.2.0', schemaVersion: 2, exportedAt: 'x', platform: 'web', files: [] }),
+      parseArchiveManifest({
+        appVersion: '0.2.0',
+        schemaVersion: 2,
+        exportedAt: 'x',
+        platform: 'web',
+        files: []
+      })
     ).toBeNull()
     expect(
       parseArchiveManifest({
@@ -614,8 +654,8 @@ describe('manifest 版本语义（archiveFormatVersion / appContentVersion）', 
         schemaVersion: 2,
         exportedAt: 'x',
         platform: 'desktop',
-        files: [{ path: 'README.md', bytes: 1, sha256: 'not-a-sha' }],
-      }),
+        files: [{ path: 'README.md', bytes: 1, sha256: 'not-a-sha' }]
+      })
     ).toBeNull()
   })
 
@@ -627,7 +667,7 @@ describe('manifest 版本语义（archiveFormatVersion / appContentVersion）', 
       appContentVersion: CONTENT_VERSION,
       exportedAt: '2026-11-11T00:00:00.000Z',
       platform: 'browser',
-      files: [],
+      files: []
     })
     expect(parsed?.archiveFormatVersion).toBe(ARCHIVE_FORMAT_VERSION + 1)
   })
@@ -640,7 +680,10 @@ describe('manifest 版本语义（archiveFormatVersion / appContentVersion）', 
 /* ---------------- 导出编排 ---------------- */
 
 describe('runArchiveExport（桌面端文件夹）', () => {
-  async function runDesktop(mock = createMockFs(), overrides: Partial<Parameters<typeof runArchiveExport>[0]> = {}) {
+  async function runDesktop(
+    mock = createMockFs(),
+    overrides: Partial<Parameters<typeof runArchiveExport>[0]> = {}
+  ) {
     const { state, stateJson } = archiveState({ builds: plantBlocks() })
     const progress: Array<{ phase: string; done: number; total: number }> = []
     const result = await runArchiveExport({
@@ -653,7 +696,7 @@ describe('runArchiveExport（桌面端文件夹）', () => {
       fs: mock.fs,
       onProgress: (value) => progress.push(value),
       now: new Date(Date.UTC(2026, 10, 10, 12, 0, 0)),
-      ...overrides,
+      ...overrides
     })
     return { result, progress, mock }
   }
@@ -697,7 +740,7 @@ describe('runArchiveExport（桌面端文件夹）', () => {
       renderBuilding: async () => {
         controller.abort()
         return FAKE_PNG
-      },
+      }
     })
     expect(result.ok).toBe(false)
     if (result.ok) return
@@ -723,7 +766,7 @@ describe('runArchiveExport（桌面端文件夹）', () => {
       renderBuilding: async () => {
         await gate
         return FAKE_PNG
-      },
+      }
     })
     await Promise.resolve()
     expect(isArchiveExporting()).toBe(true)
@@ -745,7 +788,7 @@ describe('runArchiveExport（浏览器 ZIP）', () => {
       platform: 'browser',
       lang: 'zh',
       renderBuilding: async () => FAKE_PNG,
-      now: new Date(Date.UTC(2026, 10, 10, 12, 0, 0)),
+      now: new Date(Date.UTC(2026, 10, 10, 12, 0, 0))
     })
     expect(result.ok).toBe(true)
     if (!result.ok || result.mode !== 'browser') throw new Error('browser export failed')

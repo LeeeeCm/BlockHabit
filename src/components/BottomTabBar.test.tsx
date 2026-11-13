@@ -26,7 +26,7 @@ function render(ui: React.ReactElement) {
     },
     queryByTestId: (testId: string) => {
       return container.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null
-    },
+    }
   }
 }
 
@@ -44,9 +44,7 @@ describe('BottomTabBar component', () => {
 
   it('renders all 4 navigation tabs (today, build, showcase, stats)', () => {
     const onChange = vi.fn()
-    const { getByTestId, unmount } = render(
-      <BottomTabBar currentTab="today" onChange={onChange} />
-    )
+    const { getByTestId, unmount } = render(<BottomTabBar currentTab="today" onChange={onChange} />)
 
     expect(getByTestId('tab-today')).toBeDefined()
     expect(getByTestId('tab-build')).toBeDefined()
@@ -58,9 +56,7 @@ describe('BottomTabBar component', () => {
 
   it('triggers onChange and haptic feedback when an inactive tab is clicked', () => {
     const onChange = vi.fn()
-    const { getByTestId, unmount } = render(
-      <BottomTabBar currentTab="today" onChange={onChange} />
-    )
+    const { getByTestId, unmount } = render(<BottomTabBar currentTab="today" onChange={onChange} />)
 
     const buildTab = getByTestId('tab-build')
     act(() => {
@@ -76,9 +72,7 @@ describe('BottomTabBar component', () => {
 
   it('does not trigger onChange or haptic feedback when the active tab is clicked', () => {
     const onChange = vi.fn()
-    const { getByTestId, unmount } = render(
-      <BottomTabBar currentTab="today" onChange={onChange} />
-    )
+    const { getByTestId, unmount } = render(<BottomTabBar currentTab="today" onChange={onChange} />)
 
     const todayTab = getByTestId('tab-today')
     act(() => {

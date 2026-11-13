@@ -47,7 +47,7 @@ describe('ErrorBoundary 崩溃兜底', () => {
     Object.defineProperty(window, 'location', {
       configurable: true,
       writable: true,
-      value: { reload: reloadMock },
+      value: { reload: reloadMock }
     })
   })
 
@@ -73,7 +73,7 @@ describe('ErrorBoundary 崩溃兜底', () => {
     const container = render(
       <ErrorBoundary>
         <Boom />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     )
 
     expect(container.querySelector('[data-testid="error-boundary"]')).not.toBeNull()
@@ -98,7 +98,7 @@ describe('ErrorBoundary 崩溃兜底', () => {
     const container = render(
       <ErrorBoundary>
         <Boom />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     )
 
     act(() => {
@@ -112,7 +112,7 @@ describe('ErrorBoundary 崩溃兜底', () => {
     render(
       <ErrorBoundary>
         <Boom />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     )
 
     const renderEntry = getCrashLog().find((entry) => entry.kind === 'render')
@@ -124,7 +124,7 @@ describe('ErrorBoundary 崩溃兜底', () => {
     const container = render(
       <ErrorBoundary variant="tray">
         <Boom />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     )
 
     const fallback = query(container, 'error-boundary')
@@ -132,7 +132,9 @@ describe('ErrorBoundary 崩溃兜底', () => {
     // 托盘是透明窗口：兜底卡片自己撑起 surface，不额外铺底色
     expect(fallback.style.background).toBe('transparent')
     expect(container.textContent).toContain(translations.zh.errorBoundary.title)
-    expect(query(container, 'error-boundary-reload').textContent).toBe(translations.zh.errorBoundary.reload)
+    expect(query(container, 'error-boundary-reload').textContent).toBe(
+      translations.zh.errorBoundary.reload
+    )
   })
 
   it('exports diagnostics locally from the fallback card', () => {
@@ -140,15 +142,23 @@ describe('ErrorBoundary 崩溃兜底', () => {
     const originalRevokeObjectURL = URL.revokeObjectURL
     const createObjectURL = vi.fn((_blob: Blob) => 'blob:blockhabit-diagnostics')
     const revokeObjectURL = vi.fn()
-    Object.defineProperty(URL, 'createObjectURL', { configurable: true, writable: true, value: createObjectURL })
-    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, writable: true, value: revokeObjectURL })
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      writable: true,
+      value: createObjectURL
+    })
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      writable: true,
+      value: revokeObjectURL
+    })
     const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
     try {
       const container = render(
         <ErrorBoundary>
           <Boom />
-        </ErrorBoundary>,
+        </ErrorBoundary>
       )
 
       act(() => {
@@ -163,12 +173,12 @@ describe('ErrorBoundary 崩溃兜底', () => {
       Object.defineProperty(URL, 'createObjectURL', {
         configurable: true,
         writable: true,
-        value: originalCreateObjectURL,
+        value: originalCreateObjectURL
       })
       Object.defineProperty(URL, 'revokeObjectURL', {
         configurable: true,
         writable: true,
-        value: originalRevokeObjectURL,
+        value: originalRevokeObjectURL
       })
     }
   })

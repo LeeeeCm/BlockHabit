@@ -12,7 +12,7 @@ import {
   isOsCredentialStoreReady,
   probeCredentialStore,
   removeCredential,
-  setCredential,
+  setCredential
 } from '../platform/credentials'
 
 const CONFIG_STORAGE_KEY = 'blockhabit_webdav_config'
@@ -160,7 +160,9 @@ function buildLocalState(): AppState {
 }
 
 /** 拉取远端 → 迁移/校验为当前 schema；失败抛 SyncFlowError */
-async function fetchPreparedRemote(config: WebDavConfig): Promise<{ state: AppState | null; etag: string | null }> {
+async function fetchPreparedRemote(
+  config: WebDavConfig
+): Promise<{ state: AppState | null; etag: string | null }> {
   const remote = await fetchRemoteState(config)
   if (remote.json === null) return { state: null, etag: remote.etag }
   let parsed: unknown
@@ -179,7 +181,7 @@ export function useSync() {
   const [isSyncing, setIsSyncing] = useState(false)
   const [status, setStatus] = useState<SyncStatus>(() => config.lastSyncStatus ?? 'idle')
   const [error, setError] = useState<SyncErrorCode | null>(
-    () => (config.lastSyncError as SyncErrorCode) ?? null,
+    () => (config.lastSyncError as SyncErrorCode) ?? null
   )
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(() => config.lastSyncAt ?? null)
 
@@ -224,7 +226,7 @@ export function useSync() {
     const updatedConfig: WebDavConfig = {
       ...currentConfig,
       lastSyncStatus: 'error',
-      lastSyncError: code,
+      lastSyncError: code
     }
     setConfigState(updatedConfig)
     saveWebDavConfig(updatedConfig)
@@ -295,7 +297,7 @@ export function useSync() {
         ...currentConfig,
         lastSyncAt: now,
         lastSyncStatus: 'success',
-        lastSyncError: null,
+        lastSyncError: null
       }
       setConfigState(updatedConfig)
       saveWebDavConfig(updatedConfig)
@@ -354,6 +356,6 @@ export function useSync() {
     lastSyncAt,
     updateConfig,
     syncNow,
-    getLastError: () => lastErrorRef.current,
+    getLastError: () => lastErrorRef.current
   }
 }

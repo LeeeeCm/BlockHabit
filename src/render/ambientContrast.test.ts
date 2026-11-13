@@ -5,7 +5,7 @@ import {
   contrastRatio,
   floorContrast,
   relativeLuminance,
-  type IsoPalette,
+  type IsoPalette
 } from './iso'
 
 /**
@@ -17,20 +17,52 @@ import {
 const THEMES: Record<string, { bg: string; base: IsoPalette }> = {
   light: {
     bg: '#fafafa',
-    base: { top: '#f4f4f4', left: '#c9c9c9', right: '#8a8a8a', ghost: '#dcdcdc', line: '#e8e8e8', accent: '#f5b301', ink: '#0a0a0a' },
+    base: {
+      top: '#f4f4f4',
+      left: '#c9c9c9',
+      right: '#8a8a8a',
+      ghost: '#dcdcdc',
+      line: '#e8e8e8',
+      accent: '#f5b301',
+      ink: '#0a0a0a'
+    }
   },
   dark: {
     bg: '#0a0a0a',
-    base: { top: '#424242', left: '#303030', right: '#1c1c1c', ghost: '#262626', line: '#2b2b2b', accent: '#f5b301', ink: '#fafafa' },
+    base: {
+      top: '#424242',
+      left: '#303030',
+      right: '#1c1c1c',
+      ghost: '#262626',
+      line: '#2b2b2b',
+      accent: '#f5b301',
+      ink: '#fafafa'
+    }
   },
   oat: {
     bg: '#f7f4ee',
-    base: { top: '#fbf9f5', left: '#dfd8cc', right: '#574f45', ghost: '#dfd8cc', line: '#e7e2d7', accent: '#c25e3e', ink: '#292524' },
+    base: {
+      top: '#fbf9f5',
+      left: '#dfd8cc',
+      right: '#574f45',
+      ghost: '#dfd8cc',
+      line: '#e7e2d7',
+      accent: '#c25e3e',
+      ink: '#292524'
+    }
   },
   fog: {
     bg: '#f1f4f8',
-    base: { top: '#f8fafc', left: '#cbd5e1', right: '#334155', ghost: '#cbd5e1', line: '#cbd5e1', accent: '#0284c7', ink: '#1e293b' },
-  },
+    base: {
+      top: '#f8fafc',
+      left: '#cbd5e1',
+      right: '#334155',
+      ghost: '#cbd5e1',
+      line: '#cbd5e1',
+      accent: '#0284c7',
+      ink: '#1e293b'
+    }
+  }
 }
 
 describe('对比度工具', () => {
@@ -58,7 +90,9 @@ describe('环境光对比度地板（C4）', () => {
     const noon = contrastRatio(base.right, bg)
     const night = applyAmbientLighting(base, 'night', bg)
     expect(contrastRatio(night.right, bg)).toBeGreaterThanOrEqual(noon - 0.001)
-    expect(contrastRatio(night.left, bg)).toBeGreaterThanOrEqual(contrastRatio(base.left, bg) - 0.001)
+    expect(contrastRatio(night.left, bg)).toBeGreaterThanOrEqual(
+      contrastRatio(base.left, bg) - 0.001
+    )
     // 且明显高于修复前的 1.03:1
     expect(contrastRatio(night.right, bg)).toBeGreaterThan(1.1)
   })
@@ -66,7 +100,9 @@ describe('环境光对比度地板（C4）', () => {
   it('墨黑主题黄昏：同样不跌破标准光照', () => {
     const { bg, base } = THEMES.dark
     const dusk = applyAmbientLighting(base, 'dusk', bg)
-    expect(contrastRatio(dusk.right, bg)).toBeGreaterThanOrEqual(contrastRatio(base.right, bg) - 0.001)
+    expect(contrastRatio(dusk.right, bg)).toBeGreaterThanOrEqual(
+      contrastRatio(base.right, bg) - 0.001
+    )
   })
 
   it('浅色主题（纸白/燕麦/雾灰）的暗化结果完全不受影响', () => {

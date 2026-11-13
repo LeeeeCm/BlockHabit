@@ -70,13 +70,13 @@ export const useReminderStore = create<ReminderStore>()((set, get) => ({
     set((s) => ({
       tracks: {
         ...s.tracks,
-        [habitId]: { ...track, snoozeUntilMs: untilMs, snoozeCount: track.snoozeCount + 1 },
-      },
+        [habitId]: { ...track, snoozeUntilMs: untilMs, snoozeCount: track.snoozeCount + 1 }
+      }
     }))
     return true
   },
 
   clearAll() {
     set({ pending: [] })
-  },
+  }
 }))

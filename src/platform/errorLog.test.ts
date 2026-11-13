@@ -8,7 +8,7 @@ import {
   downloadDiagnostics,
   getCrashLog,
   installGlobalErrorHandlers,
-  recordCrash,
+  recordCrash
 } from './errorLog'
 
 describe('errorLog 本地崩溃日志', () => {
@@ -69,7 +69,7 @@ describe('errorLog 本地崩溃日志', () => {
     clearCrashLog()
     localStorage.setItem(
       CRASH_LOG_KEY,
-      JSON.stringify([{ at: '2026-11-10T00:00:00.000Z', kind: 'error', message: 'persisted boom' }]),
+      JSON.stringify([{ at: '2026-11-10T00:00:00.000Z', kind: 'error', message: 'persisted boom' }])
     )
     const hydrated = getCrashLog()
     expect(hydrated).toHaveLength(1)
@@ -100,15 +100,23 @@ describe('errorLog 本地崩溃日志', () => {
     const originalRevokeObjectURL = URL.revokeObjectURL
     const createObjectURL = vi.fn((_blob: Blob) => 'blob:blockhabit-diagnostics')
     const revokeObjectURL = vi.fn()
-    Object.defineProperty(URL, 'createObjectURL', { configurable: true, writable: true, value: createObjectURL })
-    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, writable: true, value: revokeObjectURL })
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      writable: true,
+      value: createObjectURL
+    })
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      writable: true,
+      value: revokeObjectURL
+    })
 
     let downloadedFileName = ''
-    const clickSpy = vi
-      .spyOn(HTMLAnchorElement.prototype, 'click')
-      .mockImplementation(function (this: HTMLAnchorElement) {
-        downloadedFileName = this.download
-      })
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement
+    ) {
+      downloadedFileName = this.download
+    })
 
     try {
       downloadDiagnostics()
@@ -130,12 +138,12 @@ describe('errorLog 本地崩溃日志', () => {
       Object.defineProperty(URL, 'createObjectURL', {
         configurable: true,
         writable: true,
-        value: originalCreateObjectURL,
+        value: originalCreateObjectURL
       })
       Object.defineProperty(URL, 'revokeObjectURL', {
         configurable: true,
         writable: true,
-        value: originalRevokeObjectURL,
+        value: originalRevokeObjectURL
       })
     }
   })
@@ -162,8 +170,12 @@ describe('errorLog 本地崩溃日志', () => {
     window.dispatchEvent(rejectionEvent)
 
     const entries = getCrashLog()
-    expect(entries.some((entry) => entry.kind === 'error' && entry.message === 'global boom')).toBe(true)
-    expect(entries.some((entry) => entry.kind === 'rejection' && entry.message === 'rejected boom')).toBe(true)
+    expect(entries.some((entry) => entry.kind === 'error' && entry.message === 'global boom')).toBe(
+      true
+    )
+    expect(
+      entries.some((entry) => entry.kind === 'rejection' && entry.message === 'rejected boom')
+    ).toBe(true)
     expect(entries.find((entry) => entry.kind === 'error')?.stack).toContain('app.js:3:7')
 
     cleanup()

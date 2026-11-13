@@ -78,15 +78,30 @@ export function ReminderDialog({ onStart, onToast }: Props) {
         const endMin = item.end !== undefined ? parseHHmm(item.end) : null
         const minutesLeft = endMin !== null ? endMin - nowMin : null
         return (
-          <div key={item.habitId} className={`reminder-item${item.stage === 'due-soon' ? ' due-soon' : ''}`}>
+          <div
+            key={item.habitId}
+            className={`reminder-item${item.stage === 'due-soon' ? ' due-soon' : ''}`}
+          >
             <div className="reminder-item-title">
-              <span style={{ display: 'inline-flex', color: 'var(--ink-2)', flexShrink: 0 }} aria-hidden="true">
+              <span
+                style={{ display: 'inline-flex', color: 'var(--ink-2)', flexShrink: 0 }}
+                aria-hidden="true"
+              >
                 <IconMoodHard size={14} />
               </span>
-              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span
+                style={{
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
                 {item.name}
               </span>
-              {item.stage === 'due-soon' && <span className="reminder-due-badge">{t.reminder.dueSoonBadge}</span>}
+              {item.stage === 'due-soon' && (
+                <span className="reminder-due-badge">{t.reminder.dueSoonBadge}</span>
+              )}
             </div>
             <div className="reminder-item-meta">
               <span>{t.reminder.startLabel(item.start)}</span>
@@ -96,13 +111,25 @@ export function ReminderDialog({ onStart, onToast }: Props) {
               )}
             </div>
             <div className="reminder-item-actions">
-              <button className="btn primary" style={{ fontSize: 'var(--fs-body)', padding: '6px 14px' }} onClick={() => handleStart(item.habitId)}>
+              <button
+                className="btn primary"
+                style={{ fontSize: 'var(--fs-body)', padding: '6px 14px' }}
+                onClick={() => handleStart(item.habitId)}
+              >
                 {t.reminder.startBtn}
               </button>
-              <button className="btn ghost" style={{ fontSize: 'var(--fs-body)', padding: '6px 12px' }} onClick={() => handleSnooze(item.habitId)}>
+              <button
+                className="btn ghost"
+                style={{ fontSize: 'var(--fs-body)', padding: '6px 12px' }}
+                onClick={() => handleSnooze(item.habitId)}
+              >
                 {t.reminder.snoozeBtn}
               </button>
-              <button className="btn ghost" style={{ fontSize: 'var(--fs-body)', padding: '6px 12px' }} onClick={() => handleSkip(item.habitId)}>
+              <button
+                className="btn ghost"
+                style={{ fontSize: 'var(--fs-body)', padding: '6px 12px' }}
+                onClick={() => handleSkip(item.habitId)}
+              >
                 {t.reminder.skipBtn}
               </button>
             </div>

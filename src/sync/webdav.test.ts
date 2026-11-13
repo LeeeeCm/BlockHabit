@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchRemoteState, pushRemoteState, getSyncUrl, getAuthHeaders, WebDavError } from './webdav'
+import {
+  fetchRemoteState,
+  pushRemoteState,
+  getSyncUrl,
+  getAuthHeaders,
+  WebDavError
+} from './webdav'
 import type { WebDavConfig } from './types'
 
 describe('WebDAV client', () => {
@@ -7,7 +13,7 @@ describe('WebDAV client', () => {
     endpoint: 'https://dav.example.com/sync/',
     username: 'user',
     password: 'secret-password',
-    enabled: true,
+    enabled: true
   }
 
   beforeEach(() => {
@@ -15,9 +21,15 @@ describe('WebDAV client', () => {
   })
 
   it('normalizes endpoint url correctly', () => {
-    expect(getSyncUrl('https://dav.example.com/dav/')).toBe('https://dav.example.com/dav/blockhabit-data.json')
-    expect(getSyncUrl('https://dav.example.com/dav')).toBe('https://dav.example.com/dav/blockhabit-data.json')
-    expect(getSyncUrl('https://dav.example.com/my-custom-backup.json')).toBe('https://dav.example.com/my-custom-backup.json')
+    expect(getSyncUrl('https://dav.example.com/dav/')).toBe(
+      'https://dav.example.com/dav/blockhabit-data.json'
+    )
+    expect(getSyncUrl('https://dav.example.com/dav')).toBe(
+      'https://dav.example.com/dav/blockhabit-data.json'
+    )
+    expect(getSyncUrl('https://dav.example.com/my-custom-backup.json')).toBe(
+      'https://dav.example.com/my-custom-backup.json'
+    )
     expect(getSyncUrl('')).toBe('')
   })
 
@@ -32,8 +44,8 @@ describe('WebDAV client', () => {
       new Response(mockJson, {
         status: 200,
         statusText: 'OK',
-        headers: { ETag: '"abc123"' },
-      }),
+        headers: { ETag: '"abc123"' }
+      })
     )
 
     const result = await fetchRemoteState(mockConfig)
@@ -44,9 +56,9 @@ describe('WebDAV client', () => {
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
-          Authorization: expect.stringMatching(/^Basic /),
-        }),
-      }),
+          Authorization: expect.stringMatching(/^Basic /)
+        })
+      })
     )
   })
 
@@ -61,7 +73,10 @@ describe('WebDAV client', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2)
     expect(fetchSpy).toHaveBeenLastCalledWith(
       'https://dav.example.com/sync/',
-      expect.objectContaining({ method: 'PROPFIND', headers: expect.objectContaining({ Depth: '0' }) }),
+      expect.objectContaining({
+        method: 'PROPFIND',
+        headers: expect.objectContaining({ Depth: '0' })
+      })
     )
   })
 
@@ -75,7 +90,7 @@ describe('WebDAV client', () => {
 
   it('fetchRemoteState throws WebDavError auth on 401', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      new Response(null, { status: 401, statusText: 'Unauthorized' }),
+      new Response(null, { status: 401, statusText: 'Unauthorized' })
     )
 
     await expect(fetchRemoteState(mockConfig)).rejects.toMatchObject({ code: 'auth' })
@@ -83,9 +98,9 @@ describe('WebDAV client', () => {
 
   it('pushRemoteState sends conditional PUT with If-Match when etag present', async () => {
     const mockJson = JSON.stringify({ schemaVersion: 2, habits: [] })
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      new Response(null, { status: 204, statusText: 'No Content' }),
-    )
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(null, { status: 204, statusText: 'No Content' }))
 
     await pushRemoteState(mockConfig, mockJson, '"etag-1"')
     expect(fetchSpy).toHaveBeenCalledWith(
@@ -93,8 +108,8 @@ describe('WebDAV client', () => {
       expect.objectContaining({
         method: 'PUT',
         body: mockJson,
-        headers: expect.objectContaining({ 'If-Match': '"etag-1"' }),
-      }),
+        headers: expect.objectContaining({ 'If-Match': '"etag-1"' })
+      })
     )
   })
 
@@ -110,7 +125,7 @@ describe('WebDAV client', () => {
     expect(fetchSpy).toHaveBeenNthCalledWith(
       2,
       'https://dav.example.com/sync/',
-      expect.objectContaining({ method: 'MKCOL' }),
+      expect.objectContaining({ method: 'MKCOL' })
     )
   })
 
@@ -124,7 +139,7 @@ describe('WebDAV client', () => {
 
   it('pushRemoteState throws http error on 500', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      new Response(null, { status: 500, statusText: 'Internal Server Error' }),
+      new Response(null, { status: 500, statusText: 'Internal Server Error' })
     )
 
     const err = await pushRemoteState(mockConfig, '{}').catch((e) => e)

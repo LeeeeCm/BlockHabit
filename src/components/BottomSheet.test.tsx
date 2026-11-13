@@ -32,7 +32,8 @@ function render(ui: React.ReactElement) {
       if (!el) throw new Error(`Element with data-testid="${testId}" not found`)
       return el as HTMLElement
     },
-    queryByTestId: (testId: string) => container.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null,
+    queryByTestId: (testId: string) =>
+      container.querySelector(`[data-testid="${testId}"]`) as HTMLElement | null,
     getByText: (text: string) => {
       const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT)
       let node: Node | null
@@ -42,7 +43,7 @@ function render(ui: React.ReactElement) {
         }
       }
       throw new Error(`Element with text "${text}" not found`)
-    },
+    }
   }
 }
 
@@ -204,7 +205,9 @@ describe('BottomSheet component', () => {
     unmount()
 
     detectSpy.mockReturnValue('desktop')
-    const { queryByTestId: queryDesktop, unmount: unmountDesktop } = render(<HabitDialog onClose={vi.fn()} />)
+    const { queryByTestId: queryDesktop, unmount: unmountDesktop } = render(
+      <HabitDialog onClose={vi.fn()} />
+    )
     expect(queryDesktop('bottom-sheet-handle')).toBeNull()
     unmountDesktop()
   })
@@ -216,7 +219,9 @@ describe('BottomSheet component', () => {
     unmount()
 
     detectSpy.mockReturnValue('desktop')
-    const { queryByTestId: queryDesktop, unmount: unmountDesktop } = render(<SettingsDialog onClose={vi.fn()} />)
+    const { queryByTestId: queryDesktop, unmount: unmountDesktop } = render(
+      <SettingsDialog onClose={vi.fn()} />
+    )
     expect(queryDesktop('bottom-sheet-handle')).toBeNull()
     unmountDesktop()
   })
@@ -224,14 +229,24 @@ describe('BottomSheet component', () => {
   it('renders ConfirmDialog in BottomSheet when isMobile is true and in dialog when desktop', () => {
     const detectSpy = vi.spyOn(detectModule, 'detectPlatform').mockReturnValue('mobile')
     const { queryByTestId, unmount } = render(
-      <ConfirmDialog title="确认删除" message="此操作不可逆" onCancel={vi.fn()} onConfirm={vi.fn()} />
+      <ConfirmDialog
+        title="确认删除"
+        message="此操作不可逆"
+        onCancel={vi.fn()}
+        onConfirm={vi.fn()}
+      />
     )
     expect(queryByTestId('bottom-sheet-handle')).not.toBeNull()
     unmount()
 
     detectSpy.mockReturnValue('desktop')
     const { queryByTestId: queryDesktop, unmount: unmountDesktop } = render(
-      <ConfirmDialog title="确认删除" message="此操作不可逆" onCancel={vi.fn()} onConfirm={vi.fn()} />
+      <ConfirmDialog
+        title="确认删除"
+        message="此操作不可逆"
+        onCancel={vi.fn()}
+        onConfirm={vi.fn()}
+      />
     )
     expect(queryDesktop('bottom-sheet-handle')).toBeNull()
     unmountDesktop()
@@ -250,7 +265,7 @@ describe('BottomSheet component', () => {
       if (clientY !== undefined) {
         Object.defineProperty(evt, 'touches', {
           configurable: true,
-          value: [{ clientY }],
+          value: [{ clientY }]
         })
       }
       el.dispatchEvent(evt)

@@ -18,7 +18,7 @@ function reset() {
     completedBlueprintIds: [],
     settings: { theme: 'light', language: 'zh' },
     dayClaims: [],
-    deletedDayClaims: [],
+    deletedDayClaims: []
   })
 }
 
@@ -75,7 +75,7 @@ describe('连击里程碑奖励块（B1）', () => {
         at: '2026-01-01T08:00:00.000Z',
         placedBlockId: 'b1',
         blueprintId: 'plant',
-        bonus: true,
+        bonus: true
       },
       {
         id: 'c2',
@@ -83,8 +83,8 @@ describe('连击里程碑奖励块（B1）', () => {
         date: '2026-01-02',
         at: '2026-01-02T08:00:00.000Z',
         placedBlockId: 'b2',
-        blueprintId: 'plant',
-      },
+        blueprintId: 'plant'
+      }
     ]
     const builds = rebuildBuilds(live, [])
     expect(builds.find((b) => b.id === 'b1')?.bonus).toBe(true)

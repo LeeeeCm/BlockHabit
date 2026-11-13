@@ -32,7 +32,9 @@
   min-width: 380px;
   max-width: 92vw;
   max-height: 86vh;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.2),
+    0 4px 16px rgba(0, 0, 0, 0.06);
   animation: pop-in var(--dur-md) var(--ease-out);
   display: flex;
   flex-direction: column;
@@ -115,7 +117,6 @@
   }
 }
 
-
 /* 表单 */
 .field {
   display: flex;
@@ -164,7 +165,9 @@
   font-size: var(--fs-body);
   color: var(--ink-2);
   border-radius: 8px;
-  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default);
+  transition:
+    background var(--dur-xs) var(--ease-default),
+    color var(--dur-xs) var(--ease-default);
 }
 .seg button.active {
   background: var(--ink);
@@ -212,11 +215,12 @@
 .icon-btn,
 .card-action,
 .pill-action {
-  transition: background var(--dur-sm) var(--ease-out),
-              color var(--dur-sm) var(--ease-out),
-              border-color var(--dur-sm) var(--ease-out),
-              transform var(--dur-sm) var(--ease-out),
-              box-shadow var(--dur-sm) var(--ease-out);
+  transition:
+    background var(--dur-sm) var(--ease-out),
+    color var(--dur-sm) var(--ease-out),
+    border-color var(--dur-sm) var(--ease-out),
+    transform var(--dur-sm) var(--ease-out),
+    box-shadow var(--dur-sm) var(--ease-out);
 }
 
 .btn:active,

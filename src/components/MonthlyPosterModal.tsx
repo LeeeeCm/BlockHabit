@@ -39,7 +39,9 @@ export function MonthlyPosterModal({ onClose }: Props) {
   const monthPrefix = `${year}-${monthStr}`
 
   const monthNotes = useMemo(() => {
-    const list = checkIns.filter((c) => !c.deletedAt && c.date.startsWith(monthPrefix) && c.note?.trim())
+    const list = checkIns.filter(
+      (c) => !c.deletedAt && c.date.startsWith(monthPrefix) && c.note?.trim()
+    )
     list.sort((a, b) => {
       if (a.starred && !b.starred) return -1
       if (!a.starred && b.starred) return 1
@@ -51,7 +53,6 @@ export function MonthlyPosterModal({ onClose }: Props) {
   const [quoteIdx, setQuoteIdx] = useState(0)
   const { ref: dialogRef } = useDialogA11y({ open: true, onClose })
 
-
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -61,7 +62,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
     const dimMap = {
       '4:5': { W: 600, H: 750 },
       '9:16': { W: 540, H: 960 },
-      '1:1': { W: 600, H: 600 },
+      '1:1': { W: 600, H: 600 }
     }
     const { W, H } = dimMap[aspectRatio]
     canvas.width = W * 2
@@ -99,7 +100,20 @@ export function MonthlyPosterModal({ onClose }: Props) {
 
     ctx.font = '700 15px "Rubik", sans-serif'
     ctx.fillStyle = colorAccent
-    const MONTH_EN = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+    const MONTH_EN = [
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC'
+    ]
     ctx.textAlign = 'right'
     ctx.fillText(MONTH_EN[month - 1] || 'MONTH', W - margin, margin + 16)
 
@@ -161,7 +175,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
       cfg,
       bonusByIndex,
       // 导出画布固定 2x 变换：精灵密度必须对齐，否则 1x 屏导出图块面模糊
-      spriteScale: 2,
+      spriteScale: 2
     })
     ctx.restore()
 
@@ -176,7 +190,11 @@ export function MonthlyPosterModal({ onClose }: Props) {
       ? t.poster.completedTotal(totalBlocks)
       : placedCount === 0
         ? t.poster.foundationReady(totalBlocks)
-        : t.poster.buildingProgress(placedCount, totalBlocks, Math.round((placedCount / totalBlocks) * 100))
+        : t.poster.buildingProgress(
+            placedCount,
+            totalBlocks,
+            Math.round((placedCount / totalBlocks) * 100)
+          )
     ctx.fillText(progressText, margin + 18, stageY + 48)
 
     // 4. 当月 30 天积木热力矩阵 (30-Day Brick Matrix)
@@ -235,11 +253,15 @@ export function MonthlyPosterModal({ onClose }: Props) {
     // 5. 核心指标卡片 (Metrics Grid)
     const metricsX = matrixGridX + matrixTotalW + 18
     const metricsW = W - margin - metricsX
-    const monthCheckIns = checkIns.filter((c) => !c.deletedAt && c.date.startsWith(monthPrefix)).length
+    const monthCheckIns = checkIns.filter(
+      (c) => !c.deletedAt && c.date.startsWith(monthPrefix)
+    ).length
     const monthFocusMins = checkIns
       .filter((c) => c.date.startsWith(monthPrefix))
       .reduce((s, c) => s + (c.actualMinutes ?? 0), 0)
-    const monthBlocks = builds.filter((b) => dateKey(new Date(b.placedAt)).startsWith(monthPrefix)).length
+    const monthBlocks = builds.filter((b) =>
+      dateKey(new Date(b.placedAt)).startsWith(monthPrefix)
+    ).length
 
     const activeHabits = habits.filter((h) => !h.archivedAt)
     let best = 0
@@ -253,7 +275,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
       { label: t.poster.metricCheckIns, val: `${monthCheckIns}` },
       { label: t.poster.metricFocusTime, val: `${(monthFocusMins / 60).toFixed(1)}h` },
       { label: t.poster.metricBlocksAdded, val: `+${monthBlocks}` },
-      { label: t.poster.metricStreak, val: `${curr}d` },
+      { label: t.poster.metricStreak, val: `${curr}d` }
     ]
 
     const mCellH = 43
@@ -304,12 +326,20 @@ export function MonthlyPosterModal({ onClose }: Props) {
     ctx.fillStyle = colorInk2
     ctx.font = '700 10.5px "Rubik", sans-serif'
     ctx.textAlign = 'right'
-    const rightTag = currentNote
-      ? t.poster.builderRecord(currentNote.date)
-      : 'BLOCKHABIT CHRONICLE'
+    const rightTag = currentNote ? t.poster.builderRecord(currentNote.date) : 'BLOCKHABIT CHRONICLE'
     ctx.fillText(rightTag, W - margin, footerY + 22)
     ctx.textAlign = 'left'
-  }, [habits, checkIns, builds, activeBlueprintId, completed, lang, monthNotes, quoteIdx, aspectRatio])
+  }, [
+    habits,
+    checkIns,
+    builds,
+    activeBlueprintId,
+    completed,
+    lang,
+    monthNotes,
+    quoteIdx,
+    aspectRatio
+  ])
 
   async function handleCopy() {
     const canvas = canvasRef.current
@@ -361,11 +391,26 @@ export function MonthlyPosterModal({ onClose }: Props) {
           flexDirection: 'column',
           alignItems: 'center',
           maxWidth: 600,
-          maxHeight: '94vh',
+          maxHeight: '94vh'
         }}
       >
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ fontSize: 'var(--fs-title)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: 12
+          }}
+        >
+          <span
+            style={{
+              fontSize: 'var(--fs-title)',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
             <IconPoster size={18} />
             <span>{t.poster.modalTitle}</span>
           </span>
@@ -395,7 +440,11 @@ export function MonthlyPosterModal({ onClose }: Props) {
                   setAspectRatio(r)
                 }}
               >
-                {r === '4:5' ? t.poster.ratioCard45 : r === '9:16' ? t.poster.ratioStory916 : t.poster.ratioSquare11}
+                {r === '4:5'
+                  ? t.poster.ratioCard45
+                  : r === '9:16'
+                    ? t.poster.ratioStory916
+                    : t.poster.ratioSquare11}
               </button>
             ))}
           </div>
@@ -413,7 +462,7 @@ export function MonthlyPosterModal({ onClose }: Props) {
             boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
             border: '1px solid var(--line)',
             display: 'block',
-            margin: '0 auto',
+            margin: '0 auto'
           }}
         />
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
@@ -421,7 +470,13 @@ export function MonthlyPosterModal({ onClose }: Props) {
             <button
               className="btn ghost"
               onClick={() => setQuoteIdx((prev) => (prev + 1) % monthNotes.length)}
-              style={{ fontSize: 'var(--fs-small)', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              style={{
+                fontSize: 'var(--fs-small)',
+                padding: '6px 12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6
+              }}
               title={t.poster.cycleQuoteTooltip}
             >
               <IconShuffle size={13} style={{ flexShrink: 0 }} />

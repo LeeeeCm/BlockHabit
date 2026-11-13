@@ -6,7 +6,7 @@ import {
   drawCube,
   DEFAULT_ISO_CONFIG,
   type IsoConfig,
-  type IsoPalette,
+  type IsoPalette
 } from './iso'
 const mockPalette: IsoPalette = {
   top: '#f4f4f4',
@@ -15,7 +15,7 @@ const mockPalette: IsoPalette = {
   ghost: 'rgba(255,255,255,0.4)',
   line: '#1c1917',
   accent: '#f59e0b',
-  ink: '#1c1917',
+  ink: '#1c1917'
 }
 
 describe('iso block sprite cache', () => {
@@ -54,7 +54,7 @@ describe('iso block sprite cache', () => {
           roundRect: vi.fn(),
           setTransform: vi.fn(),
           clearRect: vi.fn(),
-          drawImage: vi.fn(),
+          drawImage: vi.fn()
         }
       }
     } as unknown as typeof globalThis.OffscreenCanvas
@@ -110,7 +110,7 @@ describe('iso block sprite cache', () => {
     expect(s1Again).toBe(s1)
     expect(s2).not.toBe(s1)
     // 位图密度随 dpr 翻倍（CSS 逻辑尺寸不变）
-    expect(s2!.canvas.width).toBeCloseTo((s1!.canvas.width) * 2)
+    expect(s2!.canvas.width).toBeCloseTo(s1!.canvas.width * 2)
   })
 
   it('treats palette as a distinct cache dimension (theme switch does not cross-contaminate)', () => {
@@ -121,7 +121,7 @@ describe('iso block sprite cache', () => {
       top: '#27272a',
       left: '#3f3f46',
       right: '#18181b',
-      ink: '#fafafa',
+      ink: '#fafafa'
     }
     const dark = getCubeSprite('#3b82f6', 'basic', false, c, darkPalette, 2)
     expect(dark).not.toBe(light)
@@ -183,12 +183,12 @@ describe('iso block sprite cache', () => {
       fill: vi.fn(),
       createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
       clip: vi.fn(),
-      roundRect: vi.fn(),
+      roundRect: vi.fn()
     } as unknown as CanvasRenderingContext2D
 
     drawCube(mockCtx, 100, 100, DEFAULT_ISO_CONFIG, mockPalette, {
       color: '#3b82f6',
-      type: 'basic',
+      type: 'basic'
     })
 
     expect(drawImageSpy).toHaveBeenCalledTimes(1)
@@ -211,7 +211,7 @@ describe('iso block sprite cache', () => {
       createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
       clip: vi.fn(),
       roundRect: vi.fn(),
-      ellipse: vi.fn(),
+      ellipse: vi.fn()
     } as unknown as CanvasRenderingContext2D
 
     drawCube(mockCtx, 100, 100, DEFAULT_ISO_CONFIG, mockPalette, {
@@ -220,7 +220,7 @@ describe('iso block sprite cache', () => {
       bonus: true,
       starred: true,
       hasNote: true,
-      highlight: true,
+      highlight: true
     })
 
     // Base sprite is drawn
@@ -252,13 +252,13 @@ describe('iso block sprite cache', () => {
         fill: fillSpy,
         createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
         clip: vi.fn(),
-        roundRect: vi.fn(),
+        roundRect: vi.fn()
       } as unknown as CanvasRenderingContext2D
 
       expect(() => {
         drawCube(mockCtx, 100, 100, DEFAULT_ISO_CONFIG, mockPalette, {
           color: '#3b82f6',
-          type: 'basic',
+          type: 'basic'
         })
       }).not.toThrow()
 

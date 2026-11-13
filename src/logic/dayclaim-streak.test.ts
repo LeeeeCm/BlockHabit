@@ -3,7 +3,9 @@ import { dayClaimStreak } from './streak'
 
 describe('dayClaimStreak（连续每日打卡领块）', () => {
   it('counts consecutive claimed days ending today', () => {
-    expect(dayClaimStreak(['2026-08-20', '2026-08-21', '2026-08-22'], new Date(2026, 7, 22))).toBe(3)
+    expect(dayClaimStreak(['2026-08-20', '2026-08-21', '2026-08-22'], new Date(2026, 7, 22))).toBe(
+      3
+    )
   })
 
   it('today unclaimed counts from yesterday', () => {
@@ -19,6 +21,8 @@ describe('dayClaimStreak（连续每日打卡领块）', () => {
   })
 
   it('unordered input tolerated', () => {
-    expect(dayClaimStreak(['2026-08-22', '2026-08-20', '2026-08-21'], new Date(2026, 7, 22))).toBe(3)
+    expect(dayClaimStreak(['2026-08-22', '2026-08-20', '2026-08-21'], new Date(2026, 7, 22))).toBe(
+      3
+    )
   })
 })

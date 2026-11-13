@@ -95,6 +95,6 @@ export function buildTodayBrief(input: TodayBriefInput): TodayBriefState {
     remainingBlocks,
     activeBlueprintId: input.activeBlueprintId,
     nextBlueprintId,
-    firstPendingHabitId: findFirstPending(input.targetHabits ?? active, input.checkIns, input.day),
+    firstPendingHabitId: findFirstPending(input.targetHabits ?? active, input.checkIns, input.day)
   }
 }

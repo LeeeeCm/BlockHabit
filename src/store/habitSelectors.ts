@@ -51,7 +51,7 @@ function checkInItemsEqual(a: CheckIn, b: CheckIn): boolean {
 export function selectHabitCheckInSlice(
   checkIns: CheckIn[],
   habit: Habit,
-  day: string,
+  day: string
 ): HabitCheckInSlice {
   const habitId = habit.id
   // 仅筛选属于本习惯的打卡
@@ -85,13 +85,14 @@ export function selectHabitCheckInSlice(
   const todayCheckIns = dayCheckInsFor(habitCheckIns, habitId, day)
   const todayCheckIn = todayCheckIns[todayCheckIns.length - 1]
   const counterVal = habit.kind === 'counter' ? dayCounterValue(todayCheckIns, habitId, day) : 0
-  const weekCount = habit.frequency.type === 'weekly' ? weekCountFor(habitCheckIns, habitId, day) : 0
+  const weekCount =
+    habit.frequency.type === 'weekly' ? weekCountFor(habitCheckIns, habitId, day) : 0
 
   const slice: HabitCheckInSlice = {
     todayCheckIns,
     todayCheckIn,
     counterVal,
-    weekCount,
+    weekCount
   }
 
   sliceCache.set(habitId, {
@@ -99,7 +100,7 @@ export function selectHabitCheckInSlice(
     slice,
     day,
     kind: habit.kind,
-    frequencyType: habit.frequency.type,
+    frequencyType: habit.frequency.type
   })
 
   return slice

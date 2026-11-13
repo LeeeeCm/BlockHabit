@@ -9,16 +9,16 @@ const flushLazy = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 // Mock pages to lightweight markers
 vi.mock('./pages/Today', () => ({
-  default: () => <div data-testid="page-today">Today Page</div>,
+  default: () => <div data-testid="page-today">Today Page</div>
 }))
 vi.mock('./pages/Build', () => ({
-  default: () => <div data-testid="page-build">Build Page</div>,
+  default: () => <div data-testid="page-build">Build Page</div>
 }))
 vi.mock('./pages/Showcase', () => ({
-  default: () => <div data-testid="page-showcase">Showcase Page</div>,
+  default: () => <div data-testid="page-showcase">Showcase Page</div>
 }))
 vi.mock('./pages/Stats', () => ({
-  default: () => <div data-testid="page-stats">Stats Page</div>,
+  default: () => <div data-testid="page-stats">Stats Page</div>
 }))
 
 // Mock storage & persistence to avoid running real singleton/fs
@@ -26,7 +26,7 @@ vi.mock('./store/appStore', async (importOriginal) => {
   const actual = await importOriginal<typeof AppStoreModule>()
   return {
     ...actual,
-    initPersistence: vi.fn(),
+    initPersistence: vi.fn()
   }
 })
 
@@ -39,16 +39,19 @@ vi.mock('@tauri-apps/api/window', () => ({
     minimize: vi.fn(),
     toggleMaximize: vi.fn(),
     close: vi.fn(),
-    onResized: vi.fn().mockResolvedValue(() => {}),
+    onResized: vi.fn().mockResolvedValue(() => {})
   }),
   LogicalSize: class {
-    constructor(public width: number, public height: number) {}
-  },
+    constructor(
+      public width: number,
+      public height: number
+    ) {}
+  }
 }))
 
 vi.mock('@tauri-apps/api/event', () => ({
   listen: vi.fn().mockResolvedValue(() => {}),
-  emit: vi.fn(),
+  emit: vi.fn()
 }))
 
 import App from './App'
@@ -68,8 +71,8 @@ describe('App keyboard shortcuts and modal guard', () => {
         matches: false,
         media: q,
         addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      }),
+        removeEventListener: vi.fn()
+      })
     })
   })
 

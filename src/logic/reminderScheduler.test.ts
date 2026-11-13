@@ -7,7 +7,7 @@ import {
   freshTrack,
   MAX_SNOOZES,
   SNOOZE_MINUTES,
-  type ReminderTrack,
+  type ReminderTrack
 } from './reminderScheduler'
 import { useReminderStore } from '../store/reminderStore'
 import type { Habit } from '../types'
@@ -20,7 +20,7 @@ function habitWith(reminder: { start: string; end?: string } | undefined): Habit
     name: '背单词',
     frequency: { type: 'daily' },
     createdAt: '2026-08-01T00:00:00.000Z',
-    reminder,
+    reminder
   }
 }
 
@@ -39,7 +39,14 @@ interface ScanOpts {
   track?: ReminderTrack
 }
 
-function scan({ now, reminder, metToday = false, skippedToday = false, enabled = true, track }: ScanOpts) {
+function scan({
+  now,
+  reminder,
+  metToday = false,
+  skippedToday = false,
+  enabled = true,
+  track
+}: ScanOpts) {
   return scanHabitReminder({
     now,
     day: DAY,
@@ -47,7 +54,7 @@ function scan({ now, reminder, metToday = false, skippedToday = false, enabled =
     remindersEnabled: enabled,
     metToday,
     skippedToday,
-    track,
+    track
   })
 }
 
@@ -78,7 +85,11 @@ describe('scanHabitReminder — 首次提醒', () => {
     expect(first.notify).toEqual({ stage: 'start' })
     expect(first.track.startNotified).toBe(true)
 
-    const again = scan({ now: at('21:30'), reminder: { start: '21:00', end: '23:00' }, track: first.track })
+    const again = scan({
+      now: at('21:30'),
+      reminder: { start: '21:00', end: '23:00' },
+      track: first.track
+    })
     expect(again.notify).toBeUndefined()
   })
 
@@ -158,7 +169,12 @@ describe('scanHabitReminder — 贪睡', () => {
   const reminder = { start: '21:00', end: '23:00' }
 
   it('贪睡等待期内静默，到期且仍在窗口内再响', () => {
-    const track: ReminderTrack = { ...freshTrack(DAY), startNotified: true, snoozeUntilMs: at('21:20').getTime(), snoozeCount: 1 }
+    const track: ReminderTrack = {
+      ...freshTrack(DAY),
+      startNotified: true,
+      snoozeUntilMs: at('21:20').getTime(),
+      snoozeCount: 1
+    }
     const waiting = scan({ now: at('21:10'), reminder, track })
     expect(waiting.notify).toBeUndefined()
 
@@ -169,14 +185,23 @@ describe('scanHabitReminder — 贪睡', () => {
   })
 
   it('贪睡到期但已过窗口 → 不响，清掉贪睡', () => {
-    const track: ReminderTrack = { ...freshTrack(DAY), startNotified: true, snoozeUntilMs: at('23:10').getTime(), snoozeCount: 1 }
+    const track: ReminderTrack = {
+      ...freshTrack(DAY),
+      startNotified: true,
+      snoozeUntilMs: at('23:10').getTime(),
+      snoozeCount: 1
+    }
     const r = scan({ now: at('23:10'), reminder, track })
     expect(r.notify).toBeUndefined()
     expect(r.track.snoozeUntilMs).toBeUndefined()
   })
 
   it('跨天轨迹重置：昨天的提醒状态不影响今天', () => {
-    const yesterdayTrack: ReminderTrack = { ...freshTrack('2026-10-01'), startNotified: true, dueSoonNotified: true }
+    const yesterdayTrack: ReminderTrack = {
+      ...freshTrack('2026-10-01'),
+      startNotified: true,
+      dueSoonNotified: true
+    }
     const r = scan({ now: at('21:00'), reminder, track: yesterdayTrack })
     expect(r.notify).toEqual({ stage: 'start' })
     expect(r.track.date).toBe(DAY)
@@ -193,7 +218,9 @@ describe('reminderStore — 贪睡请求侧上限', () => {
     const s = useReminderStore.getState()
     s.setTrack('h1', freshTrack(DAY))
     for (let i = 0; i < MAX_SNOOZES; i++) {
-      expect(useReminderStore.getState().snooze('h1', Date.now() + SNOOZE_MINUTES * 60_000)).toBe(true)
+      expect(useReminderStore.getState().snooze('h1', Date.now() + SNOOZE_MINUTES * 60_000)).toBe(
+        true
+      )
     }
     expect(useReminderStore.getState().snooze('h1', Date.now())).toBe(false)
   })

@@ -7,7 +7,7 @@ import {
   isWithinRepairWindow,
   monthKeyOf,
   refreshMonthlyAllowance,
-  repairBricksForStreak,
+  repairBricksForStreak
 } from './repairBricks'
 
 /**
@@ -24,7 +24,11 @@ describe('repairBricks · 月度额度', () => {
 
   it('同一个月内重复结算不发放（幂等）', () => {
     const first = refreshMonthlyAllowance(0, '2026-10', new Date('2026-11-10T10:00:00'))
-    const second = refreshMonthlyAllowance(first.count, first.month, new Date('2026-11-20T10:00:00'))
+    const second = refreshMonthlyAllowance(
+      first.count,
+      first.month,
+      new Date('2026-11-20T10:00:00')
+    )
     expect(second.count).toBe(first.count)
     expect(second.granted).toBe(0)
   })

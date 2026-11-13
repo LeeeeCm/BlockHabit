@@ -55,7 +55,10 @@ export function normalizeServerBase(input: string): string {
   value = value.replace(/[?#].*$/, '')
   if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(value)) value = `https://${value}`
   // 协议统一小写
-  value = value.replace(/^([a-z][a-z0-9+.-]*):\/\//i, (_match, scheme: string) => `${scheme.toLowerCase()}://`)
+  value = value.replace(
+    /^([a-z][a-z0-9+.-]*):\/\//i,
+    (_match, scheme: string) => `${scheme.toLowerCase()}://`
+  )
   // 去掉尾部斜杠，并把路径中的重复斜杠合并（保留 scheme 后的 //）
   value = value.replace(/\/+$/, '').replace(/([^:])\/{2,}/g, '$1/')
   // 只有协议、没有主机（如 "https://"）视为空
@@ -104,7 +107,7 @@ export const PROVIDER_PRESETS: Record<ProviderId, ProviderPreset> = {
     requiresAppPassword: true,
     nameKey: 'settings.webdav.providers.nextcloud',
     hintKey: 'settings.webdav.providerHints.nextcloud',
-    buildEndpoint: nextcloudEndpoint,
+    buildEndpoint: nextcloudEndpoint
   },
   jianguoyun: {
     id: 'jianguoyun',
@@ -112,7 +115,7 @@ export const PROVIDER_PRESETS: Record<ProviderId, ProviderPreset> = {
     requiresAppPassword: true,
     nameKey: 'settings.webdav.providers.jianguoyun',
     hintKey: 'settings.webdav.providerHints.jianguoyun',
-    buildEndpoint: () => jianguoyunEndpoint(),
+    buildEndpoint: () => jianguoyunEndpoint()
   },
   synology: {
     id: 'synology',
@@ -120,7 +123,7 @@ export const PROVIDER_PRESETS: Record<ProviderId, ProviderPreset> = {
     requiresAppPassword: false,
     nameKey: 'settings.webdav.providers.synology',
     hintKey: 'settings.webdav.providerHints.synology',
-    buildEndpoint: synologyEndpoint,
+    buildEndpoint: synologyEndpoint
   },
   generic: {
     id: 'generic',
@@ -128,8 +131,8 @@ export const PROVIDER_PRESETS: Record<ProviderId, ProviderPreset> = {
     requiresAppPassword: false,
     nameKey: 'settings.webdav.providers.generic',
     hintKey: 'settings.webdav.providerHints.generic',
-    buildEndpoint: genericEndpoint,
-  },
+    buildEndpoint: genericEndpoint
+  }
 }
 
 /** 按服务商生成集合 URL；未知 id 或信息不足时返回 '' */
@@ -153,7 +156,10 @@ export interface ProviderSwitchState {
   endpoint: string
 }
 
-export function switchProvider(current: ProviderSwitchState, nextId: ProviderId): ProviderSwitchState {
+export function switchProvider(
+  current: ProviderSwitchState,
+  nextId: ProviderId
+): ProviderSwitchState {
   if (!PROVIDER_PRESETS[nextId]) return { ...current }
   // 坚果云使用固定域名，base 没有意义（清掉避免残留在表单里）
   const base = nextId === 'jianguoyun' ? '' : current.base
@@ -161,6 +167,6 @@ export function switchProvider(current: ProviderSwitchState, nextId: ProviderId)
     providerId: nextId,
     base,
     username: current.username,
-    endpoint: buildEndpoint(nextId, base, current.username),
+    endpoint: buildEndpoint(nextId, base, current.username)
   }
 }

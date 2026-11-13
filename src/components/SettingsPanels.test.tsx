@@ -15,7 +15,7 @@ vi.mock('../storage/backups', () => ({
   createBackup: vi.fn(async () => true),
   listBackups: vi.fn(async () => []),
   openDataDir: vi.fn(async () => true),
-  readBackup: vi.fn(async () => null),
+  readBackup: vi.fn(async () => null)
 }))
 vi.mock('../platform/diagnostics', () => ({ exportDiagnosticsPackage: vi.fn(async () => true) }))
 
@@ -40,12 +40,14 @@ function render(ui: React.ReactElement) {
         root.unmount()
       })
       container.remove()
-    },
+    }
   }
 }
 
 function button(container: HTMLElement, label: string): HTMLButtonElement {
-  const found = Array.from(container.querySelectorAll('button')).find((el) => (el.textContent ?? '').trim() === label)
+  const found = Array.from(container.querySelectorAll('button')).find(
+    (el) => (el.textContent ?? '').trim() === label
+  )
   if (!found) throw new Error(`button not found: ${label}`)
   return found
 }
@@ -60,14 +62,16 @@ function makeSync(overrides: Partial<SyncController> = {}): SyncController {
     lastSyncAt: null,
     syncNow: vi.fn(async () => true),
     getLastError: vi.fn(() => null),
-    ...overrides,
+    ...overrides
   }
 }
 
 let clickSpy: ReturnType<typeof vi.spyOn> | null = null
 
 beforeEach(() => {
-  useAppStore.setState({ settings: { ...useAppStore.getState().settings, language: 'zh', theme: 'light' } })
+  useAppStore.setState({
+    settings: { ...useAppStore.getState().settings, language: 'zh', theme: 'light' }
+  })
 })
 
 afterEach(() => {
@@ -101,7 +105,9 @@ describe('WebdavPanel（从 SettingsDialog 抽出）', () => {
       button(container, '坚果云').click()
     })
     expect(sync.updateConfig).toHaveBeenCalledWith({ endpoint: JIANGUOYUN_ENDPOINT })
-    const inputs = Array.from(container.querySelectorAll('input[type="text"]')) as HTMLInputElement[]
+    const inputs = Array.from(
+      container.querySelectorAll('input[type="text"]')
+    ) as HTMLInputElement[]
     expect(inputs[0].value).toBe(JIANGUOYUN_ENDPOINT)
     expect(inputs[0].readOnly).toBe(true)
     expect(container.textContent).toContain('应用专用密码')
@@ -115,14 +121,18 @@ describe('WebdavPanel（从 SettingsDialog 抽出）', () => {
       button(container, '通用').click()
     })
     expect(sync.updateConfig).toHaveBeenCalledWith({ endpoint: '' })
-    const endpoints = Array.from(container.querySelectorAll('input[type="text"]')) as HTMLInputElement[]
+    const endpoints = Array.from(
+      container.querySelectorAll('input[type="text"]')
+    ) as HTMLInputElement[]
     expect(endpoints[0].value).toBe('')
     unmount()
   })
 
   it('立即同步：成功/失败都通过父级 onToast 转发，失败按错误码映射文案', async () => {
     const onToast = vi.fn()
-    const okSync = makeSync({ config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' } })
+    const okSync = makeSync({
+      config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' }
+    })
     const okRender = render(<WebdavPanel sync={okSync} onToast={onToast} />)
     await act(async () => {
       button(okRender.container, '立即同步').click()
@@ -134,7 +144,7 @@ describe('WebdavPanel（从 SettingsDialog 抽出）', () => {
     const failSync = makeSync({
       config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' },
       syncNow: vi.fn(async () => false),
-      getLastError: vi.fn((): SyncErrorCode | null => 'auth'),
+      getLastError: vi.fn((): SyncErrorCode | null => 'auth')
     })
     const failRender = render(<WebdavPanel sync={failSync} onToast={onToast} />)
     await act(async () => {
@@ -146,7 +156,12 @@ describe('WebdavPanel（从 SettingsDialog 抽出）', () => {
 
   it('自动同步开关与间隔：updateConfig 接线不变；开启后显示四档间隔', async () => {
     const sync = makeSync({
-      config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/', enabled: true, autoSyncIntervalMinutes: 30 },
+      config: {
+        ...DEFAULT_WEBDAV_CONFIG,
+        endpoint: 'https://dav.example.com/',
+        enabled: true,
+        autoSyncIntervalMinutes: 30
+      }
     })
     const { container, unmount } = render(<WebdavPanel sync={sync} onToast={vi.fn()} />)
     expect(container.textContent).toContain('启动时与每隔设定间隔自动与云端合并')
@@ -164,27 +179,39 @@ describe('WebdavPanel（从 SettingsDialog 抽出）', () => {
   it('状态行：同步中 / 错误码 / 上次同步时间', () => {
     const syncing = render(
       <WebdavPanel
-        sync={makeSync({ config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' }, isSyncing: true, status: 'syncing' })}
+        sync={makeSync({
+          config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' },
+          isSyncing: true,
+          status: 'syncing'
+        })}
         onToast={vi.fn()}
-      />,
+      />
     )
     expect(syncing.container.textContent).toContain('正在连接同步中...')
     syncing.unmount()
 
     const failed = render(
       <WebdavPanel
-        sync={makeSync({ config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' }, status: 'error', error: 'network' })}
+        sync={makeSync({
+          config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' },
+          status: 'error',
+          error: 'network'
+        })}
         onToast={vi.fn()}
-      />,
+      />
     )
     expect(failed.container.textContent).toContain('网络错误，请检查服务器地址与连接')
     failed.unmount()
 
     const synced = render(
       <WebdavPanel
-        sync={makeSync({ config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' }, status: 'success', lastSyncAt: '2026-11-10T12:00:00.000Z' })}
+        sync={makeSync({
+          config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' },
+          status: 'success',
+          lastSyncAt: '2026-11-10T12:00:00.000Z'
+        })}
         onToast={vi.fn()}
-      />,
+      />
     )
     expect(synced.container.textContent).toContain('上次同步: ')
     synced.unmount()
@@ -192,7 +219,9 @@ describe('WebdavPanel（从 SettingsDialog 抽出）', () => {
 
   it('浏览器预览点「测试连接」：只提示需在桌面端运行，不发起网络请求', async () => {
     const onToast = vi.fn()
-    const sync = makeSync({ config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' } })
+    const sync = makeSync({
+      config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: 'https://dav.example.com/' }
+    })
     const { container, unmount } = render(<WebdavPanel sync={sync} onToast={onToast} />)
     await act(async () => {
       button(container, '测试连接').click()
@@ -219,7 +248,9 @@ describe('ArchiveDataPanel（数据安全）', () => {
     const onImportFile = vi.fn()
     const { container, unmount } = render(<ArchiveDataPanel onImportFile={onImportFile} />)
     const input = container.querySelector('input[type="file"]') as HTMLInputElement
-    const file = new File(['{"schemaVersion":2}'], 'blockhabit-backup.json', { type: 'application/json' })
+    const file = new File(['{"schemaVersion":2}'], 'blockhabit-backup.json', {
+      type: 'application/json'
+    })
     Object.defineProperty(input, 'files', { configurable: true, value: [file] })
     await act(async () => {
       input.dispatchEvent(new Event('change', { bubbles: true }))
@@ -262,7 +293,9 @@ describe('DiagnosticsExportPanel（诊断包）', () => {
 
 describe('ArchiveBackupsPanel（备份与恢复）', () => {
   it('渲染立即备份 / 打开数据目录 / 空备份列表', () => {
-    const { container, unmount } = render(<ArchiveBackupsPanel onToast={vi.fn()} onRestoreCandidate={vi.fn()} />)
+    const { container, unmount } = render(
+      <ArchiveBackupsPanel onToast={vi.fn()} onRestoreCandidate={vi.fn()} />
+    )
     const text = container.textContent ?? ''
     expect(button(container, '立即备份')).toBeDefined()
     expect(button(container, '打开数据目录')).toBeDefined()
@@ -273,7 +306,9 @@ describe('ArchiveBackupsPanel（备份与恢复）', () => {
 
   it('立即备份：写入备份、toast、刷新列表', async () => {
     const onToast = vi.fn()
-    const { container, unmount } = render(<ArchiveBackupsPanel onToast={onToast} onRestoreCandidate={vi.fn()} />)
+    const { container, unmount } = render(
+      <ArchiveBackupsPanel onToast={onToast} onRestoreCandidate={vi.fn()} />
+    )
     await act(async () => {
       button(container, '立即备份').click()
     })
@@ -286,7 +321,9 @@ describe('ArchiveBackupsPanel（备份与恢复）', () => {
   it('打开数据目录失败时 toast 提示', async () => {
     vi.mocked(openDataDir).mockResolvedValueOnce(false)
     const onToast = vi.fn()
-    const { container, unmount } = render(<ArchiveBackupsPanel onToast={onToast} onRestoreCandidate={vi.fn()} />)
+    const { container, unmount } = render(
+      <ArchiveBackupsPanel onToast={onToast} onRestoreCandidate={vi.fn()} />
+    )
     await act(async () => {
       button(container, '打开数据目录').click()
     })
@@ -304,7 +341,9 @@ describe('SettingsDialog 组合引用', () => {
     expect(container.textContent).not.toContain('导出备份')
 
     const titles = Array.from(container.querySelectorAll('.apple-group-title'))
-    const dataTitle = titles.find((el) => (el.textContent ?? '').includes('数据安全')) as HTMLElement
+    const dataTitle = titles.find((el) =>
+      (el.textContent ?? '').includes('数据安全')
+    ) as HTMLElement
     expect(dataTitle).toBeDefined()
     await act(async () => {
       dataTitle.click()

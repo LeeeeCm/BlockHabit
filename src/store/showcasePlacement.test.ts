@@ -5,7 +5,7 @@ import {
   canPlaceModel,
   getModelFootprint,
   getRotatedFootprint,
-  SHOWCASE_GRID_SIZE,
+  SHOWCASE_GRID_SIZE
 } from '../logic/showcase'
 import type { ShowcasePlacement } from '../types'
 
@@ -31,7 +31,7 @@ function resetStore(placements: ShowcasePlacement[]) {
     settings: { theme: 'light', language: 'zh' },
     dayClaims: [],
     deletedDayClaims: [],
-    showcasePlacements: placements,
+    showcasePlacements: placements
   })
 }
 

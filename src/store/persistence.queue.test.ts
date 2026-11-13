@@ -18,7 +18,7 @@ describe('persistence save serialization', () => {
         return new Promise<void>((resolve) => {
           pending.push(resolve)
         })
-      },
+      }
     }
     await initPersistence(adapter)
     useAppStore.setState({ hydrated: true })

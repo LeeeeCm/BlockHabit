@@ -123,7 +123,9 @@ const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/
 const DAY_MS = 86_400_000
 
 function isValidDateKey(key: string | undefined | null): key is string {
-  return typeof key === 'string' && DATE_KEY_RE.test(key) && Number.isFinite(parseKey(key).getTime())
+  return (
+    typeof key === 'string' && DATE_KEY_RE.test(key) && Number.isFinite(parseKey(key).getTime())
+  )
 }
 
 /** 本地日期键 → 年份；非法键返回 null */
@@ -270,12 +272,13 @@ function buildBuildingEntries(state: YearbookState, year: number): BuildingEntry
       firstPlacedAt,
       days: firstPlacedAt ? calendarDaysBetween(firstPlacedAt, completedAt!) : null,
       blocks: blueprint.blocks.length,
-      foundationNote: note ? note : undefined,
+      foundationNote: note ? note : undefined
     })
   }
   entries.sort(
     (a, b) =>
-      (a.completedAt ?? '').localeCompare(b.completedAt ?? '') || a.blueprintId.localeCompare(b.blueprintId),
+      (a.completedAt ?? '').localeCompare(b.completedAt ?? '') ||
+      a.blueprintId.localeCompare(b.blueprintId)
   )
   return entries
 }
@@ -299,7 +302,7 @@ function pickQuote(checkIns: CheckIn[], habitById: Map<string, Habit>): Yearbook
     text: picked.note!.trim(),
     habitName: habitById.get(picked.habitId)?.name ?? '',
     date: picked.date,
-    starred: picked.starred === true,
+    starred: picked.starred === true
   }
 }
 
@@ -327,12 +330,14 @@ function buildTimeShape(checkIns: CheckIn[], habitById: Map<string, Habit>): Yea
         name: habit?.name ?? '',
         count,
         // 并列规则：打卡数降序 → 习惯创建时间升序 → id 升序（稳定、可复现）
-        createdAt: habit?.createdAt ?? '',
+        createdAt: habit?.createdAt ?? ''
       }
     })
     .sort(
       (a, b) =>
-        b.count - a.count || a.createdAt.localeCompare(b.createdAt) || a.habitId.localeCompare(b.habitId),
+        b.count - a.count ||
+        a.createdAt.localeCompare(b.createdAt) ||
+        a.habitId.localeCompare(b.habitId)
     )
     .slice(0, 3)
     .map(({ habitId, name, count }) => ({ habitId, name, count }))
@@ -340,7 +345,7 @@ function buildTimeShape(checkIns: CheckIn[], habitById: Map<string, Habit>): Yea
   return {
     peakHour: peakOf(hourCounts),
     peakWeekday: peakOf(weekdayCounts),
-    topHabits,
+    topHabits
   }
 }
 
@@ -405,7 +410,11 @@ function dayRatioWithIndex(habits: Habit[], index: CheckInIndex, day: string): n
   return met / active.length
 }
 /** 生成某年的年鉴模型（全部由 AppState 派生，空年份返回 hasData=false） */
-export function buildYearbook(state: YearbookState, year: number, now: Date = new Date()): YearbookModel {
+export function buildYearbook(
+  state: YearbookState,
+  year: number,
+  now: Date = new Date()
+): YearbookModel {
   const live = liveCheckIns(state)
   const inYear = live.filter((c) => yearOfKey(c.date) === year)
   const habitById = new Map(state.habits.map((h) => [h.id, h] as const))
@@ -417,7 +426,7 @@ export function buildYearbook(state: YearbookState, year: number, now: Date = ne
   const claimedSet = new Set(claimedDates)
 
   const blocksInYear = liveBuilds(state).filter(
-    (b) => yearOfKey(localDateKeyOfIso(b.placedAt)) === year,
+    (b) => yearOfKey(localDateKeyOfIso(b.placedAt)) === year
   ).length
 
   const buildings = buildBuildingEntries(state, year)
@@ -432,9 +441,9 @@ export function buildYearbook(state: YearbookState, year: number, now: Date = ne
       inYear.reduce((sum, c) => {
         const minutes = typeof c.actualMinutes === 'number' ? c.actualMinutes : 0
         return Number.isFinite(minutes) && minutes > 0 ? sum + minutes : sum
-      }, 0),
+      }, 0)
     ),
-    notes: inYear.filter((c) => !!c.note?.trim()).length,
+    notes: inYear.filter((c) => !!c.note?.trim()).length
   }
 
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
@@ -450,13 +459,13 @@ export function buildYearbook(state: YearbookState, year: number, now: Date = ne
         day,
         ratio: dayRatioWithIndex(state.habits, checkInIndex, key),
         future: parseKey(key).getTime() > todayStart,
-        claimed: claimedSet.has(key),
+        claimed: claimedSet.has(key)
       })
     }
     months.push({
       month,
       days,
-      checkIns: inYear.filter((c) => c.date.startsWith(prefix)).length,
+      checkIns: inYear.filter((c) => c.date.startsWith(prefix)).length
     })
   }
 
@@ -467,8 +476,7 @@ export function buildYearbook(state: YearbookState, year: number, now: Date = ne
     buildings,
     timeShape: buildTimeShape(inYear, habitById),
     quote: pickQuote(inYear, habitById),
-    hasData:
-      stats.checkIns > 0 || stats.blocks > 0 || stats.perfectDays > 0 || buildings.length > 0,
+    hasData: stats.checkIns > 0 || stats.blocks > 0 || stats.perfectDays > 0 || buildings.length > 0
   }
 }
 
@@ -508,22 +516,20 @@ export function yearbookSummaryText(model: YearbookModel, t: TranslationSchema):
     `${y.metrics.allClear} ${model.stats.perfectDays}`,
     `${y.metrics.longestStreak} ${y.streakDays(model.stats.longestStreak)}`,
     `${y.metrics.focusHours} ${y.focusHoursValue(focusHours(model))}`,
-    `${y.metrics.notes} ${model.stats.notes}`,
+    `${y.metrics.notes} ${model.stats.notes}`
   ]
 
   if (model.buildings.length > 0) {
     parts.push(
       `${y.sections.buildings} ${model.buildings
         .map((b) => `${blueprintLabel(t, b.blueprintId)} ${b.completedAt ?? ''}`)
-        .join(' · ')}`,
+        .join(' · ')}`
     )
   }
 
   const shape: string[] = []
   if (model.timeShape.peakWeekday !== null) {
-    shape.push(
-      `${y.busiestWeekday} ${weekdayLabel(t, model.timeShape.peakWeekday)}`,
-    )
+    shape.push(`${y.busiestWeekday} ${weekdayLabel(t, model.timeShape.peakWeekday)}`)
   }
   if (model.timeShape.peakHour !== null) {
     shape.push(`${y.busiestPeriod} ${formatPeakHour(model.timeShape.peakHour)}`)
@@ -532,14 +538,14 @@ export function yearbookSummaryText(model: YearbookModel, t: TranslationSchema):
     shape.push(
       `${y.topHabits} ${model.timeShape.topHabits
         .map((h) => `${habitLabel(t, h.name)} ${h.count}`)
-        .join(' · ')}`,
+        .join(' · ')}`
     )
   }
   if (shape.length > 0) parts.push(shape.join(' · '))
 
   if (model.quote) {
     parts.push(
-      `${y.sections.quote} “${model.quote.text}” ${y.quoteFrom(habitLabel(t, model.quote.habitName))} · ${model.quote.date}`,
+      `${y.sections.quote} “${model.quote.text}” ${y.quoteFrom(habitLabel(t, model.quote.habitName))} · ${model.quote.date}`
     )
   }
 
@@ -553,7 +559,7 @@ export function yearbookSummaryText(model: YearbookModel, t: TranslationSchema):
 export function yearbookMarkdown(
   model: YearbookModel,
   t: TranslationSchema,
-  today: string = dateKey(new Date()),
+  today: string = dateKey(new Date())
 ): string {
   const y = t.yearbook
   const lines: string[] = [`# ${y.markdownHeading(model.year)}`, '']
@@ -596,7 +602,7 @@ export function yearbookMarkdown(
     } else {
       model.timeShape.topHabits.forEach((habit, index) => {
         lines.push(
-          `- **${y.topHabits} ${index + 1}**: ${habitLabel(t, habit.name)} · ${habit.count}`,
+          `- **${y.topHabits} ${index + 1}**: ${habitLabel(t, habit.name)} · ${habit.count}`
         )
       })
     }
@@ -604,7 +610,12 @@ export function yearbookMarkdown(
 
     lines.push(`## ${y.sections.quote}`, '')
     if (model.quote) {
-      lines.push(`> “${model.quote.text}”`, `>`, `> ${y.quoteFrom(habitLabel(t, model.quote.habitName))} · ${model.quote.date}`, '')
+      lines.push(
+        `> “${model.quote.text}”`,
+        `>`,
+        `> ${y.quoteFrom(habitLabel(t, model.quote.habitName))} · ${model.quote.date}`,
+        ''
+      )
     } else {
       lines.push(`- ${y.noData}`, '')
     }
@@ -612,7 +623,7 @@ export function yearbookMarkdown(
 
   lines.push('---', '')
   lines.push(
-    `*${t.stats.exportTitle} · ${t.stats.exportDate}: ${today} · ${y.coverTitle} · ${y.yearTitle(model.year)}*`,
+    `*${t.stats.exportTitle} · ${t.stats.exportDate}: ${today} · ${y.coverTitle} · ${y.yearTitle(model.year)}*`
   )
   return lines.join('\n')
 }

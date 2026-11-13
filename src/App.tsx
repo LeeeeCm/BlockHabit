@@ -1,9 +1,21 @@
 import { clearCubeSpriteCache } from './render/isoCube'
 import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react'
 import { useTransient } from './platform/useTransient'
-import { currentMonitor, getCurrentWindow, LogicalPosition, LogicalSize, primaryMonitor } from '@tauri-apps/api/window'
+import {
+  currentMonitor,
+  getCurrentWindow,
+  LogicalPosition,
+  LogicalSize,
+  primaryMonitor
+} from '@tauri-apps/api/window'
 import { listen } from '@tauri-apps/api/event'
-import { initPersistence, useAppStore, forceFlush, persistenceReady, isDemoMode } from './store/appStore'
+import {
+  initPersistence,
+  useAppStore,
+  forceFlush,
+  persistenceReady,
+  isDemoMode
+} from './store/appStore'
 import { cacheAppearance } from './platform/appearance'
 import { pickAdapter } from './storage'
 import { setSoundMuted, setVolume } from './audio/sound'
@@ -13,7 +25,7 @@ import {
   planFocusNotifications,
   trayPhaseFor,
   trayStatusFor,
-  type TrayFocusPhase,
+  type TrayFocusPhase
 } from './logic/focusSession'
 import { useReminderStore } from './store/reminderStore'
 import { getBlueprintName, useI18n } from './i18n'
@@ -26,7 +38,7 @@ import Stats from './pages/Stats'
 // （见 .tmp-perf/report.md §5）；改为静态 import，换取切页即时。只有迷你摆件仍懒加载
 // （它只在迷你模式出现，且静态依赖 BuildScene）。
 const MiniDeskToy = lazy(() =>
-  import('./components/MiniDeskToy').then((m) => ({ default: m.MiniDeskToy })),
+  import('./components/MiniDeskToy').then((m) => ({ default: m.MiniDeskToy }))
 )
 import { SettingsDialog } from './components/SettingsDialog'
 import { ReminderWatcher } from './components/ReminderWatcher'
@@ -42,7 +54,7 @@ import {
   IconWinClose,
   IconWinMax,
   IconWinMin,
-  IconWinRestore,
+  IconWinRestore
 } from './components/Icons'
 import logoUrl from './assets/logo-mark.svg'
 import { usePlatform } from './platform'
@@ -56,13 +68,12 @@ import {
   defaultMiniPosition,
   loadWindowLayout,
   saveWindowLayout,
-  type MiniSize,
+  type MiniSize
 } from './platform/miniWindow'
 
 type Tab = MobileTab
 
-const inTauri =
-  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 /**
  * 专注相位（摆件 / 托盘共用）：只有存在会话时才按 1s 心跳；
@@ -127,8 +138,26 @@ function TimerWatcher() {
 
   if (!toast) return null
   return (
-    <div className="toast" style={{ bottom: 150, maxWidth: '80vw', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-      <span className="accent" style={{ color: 'var(--progress-green)', display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', marginRight: 5 }}>
+    <div
+      className="toast"
+      style={{
+        bottom: 150,
+        maxWidth: '80vw',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }}
+    >
+      <span
+        className="accent"
+        style={{
+          color: 'var(--progress-green)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          verticalAlign: 'middle',
+          marginRight: 5
+        }}
+      >
         <IconCheck size={14} />
       </span>
       {toast}
@@ -170,13 +199,24 @@ function TraySync() {
     // 专注相位后缀由纯函数拼接（ready 优先于 focusing），便于单测覆盖最终 tooltip 字符串
     status = trayStatusFor(status, focusPhase, {
       focusing: t.focusCompanion.focusing,
-      ready: t.focusCompanion.ready,
+      ready: t.focusCompanion.ready
     })
     void (async () => {
       const { invoke } = await import('@tauri-apps/api/core')
       await invoke('update_tray', { status })
     })()
-  }, [habits, checkIns, dayClaims, builds, activeBlueprintId, lang, t, day, pendingReminders, focusPhase])
+  }, [
+    habits,
+    checkIns,
+    dayClaims,
+    builds,
+    activeBlueprintId,
+    lang,
+    t,
+    day,
+    pendingReminders,
+    focusPhase
+  ])
 
   return null
 }
@@ -185,7 +225,7 @@ function TraySync() {
 function TitleBar({
   onSettings,
   onToggleMini,
-  onRequestClose,
+  onRequestClose
 }: {
   onSettings: () => void
   onToggleMini: () => void
@@ -240,7 +280,9 @@ function TitleBar({
     <header className="titlebar" data-tauri-drag-region>
       <div className="brand" data-tauri-drag-region>
         <img src={logoUrl} alt="" width={24} height={24} data-tauri-drag-region />
-        <span data-tauri-drag-region style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 700 }}>BlockHabit</span>
+        <span data-tauri-drag-region style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 700 }}>
+          BlockHabit
+        </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         <button className="icon-btn" title={t.titlebar.miniMode} onClick={onToggleMini}>
@@ -251,7 +293,11 @@ function TitleBar({
         </button>
         {inTauri && (
           <>
-            <button className="win-btn" title={t.titlebar.minimize} onClick={() => void winAction('min')}>
+            <button
+              className="win-btn"
+              title={t.titlebar.minimize}
+              onClick={() => void winAction('min')}
+            >
               <IconWinMin size={16} />
             </button>
             <button
@@ -261,7 +307,11 @@ function TitleBar({
             >
               {maximized ? <IconWinRestore size={16} /> : <IconWinMax size={16} />}
             </button>
-            <button className="win-btn close" title={t.titlebar.close} onClick={() => void winAction('close')}>
+            <button
+              className="win-btn close"
+              title={t.titlebar.close}
+              onClick={() => void winAction('close')}
+            >
               <IconWinClose size={16} />
             </button>
           </>
@@ -274,7 +324,8 @@ function TitleBar({
 export default function App() {
   const { t } = useI18n()
   const [tab, setTab] = useState<Tab>(() => {
-    const tParam = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('tab') : null
+    const tParam =
+      typeof location !== 'undefined' ? new URLSearchParams(location.search).get('tab') : null
     return tParam === 'build' || tParam === 'showcase' || tParam === 'stats' ? tParam : 'today'
   })
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -297,8 +348,7 @@ export default function App() {
   const day = useTodayKey()
   const activeHabits = habits.filter((h) => !h.archivedAt)
   const hasUnfinishedToday =
-    activeHabits.length > 0 &&
-    activeHabits.some((h) => !habitMetOnDay(h, checkIns, day))
+    activeHabits.length > 0 && activeHabits.some((h) => !habitMetOnDay(h, checkIns, day))
 
   const bp = getBlueprint(activeBlueprintId)
   const placedCount = builds.filter((b) => b.blueprintId === activeBlueprintId).length
@@ -315,7 +365,9 @@ export default function App() {
     const wasMini = miniModeRef.current
     setMiniMode(enable)
     if (!inTauri) {
-      updateSettings(enable ? { enableMiniWidget: true, miniWidgetSize: size } : { enableMiniWidget: false })
+      updateSettings(
+        enable ? { enableMiniWidget: true, miniWidgetSize: size } : { enableMiniWidget: false }
+      )
       return
     }
     const win = getCurrentWindow()
@@ -331,14 +383,15 @@ export default function App() {
           main: {
             w: Math.round(outer.width / f),
             h: Math.round(outer.height / f),
-            ...(pos ? { x: Math.round(pos.x / f), y: Math.round(pos.y / f) } : {}),
-          },
+            ...(pos ? { x: Math.round(pos.x / f), y: Math.round(pos.y / f) } : {})
+          }
         })
       }
       // 显式最小尺寸契约：先 setMinSize 再 setSize，不依赖 tauri.conf 的 900×600 隐式行为
       await win.setMinSize(new LogicalSize(preset.w, preset.h)).catch(() => {})
       await win.setSize(new LogicalSize(preset.w, preset.h))
-      const monitor = (await currentMonitor().catch(() => null)) ?? (await primaryMonitor().catch(() => null))
+      const monitor =
+        (await currentMonitor().catch(() => null)) ?? (await primaryMonitor().catch(() => null))
       let point = loadWindowLayout().mini ?? null
       if (monitor) {
         const f = monitor.scaleFactor || 1
@@ -346,7 +399,7 @@ export default function App() {
           x: monitor.workArea.position.x / f,
           y: monitor.workArea.position.y / f,
           width: monitor.workArea.size.width / f,
-          height: monitor.workArea.size.height / f,
+          height: monitor.workArea.size.height / f
         }
         point = clampMiniPosition(point ?? defaultMiniPosition(area, preset), area, preset)
         await win.setPosition(new LogicalPosition(point.x, point.y)).catch(() => {})
@@ -378,7 +431,10 @@ export default function App() {
   function toggleMiniPin() {
     const next = !useAppStore.getState().settings.miniWidgetAlwaysOnTop
     updateSettings({ miniWidgetAlwaysOnTop: next })
-    if (inTauri && miniModeRef.current) void getCurrentWindow().setAlwaysOnTop(next).catch(() => {})
+    if (inTauri && miniModeRef.current)
+      void getCurrentWindow()
+        .setAlwaysOnTop(next)
+        .catch(() => {})
   }
 
   // 摆件使用中改尺寸：即时应用到当前窗口（不经过进入/退出流程）
@@ -395,7 +451,9 @@ export default function App() {
   // 摆件使用中切换置顶：即时应用
   useEffect(() => {
     if (!inTauri || !miniModeRef.current) return
-    void getCurrentWindow().setAlwaysOnTop(miniWidgetAlwaysOnTop).catch(() => {})
+    void getCurrentWindow()
+      .setAlwaysOnTop(miniWidgetAlwaysOnTop)
+      .catch(() => {})
   }, [miniWidgetAlwaysOnTop])
 
   // 摆件拖动后持久化位置（独立验证 P2-2）：节流 400ms，只存设备本地
@@ -411,7 +469,7 @@ export default function App() {
       const layout = loadWindowLayout()
       saveWindowLayout({
         ...layout,
-        mini: { x: Math.round(pos.x / f), y: Math.round(pos.y / f) },
+        mini: { x: Math.round(pos.x / f), y: Math.round(pos.y / f) }
       })
     }
     const schedule = () => {
@@ -547,7 +605,8 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null
       const tag = target?.tagName?.toLowerCase()
-      if (tag === 'input' || tag === 'textarea' || tag === 'select' || target?.isContentEditable) return
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || target?.isContentEditable)
+        return
       // 弹窗打开时不响应数字键切页
       if (document.querySelector('[role="dialog"][aria-modal="true"]')) return
       if (e.key === '1') setTab('today')
@@ -563,7 +622,7 @@ export default function App() {
     ['today', t.nav.today, IconToday],
     ['build', t.nav.build, IconBuild],
     ['showcase', t.nav.showcase, IconShowcase],
-    ['stats', t.nav.stats, IconStats],
+    ['stats', t.nav.stats, IconStats]
   ]
   // 水合门（D-20261110-056）：读档完成前不渲染空态，避免「空态一闪 → 真实习惯」的闪变
   if (!ready) {
@@ -582,7 +641,7 @@ export default function App() {
           background: 'var(--bg)',
           display: inTauri ? 'block' : 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'center'
         }}
       >
         <div
@@ -628,12 +687,18 @@ export default function App() {
             WebkitBackdropFilter: 'blur(20px)',
             borderBottom: '1px solid var(--line)',
             flexShrink: 0,
-            zIndex: 80,
+            zIndex: 80
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img src={logoUrl} alt="BlockHabit" width={24} height={24} />
-            <span style={{ fontSize: 'var(--fs-title)', fontWeight: 700, fontFamily: "'Rubik', sans-serif" }}>
+            <span
+              style={{
+                fontSize: 'var(--fs-title)',
+                fontWeight: 700,
+                fontFamily: "'Rubik', sans-serif"
+              }}
+            >
               {tabs.find(([id]) => id === tab)?.[1] ?? 'BlockHabit'}
             </span>
           </div>
@@ -642,7 +707,13 @@ export default function App() {
             title={t.titlebar.settings}
             aria-label={t.titlebar.settings}
             onClick={() => setSettingsOpen(true)}
-            style={{ width: 44, height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              width: 44,
+              height: 44,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
             <IconSettings size={20} />
           </button>
@@ -701,7 +772,9 @@ export default function App() {
         </div>
       )}
       {saveErrorVisible && (
-        <div className="toast" style={{ zIndex: 2000 }}>{t.settings.saveFailedToast}</div>
+        <div className="toast" style={{ zIndex: 2000 }}>
+          {t.settings.saveFailedToast}
+        </div>
       )}
       {loadFailed && (
         <div className="toast" style={{ zIndex: 2000, whiteSpace: 'normal', maxWidth: '80vw' }}>

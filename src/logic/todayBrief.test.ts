@@ -6,21 +6,33 @@ import type { CheckIn, Habit } from '../types'
 const DAY = '2026-11-10'
 
 function habit(id: string, over: Partial<Habit> = {}): Habit {
-  return { id, name: id, frequency: { type: 'daily' }, createdAt: '2026-01-01T00:00:00.000Z', ...over }
+  return {
+    id,
+    name: id,
+    frequency: { type: 'daily' },
+    createdAt: '2026-01-01T00:00:00.000Z',
+    ...over
+  }
 }
 
 function checkIn(habitId: string, date = DAY): CheckIn {
   return { id: `c-${habitId}-${date}`, habitId, date, at: `${date}T08:00:00.000Z` }
 }
 
-function brief(habits: Habit[], checkIns: CheckIn[] = [], placed = 0, hour = 9, activeBlueprintId = 'plant') {
+function brief(
+  habits: Habit[],
+  checkIns: CheckIn[] = [],
+  placed = 0,
+  hour = 9,
+  activeBlueprintId = 'plant'
+) {
   return buildTodayBrief({
     now: new Date(2026, 10, 10, hour, 0, 0),
     day: DAY,
     habits,
     checkIns,
     builds: Array.from({ length: placed }, () => ({ blueprintId: activeBlueprintId })),
-    activeBlueprintId,
+    activeBlueprintId
   })
 }
 
@@ -52,7 +64,7 @@ describe('buildTodayBrief', () => {
     const habits = [
       habit('evening-pinned', { period: 'evening', pinned: true }),
       habit('any-first', { period: 'any' }),
-      habit('any-done', { period: 'any' }),
+      habit('any-done', { period: 'any' })
     ]
     const state = brief(habits, [checkIn('any-done')])
     expect(state.show).toBe(true)
@@ -91,7 +103,7 @@ describe('buildTodayBrief', () => {
       checkIns: [],
       builds: [],
       activeBlueprintId: 'plant',
-      targetHabits: [habits[1]],
+      targetHabits: [habits[1]]
     })
     // 计数仍是全量，但「开始第一个」只指向当前筛选下可见的那件
     expect(state.total).toBe(2)
@@ -108,7 +120,7 @@ describe('buildTodayBrief', () => {
       checkIns: [],
       builds: Array.from({ length: full }, () => ({ blueprintId: 'castle' })),
       activeBlueprintId: 'castle',
-      completedBlueprintIds: completed,
+      completedBlueprintIds: completed
     })
     expect(state.nextBlueprintId).not.toBe(blueprintOrder[1])
     expect(state.nextBlueprintId).not.toBe(blueprintOrder[2])
@@ -120,7 +132,7 @@ describe('buildTodayBrief', () => {
       checkIns: [],
       builds: Array.from({ length: full }, () => ({ blueprintId: 'castle' })),
       activeBlueprintId: 'castle',
-      completedBlueprintIds: [...blueprintOrder],
+      completedBlueprintIds: [...blueprintOrder]
     })
     expect(allDone.nextBlueprintId).toBeUndefined()
   })

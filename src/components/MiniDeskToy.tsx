@@ -9,7 +9,7 @@ import {
   formatRemaining,
   normalizeExtensions,
   viewFocusSessions,
-  type FocusView,
+  type FocusView
 } from '../logic/focusSession'
 import { MINI_PRESETS, type MiniSize } from '../platform/miniWindow'
 import { useTodayKey } from '../logic/useTodayKey'
@@ -48,9 +48,19 @@ function FocusRing({ progress, size, label }: { progress: number; size: number; 
   const circumference = 2 * Math.PI * radius
   const ratio = Math.max(0, Math.min(1, progress))
   return (
-    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }} aria-hidden="true">
+    <div
+      style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}
+      aria-hidden="true"
+    >
       <svg width={size} height={size} viewBox={'0 0 ' + size + ' ' + size}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--line)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="var(--line)"
+          strokeWidth={stroke}
+        />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -75,7 +85,7 @@ function FocusRing({ progress, size, label }: { progress: number; size: number; 
           fontSize: size >= 64 ? 'var(--fs-small)' : 'var(--fs-caption)',
           fontWeight: 700,
           fontVariantNumeric: 'tabular-nums',
-          color: 'var(--ink)',
+          color: 'var(--ink)'
         }}
       >
         {label}
@@ -124,7 +134,9 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
   const focusSessionsView = viewFocusSessions(sessions, focusNow)
   const focusHabitId = focusSessionsView.primaryId
   const focusSession = focusHabitId ? sessions[focusHabitId] : null
-  const focusHabit = focusHabitId ? habits.find((h) => h.id === focusHabitId && !h.archivedAt) : undefined
+  const focusHabit = focusHabitId
+    ? habits.find((h) => h.id === focusHabitId && !h.archivedAt)
+    : undefined
   const focusView: FocusView | null = focusSessionsView.ordered[0]?.view ?? null
   const focusActive = Boolean(focusHabit && focusView && focusView.phase !== 'expired')
   const canExtend = focusSession ? normalizeExtensions(focusSession) < MAX_EXTENSIONS : false
@@ -181,7 +193,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
       res.complete
         ? t.mini.toastComplete(getBlueprintName(blueprint.id, lang))
         : t.mini.toastQuickCheckIn(habitName),
-      1800,
+      1800
     )
   }
 
@@ -205,7 +217,12 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
 
   const controlSize = 32
   const iconBtnStyle = { width: controlSize, height: controlSize, borderRadius: 7, flexShrink: 0 }
-  const stageStyle = { flex: 1, position: 'relative' as const, minHeight: 0, background: 'var(--surface)' }
+  const stageStyle = {
+    flex: 1,
+    position: 'relative' as const,
+    minHeight: 0,
+    background: 'var(--surface)'
+  }
 
   /** 专注面板：口袋档纵向铺满内容区；标准/展台档占底部固定高度（三档都不裁切） */
   function renderFocusPanel() {
@@ -228,10 +245,18 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
             flexDirection: 'column',
             justifyContent: 'center',
             gap: 4,
-            padding: '6px 8px',
+            padding: '6px 8px'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, minWidth: 0 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 6,
+              minWidth: 0
+            }}
+          >
             <span
               style={{
                 fontSize: 'var(--fs-caption)',
@@ -240,7 +265,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                 minWidth: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'nowrap'
               }}
             >
               {focusHabit.name}
@@ -254,7 +279,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                   flexShrink: 0,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {t.focusCompanion.moreSessions(otherFocusCount)}
@@ -265,7 +290,12 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                 className="btn ghost"
                 onClick={() => setGiveUpPending(true)}
                 title={t.focusCompanion.giveUp}
-                style={{ flexShrink: 0, padding: '2px 6px', minHeight: 24, fontSize: 'var(--fs-caption)' }}
+                style={{
+                  flexShrink: 0,
+                  padding: '2px 6px',
+                  minHeight: 24,
+                  fontSize: 'var(--fs-caption)'
+                }}
               >
                 {t.focusCompanion.giveUp}
               </button>
@@ -274,21 +304,33 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
 
           {giveUpPending ? (
             <>
-              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--danger)', lineHeight: 1.35 }}>
+              <div
+                style={{ fontSize: 'var(--fs-caption)', color: 'var(--danger)', lineHeight: 1.35 }}
+              >
                 {t.focusCompanion.giveUpConfirm}
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button
                   className="btn ghost"
                   onClick={() => setGiveUpPending(false)}
-                  style={{ flex: 1, minHeight: 30, padding: '2px 6px', fontSize: 'var(--fs-caption)' }}
+                  style={{
+                    flex: 1,
+                    minHeight: 30,
+                    padding: '2px 6px',
+                    fontSize: 'var(--fs-caption)'
+                  }}
                 >
                   {t.common.cancel}
                 </button>
                 <button
                   className="btn primary"
                   onClick={abandonFocus}
-                  style={{ flex: 1, minHeight: 30, padding: '2px 6px', fontSize: 'var(--fs-caption)' }}
+                  style={{
+                    flex: 1,
+                    minHeight: 30,
+                    padding: '2px 6px',
+                    fontSize: 'var(--fs-caption)'
+                  }}
                 >
                   {t.focusCompanion.giveUp}
                 </button>
@@ -303,32 +345,46 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                   lineHeight: 1.05,
                   fontFamily: "'Rubik', sans-serif",
                   fontVariantNumeric: 'tabular-nums',
-                  color: 'var(--ink)',
+                  color: 'var(--ink)'
                 }}
               >
                 {remainingText}
               </div>
-              <div style={{ height: 3, background: 'var(--line)', borderRadius: 999, overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: 3,
+                  background: 'var(--line)',
+                  borderRadius: 999,
+                  overflow: 'hidden'
+                }}
+              >
                 <div
                   style={{
                     width: Math.round(focusView.progress * 100) + '%',
                     height: '100%',
                     background: 'var(--ink)',
                     borderRadius: 999,
-                    transition: 'width var(--dur-lg) var(--ease-default)',
+                    transition: 'width var(--dur-lg) var(--ease-default)'
                   }}
                 />
               </div>
             </>
           ) : (
             <>
-              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', lineHeight: 1.35 }}>
+              <div
+                style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', lineHeight: 1.35 }}
+              >
                 {t.focusCompanion.ready}
               </div>
               <button
                 className="btn primary"
                 onClick={confirmFocusCheckIn}
-                style={{ minHeight: 30, padding: '2px 8px', fontSize: 'var(--fs-caption)', flexShrink: 0 }}
+                style={{
+                  minHeight: 30,
+                  padding: '2px 8px',
+                  fontSize: 'var(--fs-caption)',
+                  flexShrink: 0
+                }}
               >
                 {t.focusCompanion.confirmCheckIn}
               </button>
@@ -337,7 +393,13 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                   <button
                     className="btn ghost"
                     onClick={extendFocus}
-                    style={{ flex: 1, minWidth: 0, minHeight: 26, padding: '2px 6px', fontSize: 'var(--fs-caption)' }}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      minHeight: 26,
+                      padding: '2px 6px',
+                      fontSize: 'var(--fs-caption)'
+                    }}
                   >
                     {t.focusCompanion.extendFive}
                   </button>
@@ -345,7 +407,13 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                 <button
                   className="btn ghost"
                   onClick={() => setGiveUpPending(true)}
-                  style={{ flex: 1, minWidth: 0, minHeight: 26, padding: '2px 6px', fontSize: 'var(--fs-caption)' }}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    minHeight: 26,
+                    padding: '2px 6px',
+                    fontSize: 'var(--fs-caption)'
+                  }}
                 >
                   {t.focusCompanion.giveUp}
                 </button>
@@ -360,7 +428,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                 color: 'var(--ink-2)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'nowrap'
               }}
             >
               {t.focusCompanion.moreSessions(otherFocusCount)}
@@ -381,11 +449,15 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
           flexDirection: 'column',
           justifyContent: 'center',
           gap: 6,
-          padding: compact ? '5px 8px 7px' : '8px 12px 10px',
+          padding: compact ? '5px 8px 7px' : '8px 12px 10px'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 0 }}>
-          <FocusRing progress={focusing ? focusView.progress : 1} size={ringSize} label={ringLabel} />
+          <FocusRing
+            progress={focusing ? focusView.progress : 1}
+            size={ringSize}
+            label={ringLabel}
+          />
           <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <span
               style={{
@@ -394,7 +466,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                 color: 'var(--ink)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'nowrap'
               }}
             >
               {focusHabit.name}
@@ -405,7 +477,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                 color: 'var(--ink-2)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'nowrap'
               }}
             >
               {focusing ? t.focusCompanion.focusing : t.focusCompanion.ready}
@@ -417,7 +489,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                   color: 'var(--ink-2)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {t.focusCompanion.moreSessions(otherFocusCount)}
@@ -433,7 +505,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                   overflow: 'hidden',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
+                  WebkitBoxOrient: 'vertical'
                 }}
               >
                 {t.focusCompanion.persistedHint}
@@ -454,7 +526,9 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
         </div>
 
         {giveUpPending ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, minHeight: 44 }}>
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, minHeight: 44 }}
+          >
             <span
               style={{
                 flex: 1,
@@ -465,7 +539,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                 overflow: 'hidden',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
+                WebkitBoxOrient: 'vertical'
               }}
             >
               {t.focusCompanion.giveUpConfirm}
@@ -473,27 +547,45 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
             <button
               className="btn ghost"
               onClick={() => setGiveUpPending(false)}
-              style={{ flexShrink: 0, minHeight: 32, padding: '2px 10px', fontSize: 'var(--fs-caption)' }}
+              style={{
+                flexShrink: 0,
+                minHeight: 32,
+                padding: '2px 10px',
+                fontSize: 'var(--fs-caption)'
+              }}
             >
               {t.common.cancel}
             </button>
             <button
               className="btn primary"
               onClick={abandonFocus}
-              style={{ flexShrink: 0, minHeight: 32, padding: '2px 10px', fontSize: 'var(--fs-caption)' }}
+              style={{
+                flexShrink: 0,
+                minHeight: 32,
+                padding: '2px 10px',
+                fontSize: 'var(--fs-caption)'
+              }}
             >
               {t.focusCompanion.giveUp}
             </button>
           </div>
         ) : focusing ? (
-          <div style={{ height: 3, background: 'var(--line)', borderRadius: 999, overflow: 'hidden', flexShrink: 0 }}>
+          <div
+            style={{
+              height: 3,
+              background: 'var(--line)',
+              borderRadius: 999,
+              overflow: 'hidden',
+              flexShrink: 0
+            }}
+          >
             <div
               style={{
                 width: Math.round(focusView.progress * 100) + '%',
                 height: '100%',
                 background: 'var(--ink)',
                 borderRadius: 999,
-                transition: 'width var(--dur-lg) var(--ease-default)',
+                transition: 'width var(--dur-lg) var(--ease-default)'
               }}
             />
           </div>
@@ -502,7 +594,13 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
             <button
               className="btn primary"
               onClick={confirmFocusCheckIn}
-              style={{ flex: 1, minWidth: 0, minHeight: 32, padding: '2px 10px', fontSize: 'var(--fs-caption)' }}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                minHeight: 32,
+                padding: '2px 10px',
+                fontSize: 'var(--fs-caption)'
+              }}
             >
               {t.focusCompanion.confirmCheckIn}
             </button>
@@ -510,7 +608,13 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
               <button
                 className="btn ghost"
                 onClick={extendFocus}
-                style={{ flex: 1, minWidth: 0, minHeight: 32, padding: '2px 8px', fontSize: 'var(--fs-caption)' }}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  minHeight: 32,
+                  padding: '2px 8px',
+                  fontSize: 'var(--fs-caption)'
+                }}
               >
                 {t.focusCompanion.extendFive}
               </button>
@@ -536,7 +640,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
         borderRadius: 'var(--r-md)',
         overflow: 'hidden',
         userSelect: 'none',
-        boxShadow: '0 12px 36px rgba(0,0,0,0.18)',
+        boxShadow: '0 12px 36px rgba(0,0,0,0.18)'
       }}
     >
       {/* 顶部轻量拖拽栏（双击展开主窗） */}
@@ -554,10 +658,13 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
           flexShrink: 0,
           borderBottom: '1px solid var(--line)',
           background: 'var(--bg)',
-          cursor: 'move',
+          cursor: 'move'
         }}
       >
-        <div data-tauri-drag-region style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+        <div
+          data-tauri-drag-region
+          style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}
+        >
           <img src={logoUrl} alt="" width={compact ? 12 : 14} height={compact ? 12 : 14} />
           <span
             data-tauri-drag-region
@@ -568,7 +675,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
               color: 'var(--ink)',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              whiteSpace: 'nowrap'
             }}
           >
             BlockHabit
@@ -585,10 +692,20 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
           >
             <IconPin size={compact ? 12 : 14} pinned={pinned} />
           </button>
-          <button className="icon-btn" onClick={onExpand} title={t.mini.expandTooltip} style={iconBtnStyle}>
+          <button
+            className="icon-btn"
+            onClick={onExpand}
+            title={t.mini.expandTooltip}
+            style={iconBtnStyle}
+          >
             <IconExpand size={compact ? 12 : 14} />
           </button>
-          <button className="icon-btn" onClick={onClose} title={t.mini.closeTooltip} style={iconBtnStyle}>
+          <button
+            className="icon-btn"
+            onClick={onClose}
+            title={t.mini.closeTooltip}
+            style={iconBtnStyle}
+          >
             <IconWinClose size={compact ? 12 : 14} />
           </button>
         </div>
@@ -600,7 +717,11 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
         ) : (
           <>
             <div style={stageStyle}>
-              <BuildScene blueprint={blueprint} placedCount={placedCount} animateIndex={justPlacedIndex} />
+              <BuildScene
+                blueprint={blueprint}
+                placedCount={placedCount}
+                animateIndex={justPlacedIndex}
+              />
             </div>
             <div
               style={{
@@ -608,7 +729,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                 flexShrink: 0,
                 borderTop: '1px solid var(--line)',
                 background: 'var(--bg)',
-                overflow: 'hidden',
+                overflow: 'hidden'
               }}
             >
               {renderFocusPanel()}
@@ -619,7 +740,11 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
         <>
           {/* 3D 迷你积木展示区 */}
           <div style={stageStyle}>
-            <BuildScene blueprint={blueprint} placedCount={placedCount} animateIndex={justPlacedIndex} />
+            <BuildScene
+              blueprint={blueprint}
+              placedCount={placedCount}
+              animateIndex={justPlacedIndex}
+            />
           </div>
 
           {/* 底部：按尺寸档切换信息密度 */}
@@ -628,7 +753,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
               padding: compact ? '5px 8px 7px' : '8px 12px 10px',
               borderTop: '1px solid var(--line)',
               background: 'var(--bg)',
-              flexShrink: 0,
+              flexShrink: 0
             }}
           >
             <div
@@ -638,36 +763,71 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                 alignItems: 'center',
                 gap: 6,
                 fontSize: 'var(--fs-caption)',
-                marginBottom: 4,
+                marginBottom: 4
               }}
             >
               {!compact && (
-                <span style={{ fontWeight: 600, color: 'var(--ink)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span
+                  style={{
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
                   {getBlueprintName(blueprint.id, lang)}
                 </span>
               )}
-              <span style={{ color: 'var(--ink-2)', flexShrink: 0, marginLeft: compact ? 'auto' : 0 }}>
+              <span
+                style={{ color: 'var(--ink-2)', flexShrink: 0, marginLeft: compact ? 'auto' : 0 }}
+              >
                 {preset.showProgressText
                   ? placedCount + '/' + total + ' (' + percent + '%)'
                   : t.mini.nextMilestone(getBlueprintName(blueprint.id, lang), remaining)}
               </span>
             </div>
 
-            <div style={{ height: 3, background: 'var(--line)', borderRadius: 999, overflow: 'hidden', marginBottom: compact ? 5 : 8 }}>
+            <div
+              style={{
+                height: 3,
+                background: 'var(--line)',
+                borderRadius: 999,
+                overflow: 'hidden',
+                marginBottom: compact ? 5 : 8
+              }}
+            >
               <div
                 style={{
                   width: percent + '%',
                   height: '100%',
                   background: placedCount >= total ? 'var(--progress-green)' : 'var(--ink)',
                   borderRadius: 999,
-                  transition: 'width var(--dur-lg) var(--ease-default)',
+                  transition: 'width var(--dur-lg) var(--ease-default)'
                 }}
               />
             </div>
 
             {preset.showTodayList ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 96, overflowY: 'auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginBottom: 2 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                  maxHeight: 96,
+                  overflowY: 'auto'
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: 'var(--fs-caption)',
+                    color: 'var(--ink-2)',
+                    marginBottom: 2
+                  }}
+                >
                   <span>{t.mini.todayLabel}</span>
                   <span>
                     {doneCount}/{activeHabits.length}
@@ -690,15 +850,35 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                         background: 'transparent',
                         color: 'var(--ink)',
                         fontSize: 'var(--fs-caption)',
-                        textAlign: 'left',
+                        textAlign: 'left'
                       }}
                     >
-                      <IconCheck size={12} style={{ color: 'var(--ink-3, var(--ink-2))', flexShrink: 0 }} />
-                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.name}</span>
+                      <IconCheck
+                        size={12}
+                        style={{ color: 'var(--ink-3, var(--ink-2))', flexShrink: 0 }}
+                      />
+                      <span
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {h.name}
+                      </span>
                     </button>
                   ))
                 ) : (
-                  <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--progress-green)', fontWeight: 600, padding: '2px 0' }}>
+                  <div
+                    style={{
+                      fontSize: 'var(--fs-caption)',
+                      color: 'var(--progress-green)',
+                      fontWeight: 600,
+                      padding: '2px 0'
+                    }}
+                  >
                     {t.mini.allDone}
                   </div>
                 )}
@@ -714,7 +894,7 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                         fontSize: 'var(--fs-caption)',
                         padding: '4px 10px',
                         minHeight: 32,
-                        background: 'color-mix(in srgb, var(--ink) 8%, transparent)',
+                        background: 'color-mix(in srgb, var(--ink) 8%, transparent)'
                       }}
                       onClick={() => handleQuickCheckIn(h.id, h.name)}
                       title={t.mini.habitCheckInTip(h.name)}
@@ -723,7 +903,14 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
                     </button>
                   ))
                 ) : (
-                  <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--progress-green)', fontWeight: 600, padding: '2px 0' }}>
+                  <div
+                    style={{
+                      fontSize: 'var(--fs-caption)',
+                      color: 'var(--progress-green)',
+                      fontWeight: 600,
+                      padding: '2px 0'
+                    }}
+                  >
                     {t.mini.allDone}
                   </div>
                 )}
@@ -734,7 +921,15 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
       )}
 
       {toast && (
-        <div className="toast" style={{ bottom: compact ? 8 : 44, fontSize: 'var(--fs-small)', padding: '5px 12px', whiteSpace: 'nowrap' }}>
+        <div
+          className="toast"
+          style={{
+            bottom: compact ? 8 : 44,
+            fontSize: 'var(--fs-small)',
+            padding: '5px 12px',
+            whiteSpace: 'nowrap'
+          }}
+        >
           {toast}
         </div>
       )}

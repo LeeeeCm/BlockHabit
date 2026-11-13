@@ -33,7 +33,9 @@
   display: flex;
   flex-direction: column;
   animation: drop-modal-in var(--dur-md) var(--ease-bounce);
-  transition: transform var(--dur-md) var(--ease-bounce), opacity var(--dur-md) var(--ease-default);
+  transition:
+    transform var(--dur-md) var(--ease-bounce),
+    opacity var(--dur-md) var(--ease-default);
   transform: scale(1);
   opacity: 1;
 }
@@ -118,7 +120,9 @@
   background: var(--ink);
   border-radius: var(--r-pill);
   will-change: width;
-  transition: width var(--dur-lg) var(--ease-bounce), background var(--dur-lg) var(--ease-default);
+  transition:
+    width var(--dur-lg) var(--ease-bounce),
+    background var(--dur-lg) var(--ease-default);
 }
 
 .counter-fill.done {
@@ -137,7 +141,9 @@
   outline: none;
   box-sizing: border-box;
   margin-top: 6px;
-  transition: border-color var(--dur-xs) var(--ease-default), background var(--dur-xs) var(--ease-default);
+  transition:
+    border-color var(--dur-xs) var(--ease-default),
+    background var(--dur-xs) var(--ease-default);
 }
 
 .micro-note-input:focus {
@@ -153,7 +159,10 @@
   flex-direction: column;
   gap: 10px;
   overflow: hidden;
-  transition: max-height var(--dur-lg) var(--ease-bounce), opacity var(--dur-md) var(--ease-default), padding var(--dur-lg) var(--ease-default);
+  transition:
+    max-height var(--dur-lg) var(--ease-bounce),
+    opacity var(--dur-md) var(--ease-default),
+    padding var(--dur-lg) var(--ease-default);
 }
 
 .micro-mood-group {
@@ -204,7 +213,9 @@
   font-size: var(--fs-body);
   color: var(--ink);
   outline: none;
-  transition: border-color var(--dur-xs) var(--ease-default), background var(--dur-xs) var(--ease-default);
+  transition:
+    border-color var(--dur-xs) var(--ease-default),
+    background var(--dur-xs) var(--ease-default);
 }
 
 .drop-engrave-input:focus {

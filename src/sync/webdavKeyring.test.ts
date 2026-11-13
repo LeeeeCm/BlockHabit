@@ -20,7 +20,7 @@ const cred = vi.hoisted(() => ({
   get: vi.fn(),
   set: vi.fn(),
   remove: vi.fn(),
-  probe: vi.fn(),
+  probe: vi.fn()
 }))
 
 vi.mock('../platform/credentials', () => ({
@@ -31,7 +31,7 @@ vi.mock('../platform/credentials', () => ({
   setCredential: cred.set,
   removeCredential: cred.remove,
   probeCredentialStore: cred.probe,
-  __resetCredentialStoreForTests: () => {},
+  __resetCredentialStoreForTests: () => {}
 }))
 
 const KEY = 'blockhabit_webdav_config'
@@ -47,7 +47,7 @@ function rawConfig(overrides: Partial<WebDavConfig> = {}): WebDavConfig {
     lastSyncStatus: 'idle',
     lastSyncError: null,
     rememberPassword: true,
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -159,10 +159,7 @@ describe('C4 §4 方案 B：OS 凭据管理器接管 WebDAV 密码', () => {
       rawConfig({ password: '', credentialStore: 'os' })
     )
 
-    expect(cred.account).toHaveBeenCalledWith(
-      'https://dav.example.com/remote.php/dav',
-      'lee'
-    )
+    expect(cred.account).toHaveBeenCalledWith('https://dav.example.com/remote.php/dav', 'lee')
     expect(hydrated.password).toBe('secret-pass')
   })
 

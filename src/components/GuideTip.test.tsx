@@ -16,7 +16,7 @@ function renderTip(ui: ReactElement) {
       act(() => root.unmount())
       container.remove()
     },
-    note: () => container.querySelector('[role="note"]') as HTMLElement | null,
+    note: () => container.querySelector('[role="note"]') as HTMLElement | null
   }
 }
 
@@ -25,7 +25,7 @@ function baseProps() {
     title: '这是你的工地',
     body: '滚轮缩放、拖拽平移；落下的积木会按蓝图逐块咬合。',
     dismissLabel: '知道了',
-    onDismiss: vi.fn(),
+    onDismiss: vi.fn()
   }
 }
 

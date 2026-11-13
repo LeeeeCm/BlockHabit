@@ -44,10 +44,10 @@ export function sha256HexPure(input: Uint8Array): string {
     0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
     0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
     0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
   ])
   const h = new Uint32Array([
-    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
   ])
   const bitLength = input.length * 8
   const paddedLength = ((input.length + 9 + 63) >> 6) << 6
@@ -177,11 +177,17 @@ export function dosDateTime(now: Date): { time: number; date: number } {
 /** 文本文件尝试 raw DEFLATE（CompressionStream）；不可用/更大时返回 null 降级 STORE */
 async function tryDeflate(bytes: Uint8Array): Promise<Uint8Array | null> {
   const Ctor = (globalThis as { CompressionStream?: typeof CompressionStream }).CompressionStream
-  if (typeof Ctor !== 'function' || typeof Blob === 'undefined' || typeof Response === 'undefined') {
+  if (
+    typeof Ctor !== 'function' ||
+    typeof Blob === 'undefined' ||
+    typeof Response === 'undefined'
+  ) {
     return null
   }
   try {
-    const stream = new Blob([bytes as unknown as BlobPart]).stream().pipeThrough(new Ctor('deflate-raw'))
+    const stream = new Blob([bytes as unknown as BlobPart])
+      .stream()
+      .pipeThrough(new Ctor('deflate-raw'))
     const buffer = await new Response(stream).arrayBuffer()
     return new Uint8Array(buffer)
   } catch {
@@ -193,7 +199,10 @@ async function tryDeflate(bytes: Uint8Array): Promise<Uint8Array | null> {
  * 生成 ZIP（method 0 STORE，文本可降级/升级为 method 8 DEFLATE）：
  * 本地文件头 → 数据 → 中央目录 → EOCD；UTF-8 文件名（bit 11），无 data descriptor。
  */
-export async function buildZip(entries: ZipEntryInput[], now: Date = new Date()): Promise<Uint8Array> {
+export async function buildZip(
+  entries: ZipEntryInput[],
+  now: Date = new Date()
+): Promise<Uint8Array> {
   const { time, date } = dosDateTime(now)
   const localParts: Uint8Array[] = []
   const centralParts: Uint8Array[] = []

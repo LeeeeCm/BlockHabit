@@ -31,5 +31,5 @@ export const DEFAULT_WEBDAV_CONFIG: WebDavConfig = {
   lastSyncAt: null,
   lastSyncStatus: 'idle',
   lastSyncError: null,
-  rememberPassword: true,
+  rememberPassword: true
 }

@@ -18,10 +18,12 @@ export function HabitTemplates({ onPick }: { onPick: (template: HabitTemplate) =
         alignItems: 'center',
         width: '100%',
         maxWidth: 460,
-        marginTop: 8,
+        marginTop: 8
       }}
     >
-      <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>{t.templates.title}</span>
+      <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>
+        {t.templates.title}
+      </span>
       {habitTemplates.map((template) => (
         <button
           key={template.id}

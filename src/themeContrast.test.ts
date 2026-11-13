@@ -30,12 +30,11 @@ const THEMES: Array<[string, Record<string, string>]> = [
   ['light', ROOT],
   ['dark', { ...ROOT, ...themeVars(":root[data-theme='dark'] {") }],
   ['oat', { ...ROOT, ...themeVars(":root[data-theme='oat'] {") }],
-  ['fog', { ...ROOT, ...themeVars(":root[data-theme='fog'] {") }],
+  ['fog', { ...ROOT, ...themeVars(":root[data-theme='fog'] {") }]
 ]
 
 describe('彩色令牌对比度（C3）', () => {
   for (const [label, v] of THEMES) {
-
     it(`${label}: 填充上的文字 ≥ 4.5:1`, () => {
       expect(contrastRatio(v['--on-accent'], v['--accent'])).toBeGreaterThanOrEqual(4.5)
       expect(contrastRatio(v['--on-success'], v['--progress-green'])).toBeGreaterThanOrEqual(4.5)

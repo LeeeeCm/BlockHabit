@@ -28,7 +28,9 @@ function safeSet(key: string, value: string): void {
  * 用上次写入的缓存主题/语言先把根节点属性摆正，避免暗色/燕麦/雾灰主题启动时闪一下纸白。
  * 缓存只是绘制提示，真值仍以存档为准（App 的 effect 会立刻覆盖并回写）。
  */
-export function applyCachedAppearance(doc: Document | undefined = typeof document !== 'undefined' ? document : undefined): void {
+export function applyCachedAppearance(
+  doc: Document | undefined = typeof document !== 'undefined' ? document : undefined
+): void {
   if (!doc) return
   const theme = safeGet(THEME_CACHE_KEY)
   if (theme && (THEMES as readonly string[]).includes(theme)) {

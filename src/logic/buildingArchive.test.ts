@@ -7,7 +7,7 @@ import {
   completionDateOf,
   completionDateOfBuilds,
   listArchiveBuildings,
-  type BuildingArchiveState,
+  type BuildingArchiveState
 } from './buildingArchive'
 import { completionDateOf as yearbookCompletionDateOf } from './yearbook'
 
@@ -31,7 +31,7 @@ function atLocal(date: string, hour = 12): string {
 function makeBlocks(
   blueprintId: string,
   dates: string[],
-  over: Record<number, Partial<PlacedBlock>> = {},
+  over: Record<number, Partial<PlacedBlock>> = {}
 ): PlacedBlock[] {
   const bp = blueprints[blueprintId]
   return bp.blocks.map((_, index) => ({
@@ -41,7 +41,7 @@ function makeBlocks(
     placedAt: atLocal(dates[Math.min(index, dates.length - 1)]),
     fromHabitId: 'h1',
     bonus: false,
-    ...over[index],
+    ...over[index]
   }))
 }
 
@@ -52,7 +52,7 @@ function makeState(over: Partial<BuildingArchiveState> = {}): BuildingArchiveSta
     habits: [],
     foundationNotes: {},
     completedBlueprintIds: [],
-    ...over,
+    ...over
   }
 }
 
@@ -93,7 +93,7 @@ describe('空数据与未落成', () => {
     const partial = makeBlocks('plant', ['2026-02-01']).slice(0, 2)
     const archive = buildBuildingArchive(
       makeState({ builds: partial, completedBlueprintIds: ['plant'] }),
-      'plant',
+      'plant'
     )
     expect(archive.completed).toBe(false)
     expect(archive.archivedAtUnknown).toBe(true)
@@ -122,7 +122,7 @@ describe('落成日、耗时与统计', () => {
       index,
       placedAt: iso,
       fromHabitId: 'h1',
-      bonus: false,
+      bonus: false
     }))
     expect(completionDateOf(makeState({ builds: blocks }), 'plant')).toBe(
       // dateKey(new Date(iso)) —— 与实现的本地口径一致（不硬编码时区）
@@ -130,7 +130,7 @@ describe('落成日、耗时与统计', () => {
         const d = new Date(iso)
         const pad = (n: number) => String(n).padStart(2, '0')
         return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
-      })(),
+      })()
     )
   })
 
@@ -149,11 +149,11 @@ describe('落成日、耗时与统计', () => {
     const blocks = makeBlocks('plant', ['2026-03-01'], {
       1: { bonus: true, fromHabitId: '__day__' },
       3: { fromHabitId: '__day__' },
-      5: { bonus: true },
+      5: { bonus: true }
     })
     const state = makeState({
       builds: blocks,
-      habits: [habit('h1', { name: '晨间冥想' })],
+      habits: [habit('h1', { name: '晨间冥想' })]
     })
     const archive = buildBuildingArchive(state, 'plant')
     expect(archive.bonusBlocks).toBe(2)
@@ -163,7 +163,7 @@ describe('落成日、耗时与统计', () => {
     expect(archive.bonusByIndex[0]).toBe(false)
     // 其余块默认 h1；两块 __day__ 不计入「投入最多习惯」
     expect(archive.topHabits).toEqual([
-      { habitId: 'h1', name: '晨间冥想', count: blueprints.plant.blocks.length - 2 },
+      { habitId: 'h1', name: '晨间冥想', count: blueprints.plant.blocks.length - 2 }
     ])
   })
 
@@ -187,7 +187,7 @@ describe('投入最多的习惯', () => {
       habit('h1', { name: 'A', createdAt: '2024-01-01T00:00:00.000Z' }),
       habit('h2', { name: 'B', createdAt: '2024-01-02T00:00:00.000Z' }),
       habit('h3', { name: 'C', createdAt: '2024-01-03T00:00:00.000Z' }),
-      habit('h4', { name: 'D', createdAt: '2024-01-04T00:00:00.000Z' }),
+      habit('h4', { name: 'D', createdAt: '2024-01-04T00:00:00.000Z' })
     ]
     // plant 6 块：h1=3、h2=1、h3=1、全勤=1
     const blocks = makeBlocks('plant', ['2026-03-01'], {
@@ -196,7 +196,7 @@ describe('投入最多的习惯', () => {
       2: { fromHabitId: 'h1' },
       3: { fromHabitId: 'h2' },
       4: { fromHabitId: 'h3' },
-      5: { fromHabitId: '__day__' },
+      5: { fromHabitId: '__day__' }
     })
     const archive = buildBuildingArchive(makeState({ builds: blocks, habits }), 'plant')
     const h1Count = blueprints.plant.blocks.length - 3 // 6 以后默认 h1，减去 __day__ 与 h2/h3 各 1
@@ -216,7 +216,7 @@ describe('关键块与随笔时间线', () => {
   it('关键块锚点：首块 / 25% / 50% / 75% / 末块，按序位升序', () => {
     const archive = buildBuildingArchive(
       makeState({ builds: makeBlocks('plant', ['2026-03-01', '2026-03-12']) }),
-      'plant',
+      'plant'
     )
     const capacity = blueprints.plant.blocks.length
     // 独立复算锚点：首块 / 25% / 50% / 75% / 末块，按序位去重
@@ -233,11 +233,13 @@ describe('关键块与随笔时间线', () => {
     expect(archive.milestones[archive.milestones.length - 1].kind).toBe('last')
     expect(archive.milestones.map((m) => m.percent)).toEqual(
       expectedPercents.map((percent, position) =>
-        position === 0 || position === expectedPercents.length - 1 ? undefined : percent,
-      ),
+        position === 0 || position === expectedPercents.length - 1 ? undefined : percent
+      )
     )
     expect(archive.milestones[0].blockId).toBe('plant-0')
-    expect(archive.milestones[archive.milestones.length - 1].blockId).toBe('plant-' + (capacity - 1))
+    expect(archive.milestones[archive.milestones.length - 1].blockId).toBe(
+      'plant-' + (capacity - 1)
+    )
   })
 
   it('小模型（2 块）锚点去重后只剩首块与末块', () => {
@@ -245,17 +247,31 @@ describe('关键块与随笔时间线', () => {
       id: '__small__',
       blocks: [
         { x: 0, y: 0, z: 0, type: 'basic' },
-        { x: 0, y: 0, z: 1, type: 'basic' },
-      ],
+        { x: 0, y: 0, z: 1, type: 'basic' }
+      ]
     }
     const builds: PlacedBlock[] = [
-      { id: 's0', blueprintId: '__small__', index: 0, placedAt: atLocal('2026-01-01'), fromHabitId: 'h1', bonus: false },
-      { id: 's1', blueprintId: '__small__', index: 1, placedAt: atLocal('2026-01-02'), fromHabitId: 'h1', bonus: false },
+      {
+        id: 's0',
+        blueprintId: '__small__',
+        index: 0,
+        placedAt: atLocal('2026-01-01'),
+        fromHabitId: 'h1',
+        bonus: false
+      },
+      {
+        id: 's1',
+        blueprintId: '__small__',
+        index: 1,
+        placedAt: atLocal('2026-01-02'),
+        fromHabitId: 'h1',
+        bonus: false
+      }
     ]
     const archive = buildBuildingArchive(makeState({ builds }), '__small__')
     expect(archive.milestones).toEqual([
       expect.objectContaining({ index: 0, kind: 'first' }),
-      expect.objectContaining({ index: 1, kind: 'last' }),
+      expect.objectContaining({ index: 1, kind: 'last' })
     ])
   })
 
@@ -272,7 +288,7 @@ describe('关键块与随笔时间线', () => {
           placedBlockId: 'plant-0',
           note: '  第一块，窗外有雨。 ',
           mood: 'calm',
-          starred: true,
+          starred: true
         }),
         checkIn({
           id: 'c2',
@@ -280,9 +296,9 @@ describe('关键块与随笔时间线', () => {
           date: '2026-03-02',
           placedBlockId: 'plant-1',
           note: '被撤销了',
-          deletedAt: atLocal('2026-03-03'),
-        }),
-      ],
+          deletedAt: atLocal('2026-03-03')
+        })
+      ]
     })
     const archive = buildBuildingArchive(state, 'plant')
     const first = archive.milestones[0]
@@ -301,18 +317,36 @@ describe('关键块与随笔时间线', () => {
       builds: blocks,
       habits: [habit('h1', { name: '晨间冥想' })],
       checkIns: [
-        checkIn({ id: 'c2', habitId: 'h1', date: '2026-03-05', placedBlockId: 'plant-3', note: '后来写的' }),
-        checkIn({ id: 'c1', habitId: 'h1', date: '2026-03-02', placedBlockId: 'plant-2', note: '先写的' }),
-        checkIn({ id: 'c3', habitId: 'h1', date: '2026-03-03', placedBlockId: 'plant-3', note: '   ' }),
+        checkIn({
+          id: 'c2',
+          habitId: 'h1',
+          date: '2026-03-05',
+          placedBlockId: 'plant-3',
+          note: '后来写的'
+        }),
+        checkIn({
+          id: 'c1',
+          habitId: 'h1',
+          date: '2026-03-02',
+          placedBlockId: 'plant-2',
+          note: '先写的'
+        }),
+        checkIn({
+          id: 'c3',
+          habitId: 'h1',
+          date: '2026-03-03',
+          placedBlockId: 'plant-3',
+          note: '   '
+        }),
         checkIn({
           id: 'c4',
           habitId: 'h1',
           date: '2026-03-04',
           placedBlockId: 'plant-3',
           note: '墓碑',
-          deletedAt: atLocal('2026-03-06'),
-        }),
-      ],
+          deletedAt: atLocal('2026-03-06')
+        })
+      ]
     })
     const archive = buildBuildingArchive(state, 'plant')
     expect(archive.notes.map((n) => n.note)).toEqual(['先写的', '后来写的'])
@@ -329,7 +363,7 @@ describe('第 N 座与建筑清单', () => {
     const builds: PlacedBlock[] = [
       ...makeBlocks('coffee', ['2026-05-01']),
       ...makeBlocks('plant', ['2025-12-20']),
-      ...makeBlocks('camera', ['2026-08-01']),
+      ...makeBlocks('camera', ['2026-08-01'])
     ]
     const state = makeState({ builds })
     expect(buildBuildingArchive(state, 'plant').ordinal).toBe(1)
@@ -340,10 +374,10 @@ describe('第 N 座与建筑清单', () => {
   })
 
   it('未落成建筑 ordinal=null、不进 list；completedBlueprintIds 顺序不影响序号', () => {
-    const builds = [...makeBlocks('plant', ['2026-03-01']), ...makeBlocks('coffee', ['2026-04-01'])].slice(
-      0,
-      blueprints.plant.blocks.length,
-    )
+    const builds = [
+      ...makeBlocks('plant', ['2026-03-01']),
+      ...makeBlocks('coffee', ['2026-04-01'])
+    ].slice(0, blueprints.plant.blocks.length)
     const state = makeState({ builds, completedBlueprintIds: ['coffee', 'plant'] })
     expect(buildBuildingArchive(state, 'plant').ordinal).toBe(1)
     expect(buildBuildingArchive(state, 'coffee').ordinal).toBeNull()
@@ -355,7 +389,7 @@ describe('拍立得落成日口径（completionDateOfBuilds）', () => {
   it('只依赖 builds 切片，与 completionDateOf 同口径（块数达容量 → max(placedAt) 本地日期）', () => {
     const builds = makeBlocks('coffee', ['2026-01-02', '2026-02-03'])
     expect(completionDateOfBuilds(builds, 'coffee')).toBe(
-      completionDateOf(makeState({ builds }), 'coffee'),
+      completionDateOf(makeState({ builds }), 'coffee')
     )
     expect(completionDateOfBuilds(builds, 'coffee')).toBe('2026-02-03')
   })
@@ -376,7 +410,7 @@ describe('拍立得落成日口径（completionDateOfBuilds）', () => {
       placedAt: atLocal('2026-04-01'),
       fromHabitId: 'h1',
       bonus: false,
-      deletedAt: atLocal('2026-04-02'),
+      deletedAt: atLocal('2026-04-02')
     })
     expect(completionDateOfBuilds(blocks, 'plant')).toBe('2026-03-01')
 
@@ -405,7 +439,7 @@ describe('拍立得落成日口径（completionDateOfBuilds）', () => {
       index,
       placedAt: iso,
       fromHabitId: 'h1',
-      bonus: false,
+      bonus: false
     }))
     const d = new Date(iso)
     const pad = (n: number) => String(n).padStart(2, '0')
@@ -421,15 +455,21 @@ describe('铭言、墓碑与口径交叉校验', () => {
   it('铭言 trim 后读取；空白铭言视为无', () => {
     expect(
       buildBuildingArchive(
-        makeState({ builds: makeBlocks('plant', ['2026-03-01']), foundationNotes: { plant: '  从一颗种子开始。 ' } }),
-        'plant',
-      ).foundationNote,
+        makeState({
+          builds: makeBlocks('plant', ['2026-03-01']),
+          foundationNotes: { plant: '  从一颗种子开始。 ' }
+        }),
+        'plant'
+      ).foundationNote
     ).toBe('从一颗种子开始。')
     expect(
       buildBuildingArchive(
-        makeState({ builds: makeBlocks('plant', ['2026-03-01']), foundationNotes: { plant: '   ' } }),
-        'plant',
-      ).foundationNote,
+        makeState({
+          builds: makeBlocks('plant', ['2026-03-01']),
+          foundationNotes: { plant: '   ' }
+        }),
+        'plant'
+      ).foundationNote
     ).toBeUndefined()
   })
 

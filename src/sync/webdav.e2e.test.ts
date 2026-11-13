@@ -89,14 +89,27 @@ const config: WebDavConfig = {
   endpoint: '',
   username: 'tester',
   password: 'secret',
-  enabled: true,
+  enabled: true
 }
 
 function habit(id: string, name: string, updatedAt: string): Habit {
-  return { id, name, frequency: { type: 'daily' }, createdAt: '2026-08-01T00:00:00.000Z', updatedAt }
+  return {
+    id,
+    name,
+    frequency: { type: 'daily' },
+    createdAt: '2026-08-01T00:00:00.000Z',
+    updatedAt
+  }
 }
 
-function checkIn(id: string, habitId: string, date: string, at: string, placedBlockId?: string, deletedAt?: string): CheckIn {
+function checkIn(
+  id: string,
+  habitId: string,
+  date: string,
+  at: string,
+  placedBlockId?: string,
+  deletedAt?: string
+): CheckIn {
   return { id, habitId, date, at, placedBlockId, blueprintId: 'plant', deletedAt }
 }
 
@@ -114,7 +127,7 @@ function v2State(overrides: Partial<AppState>): AppState {
     repairBricks: 0,
     showcasePlacements: [],
     foundationNotes: {},
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -138,16 +151,27 @@ describe('WebDAV E2E: two-device sync against a real local server', () => {
     // 设备 B 的本地视图：打卡已被撤销（墓碑），积木已回收
     const deviceB: AppState = v2State({
       habits: [h],
-      checkIns: [checkIn('c1', 'h-run', daysAgo(1), new Date(Date.now() - 86_400_000).toISOString(), 'b0', new Date().toISOString())],
-      dayClaims: [],
+      checkIns: [
+        checkIn(
+          'c1',
+          'h-run',
+          daysAgo(1),
+          new Date(Date.now() - 86_400_000).toISOString(),
+          'b0',
+          new Date().toISOString()
+        )
+      ],
+      dayClaims: []
     })
     expect(deviceB.builds).toHaveLength(0)
 
     // 设备 A 的档案：仍有这条有效打卡（尚未看到撤销）
     const deviceA = v2State({
       habits: [h],
-      checkIns: [checkIn('c1', 'h-run', daysAgo(1), new Date(Date.now() - 86_400_000).toISOString(), 'b0')],
-      dayClaims: [],
+      checkIns: [
+        checkIn('c1', 'h-run', daysAgo(1), new Date(Date.now() - 86_400_000).toISOString(), 'b0')
+      ],
+      dayClaims: []
     })
     await pushRemoteState(cfg, JSON.stringify(deviceA))
 
@@ -173,7 +197,7 @@ describe('WebDAV E2E: two-device sync against a real local server', () => {
 
     // 云端已有设备 A 的档案（etag e1）
     const archiveA = v2State({
-      habits: [habit('h-a', '设备A习惯', '2026-08-01T00:00:00.000Z')],
+      habits: [habit('h-a', '设备A习惯', '2026-08-01T00:00:00.000Z')]
     })
     await pushRemoteState(cfg, JSON.stringify(archiveA))
     const snapshot1 = await fetchRemoteState(cfg)
@@ -181,7 +205,7 @@ describe('WebDAV E2E: two-device sync against a real local server', () => {
 
     // 设备 B 基于陈旧视图推送；服务器在 412 前注入"设备 A 刚推送的新版本"
     const deviceBLocal = v2State({
-      habits: [habit('h-b', '设备B习惯', '2026-08-01T00:00:00.000Z')],
+      habits: [habit('h-b', '设备B习惯', '2026-08-01T00:00:00.000Z')]
     })
     concurrentWriter = () => {
       const parsed = JSON.parse(cloud.get(FILE)!.body)
@@ -190,7 +214,10 @@ describe('WebDAV E2E: two-device sync against a real local server', () => {
       const newer = mergeAppState(prepared, archiveA)
       cloud.set(FILE, {
         etag: `"e${++etagCounter}"`,
-        body: JSON.stringify({ ...newer, habits: [...newer.habits, habit('h-c', '设备C习惯', '2026-08-02T00:00:00.000Z')] }),
+        body: JSON.stringify({
+          ...newer,
+          habits: [...newer.habits, habit('h-c', '设备C习惯', '2026-08-02T00:00:00.000Z')]
+        })
       })
     }
 
@@ -198,7 +225,8 @@ describe('WebDAV E2E: two-device sync against a real local server', () => {
     console.log('step: stale fetched, etag=', stale.etag)
     vi.spyOn(globalThis, 'fetch')
     let sawConflict = false
-    try {      // 直接用陈旧 etag 复现 412（绕过 fetch 内部流程）
+    try {
+      // 直接用陈旧 etag 复现 412（绕过 fetch 内部流程）
       const merged = mergeAppState(deviceBLocal, prepareImport(JSON.parse(stale.json!))!)
       await pushRemoteState(cfg, JSON.stringify(merged), `"stale-etag"`)
     } catch (err) {

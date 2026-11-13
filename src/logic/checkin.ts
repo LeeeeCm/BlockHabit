@@ -2,8 +2,7 @@ import type { CheckIn, DayClaim, Habit } from '../types'
 import { addDays, parseKey, todayKey, weekStart, dateKey } from './dates'
 
 export type CanCheckInResult =
-  | { ok: true }
-  | { ok: false; reason: 'no-habit' | 'archived' | 'already' | 'weekly-full' }
+  { ok: true } | { ok: false; reason: 'no-habit' | 'archived' | 'already' | 'weekly-full' }
 
 /** 该习惯在指定日期的有效（未撤销）打卡；墓碑打卡对所有统计与判定不可见 */
 export function dayCheckInsFor(checkIns: CheckIn[], habitId: string, day: string): CheckIn[] {
@@ -59,7 +58,7 @@ export function canCheckInHabit(
   habit: Habit,
   checkIns: CheckIn[],
   day: string,
-  weekCountOverride?: number,
+  weekCountOverride?: number
 ): CanCheckInResult {
   if (habit.archivedAt) return { ok: false, reason: 'archived' }
   if (habit.kind !== 'counter' && dayCheckInsFor(checkIns, habit.id, day).length > 0) {
@@ -67,7 +66,8 @@ export function canCheckInHabit(
   }
   // counter 习惯的"完成"以当日 targetValue 达成为准，周配额仅约束 instant/focus
   if (habit.frequency.type === 'weekly' && habit.kind !== 'counter') {
-    const count = weekCountOverride !== undefined ? weekCountOverride : weekCountFor(checkIns, habit.id, day)
+    const count =
+      weekCountOverride !== undefined ? weekCountOverride : weekCountFor(checkIns, habit.id, day)
     if (count >= habit.frequency.times) {
       return { ok: false, reason: 'weekly-full' }
     }
@@ -79,7 +79,7 @@ export function canCheckIn(
   habits: Habit[],
   checkIns: CheckIn[],
   habitId: string,
-  day: string,
+  day: string
 ): CanCheckInResult {
   const habit = habits.find((h) => h.id === habitId)
   if (!habit) return { ok: false, reason: 'no-habit' }
@@ -97,20 +97,20 @@ export function isDayComplete(habits: Habit[], checkIns: CheckIn[], day: string)
 }
 
 export type CanClaimDayResult =
-  | { ok: true }
-  | { ok: false; reason: 'no-habits' | 'incomplete' | 'already' }
+  { ok: true } | { ok: false; reason: 'no-habits' | 'incomplete' | 'already' }
 
 /** 每日打卡领块：全部任务完成且今日未领过才能领 */
 export function canClaimDay(
   habits: Habit[],
   checkIns: CheckIn[],
   dayClaims: DayClaim[],
-  day: string,
+  day: string
 ): CanClaimDayResult {
   const active = habits.filter((h) => !h.archivedAt)
   if (active.length === 0) return { ok: false, reason: 'no-habits' }
   if (dayClaims.some((c) => c.date === day)) return { ok: false, reason: 'already' }
-  if (!active.every((h) => habitMetOnDay(h, checkIns, day))) return { ok: false, reason: 'incomplete' }
+  if (!active.every((h) => habitMetOnDay(h, checkIns, day)))
+    return { ok: false, reason: 'incomplete' }
   return { ok: true }
 }
 

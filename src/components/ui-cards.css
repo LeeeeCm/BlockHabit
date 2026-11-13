@@ -9,9 +9,10 @@
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 4%, transparent);
-  transition: transform var(--dur-md) var(--ease-out),
-              box-shadow var(--dur-md) var(--ease-out),
-              border-color var(--dur-md) var(--ease-default);
+  transition:
+    transform var(--dur-md) var(--ease-out),
+    box-shadow var(--dur-md) var(--ease-out),
+    border-color var(--dur-md) var(--ease-default);
 }
 
 /* 今日页双列大卡片 */
@@ -38,16 +39,18 @@
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   box-shadow: 0 1.5px 5px color-mix(in srgb, var(--ink) 3.5%, transparent);
-  transition: transform var(--dur-md) var(--ease-out),
-              box-shadow var(--dur-md) var(--ease-out),
-              border-color var(--dur-md) var(--ease-default);
+  transition:
+    transform var(--dur-md) var(--ease-out),
+    box-shadow var(--dur-md) var(--ease-out),
+    border-color var(--dur-md) var(--ease-default);
 }
 
 .habit-card:hover {
   transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--ink) 18%, var(--line));
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 7%, transparent),
-              0 2px 6px color-mix(in srgb, var(--ink) 3.5%, transparent);
+  box-shadow:
+    0 8px 24px color-mix(in srgb, var(--ink) 7%, transparent),
+    0 2px 6px color-mix(in srgb, var(--ink) 3.5%, transparent);
 }
 
 .habit-card .card-actions-group {
@@ -71,9 +74,10 @@
   height: 28px;
   border-radius: 8px;
   color: var(--ink-2);
-  transition: background var(--dur-sm) var(--ease-out),
-              color var(--dur-sm) var(--ease-out),
-              transform var(--dur-xs) var(--ease-out);
+  transition:
+    background var(--dur-sm) var(--ease-out),
+    color var(--dur-sm) var(--ease-out),
+    transform var(--dur-xs) var(--ease-out);
 }
 .habit-card .card-action:hover {
   color: var(--ink);
@@ -101,7 +105,10 @@
   align-items: center;
   gap: 5px;
   cursor: pointer;
-  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default), transform var(--dur-xs) var(--ease-default);
+  transition:
+    background var(--dur-xs) var(--ease-default),
+    color var(--dur-xs) var(--ease-default),
+    transform var(--dur-xs) var(--ease-default);
 }
 .pill-action:hover,
 .habit-card .pill-action:hover {
@@ -159,7 +166,10 @@
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   background: var(--bg);
-  transition: border-color var(--dur-xs) var(--ease-default), transform var(--dur-xs) var(--ease-default), background var(--dur-xs) var(--ease-default);
+  transition:
+    border-color var(--dur-xs) var(--ease-default),
+    transform var(--dur-xs) var(--ease-default),
+    background var(--dur-xs) var(--ease-default);
 }
 .gallery-card:hover {
   border-color: var(--ink);
@@ -221,7 +231,9 @@
   font-size: var(--fs-subhead);
   border-radius: 10px;
   color: var(--ink);
-  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default);
+  transition:
+    background var(--dur-xs) var(--ease-default),
+    color var(--dur-xs) var(--ease-default);
 }
 .tray-menu-item:hover {
   background: var(--ink);
@@ -246,7 +258,9 @@
   color: var(--ink-2);
   font-size: var(--fs-body);
   background: transparent;
-  transition: border-color var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default);
+  transition:
+    border-color var(--dur-xs) var(--ease-default),
+    color var(--dur-xs) var(--ease-default);
 }
 .archive-toggle:hover {
   border-color: var(--ink-2);
@@ -284,7 +298,9 @@
   color: var(--ink-2);
   font-size: var(--fs-small);
   border: 1px solid var(--line);
-  transition: color var(--dur-xs) var(--ease-default), border-color var(--dur-xs) var(--ease-default);
+  transition:
+    color var(--dur-xs) var(--ease-default),
+    border-color var(--dur-xs) var(--ease-default);
 }
 .archive-act:hover {
   color: var(--ink);

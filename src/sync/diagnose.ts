@@ -72,7 +72,10 @@ export interface DiagnoseResponse {
   headers?: Record<string, string>
 }
 
-export type DiagnoseTransport = (url: string, init: DiagnoseRequestInit) => Promise<DiagnoseResponse>
+export type DiagnoseTransport = (
+  url: string,
+  init: DiagnoseRequestInit
+) => Promise<DiagnoseResponse>
 
 export interface DiagnoseOptions {
   /** 集合 URL（可带 .json 文件 URL，自检会回退到其父目录） */
@@ -123,9 +126,7 @@ function nowMs(): number {
  * 用注入 seed 便于测试；默认 seed 在真实环境里足够唯一（同一进程内不会碰撞）。
  */
 export function makeTempFileName(seed?: string): string {
-  const unique =
-    seed ??
-    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+  const unique = seed ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
   return `${unique}${TEMP_FILE_SUFFIX}`
 }
 
@@ -181,7 +182,7 @@ export function normalizeCollectionUrl(input: string): string | null {
 export function sanitizeDiagnosticDetail(
   input: string,
   secrets: Array<string | undefined> = [],
-  maxLength = 300,
+  maxLength = 300
 ): string {
   let text = String(input ?? '')
   if (!text) return ''
@@ -208,7 +209,11 @@ export function classifyTransportError(err: unknown): { code: DiagnoseCode; deta
   const message = err instanceof Error ? err.message : String(err ?? '')
   const probe = `${name} ${message}`.toLowerCase()
 
-  if (name === 'TimeoutError' || name === 'AbortError' || /timeout|timed out|超时|aborted|abort/.test(probe)) {
+  if (
+    name === 'TimeoutError' ||
+    name === 'AbortError' ||
+    /timeout|timed out|超时|aborted|abort/.test(probe)
+  ) {
     return { code: 'timeout', detail: message }
   }
   if (/certificate|tls|ssl|handshake|self.?signed|issuer|x509|peer failed/.test(probe)) {
@@ -217,7 +222,11 @@ export function classifyTransportError(err: unknown): { code: DiagnoseCode; deta
   if (/dns|lookup|getaddrinfo|enotfound|nodename nor servname/.test(probe)) {
     return { code: 'unreachable', detail: message }
   }
-  if (/econnrefused|econnreset|ehostunreach|enetunreach|unreachable|network ?error|network request failed|failed to fetch|load failed|socket/.test(probe)) {
+  if (
+    /econnrefused|econnreset|ehostunreach|enetunreach|unreachable|network ?error|network request failed|failed to fetch|load failed|socket/.test(
+      probe
+    )
+  ) {
     return { code: 'unreachable', detail: message }
   }
   return { code: 'unknown', detail: message }
@@ -234,7 +243,7 @@ export function createFetchTransport(fetchImpl: FetchLike): DiagnoseTransport {
       method: init.method,
       headers: init.headers,
       body: init.body,
-      signal: init.signal,
+      signal: init.signal
     })
     let text: string | undefined
     try {
@@ -258,7 +267,7 @@ async function requestWithTimeout(
   url: string,
   init: DiagnoseRequestInit,
   timeoutMs: number,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<DiagnoseResponse> {
   if (signal?.aborted) throw new DiagnoseCancelError()
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
@@ -282,7 +291,7 @@ async function requestWithTimeout(
     return await Promise.race([
       transport(url, { ...init, signal: controller?.signal }),
       timeout,
-      cancelled,
+      cancelled
     ])
   } finally {
     if (timer !== undefined) clearTimeout(timer)
@@ -316,7 +325,12 @@ function protocolOf(url: string): string {
 }
 
 function authHeadersFor(username: string, password: string): Record<string, string> {
-  return getAuthHeaders({ endpoint: '', username: String(username ?? ''), password: String(password ?? ''), enabled: true })
+  return getAuthHeaders({
+    endpoint: '',
+    username: String(username ?? ''),
+    password: String(password ?? ''),
+    enabled: true
+  })
 }
 
 /**
@@ -327,7 +341,9 @@ function authHeadersFor(username: string, password: string): Record<string, stri
 export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<DiagnoseResult> {
   const startedAt = nowMs()
   const timeoutMs =
-    typeof options.timeoutMs === 'number' && options.timeoutMs > 0 ? options.timeoutMs : DIAGNOSE_TIMEOUT_MS
+    typeof options.timeoutMs === 'number' && options.timeoutMs > 0
+      ? options.timeoutMs
+      : DIAGNOSE_TIMEOUT_MS
   const signal = options.signal
   const secrets: Array<string | undefined> = [options.password]
   const stages: DiagnoseStageResult[] = []
@@ -344,7 +360,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
     ok: !cancelled && stages.length === 5 && stages.every((stage) => stage.ok),
     cancelled,
     stages,
-    elapsedMs: Math.max(0, Math.round(nowMs() - startedAt)),
+    elapsedMs: Math.max(0, Math.round(nowMs() - startedAt))
   })
   const STAGE_ORDER: DiagnoseStage[] = ['address', 'connection', 'auth', 'readwrite', 'cleanup']
   const skipAfter = (stage: DiagnoseStage): void => {
@@ -373,7 +389,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
     push('address', {
       ok: false,
       code: 'invalid-url',
-      detail: sanitizeDiagnosticDetail(options.endpoint, secrets),
+      detail: sanitizeDiagnosticDetail(options.endpoint, secrets)
     })
     skipAfter('address')
     return finish()
@@ -382,12 +398,16 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
     push('address', {
       ok: false,
       code: 'insecure-http',
-      detail: sanitizeDiagnosticDetail(collectionUrl, secrets),
+      detail: sanitizeDiagnosticDetail(collectionUrl, secrets)
     })
     skipAfter('address')
     return finish()
   }
-  push('address', { ok: true, code: 'ok', detail: sanitizeDiagnosticDetail(collectionUrl, secrets) })
+  push('address', {
+    ok: true,
+    code: 'ok',
+    detail: sanitizeDiagnosticDetail(collectionUrl, secrets)
+  })
 
   const transport = options.transport
   const authHeaders = authHeadersFor(options.username, options.password)
@@ -399,7 +419,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       collectionUrl,
       { method: 'PROPFIND', headers: { Depth: '0' } },
       timeoutMs,
-      signal,
+      signal
     )
     push('connection', { ok: true, code: 'ok', status: response.status })
   } catch (err) {
@@ -408,7 +428,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
     push('connection', {
       ok: false,
       code: classified.code,
-      detail: sanitizeDiagnosticDetail(classified.detail, secrets),
+      detail: sanitizeDiagnosticDetail(classified.detail, secrets)
     })
     skipAfter('connection')
     return finish()
@@ -421,7 +441,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       collectionUrl,
       { method: 'PROPFIND', headers: { ...authHeaders, Depth: '0' } },
       timeoutMs,
-      signal,
+      signal
     )
     const outcome = classifyHttpStatus(response.status)
     push('auth', outcome)
@@ -435,7 +455,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
     push('auth', {
       ok: false,
       code: classified.code,
-      detail: sanitizeDiagnosticDetail(classified.detail, secrets),
+      detail: sanitizeDiagnosticDetail(classified.detail, secrets)
     })
     skipAfter('auth')
     return finish()
@@ -460,7 +480,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
         transport,
         tempUrl,
         { method: 'DELETE', headers: authHeaders },
-        cleanupTimeoutMs,
+        cleanupTimeoutMs
       )
       const outcome = classifyDeleteStatus(deleteResponse.status)
       if (outcome.ok) {
@@ -473,7 +493,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       push('cleanup', {
         ok: false,
         code: classified.code,
-        detail: sanitizeDiagnosticDetail(`${classified.detail} ${tempName}`, secrets),
+        detail: sanitizeDiagnosticDetail(`${classified.detail} ${tempName}`, secrets)
       })
     }
   }
@@ -486,10 +506,10 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       {
         method: 'PUT',
         headers: { ...authHeaders, 'Content-Type': 'application/json; charset=utf-8' },
-        body: payload,
+        body: payload
       },
       timeoutMs,
-      signal,
+      signal
     )
     const putOutcome = classifyHttpStatus(putResponse.status)
     if (!putOutcome.ok) {
@@ -504,7 +524,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
       tempUrl,
       { method: 'GET', headers: authHeaders },
       timeoutMs,
-      signal,
+      signal
     )
     const getOutcome = classifyHttpStatus(getResponse.status)
     if (!getOutcome.ok) {
@@ -527,7 +547,7 @@ export async function runWebDavDiagnosis(options: DiagnoseOptions): Promise<Diag
     push('readwrite', {
       ok: false,
       code: classified.code,
-      detail: sanitizeDiagnosticDetail(classified.detail, secrets),
+      detail: sanitizeDiagnosticDetail(classified.detail, secrets)
     })
   }
 

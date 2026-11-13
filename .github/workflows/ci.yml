@@ -5,6 +5,8 @@ name: CI
 #   2) 单元测试（vitest run）
 #   3) 设计台账（design:check：记录登记 / 状态机 / 未审批删除）
 #   4) 版本号一致性（package.json / tauri.conf.json / Cargo.toml，C4 零依赖项）
+#   5) 格式（Prettier，范围见 D-20261114-073：src/** + scripts/**）
+#   6) 生产构建（tsc + vite build）
 # 任一失败即红灯；不产出安装包（发布走手动 workflow，见后续 F6）。
 
 on:
@@ -47,3 +49,9 @@ jobs:
 
       - name: Design ledger guard
         run: npm run design:check
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Production build
+        run: npm run build

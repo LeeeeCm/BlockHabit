@@ -28,7 +28,7 @@ export function calculatePinchDistance(p1: TouchPoint, p2: TouchPoint): number {
 export function calculateTouchCenter(p1: TouchPoint, p2: TouchPoint): { x: number; y: number } {
   return {
     x: (p1.clientX + p2.clientX) / 2,
-    y: (p1.clientY + p2.clientY) / 2,
+    y: (p1.clientY + p2.clientY) / 2
   }
 }
 
@@ -46,7 +46,7 @@ export function isQuickTap(
   durationMs: number,
   displacementPx: number,
   maxDuration = 250,
-  maxDisplacement = 8,
+  maxDisplacement = 8
 ): boolean {
   return durationMs < maxDuration && displacementPx < maxDisplacement
 }

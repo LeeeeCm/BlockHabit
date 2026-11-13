@@ -35,7 +35,7 @@ function render(ui: React.ReactElement) {
         if (name instanceof RegExp && name.test(target)) return el as HTMLElement
       }
       throw new Error(`Element with role "${role}" and name "${name}" not found`)
-    },
+    }
   }
 }
 
@@ -47,7 +47,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
     name: '晨间饮水',
     frequency: { type: 'daily' },
     kind: 'instant',
-    createdAt: '2026-09-01T00:00:00Z',
+    createdAt: '2026-09-01T00:00:00Z'
   }
 
   const counterHabit: Habit = {
@@ -58,7 +58,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
     targetValue: 2000,
     unit: 'ml',
     step: 250,
-    createdAt: '2026-09-01T00:00:00Z',
+    createdAt: '2026-09-01T00:00:00Z'
   }
 
   const focusHabit: Habit = {
@@ -67,7 +67,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
     frequency: { type: 'daily' },
     kind: 'focus',
     targetMinutes: 25,
-    createdAt: '2026-09-01T00:00:00Z',
+    createdAt: '2026-09-01T00:00:00Z'
   }
 
   beforeEach(() => {
@@ -81,7 +81,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
       activeBlueprintId: 'plant',
       completedBlueprintIds: [],
       settings: { theme: 'light', language: 'zh' },
-      dayClaims: [],
+      dayClaims: []
     })
   })
 
@@ -119,13 +119,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
   it('verifies haptic feedback triggered on checkin click (triggerHaptic("medium"))', () => {
     const onCheck = vi.fn()
     const { container, unmount } = render(
-      <HabitRow
-        habit={standardHabit}
-        done={false}
-        streak={3}
-        day={todayKey()}
-        onCheck={onCheck}
-      />
+      <HabitRow habit={standardHabit} done={false} streak={3} day={todayKey()} onCheck={onCheck} />
     )
 
     const statusBtn = container.querySelector('.status-btn') as HTMLButtonElement
@@ -143,13 +137,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
   it('verifies counter step (+/-) buttons trigger haptic feedback', () => {
     const onCheck = vi.fn()
     const { getByRole, unmount } = render(
-      <HabitRow
-        habit={counterHabit}
-        done={false}
-        streak={0}
-        day={todayKey()}
-        onCheck={onCheck}
-      />
+      <HabitRow habit={counterHabit} done={false} streak={0} day={todayKey()} onCheck={onCheck} />
     )
 
     const stepPlusBtn = getByRole('button', /\+250/)
@@ -177,12 +165,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
 
   it('verifies active press animation or CSS class', () => {
     const { container, unmount } = render(
-      <HabitRow
-        habit={standardHabit}
-        done={false}
-        streak={1}
-        day={todayKey()}
-      />
+      <HabitRow habit={standardHabit} done={false} streak={1} day={todayKey()} />
     )
 
     const card = container.querySelector('.habit-card') as HTMLElement
@@ -194,12 +177,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
 
   it('verifies focus habit timer trigger button meets mobile touch targets', () => {
     const { container, unmount } = render(
-      <HabitRow
-        habit={focusHabit}
-        done={false}
-        streak={0}
-        day={todayKey()}
-      />
+      <HabitRow habit={focusHabit} done={false} streak={0} day={todayKey()} />
     )
 
     const focusBtn = container.querySelector('.pill-action') as HTMLButtonElement
@@ -215,13 +193,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
   it('verifies card click on mobile triggers checkin and haptic', () => {
     const onCheck = vi.fn()
     const { container, unmount } = render(
-      <HabitRow
-        habit={standardHabit}
-        done={false}
-        streak={1}
-        day={todayKey()}
-        onCheck={onCheck}
-      />
+      <HabitRow habit={standardHabit} done={false} streak={1} day={todayKey()} onCheck={onCheck} />
     )
 
     const card = container.querySelector('.habit-card') as HTMLElement
@@ -238,12 +210,7 @@ describe('HabitRow Mobile interaction & touch feedback', () => {
   it('verifies desktop mode does not apply mobile class or oversized buttons', () => {
     vi.spyOn(detectModule, 'detectPlatform').mockReturnValue('desktop')
     const { container, unmount } = render(
-      <HabitRow
-        habit={standardHabit}
-        done={false}
-        streak={1}
-        day={todayKey()}
-      />
+      <HabitRow habit={standardHabit} done={false} streak={1} day={todayKey()} />
     )
 
     const card = container.querySelector('.habit-card') as HTMLElement

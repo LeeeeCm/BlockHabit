@@ -14,8 +14,17 @@ const css = readFileSync(join(here, 'theme.css'), 'utf-8')
 describe('theme.css 无障碍基线（C1/C2）', () => {
   it('提供动效令牌（时长 7 档 + 缓动 4 档）', () => {
     for (const token of [
-      '--dur-2xs', '--dur-xs', '--dur-sm', '--dur-md', '--dur-lg', '--dur-xl', '--dur-scene',
-      '--ease-default', '--ease-standard', '--ease-out', '--ease-bounce',
+      '--dur-2xs',
+      '--dur-xs',
+      '--dur-sm',
+      '--dur-md',
+      '--dur-lg',
+      '--dur-xl',
+      '--dur-scene',
+      '--ease-default',
+      '--ease-standard',
+      '--ease-out',
+      '--ease-bounce'
     ]) {
       expect(css).toContain(token + ':')
     }
@@ -24,7 +33,15 @@ describe('theme.css 无障碍基线（C1/C2）', () => {
   it('响应 prefers-reduced-motion：全部时长令牌归零并有全局兜底', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)')
     const block = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'))
-    for (const token of ['--dur-2xs', '--dur-xs', '--dur-sm', '--dur-md', '--dur-lg', '--dur-xl', '--dur-scene']) {
+    for (const token of [
+      '--dur-2xs',
+      '--dur-xs',
+      '--dur-sm',
+      '--dur-md',
+      '--dur-lg',
+      '--dur-xl',
+      '--dur-scene'
+    ]) {
       expect(block).toContain(token + ': 0ms')
     }
     expect(block).toContain('animation-duration: 0.01ms !important')

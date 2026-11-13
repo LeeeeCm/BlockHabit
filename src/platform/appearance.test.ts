@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { applyCachedAppearance, cacheAppearance, THEME_CACHE_KEY, LANG_CACHE_KEY } from './appearance'
+import {
+  applyCachedAppearance,
+  cacheAppearance,
+  THEME_CACHE_KEY,
+  LANG_CACHE_KEY
+} from './appearance'
 
 /**
  * C8：首帧外观缓存 —— 消除暗色/燕麦/雾灰主题启动时的纸白闪屏。

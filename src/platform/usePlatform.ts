@@ -24,6 +24,6 @@ export function usePlatform(): UsePlatformResult {
     platform,
     isMobile: platform === 'mobile',
     isDesktop: platform === 'desktop',
-    haptic: triggerHaptic,
+    haptic: triggerHaptic
   }
 }

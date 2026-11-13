@@ -6,7 +6,7 @@ import {
   buildEndpoint,
   normalizeServerBase,
   switchProvider,
-  type ProviderId,
+  type ProviderId
 } from './providers'
 
 describe('providers：WebDAV 服务商预设', () => {
@@ -31,16 +31,16 @@ describe('providers：WebDAV 服务商预设', () => {
 
   it('Nextcloud：base + /remote.php/dav/files/<username>/BlockHabit/', () => {
     expect(buildEndpoint('nextcloud', 'https://cloud.example.com', 'alice')).toBe(
-      'https://cloud.example.com/remote.php/dav/files/alice/BlockHabit/',
+      'https://cloud.example.com/remote.php/dav/files/alice/BlockHabit/'
     )
   })
 
   it('Nextcloud：无协议输入自动补 https、尾斜杠被规范化', () => {
     expect(buildEndpoint('nextcloud', 'cloud.example.com/', 'alice')).toBe(
-      'https://cloud.example.com/remote.php/dav/files/alice/BlockHabit/',
+      'https://cloud.example.com/remote.php/dav/files/alice/BlockHabit/'
     )
     expect(buildEndpoint('nextcloud', '  HTTPS://cloud.example.com//  ', 'alice')).toBe(
-      'https://cloud.example.com/remote.php/dav/files/alice/BlockHabit/',
+      'https://cloud.example.com/remote.php/dav/files/alice/BlockHabit/'
     )
   })
 
@@ -53,7 +53,7 @@ describe('providers：WebDAV 服务商预设', () => {
     expect(endpoint).not.toContain(' ')
     expect(endpoint).not.toContain('张三')
     expect(endpoint).toBe(
-      `https://cloud.example.com/remote.php/dav/files/${encodeURIComponent(username)}/BlockHabit/`,
+      `https://cloud.example.com/remote.php/dav/files/${encodeURIComponent(username)}/BlockHabit/`
     )
   })
 
@@ -65,25 +65,29 @@ describe('providers：WebDAV 服务商预设', () => {
 
   it('坚果云：固定端点，忽略 base/username', () => {
     expect(buildEndpoint('jianguoyun', '', '')).toBe(JIANGUOYUN_ENDPOINT)
-    expect(buildEndpoint('jianguoyun', 'https://whatever.example.com', 'whoever')).toBe(JIANGUOYUN_ENDPOINT)
+    expect(buildEndpoint('jianguoyun', 'https://whatever.example.com', 'whoever')).toBe(
+      JIANGUOYUN_ENDPOINT
+    )
     expect(JIANGUOYUN_ENDPOINT).toBe('https://dav.jianguoyun.com/dav/BlockHabit/')
   })
 
   it('群晖：base + /home/BlockHabit/', () => {
     expect(buildEndpoint('synology', 'https://nas.example.com:5006', 'alice')).toBe(
-      'https://nas.example.com:5006/home/BlockHabit/',
+      'https://nas.example.com:5006/home/BlockHabit/'
     )
     expect(buildEndpoint('synology', 'nas.example.com', 'alice')).toBe(
-      'https://nas.example.com/home/BlockHabit/',
+      'https://nas.example.com/home/BlockHabit/'
     )
     expect(buildEndpoint('synology', '', 'alice')).toBe('')
   })
 
   it('通用：规范化输入并补尾斜杠，保留路径', () => {
     expect(buildEndpoint('generic', 'dav.example.com/dav', '')).toBe('https://dav.example.com/dav/')
-    expect(buildEndpoint('generic', 'https://dav.example.com/dav/', '')).toBe('https://dav.example.com/dav/')
+    expect(buildEndpoint('generic', 'https://dav.example.com/dav/', '')).toBe(
+      'https://dav.example.com/dav/'
+    )
     expect(buildEndpoint('generic', 'https://dav.example.com/dav?x=1#hash', '')).toBe(
-      'https://dav.example.com/dav/',
+      'https://dav.example.com/dav/'
     )
     expect(buildEndpoint('generic', '', '')).toBe('')
   })
@@ -98,8 +102,12 @@ describe('providers：WebDAV 服务商预设', () => {
     expect(normalizeServerBase('dav.example.com')).toBe('https://dav.example.com')
     expect(normalizeServerBase('//dav.example.com')).toBe('https://dav.example.com')
     expect(normalizeServerBase('HTTP://DAV.example.com//')).toBe('http://DAV.example.com')
-    expect(normalizeServerBase('https://dav.example.com/a//b///')).toBe('https://dav.example.com/a/b')
-    expect(normalizeServerBase('https://dav.example.com/a?query=1#f')).toBe('https://dav.example.com/a')
+    expect(normalizeServerBase('https://dav.example.com/a//b///')).toBe(
+      'https://dav.example.com/a/b'
+    )
+    expect(normalizeServerBase('https://dav.example.com/a?query=1#f')).toBe(
+      'https://dav.example.com/a'
+    )
   })
 
   it('切换服务商：旧 endpoint 绝不沿用，一律按新预设重建', () => {
@@ -107,7 +115,7 @@ describe('providers：WebDAV 服务商预设', () => {
       providerId: 'nextcloud' as ProviderId,
       base: 'https://cloud.example.com',
       username: 'alice',
-      endpoint: buildEndpoint('nextcloud', 'https://cloud.example.com', 'alice'),
+      endpoint: buildEndpoint('nextcloud', 'https://cloud.example.com', 'alice')
     }
     const toGeneric = switchProvider(before, 'generic')
     expect(toGeneric.providerId).toBe('generic')
@@ -130,7 +138,7 @@ describe('providers：WebDAV 服务商预设', () => {
       providerId: 'nextcloud' as ProviderId,
       base: 'https://cloud.example.com',
       username: 'alice',
-      endpoint: 'stale-endpoint',
+      endpoint: 'stale-endpoint'
     }
     const rebuilt = switchProvider(state, 'nextcloud')
     expect(rebuilt.endpoint).toBe(buildEndpoint('nextcloud', state.base, state.username))

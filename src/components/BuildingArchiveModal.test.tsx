@@ -22,7 +22,7 @@ function createFakeContext(): CanvasRenderingContext2D {
     measureText: (text: string) => ({ width: String(text).length * 7 }),
     createLinearGradient: () => gradient,
     createRadialGradient: () => gradient,
-    getTransform: () => ({ a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 }),
+    getTransform: () => ({ a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 })
   }
   return new Proxy(target, {
     get(obj, prop) {
@@ -33,7 +33,7 @@ function createFakeContext(): CanvasRenderingContext2D {
     set(obj, prop, value) {
       obj[prop as string] = value
       return true
-    },
+    }
   }) as unknown as CanvasRenderingContext2D
 }
 
@@ -49,7 +49,7 @@ function plantBuilds(): PlacedBlock[] {
     index,
     placedAt: atLocal('2026-03-0' + (index + 1)),
     fromHabitId: 'h1',
-    bonus: false,
+    bonus: false
   }))
 }
 
@@ -58,10 +58,17 @@ function seedCompletedPlant(): void {
   useAppStore.setState({
     builds: plantBuilds(),
     checkIns: [],
-    habits: [{ id: 'h1', name: '晨间冥想', frequency: { type: 'daily' }, createdAt: '2024-01-01T00:00:00.000Z' }],
+    habits: [
+      {
+        id: 'h1',
+        name: '晨间冥想',
+        frequency: { type: 'daily' },
+        createdAt: '2024-01-01T00:00:00.000Z'
+      }
+    ],
     foundationNotes: {},
     completedBlueprintIds: ['plant'],
-    settings: { ...current.settings, language: 'zh' },
+    settings: { ...current.settings, language: 'zh' }
   })
 }
 
@@ -80,7 +87,7 @@ function renderModal(onClose: () => void) {
     unmount: () => {
       act(() => root.unmount())
       container.remove()
-    },
+    }
   }
 }
 

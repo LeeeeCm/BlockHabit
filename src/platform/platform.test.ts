@@ -10,12 +10,12 @@ describe('Platform detection', () => {
     Object.defineProperty(navigator, 'userAgent', {
       writable: true,
       configurable: true,
-      value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
     })
     Object.defineProperty(navigator, 'maxTouchPoints', {
       writable: true,
       configurable: true,
-      value: 0,
+      value: 0
     })
   })
 
@@ -32,23 +32,31 @@ describe('Platform detection', () => {
 
   it('detects mobile when userAgent indicates mobile device or narrow viewport with touch', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 })
-    Object.defineProperty(navigator, 'maxTouchPoints', { writable: true, configurable: true, value: 5 })
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      writable: true,
+      configurable: true,
+      value: 5
+    })
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       configurable: true,
-      value: (q: string) => ({ matches: q.includes('coarse'), media: q }),
+      value: (q: string) => ({ matches: q.includes('coarse'), media: q })
     })
     expect(detectPlatform()).toBe('mobile')
   })
 
   it('keeps desktop paradigm on touch devices with fine pointer (touch-screen laptop)', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 390 })
-    Object.defineProperty(navigator, 'maxTouchPoints', { writable: true, configurable: true, value: 5 })
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      writable: true,
+      configurable: true,
+      value: 5
+    })
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       configurable: true,
       // fine pointer：coarse 媒体查询不匹配
-      value: (q: string) => ({ matches: false, media: q }),
+      value: (q: string) => ({ matches: false, media: q })
     })
     expect(detectPlatform()).toBe('desktop')
   })
@@ -57,12 +65,12 @@ describe('Platform detection', () => {
     Object.defineProperty(window, '__TAURI_INTERNALS__', {
       writable: true,
       configurable: true,
-      value: {},
+      value: {}
     })
     Object.defineProperty(navigator, 'userAgent', {
       writable: true,
       configurable: true,
-      value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)',
+      value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)'
     })
     expect(detectPlatform()).toBe('mobile')
   })
@@ -71,22 +79,23 @@ describe('Platform detection', () => {
     Object.defineProperty(window, '__TAURI_INTERNALS__', {
       writable: true,
       configurable: true,
-      value: {},
+      value: {}
     })
     Object.defineProperty(navigator, 'userAgent', {
       writable: true,
       configurable: true,
-      value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)',
+      value:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)'
     })
     Object.defineProperty(navigator, 'maxTouchPoints', {
       writable: true,
       configurable: true,
-      value: 5,
+      value: 5
     })
     Object.defineProperty(window, 'innerWidth', {
       writable: true,
       configurable: true,
-      value: 1024,
+      value: 1024
     })
     expect(detectPlatform()).toBe('mobile')
   })
@@ -96,13 +105,13 @@ describe('Platform detection', () => {
     try {
       Object.defineProperty(window, 'navigator', {
         value: undefined,
-        configurable: true,
+        configurable: true
       })
       expect(detectPlatform()).toBe('desktop')
     } finally {
       Object.defineProperty(window, 'navigator', {
         value: originalNavigator,
-        configurable: true,
+        configurable: true
       })
     }
   })
@@ -111,7 +120,11 @@ describe('Platform detection', () => {
 describe('Haptics trigger', () => {
   it('calls navigator.vibrate when available', () => {
     const vibrateSpy = vi.fn()
-    Object.defineProperty(navigator, 'vibrate', { writable: true, configurable: true, value: vibrateSpy })
+    Object.defineProperty(navigator, 'vibrate', {
+      writable: true,
+      configurable: true,
+      value: vibrateSpy
+    })
     triggerHaptic('light')
     expect(vibrateSpy).toHaveBeenCalledWith(10)
     triggerHaptic('medium')
@@ -127,7 +140,11 @@ describe('Haptics trigger', () => {
   })
 
   it('safely handles missing navigator.vibrate gracefully without throwing', () => {
-    Object.defineProperty(navigator, 'vibrate', { writable: true, configurable: true, value: undefined })
+    Object.defineProperty(navigator, 'vibrate', {
+      writable: true,
+      configurable: true,
+      value: undefined
+    })
     expect(() => triggerHaptic('light')).not.toThrow()
   })
 
@@ -137,7 +154,7 @@ describe('Haptics trigger', () => {
       configurable: true,
       value: () => {
         throw new Error('SecurityError')
-      },
+      }
     })
     expect(() => triggerHaptic('light')).not.toThrow()
   })
@@ -146,7 +163,11 @@ describe('Haptics trigger', () => {
 describe('usePlatform hook', () => {
   it('returns platform state and stable haptic helper', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 })
-    Object.defineProperty(navigator, 'maxTouchPoints', { writable: true, configurable: true, value: 0 })
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      writable: true,
+      configurable: true,
+      value: 0
+    })
 
     let result: UsePlatformResult | undefined
     function TestComponent() {

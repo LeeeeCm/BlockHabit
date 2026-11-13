@@ -2,12 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '../i18n'
 import { useAppStore } from '../store/appStore'
 import { exportDiagnosticsPackage } from '../platform/diagnostics'
-import { createBackup, listBackups, openDataDir, readBackup, type BackupEntry } from '../storage/backups'
+import {
+  createBackup,
+  listBackups,
+  openDataDir,
+  readBackup,
+  type BackupEntry
+} from '../storage/backups'
 import type { AppState } from '../types'
 import { ArchiveExportPanel } from './ArchiveExportPanel'
 
-const inTauri =
-  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 type Toast = (message: string, durationMs?: number) => void
 
@@ -37,35 +42,38 @@ export function ArchiveDataPanel({ onImportFile }: DataPanelProps) {
 
   return (
     <>
-            <div className="field" style={{ marginBottom: 0 }}>
-              <label>{t.settings.dataLabel}</label>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button className="btn ghost" onClick={doExport} style={{ flex: 1, padding: '7px 0' }}>
-                  {t.settings.exportJson}
-                </button>
-                <button className="btn ghost" onClick={() => fileRef.current?.click()} style={{ flex: 1, padding: '7px 0' }}>
-                  {t.settings.importJson}
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="application/json,.json"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0]
-                    if (f) onImportFile(f)
-                    e.target.value = ''
-                  }}
-                />
-              </div>
-            </div>
+      <div className="field" style={{ marginBottom: 0 }}>
+        <label>{t.settings.dataLabel}</label>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn ghost" onClick={doExport} style={{ flex: 1, padding: '7px 0' }}>
+            {t.settings.exportJson}
+          </button>
+          <button
+            className="btn ghost"
+            onClick={() => fileRef.current?.click()}
+            style={{ flex: 1, padding: '7px 0' }}
+          >
+            {t.settings.importJson}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) onImportFile(f)
+              e.target.value = ''
+            }}
+          />
+        </div>
+      </div>
 
-            {/* A4 一键档案包：文件夹（桌面）/ 单 ZIP（浏览器），可取消、失败清理 */}
-            <ArchiveExportPanel />
+      {/* A4 一键档案包：文件夹（桌面）/ 单 ZIP（浏览器），可取消、失败清理 */}
+      <ArchiveExportPanel />
     </>
   )
 }
-
 
 interface BackupsPanelProps {
   onToast: Toast
@@ -87,7 +95,7 @@ export function ArchiveBackupsPanel({ onToast, onRestoreCandidate }: BackupsPane
     void listBackups().then(setBackups)
   }, [])
 
-                  /** 刷新备份列表（读目录失败时保持空列表，不打扰用户） */
+  /** 刷新备份列表（读目录失败时保持空列表，不打扰用户） */
   async function refreshBackups(): Promise<void> {
     setBackups(await listBackups())
   }
@@ -111,50 +119,96 @@ export function ArchiveBackupsPanel({ onToast, onRestoreCandidate }: BackupsPane
 
   return (
     <>
-              <div className="field" style={{ marginBottom: 10 }}>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn ghost" onClick={() => void doManualBackup()} style={{ flex: 1, padding: '7px 0' }}>
-                    {t.settings.backupNow}
-                  </button>
-                  <button className="btn ghost" onClick={() => void doOpenDataDir()} style={{ flex: 1, padding: '7px 0' }}>
-                    {t.settings.openDataDir}
-                  </button>
-                </div>
-              </div>
-              <div className="field" style={{ marginBottom: 0 }}>
-                <label>{t.settings.restoreLabel}</label>
-                {backups.length === 0 ? (
-                  <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>{t.settings.backupsEmpty}</div>
-                ) : (
-                  <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {backups.map((b) => (
-                      <li
-                        key={b.name}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}
-                      >
-                        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {b.kind === 'corrupt'
-                            ? t.settings.backupKindCorrupt
-                            : b.timestamp
-                              ? new Date(b.timestamp).toLocaleString()
-                              : b.name}
-                          {b.size > 0 && b.kind !== 'corrupt' ? `  ·  ${Math.max(1, Math.round(b.size / 1024))} KB` : ''}
-                        </span>
-                        <span style={{ fontSize: 'var(--fs-caption)', padding: '1px 6px', borderRadius: 999, background: 'color-mix(in srgb, var(--ink) 7%, transparent)' }}>
-                          {b.kind === 'auto'
-                            ? t.settings.backupKindAuto
-                            : b.kind === 'manual'
-                              ? t.settings.backupKindManual
-                              : t.settings.backupKindCorrupt}
-                        </span>
-                        <button className="btn ghost" style={{ padding: '3px 10px', fontSize: 'var(--fs-small)' }} onClick={() => void doRestoreBackup(b.name)}>
-                          {t.settings.backupRestore}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+      <div className="field" style={{ marginBottom: 10 }}>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            className="btn ghost"
+            onClick={() => void doManualBackup()}
+            style={{ flex: 1, padding: '7px 0' }}
+          >
+            {t.settings.backupNow}
+          </button>
+          <button
+            className="btn ghost"
+            onClick={() => void doOpenDataDir()}
+            style={{ flex: 1, padding: '7px 0' }}
+          >
+            {t.settings.openDataDir}
+          </button>
+        </div>
+      </div>
+      <div className="field" style={{ marginBottom: 0 }}>
+        <label>{t.settings.restoreLabel}</label>
+        {backups.length === 0 ? (
+          <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
+            {t.settings.backupsEmpty}
+          </div>
+        ) : (
+          <ul
+            style={{
+              listStyle: 'none',
+              margin: 0,
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6
+            }}
+          >
+            {backups.map((b) => (
+              <li
+                key={b.name}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 'var(--fs-small)',
+                  color: 'var(--ink-2)'
+                }}
+              >
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {b.kind === 'corrupt'
+                    ? t.settings.backupKindCorrupt
+                    : b.timestamp
+                      ? new Date(b.timestamp).toLocaleString()
+                      : b.name}
+                  {b.size > 0 && b.kind !== 'corrupt'
+                    ? `  ·  ${Math.max(1, Math.round(b.size / 1024))} KB`
+                    : ''}
+                </span>
+                <span
+                  style={{
+                    fontSize: 'var(--fs-caption)',
+                    padding: '1px 6px',
+                    borderRadius: 999,
+                    background: 'color-mix(in srgb, var(--ink) 7%, transparent)'
+                  }}
+                >
+                  {b.kind === 'auto'
+                    ? t.settings.backupKindAuto
+                    : b.kind === 'manual'
+                      ? t.settings.backupKindManual
+                      : t.settings.backupKindCorrupt}
+                </span>
+                <button
+                  className="btn ghost"
+                  style={{ padding: '3px 10px', fontSize: 'var(--fs-small)' }}
+                  onClick={() => void doRestoreBackup(b.name)}
+                >
+                  {t.settings.backupRestore}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </>
   )
 }
@@ -176,23 +230,22 @@ export function DiagnosticsExportPanel({ onToast }: DiagnosticsProps) {
 
   return (
     <>
-            {/* F9 本地诊断包：崩溃日志 + 数据体量 + 帧率采样，纯本地生成 */}
-            <div className="field" style={{ marginBottom: 0 }}>
-              <label>{t.settings.diagnosticsLabel}</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <button
-                  className="btn ghost"
-                  style={{ padding: '7px 16px' }}
-                  onClick={() => void doExportDiagnostics()}
-                >
-                  {t.settings.diagnosticsExport}
-                </button>
-                <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', lineHeight: 1.5 }}>
-                  {t.settings.diagnosticsHint}
-                </span>
-              </div>
-            </div>
+      {/* F9 本地诊断包：崩溃日志 + 数据体量 + 帧率采样，纯本地生成 */}
+      <div className="field" style={{ marginBottom: 0 }}>
+        <label>{t.settings.diagnosticsLabel}</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            className="btn ghost"
+            style={{ padding: '7px 16px' }}
+            onClick={() => void doExportDiagnostics()}
+          >
+            {t.settings.diagnosticsExport}
+          </button>
+          <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', lineHeight: 1.5 }}>
+            {t.settings.diagnosticsHint}
+          </span>
+        </div>
+      </div>
     </>
   )
 }
-

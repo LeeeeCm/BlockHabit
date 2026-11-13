@@ -14,14 +14,14 @@ describe('HabitRow memo & slice isolation', () => {
     id: 'h1',
     name: '晨跑',
     frequency: { type: 'daily' },
-    createdAt: '2026-09-01T00:00:00.000Z',
+    createdAt: '2026-09-01T00:00:00.000Z'
   }
 
   const h2: Habit = {
     id: 'h2',
     name: '阅读',
     frequency: { type: 'daily' },
-    createdAt: '2026-09-01T00:00:00.000Z',
+    createdAt: '2026-09-01T00:00:00.000Z'
   }
 
   // store 的 checkIn 使用真实 todayKey，测试的 day 必须一致（勿硬编码日期）
@@ -37,7 +37,7 @@ describe('HabitRow memo & slice isolation', () => {
       habits: [h1, h2],
       checkIns: [],
       builds: [],
-      activeBlueprintId: 'plant',
+      activeBlueprintId: 'plant'
     })
   })
 

@@ -39,7 +39,9 @@ export function getSyncUrl(endpoint: string): string {
   if (trimmed.endsWith('.json')) {
     return encodeUrlPath(trimmed)
   }
-  const file = trimmed.endsWith('/') ? `${trimmed}${SYNC_FILE_NAME}` : `${trimmed}/${SYNC_FILE_NAME}`
+  const file = trimmed.endsWith('/')
+    ? `${trimmed}${SYNC_FILE_NAME}`
+    : `${trimmed}/${SYNC_FILE_NAME}`
   return encodeUrlPath(file)
 }
 
@@ -84,7 +86,7 @@ export function getAuthHeaders(config: WebDavConfig): Record<string, string> {
   }
   const credentials = `${config.username}:${config.password}`
   return {
-    Authorization: `Basic ${utf8ToBase64(credentials)}`,
+    Authorization: `Basic ${utf8ToBase64(credentials)}`
   }
 }
 
@@ -112,9 +114,9 @@ export async function fetchRemoteState(config: WebDavConfig): Promise<RemoteFetc
       method: 'GET',
       headers: {
         ...getAuthHeaders(config),
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache'
       },
-      signal: AbortSignal.timeout(GET_TIMEOUT_MS),
+      signal: AbortSignal.timeout(GET_TIMEOUT_MS)
     })
   } catch (err) {
     if (err instanceof WebDavError) throw err
@@ -128,17 +130,31 @@ export async function fetchRemoteState(config: WebDavConfig): Promise<RemoteFetc
     return await confirmCollectionEmpty(config, url)
   }
   if (response.status === 401 || response.status === 403) {
-    throw new WebDavError('auth', `WebDAV authentication failed (${response.status})`, response.status)
+    throw new WebDavError(
+      'auth',
+      `WebDAV authentication failed (${response.status})`,
+      response.status
+    )
   }
   if (!response.ok) {
-    throw new WebDavError('http', `WebDAV request failed: ${response.status} ${response.statusText}`, response.status)
+    throw new WebDavError(
+      'http',
+      `WebDAV request failed: ${response.status} ${response.statusText}`,
+      response.status
+    )
   }
 
-  return { json: await response.text(), etag: response.headers.get('etag') ?? response.headers.get('ETag') }
+  return {
+    json: await response.text(),
+    etag: response.headers.get('etag') ?? response.headers.get('ETag')
+  }
 }
 
 /** 404 后的二次确认：PROPFIND（Depth: 0）207/200 = 目录存在、文件确实不存在 */
-async function confirmCollectionEmpty(config: WebDavConfig, fileUrl: string): Promise<RemoteFetchResult> {
+async function confirmCollectionEmpty(
+  config: WebDavConfig,
+  fileUrl: string
+): Promise<RemoteFetchResult> {
   const dirUrl = fileUrl.slice(0, fileUrl.lastIndexOf('/') + 1)
   let propfind: Response
   try {
@@ -146,19 +162,24 @@ async function confirmCollectionEmpty(config: WebDavConfig, fileUrl: string): Pr
       method: 'PROPFIND',
       headers: {
         ...getAuthHeaders(config),
-        Depth: '0',
+        Depth: '0'
       },
-      signal: AbortSignal.timeout(GET_TIMEOUT_MS),
+      signal: AbortSignal.timeout(GET_TIMEOUT_MS)
     })
   } catch (err) {
-    if (isLikelyCors(err)) throw new WebDavError('cors', `WebDAV request blocked (likely CORS): ${String(err)}`)
+    if (isLikelyCors(err))
+      throw new WebDavError('cors', `WebDAV request blocked (likely CORS): ${String(err)}`)
     throw new WebDavError('network', `WebDAV request failed: ${String(err)}`)
   }
   if (propfind.status === 404) {
     throw new WebDavError('no-collection', `WebDAV collection does not exist: ${dirUrl}`, 404)
   }
   if (propfind.status === 401 || propfind.status === 403) {
-    throw new WebDavError('auth', `WebDAV authentication failed (${propfind.status})`, propfind.status)
+    throw new WebDavError(
+      'auth',
+      `WebDAV authentication failed (${propfind.status})`,
+      propfind.status
+    )
   }
   if (!propfind.ok && propfind.status !== 207) {
     throw new WebDavError('http', `WebDAV PROPFIND failed: ${propfind.status}`, propfind.status)
@@ -175,7 +196,11 @@ function parentCollectionUrl(fileUrl: string): string {
  * - 携带 If-Match（服务器支持 ETag 时）做条件写，防止双设备 lost update；
  * - 412 → conflict（调用方重拉重并）；409 → 父目录缺失，先 MKCOL 再重试一次。
  */
-export async function pushRemoteState(config: WebDavConfig, json: string, etag?: string | null): Promise<void> {
+export async function pushRemoteState(
+  config: WebDavConfig,
+  json: string,
+  etag?: string | null
+): Promise<void> {
   const url = getSyncUrl(config.endpoint)
   if (!url) {
     throw new WebDavError('network', 'WebDAV endpoint not configured')
@@ -183,7 +208,7 @@ export async function pushRemoteState(config: WebDavConfig, json: string, etag?:
 
   const headers: Record<string, string> = {
     ...getAuthHeaders(config),
-    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Type': 'application/json; charset=utf-8'
   }
   if (etag) {
     headers['If-Match'] = etag
@@ -195,10 +220,11 @@ export async function pushRemoteState(config: WebDavConfig, json: string, etag?:
         method: 'PUT',
         headers: { ...headers, ...extraHeaders },
         body: json,
-        signal: AbortSignal.timeout(PUT_TIMEOUT_MS),
+        signal: AbortSignal.timeout(PUT_TIMEOUT_MS)
       })
     } catch (err) {
-      if (isLikelyCors(err)) throw new WebDavError('cors', `WebDAV request blocked (likely CORS): ${String(err)}`)
+      if (isLikelyCors(err))
+        throw new WebDavError('cors', `WebDAV request blocked (likely CORS): ${String(err)}`)
       throw new WebDavError('network', `WebDAV request failed: ${String(err)}`)
     }
   }
@@ -211,11 +237,12 @@ export async function pushRemoteState(config: WebDavConfig, json: string, etag?:
       const mkcol = await httpFetch(parentCollectionUrl(url), {
         method: 'MKCOL',
         headers: getAuthHeaders(config),
-        signal: AbortSignal.timeout(GET_TIMEOUT_MS),
+        signal: AbortSignal.timeout(GET_TIMEOUT_MS)
       })
       mkcolOk = mkcol.ok || mkcol.status === 201
     } catch (err) {
-      if (isLikelyCors(err)) throw new WebDavError('cors', `WebDAV MKCOL blocked (likely CORS): ${String(err)}`)
+      if (isLikelyCors(err))
+        throw new WebDavError('cors', `WebDAV MKCOL blocked (likely CORS): ${String(err)}`)
       throw new WebDavError('network', `WebDAV MKCOL failed: ${String(err)}`)
     }
     if (mkcolOk) {
@@ -224,12 +251,24 @@ export async function pushRemoteState(config: WebDavConfig, json: string, etag?:
   }
 
   if (response.status === 401 || response.status === 403) {
-    throw new WebDavError('auth', `WebDAV authentication failed (${response.status})`, response.status)
+    throw new WebDavError(
+      'auth',
+      `WebDAV authentication failed (${response.status})`,
+      response.status
+    )
   }
   if (response.status === 412) {
-    throw new WebDavError('conflict', 'WebDAV precondition failed (remote updated concurrently)', 412)
+    throw new WebDavError(
+      'conflict',
+      'WebDAV precondition failed (remote updated concurrently)',
+      412
+    )
   }
   if (!response.ok && response.status !== 201 && response.status !== 204) {
-    throw new WebDavError('http', `WebDAV push failed: ${response.status} ${response.statusText}`, response.status)
+    throw new WebDavError(
+      'http',
+      `WebDAV push failed: ${response.status} ${response.statusText}`,
+      response.status
+    )
   }
 }

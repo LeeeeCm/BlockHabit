@@ -21,6 +21,14 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/sync/webdav.e2e.test.ts", "src/theme.test.ts", "src/designLedger.test.ts", "src/themeMotion.test.ts", "src/components/dialogA11y.test.ts", "src/themeContrast.test.ts", "src/themeTypography.test.ts"],
+  "exclude": [
+    "src/sync/webdav.e2e.test.ts",
+    "src/theme.test.ts",
+    "src/designLedger.test.ts",
+    "src/themeMotion.test.ts",
+    "src/components/dialogA11y.test.ts",
+    "src/themeContrast.test.ts",
+    "src/themeTypography.test.ts"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

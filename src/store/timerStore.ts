@@ -3,7 +3,7 @@ import {
   MAX_EXTENSIONS,
   extendSession,
   isSessionStale,
-  type FocusSessionLike,
+  type FocusSessionLike
 } from '../logic/focusSession'
 
 /**
@@ -59,7 +59,11 @@ function normalizeSession(raw: unknown): TimerSession | null {
     const extensions = Math.max(0, Math.min(MAX_EXTENSIONS, Math.floor(value.extensions)))
     if (extensions > 0) session.extensions = extensions
   }
-  if (typeof value.notifiedAt === 'number' && Number.isFinite(value.notifiedAt) && value.notifiedAt > 0) {
+  if (
+    typeof value.notifiedAt === 'number' &&
+    Number.isFinite(value.notifiedAt) &&
+    value.notifiedAt > 0
+  ) {
     session.notifiedAt = value.notifiedAt
   }
   return session
@@ -81,7 +85,10 @@ export function readFocusSessions(now: number = Date.now()): Record<string, Time
   }
   const container = parsed as { version?: unknown; sessions?: unknown } | null
   const sessionsRaw =
-    container && typeof container === 'object' && container.sessions && typeof container.sessions === 'object'
+    container &&
+    typeof container === 'object' &&
+    container.sessions &&
+    typeof container.sessions === 'object'
       ? (container.sessions as Record<string, unknown>)
       : (parsed as Record<string, unknown>)
   const sessions: Record<string, TimerSession> = {}
@@ -106,7 +113,7 @@ export function writeFocusSessions(sessions: Record<string, TimerSession>): void
     }
     localStorage.setItem(
       FOCUS_SESSIONS_STORAGE_KEY,
-      JSON.stringify({ version: STORAGE_VERSION, sessions }),
+      JSON.stringify({ version: STORAGE_VERSION, sessions })
     )
   } catch {
     // 隐私模式 / 配额满：不影响计时本身，只是重启后恢复不了
@@ -179,5 +186,5 @@ export const useTimerStore = create<TimerStore>()((set, get) => ({
     if (!changed) return
     writeFocusSessions(sessions)
     set({ sessions })
-  },
+  }
 }))

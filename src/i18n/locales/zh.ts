@@ -20,17 +20,17 @@ export const zh: TranslationSchema = {
     weekdayLabel: (w) => `周${w}`,
     timeMinutes: (m) => `${m} 分钟`,
     dismiss: '下滑关闭',
-    shortcut: (label, key) => `${label}（${key}）`,
+    shortcut: (label, key) => `${label}（${key}）`
   },
   a11y: {
     unfinishedHabits: '今日还有未完成习惯',
-    bottomNav: '底部导航',
+    bottomNav: '底部导航'
   },
   nav: {
     today: '今日',
     build: '建造',
     showcase: '展台',
-    stats: '统计',
+    stats: '统计'
   },
   titlebar: {
     settings: '设置',
@@ -38,7 +38,7 @@ export const zh: TranslationSchema = {
     minimize: '最小化',
     maximize: '最大化',
     restore: '还原',
-    close: '关闭',
+    close: '关闭'
   },
   today: {
     emptyHint: (bp) =>
@@ -48,15 +48,14 @@ export const zh: TranslationSchema = {
     collapse: '收起 ▴',
     expand: '展开 ▾',
     deleteConfirmTitle: '删除习惯',
-    deleteConfirmMsg: (name) =>
-      `确定要删除「${name}」吗？它的打卡记录将一并删除，此操作不可恢复。`,
+    deleteConfirmMsg: (name) => `确定要删除「${name}」吗？它的打卡记录将一并删除，此操作不可恢复。`,
     checkedInToast: (name) => `「${name}」已打卡`,
     streakBonusToast: (days) => `连击 ${days} 天！这块积木是点缀色奖励块`,
     periods: {
       any: '任意时段',
       morning: '早晨',
       afternoon: '午后',
-      evening: '夜晚',
+      evening: '夜晚'
     },
     restDay: '今日免战',
     resilienceContinuation: '连胜保护 · 昨日休整已接续',
@@ -93,7 +92,7 @@ export const zh: TranslationSchema = {
       bonusHabitName: '每日全勤大满贯',
       deletedHabitName: '已删除习惯',
       claimBtn: '领取全勤积木',
-      claimed: '已领全勤',
+      claimed: '已领全勤'
     },
     view3dModel: '前往建造页面查看 3D 模型',
     filterAll: '全部',
@@ -112,7 +111,7 @@ export const zh: TranslationSchema = {
     pinHabit: '置顶习惯',
     addReflectionPlaceholder: '添加打卡随笔...',
     focusedMinutes: (min) => `已专注 ${min} 分钟`,
-    timerDoneNotify: (name) => `「${name}」计时完成，回到卡片点击打卡`,
+    timerDoneNotify: (name) => `「${name}」计时完成，回到卡片点击打卡`
   },
   blockDrop: {
     plusOne: '+1 积木',
@@ -120,7 +119,7 @@ export const zh: TranslationSchema = {
     skip: '跳过动画',
     progress: (p, t, pct) => `进度 ${p} / ${t} 块 (${pct}%)`,
     completedBlueprint: (name) => `「${name}」落成！`,
-    firstBlockHint: '这是你的第一块积木 —— 它会出现在「建造」页的桌子上，往后的每块都会拼在它旁边。',
+    firstBlockHint: '这是你的第一块积木 —— 它会出现在「建造」页的桌子上，往后的每块都会拼在它旁边。'
   },
   build: {
     blocksCount: (p, t) => `${p} / ${t} 块`,
@@ -130,7 +129,8 @@ export const zh: TranslationSchema = {
     rotCw: '顺时针旋转 90°',
     nextTargetPrompt: (name) => `下一个建造目标：${name}`,
     allDoneBadge: '已全部落成',
-    allDoneHint: (total) => `${total} 座蓝图全部落成。打卡仍会记录在案，但已没有新积木可掉；你可以随时切回任意蓝图重看，或去「展台」重新摆布模型。`,
+    allDoneHint: (total) =>
+      `${total} 座蓝图全部落成。打卡仍会记录在案，但已没有新积木可掉；你可以随时切回任意蓝图重看，或去「展台」重新摆布模型。`,
     startBuildBtn: '开始建造',
     ceremonyTitle: (name) => `《${name}》落成！`,
     ceremonySubtitle: (total) => `由 ${total} 块自律积木构筑`,
@@ -143,18 +143,17 @@ export const zh: TranslationSchema = {
     ambientHint: '时段感知昼夜光照：积木随晨昏自动调节光影',
     xray: {
       toggleTooltip: '开启/关闭透视考古探针',
-      btn: '透视考古',
+      btn: '透视考古'
     },
     foundationGuide: (name) =>
-      `虚线框是「${name}」的地基范围。\n回到「今日」完成打卡，积木会一层层落进来。`,
+      `虚线框是「${name}」的地基范围。\n回到「今日」完成打卡，积木会一层层落进来。`
   },
   showcase: {
     title: '展台沙盘',
     countDisplay: (c) => `陈列 ${c} 座建筑`,
     autoArrange: '自动排列',
     dragHint: '拖拽建筑可自由摆放 · 点击建筑可查看落成纪念相纸',
-    emptyHint:
-      '还没有落成的建筑。去「今日」打卡完成拼搭，建筑会自动陈列在沙盘上。',
+    emptyHint: '还没有落成的建筑。去「今日」打卡完成拼搭，建筑会自动陈列在沙盘上。',
     fullHint: '展台空间已满，部分建筑未能重新排列',
     decoration: '装饰模式',
     decorationHint: '拖动摆位、旋转模型；仅本次会话有效，重开复原',
@@ -163,7 +162,7 @@ export const zh: TranslationSchema = {
     rotateRight: '顺时针旋转 90°',
     rotateBlocked: '旋转后会与其他模型重叠，已还原',
     ecoReshuffle: '换一组植被',
-    ecoReshuffled: '植被已重排（仅本次会话）',
+    ecoReshuffled: '植被已重排（仅本次会话）'
   },
   stats: {
     title: '统计',
@@ -187,8 +186,7 @@ export const zh: TranslationSchema = {
     repairBeforeCreationToast: '无法补签习惯创建之前的日期',
     repairFailToast: '补签失败，请稍后再试',
     repairLimitToast: '只能补签过去 30 天以内的遗漏打卡',
-    repairNoBricksToast:
-      '暂无可用修复积木，完整拼完一座建筑可获得 1 块！',
+    repairNoBricksToast: '暂无可用修复积木，完整拼完一座建筑可获得 1 块！',
     heatmapDone: '已完成',
     heatmapLabel: '近 13 周完成情况日历（方向键移动，Home/End 到本周首尾）',
     heatmapRepair: '点击补签',
@@ -209,12 +207,12 @@ export const zh: TranslationSchema = {
       bestStreak: '最长连击',
       totalCheckIns: '总打卡',
       hours: (h) => `${h} 小时`,
-      minutes: (m) => `${m} 分钟`,
+      minutes: (m) => `${m} 分钟`
     },
     recentReflections: '近期打卡随笔',
     exportMd: '导出 MD',
     allMoods: '全部心境',
-    loadMoreReflections: (cur, total) => `加载更多随笔 (${cur}/${total})`,
+    loadMoreReflections: (cur, total) => `加载更多随笔 (${cur}/${total})`
   },
   habitDialog: {
     newTitle: '新建习惯',
@@ -258,7 +256,7 @@ export const zh: TranslationSchema = {
     fewerSettings: '收起更多设置',
     noteLabel: '备注',
     notePlaceholder: '为什么想做这件事？',
-    archiveBtn: '归档',
+    archiveBtn: '归档'
   },
   gallery: {
     title: '模型图鉴',
@@ -266,13 +264,12 @@ export const zh: TranslationSchema = {
     inProgress: '建造中',
     locked: '待解锁',
     completePreviousFirst: '请完成上一个积木拼装任务',
-    totalBlocks: (total) => `共 ${total} 块`,
+    totalBlocks: (total) => `共 ${total} 块`
   },
   polaroid: {
     modalTitle: '建筑落成纪念相纸',
     cardTitle: (name) => `《${name}》`,
-    cardDetails: (blocks, date) =>
-      `共 ${blocks} 块积木 · 完美落成纪念 · ${date}`,
+    cardDetails: (blocks, date) => `共 ${blocks} 块积木 · 完美落成纪念 · ${date}`,
     savePng: '保存图片',
     copyImage: '复制图片',
     copiedToast: '已复制相纸到剪贴板！',
@@ -284,7 +281,7 @@ export const zh: TranslationSchema = {
     modalTitleBack: '筑造手账相卡 (背面)',
     flipTooltip: '翻转卡片正反面',
     viewFront: '查看相片正面',
-    viewBack: '翻转手账背面',
+    viewBack: '翻转手账背面'
   },
   settings: {
     title: '设置',
@@ -354,7 +351,7 @@ export const zh: TranslationSchema = {
       rememberPasswordHintOff: '密码只保留在本次运行内存中，重开应用后需要重新输入才能同步。',
       rememberPasswordHintOs: '密码由 Windows 凭据管理器保管，存档与配置文件里都不含明文密码。',
       passwordStoredPlaceholder: '已保存；留空继续使用',
-      passwordKeepHint: '已保存密码：留空表示继续使用，输入新密码可替换。',
+      passwordKeepHint: '已保存密码：留空表示继续使用，输入新密码可替换。'
     },
     shortcutsTitle: '快捷键说明',
     shortcutsDetail: '按键 1~4 切换页面 · Ctrl+N 新建习惯 · 退出键关闭弹窗',
@@ -387,9 +384,12 @@ export const zh: TranslationSchema = {
     importConfirmMsg: (habits, checkIns) =>
       `将覆盖现有的 ${habits} 条习惯 / ${checkIns} 条打卡记录，当前数据会自动备份。`,
     saveFailedToast: '存档保存失败，请检查磁盘空间；可在设置中先导出备份。',
-    needsUpgradeToast: '存档由更新版本的应用创建，请升级 BlockHabit 后再使用；本次会话中的变更不会被保存。',
-    loadFailedToast: '存档读取失败，本次会话已暂停自动保存以免覆盖原存档；请检查磁盘/权限后重启应用。',
-    corruptRecoveredToast: '原存档已损坏，已把原始内容备份到数据目录（*.corrupt-backup）；本次以空存档启动，可在设置中导入备份恢复。',
+    needsUpgradeToast:
+      '存档由更新版本的应用创建，请升级 BlockHabit 后再使用；本次会话中的变更不会被保存。',
+    loadFailedToast:
+      '存档读取失败，本次会话已暂停自动保存以免覆盖原存档；请检查磁盘/权限后重启应用。',
+    corruptRecoveredToast:
+      '原存档已损坏，已把原始内容备份到数据目录（*.corrupt-backup）；本次以空存档启动，可在设置中导入备份恢复。',
     syncErrors: {
       noEndpoint: '请先填写 WebDAV 服务器地址',
       auth: '认证失败，请检查用户名与密码',
@@ -399,11 +399,10 @@ export const zh: TranslationSchema = {
       cors: '同步被跨域策略拦截：浏览器预览（npm run dev）里的请求会受 CORS 限制，标准 WebDAV 服务器（如 Nextcloud）默认不返回跨域头。桌面端已走原生 HTTP 通道，不受此限制；请在桌面应用内重试，或先用「导出 / 导入 JSON」搬运数据。',
       conflict: '重试后仍存在同步冲突，请稍后再次同步',
       noCollection: '服务器上不存在对应的 WebDAV 目录',
-      http: '服务器返回错误，请检查 WebDAV 路径',
+      http: '服务器返回错误，请检查 WebDAV 路径'
     },
     assetSummaryTitle: '自律资产统计',
-    assetSummaryDetail: (habits, buildings) =>
-      `在册习惯 ${habits} 个 · 已落成建筑 ${buildings} 座`,
+    assetSummaryDetail: (habits, buildings) => `在册习惯 ${habits} 个 · 已落成建筑 ${buildings} 座`,
     repairInventory: '修复积木库存',
     slogan: 'BlockHabit · 每一次打卡，都算数。',
     aboutTitle: '内容路线',
@@ -416,8 +415,7 @@ export const zh: TranslationSchema = {
     aboutUpgradeBody:
       '更高内容版本的存档需要所有设备一起升级：旧设备会拒绝读取并暂停自动保存，以免把未知建筑数据写坏。请在所有设备更新到同一版本后再继续。',
     aboutLocalTitle: '数据与隐私',
-    aboutLocalBody:
-      '无账号、无遥测上传；数据保存在本机，可随时导出 JSON 或完整档案包带走。',
+    aboutLocalBody: '无账号、无遥测上传；数据保存在本机，可随时导出 JSON 或完整档案包带走。',
     updateTitle: '版本与更新',
     updateCurrent: (version) => `当前版本 ${version}`,
     updateCheck: '检查更新',
@@ -439,7 +437,8 @@ export const zh: TranslationSchema = {
     diagnosticsExport: '导出诊断包',
     diagnosticsToast: '诊断包已导出到下载目录',
     diagnosticsFailToast: '导出失败，请稍后再试',
-    reminderAutostartHint: '提醒只在应用运行中生效。若希望关掉应用也能到点提醒，请开启「开机自启」并允许它常驻后台。',
+    reminderAutostartHint:
+      '提醒只在应用运行中生效。若希望关掉应用也能到点提醒，请开启「开机自启」并允许它常驻后台。',
     ambientLightingLabel: '时段感知昼夜光照',
     ambientLightingOn: '实时流转',
     ambientLightingOff: '固定标准',
@@ -481,7 +480,7 @@ export const zh: TranslationSchema = {
     reminderToggleLabel: '习惯到点提醒',
     reminderToggleOn: '开启',
     reminderToggleOff: '免打扰',
-    reminderToggleHint: '到设定时间提醒开始习惯（应用需保持运行）',
+    reminderToggleHint: '到设定时间提醒开始习惯（应用需保持运行）'
   },
   reminder: {
     startBody: (name) => `该开始「${name}」了`,
@@ -498,7 +497,7 @@ export const zh: TranslationSchema = {
     skipBtn: '跳过今天',
     skippedToast: '今天不再提醒这个习惯',
     bannerTitle: (count) => `${count} 个习惯在等你开始`,
-    bannerHint: '积木在等它落位',
+    bannerHint: '积木在等它落位'
   },
   mini: {
     expandTooltip: '还原展开大窗口',
@@ -509,7 +508,7 @@ export const zh: TranslationSchema = {
     habitCheckInTip: (name) => `点击完成「${name}」`,
     todayLabel: '今日',
     nextMilestone: (blueprint, remaining) => `《${blueprint}》还差 ${remaining} 块落成`,
-    doubleClickHint: '双击标题展开主窗',
+    doubleClickHint: '双击标题展开主窗'
   },
   blueprints: {
     plant: '绿意盆栽',
@@ -534,25 +533,25 @@ export const zh: TranslationSchema = {
     bookshop: '旧书店',
     postoffice: '邮政所',
     firestation: '消防站',
-    watertower: '水塔',
+    watertower: '水塔'
   },
   tray: {
     tooltipDone: '今日打卡已全部搞定',
     tooltipProgress: (done, total) => `今日进度 ${done}/${total}`,
     openMain: '展开主窗口',
-    quit: '退出应用',
+    quit: '退出应用'
   },
   errorBoundary: {
     title: '出了点问题',
     body: '界面刚刚遇到一个意外错误。你的数据仍保存在本地，重新加载即可继续。',
     reload: '重新加载',
-    export: '导出诊断信息',
+    export: '导出诊断信息'
   },
   microMood: {
     energetic: '充实',
     hard: '硬啃',
     spark: '灵感',
-    calm: '平静',
+    calm: '平静'
   },
   reflections: {
     engravePlaceholder: '记下今日克服的阻碍或微小胜利...',
@@ -579,7 +578,7 @@ export const zh: TranslationSchema = {
     exportSuccessToast: '已复制 Markdown 手账至剪贴板',
     pickFromReflections: '从本建筑建造随笔中挑选：',
     clickToUseDedication: '点击选用作为奠基语',
-    echoFromHabit: (name) => `— 来自【${name}】`,
+    echoFromHabit: (name) => `— 来自【${name}】`
   },
   poster: {
     modalTitle: '月度包豪斯自律画报',
@@ -602,7 +601,7 @@ export const zh: TranslationSchema = {
     metricBlocksAdded: '新增积木',
     metricStreak: '连续达标',
     defaultQuote: '“每一块积木落下的声音，都是击碎拖延的响指。”',
-    builderRecord: (date) => `筑造者记 · ${date}`,
+    builderRecord: (date) => `筑造者记 · ${date}`
   },
   /** 今日简报（D-20261110-052） */
   todayBrief: {
@@ -611,14 +610,14 @@ export const zh: TranslationSchema = {
       morning: '早上好',
       noon: '中午好',
       afternoon: '下午好',
-      evening: '晚上好',
+      evening: '晚上好'
     },
     idle: (total) => `今天 ${total} 件，一件一件来。`,
     inProgress: (done, total, pending) => `已完成 ${done}/${total}，还有 ${pending} 件没落块。`,
     milestone: (blueprint, remaining) => `《${blueprint}》还差 ${remaining} 块落成`,
     nextReady: (blueprint) => `下一座《${blueprint}》已就绪`,
     startFirst: '开始第一个',
-    viewBuild: '去建造页看看',
+    viewBuild: '去建造页看看'
   },
   /** 习惯模板（D-20261110-053） */
   templates: {
@@ -629,7 +628,7 @@ export const zh: TranslationSchema = {
     walk: '走动',
     sleep: '早睡',
     ledger: '记账',
-    created: (name) => `已建好「${name}」，点卡片完成第一次打卡。`,
+    created: (name) => `已建好「${name}」，点卡片完成第一次打卡。`
   },
   /** 页面提示（D-20261110-054） */
   guide: {
@@ -642,7 +641,7 @@ export const zh: TranslationSchema = {
     gotIt: '知道了',
     replayTitle: '页面提示',
     replay: '重看页面提示',
-    replayToast: '页面提示会在下次进入时重新出现',
+    replayToast: '页面提示会在下次进入时重新出现'
   },
   /** 晚间收尾提醒（D-20261110-055） */
   eveningNudge: {
@@ -655,7 +654,7 @@ export const zh: TranslationSchema = {
     consentEnable: '开启提醒',
     consentLater: '暂时不用',
     enabledToast: '已开启晚间收尾提醒',
-    notificationBody: (pending) => `还有 ${pending} 件没落块，今天还没收尾。`,
+    notificationBody: (pending) => `还有 ${pending} 件没落块，今天还没收尾。`
   },
   /** 落成年鉴（D-20261110-060） */
   yearbook: {
@@ -677,7 +676,7 @@ export const zh: TranslationSchema = {
       months: '十二个月',
       buildings: '建筑年表',
       shape: '时间形状',
-      quote: '当年一句',
+      quote: '当年一句'
     },
     metrics: {
       checkIns: '打卡',
@@ -686,7 +685,7 @@ export const zh: TranslationSchema = {
       allClear: '全勤',
       longestStreak: '最长连击',
       focusHours: '专注小时',
-      notes: '随笔',
+      notes: '随笔'
     },
     topHabits: '最常打卡',
     busiestPeriod: '最常时段',
@@ -699,7 +698,7 @@ export const zh: TranslationSchema = {
     monthsLegendHigh: '多',
     markdownHeading: (year) => `BlockHabit 落成年鉴 · ${year}`,
     streakDays: (n) => `${n} 天`,
-    focusHoursValue: (n) => `${n} 小时`,
+    focusHoursValue: (n) => `${n} 小时`
   },
   /** 一键档案包（D-20261110-062） */
   archive: {
@@ -715,7 +714,7 @@ export const zh: TranslationSchema = {
     partialRetry: '重试',
     openDir: '打开档案包',
     browserZipHint: '浏览器预览会下载一个 ZIP 文件',
-    contents: '包含 README、manifest、数据 JSON、校验清单与建筑图',
+    contents: '包含 README、manifest、数据 JSON、校验清单与建筑图'
   },
   /** 建筑档案卡（D-20261110-065） */
   buildingArchive: {
@@ -724,7 +723,13 @@ export const zh: TranslationSchema = {
     completedAt: (date) => `落成于 ${date}`,
     unknownDate: '不可考',
     nth: (n) => `第 ${n} 座`,
-    metrics: { blocks: '积木', days: '耗时', topHabit: '投入最多', perfectDays: '全勤日', bonusBlocks: '奖励块' },
+    metrics: {
+      blocks: '积木',
+      days: '耗时',
+      topHabit: '投入最多',
+      perfectDays: '全勤日',
+      bonusBlocks: '奖励块'
+    },
     timeline: '时间线',
     firstBlock: '首块',
     lastBlock: '最后一块',
@@ -737,7 +742,7 @@ export const zh: TranslationSchema = {
     empty: '这座建筑还没有落成',
     close: '关闭',
     topHabitValue: (name, blocks) => `${name} · ${blocks} 块`,
-    daysValue: (days) => `${days} 天`,
+    daysValue: (days) => `${days} 天`
   },
   /** 桌面专注陪伴（D-20261110-064） */
   focusCompanion: {
@@ -753,6 +758,6 @@ export const zh: TranslationSchema = {
     gaveUp: '已放弃，本次没有打卡',
     persistedHint: '计时按真实时间计算，重开应用会直接显示当前状态',
     notificationBody: (name) => `「${name}」专注时间到，确认后落块`,
-    moreSessions: (n) => `另有 ${n} 个专注`,
-  },
+    moreSessions: (n) => `另有 ${n} 个专注`
+  }
 }

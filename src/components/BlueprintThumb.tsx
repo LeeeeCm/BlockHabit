@@ -27,13 +27,16 @@ export function silhouettePalette(ink: string): IsoPalette {
     ghost: withAlpha(ink, 0.08),
     line: withAlpha(ink, 0.3),
     accent: withAlpha(ink, 0.26),
-    ink: withAlpha(ink, 0.45),
+    ink: withAlpha(ink, 0.45)
   }
 }
 
 /** 读当前主题 --ink（画布不支持 var()，必须先解析成具体颜色） */
 function inkFromDocument(doc: Document = document): string {
-  const value = doc.defaultView?.getComputedStyle(doc.documentElement).getPropertyValue('--ink').trim()
+  const value = doc.defaultView
+    ?.getComputedStyle(doc.documentElement)
+    .getPropertyValue('--ink')
+    .trim()
   return value || '#0a0a0a'
 }
 
@@ -67,7 +70,7 @@ export function BlueprintThumb({ blueprint, width = 132, height = 92, silhouette
       // 剪影态不画虚线地基：只看轮廓，不带「正在建造」的语义；
       // 同时忽略建筑专属配色（否则扩展包的彩色块会泄露出来，剪影变成「灰模里混着彩色块」）。
       skipGround: silhouette,
-      ignoreBlockColor: silhouette,
+      ignoreBlockColor: silhouette
     })
   }, [blueprint, theme, width, height, silhouette])
 
@@ -80,7 +83,7 @@ export function BlueprintThumb({ blueprint, width = 132, height = 92, silhouette
         display: 'block',
         borderRadius: 'var(--r-sm)',
         background: silhouette ? 'transparent' : 'var(--surface)',
-        opacity: silhouette ? 0.9 : undefined,
+        opacity: silhouette ? 0.9 : undefined
       }}
       aria-hidden="true"
     />

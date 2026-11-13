@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { computeFitView, EARLY_ZOOM_CAP, FIT_PAD, MAX_FIT_SCALE, VERTICAL_CENTER_RATIO } from './sceneCamera'
+import {
+  computeFitView,
+  EARLY_ZOOM_CAP,
+  FIT_PAD,
+  MAX_FIT_SCALE,
+  VERTICAL_CENTER_RATIO
+} from './sceneCamera'
 
 /**
  * D-20261110-044：取景数学（E5 拆分自 BuildScene.tsx，D10 的取舍）。
@@ -9,7 +15,12 @@ const square = (half: number) => ({ minX: -half, maxX: half, minY: -half, maxY: 
 
 describe('computeFitView', () => {
   it('小模型按留白拟合（受宽高较小者限制）', () => {
-    const v = computeFitView({ bounds: square(100), allBounds: square(100), width: 800, height: 600 })
+    const v = computeFitView({
+      bounds: square(100),
+      allBounds: square(100),
+      width: 800,
+      height: 600
+    })
     // 高度方向更紧：(600 - 96) / 200 = 2.52 → 受 MAX_FIT_SCALE 2 限制
     expect(v.scale).toBe(MAX_FIT_SCALE)
   })
@@ -41,8 +52,11 @@ describe('computeFitView', () => {
   it('模型中心水平居中、垂直偏下', () => {
     const bounds = { minX: 10, maxX: 30, minY: 40, maxY: 60 }
     const v = computeFitView({ bounds, allBounds: bounds, width: 800, height: 600 })
-    expect((bounds.minX + bounds.maxX) / 2 * v.scale + v.panX).toBeCloseTo(400, 10)
-    expect((bounds.minY + bounds.maxY) / 2 * v.scale + v.panY).toBeCloseTo(600 * VERTICAL_CENTER_RATIO, 10)
+    expect(((bounds.minX + bounds.maxX) / 2) * v.scale + v.panX).toBeCloseTo(400, 10)
+    expect(((bounds.minY + bounds.maxY) / 2) * v.scale + v.panY).toBeCloseTo(
+      600 * VERTICAL_CENTER_RATIO,
+      10
+    )
   })
 
   it('自定义留白生效', () => {

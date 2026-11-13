@@ -18,7 +18,7 @@ const DIALOGS = [
   'MonthlyPosterModal',
   'PolaroidModal',
   'ReminderDialog',
-  'SettingsDialog',
+  'SettingsDialog'
 ]
 
 describe('弹窗可访问名称（C7）', () => {

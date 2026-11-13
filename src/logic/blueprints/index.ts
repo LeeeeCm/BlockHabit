@@ -17,7 +17,7 @@ import {
   makeRocketBlueprint,
   makeRobotBlueprint,
   makeTreehouseBlueprint,
-  makeWindmillBlueprint,
+  makeWindmillBlueprint
 } from './generators'
 // 内容包 v3（D-20261111-070）：5 座生成器在 generatorsV3.ts（generators.ts 已近 800 行上限）
 import {
@@ -25,7 +25,7 @@ import {
   makeBookshopBlueprint,
   makeFirestationBlueprint,
   makePostofficeBlueprint,
-  makeWatertowerBlueprint,
+  makeWatertowerBlueprint
 } from './generatorsV3'
 
 export const plantBlueprint = makePlantBlueprint()
@@ -79,7 +79,7 @@ export const blueprintOrder: string[] = [
   'bookshop',
   'postoffice',
   'firestation',
-  'watertower',
+  'watertower'
 ]
 
 export const blueprints: Record<string, Blueprint> = {
@@ -105,7 +105,7 @@ export const blueprints: Record<string, Blueprint> = {
   bookshop: bookshopBlueprint,
   postoffice: postofficeBlueprint,
   firestation: firestationBlueprint,
-  watertower: watertowerBlueprint,
+  watertower: watertowerBlueprint
 }
 
 /**

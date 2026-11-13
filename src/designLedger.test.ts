@@ -30,7 +30,9 @@ describe('design ledger（设计台账守门）', () => {
   })
 
   it('front-matter 解析器能识别非法状态与缺失字段', () => {
-    const ok = parseFrontMatter(['---', 'id: D-20261110-999', 'status: proposed', '---', '', '正文'.repeat(80)].join('\n'))
+    const ok = parseFrontMatter(
+      ['---', 'id: D-20261110-999', 'status: proposed', '---', '', '正文'.repeat(80)].join('\n')
+    )
     expect(ok.data?.id).toBe('D-20261110-999')
     expect(STATUSES).toContain(ok.data?.status)
     const broken = parseFrontMatter('# 没有 front-matter 的文件')

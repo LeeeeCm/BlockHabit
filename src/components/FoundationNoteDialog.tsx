@@ -29,11 +29,9 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
 
   // 提取建造该建筑期间的所有随笔候选条目（优先星标与非空内容）
   const candidates = useMemo(() => {
-    const bpBuildIds = builds
-      .filter((b) => b.blueprintId === blueprintId)
-      .map((b) => b.id)
+    const bpBuildIds = builds.filter((b) => b.blueprintId === blueprintId).map((b) => b.id)
     const matched = checkIns.filter(
-      (c) => c.placedBlockId && bpBuildIds.includes(c.placedBlockId) && c.note?.trim(),
+      (c) => c.placedBlockId && bpBuildIds.includes(c.placedBlockId) && c.note?.trim()
     )
     // 排序：星标优先，然后按长度/日期
     matched.sort((a, b) => {
@@ -54,7 +52,6 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
   }
 
   const { ref: dialogRef } = useDialogA11y({ open: true, onClose })
-
 
   const bpName = getBlueprintName(blueprintId, lang)
 
@@ -79,7 +76,10 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
         <div className="dialog-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <IconFoundation size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-            <span id="foundation-dialog-title" style={{ fontSize: 'var(--fs-title)', fontWeight: 700 }}>
+            <span
+              id="foundation-dialog-title"
+              style={{ fontSize: 'var(--fs-title)', fontWeight: 700 }}
+            >
               {bpName} · {t.reflections.foundationModalTitle}
             </span>
           </div>
@@ -96,74 +96,101 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
         </div>
 
         <div className="dialog-body">
-        <p style={{ fontSize: 'var(--fs-body)', color: 'var(--ink-2)', lineHeight: 1.6, margin: '0 0 16px' }}>
-          {t.reflections.foundationPrompt}
-        </p>
+          <p
+            style={{
+              fontSize: 'var(--fs-body)',
+              color: 'var(--ink-2)',
+              lineHeight: 1.6,
+              margin: '0 0 16px'
+            }}
+          >
+            {t.reflections.foundationPrompt}
+          </p>
 
-        {candidates.length > 0 && (
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 'var(--fs-small)', fontWeight: 600, color: 'var(--ink-2)', marginBottom: 6 }}>
-              {t.reflections.pickFromReflections}
+          {candidates.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div
+                style={{
+                  fontSize: 'var(--fs-small)',
+                  fontWeight: 600,
+                  color: 'var(--ink-2)',
+                  marginBottom: 6
+                }}
+              >
+                {t.reflections.pickFromReflections}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {candidates.map((c) => {
+                  const h = habits.find((x) => x.id === c.habitId)
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => setText(c.note || '')}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: 'var(--r-sm)',
+                        background: 'color-mix(in srgb, var(--ink) 3%, transparent)',
+                        border: '1px solid var(--line)',
+                        cursor: 'pointer',
+                        fontSize: 'var(--fs-small)',
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: 8,
+                        transition: 'border-color var(--dur-xs) var(--ease-default)'
+                      }}
+                      title={t.reflections.clickToUseDedication}
+                    >
+                      {c.starred && (
+                        <IconStar
+                          size={12}
+                          filled
+                          style={{ color: 'var(--accent)', flexShrink: 0 }}
+                        />
+                      )}
+                      <span style={{ color: 'var(--ink)', flex: 1, wordBreak: 'break-word' }}>
+                        “{c.note}”
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 'var(--fs-caption)',
+                          color: 'var(--ink-2)',
+                          flexShrink: 0
+                        }}
+                      >
+                        {h?.name} · {c.date}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {candidates.map((c) => {
-                const h = habits.find((x) => x.id === c.habitId)
-                return (
-                  <div
-                    key={c.id}
-                    onClick={() => setText(c.note || '')}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: 'var(--r-sm)',
-                      background: 'color-mix(in srgb, var(--ink) 3%, transparent)',
-                      border: '1px solid var(--line)',
-                      cursor: 'pointer',
-                      fontSize: 'var(--fs-small)',
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 8,
-                      transition: 'border-color var(--dur-xs) var(--ease-default)',
-                    }}
-                    title={t.reflections.clickToUseDedication}
-                  >
-                    {c.starred && <IconStar size={12} filled style={{ color: 'var(--accent)', flexShrink: 0 }} />}
-                    <span style={{ color: 'var(--ink)', flex: 1, wordBreak: 'break-word' }}>“{c.note}”</span>
-                    <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', flexShrink: 0 }}>
-                      {h?.name} · {c.date}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+          )}
 
-        <textarea
-          autoFocus
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={t.reflections.foundationPlaceholder}
-          style={{
-            width: '100%',
-            height: 90,
-            padding: '10px 12px',
-            borderRadius: 'var(--r-sm)',
-            border: '1px solid var(--line)',
-            background: 'color-mix(in srgb, var(--ink) 2%, transparent)',
-            fontSize: 'var(--fs-body)',
-            color: 'var(--ink)',
-            resize: 'none',
-            outline: 'none',
-            lineHeight: 1.5,
-          }}
-          onKeyDown={(e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-              e.preventDefault()
-              handleSave()
-            }
-          }}
-        />
-
+          <textarea
+            autoFocus
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={t.reflections.foundationPlaceholder}
+            style={{
+              width: '100%',
+              height: 90,
+              padding: '10px 12px',
+              borderRadius: 'var(--r-sm)',
+              border: '1px solid var(--line)',
+              background: 'color-mix(in srgb, var(--ink) 2%, transparent)',
+              fontSize: 'var(--fs-body)',
+              color: 'var(--ink)',
+              resize: 'none',
+              outline: 'none',
+              lineHeight: 1.5
+            }}
+            onKeyDown={(e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault()
+                handleSave()
+              }
+            }}
+          />
         </div>
 
         <div className="dialog-footer">

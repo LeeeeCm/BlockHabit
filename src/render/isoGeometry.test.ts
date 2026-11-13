@@ -5,7 +5,7 @@ import {
   followResize,
   rotateCoord,
   STUD_H,
-  worldToScreen,
+  worldToScreen
 } from './isoGeometry'
 
 /**

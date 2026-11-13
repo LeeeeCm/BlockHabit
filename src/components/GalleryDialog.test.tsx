@@ -15,23 +15,27 @@ import { zh } from '../i18n/locales/zh'
  */
 
 const INSTALLED_TOTAL = 23
-const g = globalThis as unknown as { __galleryThumbProps?: Array<{ blueprintId: string; silhouette?: boolean }> }
+const g = globalThis as unknown as {
+  __galleryThumbProps?: Array<{ blueprintId: string; silhouette?: boolean }>
+}
 
 vi.mock('./BlueprintThumb', () => ({
   BlueprintThumb: (props: { blueprint: { id: string }; silhouette?: boolean }) => {
     g.__galleryThumbProps = g.__galleryThumbProps ?? []
     g.__galleryThumbProps.push({ blueprintId: props.blueprint.id, silhouette: props.silhouette })
     return null
-  },
+  }
 }))
 
-function setState(over: { completedBlueprintIds?: string[]; activeBlueprintId?: string } = {}): void {
+function setState(
+  over: { completedBlueprintIds?: string[]; activeBlueprintId?: string } = {}
+): void {
   const current = useAppStore.getState()
   useAppStore.setState({
     builds: [],
     completedBlueprintIds: over.completedBlueprintIds ?? [],
     activeBlueprintId: over.activeBlueprintId ?? blueprintOrder[0],
-    settings: { ...current.settings, language: 'zh' },
+    settings: { ...current.settings, language: 'zh' }
   })
 }
 
@@ -46,11 +50,12 @@ function renderGallery(onClose: () => void) {
     container,
     title: () => container.querySelector('#gallery-dialog-title')?.textContent ?? '',
     cards: () => Array.from(container.querySelectorAll<HTMLButtonElement>('.gallery-card')),
-    lockedCards: () => Array.from(container.querySelectorAll<HTMLButtonElement>('.gallery-card.locked')),
+    lockedCards: () =>
+      Array.from(container.querySelectorAll<HTMLButtonElement>('.gallery-card.locked')),
     unmount: () => {
       act(() => root.unmount())
       container.remove()
-    },
+    }
   }
 }
 
@@ -126,13 +131,28 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
   it('动态 total 的 endgame 判定：全部 23 座落成 → all-blueprints-complete，不依赖字面量', () => {
     const total = blueprintOrder.length
     expect(
-      noBlockReason({ completedBlueprints: total, blueprintTotal: total, placedCount: 0, activeBlueprintBlocks: 24 }),
+      noBlockReason({
+        completedBlueprints: total,
+        blueprintTotal: total,
+        placedCount: 0,
+        activeBlueprintBlocks: 24
+      })
     ).toBe('all-blueprints-complete')
     expect(
-      noBlockReason({ completedBlueprints: 12, blueprintTotal: total, placedCount: 24, activeBlueprintBlocks: 24 }),
+      noBlockReason({
+        completedBlueprints: 12,
+        blueprintTotal: total,
+        placedCount: 24,
+        activeBlueprintBlocks: 24
+      })
     ).toBe('active-blueprint-complete')
     expect(
-      noBlockReason({ completedBlueprints: 11, blueprintTotal: total, placedCount: 3, activeBlueprintBlocks: 24 }),
+      noBlockReason({
+        completedBlueprints: 11,
+        blueprintTotal: total,
+        placedCount: 3,
+        activeBlueprintBlocks: 24
+      })
     ).toBe('normal')
     const all = [...blueprintOrder]
     expect(firstIncompleteIndex(all)).toBe(total)

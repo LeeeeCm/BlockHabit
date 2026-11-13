@@ -8,7 +8,7 @@ export const SHOWCASE_GRID_SIZE = 26
  */
 export function isDecorationUnlocked(
   completedIds: readonly string[],
-  blueprintOrder: readonly string[],
+  blueprintOrder: readonly string[]
 ): boolean {
   if (blueprintOrder.length === 0) return false
   const completed = new Set(completedIds)
@@ -41,7 +41,7 @@ export function getModelFootprint(blocks: BlockDef[]): ModelFootprint {
     width: maxX - minX + 1,
     depth: maxY - minY + 1,
     minX,
-    minY,
+    minY
   }
 }
 
@@ -58,7 +58,7 @@ export function normalizeRotation(rotation: number): number {
  */
 export function rotateBlockCoords(
   blocks: readonly BlockDef[],
-  rotation: number,
+  rotation: number
 ): Array<{ x: number; y: number }> {
   const q = normalizeRotation(rotation)
   const rotated = blocks.map((b) => {
@@ -87,10 +87,7 @@ export function rotateBlockCoords(
  * 旋转后的占地足迹：90°/270° 宽深互换；归一化后 minX/minY 恒为 0。
  * 空模型按 1×1 处理（与 getModelFootprint 一致）。
  */
-export function getRotatedFootprint(
-  blocks: readonly BlockDef[],
-  rotation: number,
-): ModelFootprint {
+export function getRotatedFootprint(blocks: readonly BlockDef[], rotation: number): ModelFootprint {
   const coords = rotateBlockCoords(blocks, rotation)
   if (coords.length === 0) return { width: 1, depth: 1, minX: 0, minY: 0 }
   let maxX = 0
@@ -132,7 +129,7 @@ export function canPlaceModel(
   existing: ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,
   gridSize: number = SHOWCASE_GRID_SIZE,
-  rotations: Record<string, number> = {},
+  rotations: Record<string, number> = {}
 ): boolean {
   const bp = blueprintsMap[target.blueprintId]
   if (!bp) return false
@@ -142,7 +139,7 @@ export function canPlaceModel(
     x: target.gridX,
     y: target.gridY,
     width: targetFp.width,
-    depth: targetFp.depth,
+    depth: targetFp.depth
   }
 
   // 1. 边界检测：必须完整容纳在展台基座网格内
@@ -165,7 +162,7 @@ export function canPlaceModel(
       x: p.gridX,
       y: p.gridY,
       width: otherFp.width,
-      depth: otherFp.depth,
+      depth: otherFp.depth
     }
     if (isAABBOverlapping(targetBox, otherBox)) {
       return false
@@ -189,7 +186,7 @@ export function canRotatePlacement(
   existing: readonly ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,
   rotations: Record<string, number> = {},
-  gridSize: number = SHOWCASE_GRID_SIZE,
+  gridSize: number = SHOWCASE_GRID_SIZE
 ): boolean {
   const bp = blueprintsMap[blueprintId]
   if (!bp) return false
@@ -212,7 +209,7 @@ export function canRotatePlacement(
       x: p.gridX,
       y: p.gridY,
       width: otherFp.width,
-      depth: otherFp.depth,
+      depth: otherFp.depth
     }
     if (isAABBOverlapping(box, otherBox)) return false
   }
@@ -225,7 +222,7 @@ export function findNextAvailablePlacement(
   blueprintId: string,
   existing: ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,
-  gridSize: number = SHOWCASE_GRID_SIZE,
+  gridSize: number = SHOWCASE_GRID_SIZE
 ): ShowcasePlacement | null {
   const bp = blueprintsMap[blueprintId]
   if (!bp) return null
@@ -263,12 +260,12 @@ export function screenToGroundIso(
   sx: number,
   sy: number,
   tileW: number,
-  tileH: number,
+  tileH: number
 ): { gx: number; gy: number } {
   const u = sx / tileW
   const v = sy / tileH
   return {
     gx: u + v,
-    gy: v - u,
+    gy: v - u
   }
 }

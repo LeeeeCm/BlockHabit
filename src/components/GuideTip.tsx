@@ -18,7 +18,13 @@ export interface GuideTipProps {
  * 固定态：左下角浮起（bottom 84 避开高 64px 的 tabbar，zIndex 60 低于弹窗）。
  * 内联态：常规文档流，供统计页放在页头与热图之间。
  */
-export function GuideTip({ title, body, dismissLabel, variant = 'fixed', onDismiss }: GuideTipProps) {
+export function GuideTip({
+  title,
+  body,
+  dismissLabel,
+  variant = 'fixed',
+  onDismiss
+}: GuideTipProps) {
   const onDismissRef = useRef(onDismiss)
   onDismissRef.current = onDismiss
 
@@ -52,11 +58,15 @@ export function GuideTip({ title, body, dismissLabel, variant = 'fixed', onDismi
         borderRadius: 'var(--r-md)',
         padding: '12px 14px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        pointerEvents: 'auto',
+        pointerEvents: 'auto'
       }}
     >
-      <div style={{ fontSize: 'var(--fs-body)', fontWeight: 600, color: 'var(--ink)' }}>{title}</div>
-      <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', lineHeight: 1.6 }}>{body}</div>
+      <div style={{ fontSize: 'var(--fs-body)', fontWeight: 600, color: 'var(--ink)' }}>
+        {title}
+      </div>
+      <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', lineHeight: 1.6 }}>
+        {body}
+      </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button
           type="button"

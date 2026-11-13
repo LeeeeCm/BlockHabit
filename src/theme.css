@@ -49,7 +49,8 @@
    * 英文统一为 Rubik（为 3D 魔方与立方体积木定制的微倒角几何体）
    * 中文统一为 阿里妈妈数黑体（机械感、方块积木结构、硬朗切角，比黄油体更具积木与机械感）
    */
-  --font-family: 'Rubik', 'AlimamaShuHeiTi', 'MiSans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family:
+    'Rubik', 'AlimamaShuHeiTi', 'MiSans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: 'Rubik', 'AlimamaShuHeiTi', -apple-system, sans-serif;
   --font-body: 'Rubik', 'AlimamaShuHeiTi', 'MiSans', -apple-system, BlinkMacSystemFont, sans-serif;
 
@@ -170,15 +171,15 @@ h3,
   letter-spacing: 0.01em;
 }
 
-:root[lang="en"] {
+:root[lang='en'] {
   letter-spacing: -0.01em;
 }
 
-:root[lang="en"] h1,
-:root[lang="en"] h2,
-:root[lang="en"] h3,
-:root[lang="en"] .brand,
-:root[lang="en"] .big-num {
+:root[lang='en'] h1,
+:root[lang='en'] h2,
+:root[lang='en'] h3,
+:root[lang='en'] .brand,
+:root[lang='en'] .big-num {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.025em;

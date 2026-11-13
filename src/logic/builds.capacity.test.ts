@@ -3,7 +3,7 @@ import {
   rebuildBuilds,
   buildsMatchFacts,
   removeBlocksAndCompact,
-  BLUEPRINT_CAPACITY,
+  BLUEPRINT_CAPACITY
 } from './builds'
 import { blueprintOrder, getBlueprint } from './blueprints'
 import type { CheckIn, DayClaim, PlacedBlock } from '../types'
@@ -22,7 +22,7 @@ function ci(i: number, bp = 'plant'): CheckIn {
     date: '2026-01-01',
     at: `2026-01-01T00:00:${(i % 60).toString().padStart(2, '0')}.000Z`,
     placedBlockId: `b${n}`,
-    blueprintId: bp,
+    blueprintId: bp
   }
 }
 
@@ -33,7 +33,7 @@ function build(id: string, index: number, bp = 'plant'): PlacedBlock {
     index,
     placedAt: '2026-01-01T00:00:00.000Z',
     fromHabitId: 'h1',
-    bonus: false,
+    bonus: false
   }
 }
 
@@ -68,7 +68,12 @@ describe('buildsMatchFacts', () => {
 
   it('全勤块由 dayClaims 提供时视为一致', () => {
     const claims: DayClaim[] = [
-      { date: '2026-01-02', claimedAt: '2026-01-02T12:00:00.000Z', blockId: 'day-1', blueprintId: 'plant' },
+      {
+        date: '2026-01-02',
+        claimedAt: '2026-01-02T12:00:00.000Z',
+        blockId: 'day-1',
+        blueprintId: 'plant'
+      }
     ]
     const builds = rebuildBuilds([], claims)
     expect(buildsMatchFacts(builds, [], claims)).toBe(true)
@@ -84,11 +89,7 @@ describe('removeBlocksAndCompact', () => {
   })
 
   it('按蓝图分组各自压实，不改蓝图归属', () => {
-    const builds = [
-      build('p0', 0, 'plant'),
-      build('p1', 1, 'plant'),
-      build('c0', 0, 'castle'),
-    ]
+    const builds = [build('p0', 0, 'plant'), build('p1', 1, 'plant'), build('c0', 0, 'castle')]
     const next = removeBlocksAndCompact(builds, new Set(['p0']))
     expect(next.filter((b) => b.blueprintId === 'plant').map((b) => b.id)).toEqual(['p1'])
     expect(next.filter((b) => b.blueprintId === 'plant')[0].index).toBe(0)

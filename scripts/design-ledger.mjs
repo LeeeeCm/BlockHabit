@@ -22,10 +22,27 @@ import { execFileSync } from 'node:child_process'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(HERE, '..')
 
-export const STATUSES = ['proposed', 'approved', 'implemented', 'superseded', 'deprecated', 'revoked']
+export const STATUSES = [
+  'proposed',
+  'approved',
+  'implemented',
+  'superseded',
+  'deprecated',
+  'revoked'
+]
 /** 只能由人类设置的状态 */
 export const HUMAN_ONLY_STATUSES = ['approved', 'implemented', 'revoked']
-export const REQUIRED_FIELDS = ['id', 'date', 'title', 'status', 'owner', 'surface', 'axioms', 'files', 'reviewer']
+export const REQUIRED_FIELDS = [
+  'id',
+  'date',
+  'title',
+  'status',
+  'owner',
+  'surface',
+  'axioms',
+  'files',
+  'reviewer'
+]
 export const RECORD_ID_RE = /^D-(\d{8})-(\d{3})$/
 export const RECORD_FILE_RE = /^(D-\d{8}-\d{3})-[a-z0-9][a-z0-9-]*\.md$/
 export const INDEX_VERSION = 1
@@ -39,7 +56,7 @@ export const REQUIRED_HUB_FILES = [
   'VOICE.md',
   'RECORDS.md',
   'APPROVALS.md',
-  'index.json',
+  'index.json'
 ]
 
 /* ---------------------------------- 工具 ---------------------------------- */
@@ -55,7 +72,8 @@ function readIfExists(p) {
 /** 解析极简 front-matter（只支持本仓库约定子集） */
 export function parseFrontMatter(raw) {
   const text = raw.replace(/^\uFEFF/, '')
-  if (!text.startsWith('---')) return { data: null, body: text, error: '缺少 front-matter（文件必须以 --- 开头）' }
+  if (!text.startsWith('---'))
+    return { data: null, body: text, error: '缺少 front-matter（文件必须以 --- 开头）' }
   const end = text.indexOf('\n---', 3)
   if (end === -1) return { data: null, body: text, error: 'front-matter 未闭合（缺少结束的 ---）' }
   const head = text.slice(3, end)
@@ -72,7 +90,10 @@ export function parseFrontMatter(raw) {
     } else if (value.startsWith('[') && value.endsWith(']')) {
       const inner = value.slice(1, -1).trim()
       data[key] = inner
-        ? inner.split(',').map((s) => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean)
+        ? inner
+            .split(',')
+            .map((s) => s.trim().replace(/^['"]|['"]$/g, ''))
+            .filter(Boolean)
         : []
     } else {
       data[key] = value.replace(/^['"]|['"]$/g, '')
@@ -83,7 +104,11 @@ export function parseFrontMatter(raw) {
 
 function git(args) {
   try {
-    return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+    return execFileSync('git', args, {
+      cwd: ROOT,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    })
   } catch {
     return null
   }
@@ -95,7 +120,8 @@ function readIndex() {
   if (raw == null) return { records: [] }
   try {
     const parsed = JSON.parse(raw)
-    if (!parsed || !Array.isArray(parsed.records)) return { records: [], error: 'index.json 缺少 records 数组' }
+    if (!parsed || !Array.isArray(parsed.records))
+      return { records: [], error: 'index.json 缺少 records 数组' }
     return parsed
   } catch (e) {
     return { records: [], error: `index.json 不是合法 JSON：${e.message}` }
@@ -120,14 +146,18 @@ export function checkDesignLedger() {
   }
   const agents = readIfExists(path.join(ROOT, 'AGENTS.md'))
   if (agents == null) errors.push('仓库根缺少 AGENTS.md（代理规则入口）')
-  else if (!agents.includes('design/README.md')) errors.push('AGENTS.md 未指向 design/README.md（唯一设计入口必须被引用）')
+  else if (!agents.includes('design/README.md'))
+    errors.push('AGENTS.md 未指向 design/README.md（唯一设计入口必须被引用）')
 
   // 1. 逐条记录校验
   const records = []
   if (!fs.existsSync(recordsDir)) {
     errors.push('缺少 design/records/ 目录')
   } else {
-    const files = fs.readdirSync(recordsDir).filter((f) => f.endsWith('.md')).sort()
+    const files = fs
+      .readdirSync(recordsDir)
+      .filter((f) => f.endsWith('.md'))
+      .sort()
     for (const file of files) {
       const full = path.join(recordsDir, file)
       const raw = readIfExists(full) ?? ''
@@ -151,14 +181,17 @@ export function checkDesignLedger() {
       if (id && RECORD_ID_RE.test(id)) {
         const ymd = id.match(RECORD_ID_RE)[1]
         const dateStr = String(data.date ?? '').replace(/-/g, '')
-        if (dateStr !== ymd) errors.push(`${file}: date(${data.date}) 与 id 中的日期(${ymd}) 不一致`)
+        if (dateStr !== ymd)
+          errors.push(`${file}: date(${data.date}) 与 id 中的日期(${ymd}) 不一致`)
       }
       if (!STATUSES.includes(data.status)) {
         errors.push(`${file}: status 非法 "${data.status}"（允许：${STATUSES.join(' | ')}）`)
       } else if (HUMAN_ONLY_STATUSES.includes(data.status)) {
         const reviewer = String(data.reviewer ?? '').trim()
         if (!reviewer || reviewer === 'pending') {
-          errors.push(`${file}: status=${data.status} 但 reviewer 仍为 pending —— 该状态只能由人类审核后设置`)
+          errors.push(
+            `${file}: status=${data.status} 但 reviewer 仍为 pending —— 该状态只能由人类审核后设置`
+          )
         }
       }
       if ((body ?? '').replace(/\s/g, '').length < 120) {
@@ -171,7 +204,7 @@ export function checkDesignLedger() {
         status: data.status,
         owner: data.owner,
         reviewer: data.reviewer,
-        file: `design/records/${file}`,
+        file: `design/records/${file}`
       })
     }
   }
@@ -203,7 +236,9 @@ export function checkDesignLedger() {
       errors.push(`index.json 中 ${entry.id} 的 file 与实际不符（${entry.file} vs ${rec.file}）`)
     }
     if (entry.status && entry.status !== rec.status) {
-      errors.push(`index.json 中 ${entry.id} 的状态过期（${entry.status} → 实际 ${rec.status}），请运行 --fix`)
+      errors.push(
+        `index.json 中 ${entry.id} 的状态过期（${entry.status} → 实际 ${rec.status}），请运行 --fix`
+      )
     }
     if (entry.title && entry.title !== rec.title) {
       warnings.push(`index.json 中 ${entry.id} 的 title 与实际不一致`)
@@ -231,15 +266,27 @@ export function checkDesignLedger() {
   } else {
     const tracked = headFiles.split(/\r?\n/).filter(Boolean)
     for (const rel of tracked) {
-      if (!rel.endsWith('.md') && !rel.endsWith('.json') && !rel.endsWith('.svg') && !rel.endsWith('.png') && !rel.endsWith('.jpg')) continue
+      if (
+        !rel.endsWith('.md') &&
+        !rel.endsWith('.json') &&
+        !rel.endsWith('.svg') &&
+        !rel.endsWith('.png') &&
+        !rel.endsWith('.jpg')
+      )
+        continue
       const abs = path.join(ROOT, rel)
       if (fs.existsSync(abs)) continue
       // 已删除：必须有已批准/已完成的审批条目指向它
       const approved = approvals
         .split(/\r?\n/)
-        .filter((line) => line.includes(rel) || (rel.startsWith('design/records/') && line.includes(path.basename(rel))))
+        .filter(
+          (line) =>
+            line.includes(rel) ||
+            (rel.startsWith('design/records/') && line.includes(path.basename(rel)))
+        )
         .some((line) => /\b(approved|done)\b/.test(line))
-      if (!approved) errors.push(`检测到未审批删除：${rel} —— 请先在 design/APPROVALS.md 取得人工批准`)
+      if (!approved)
+        errors.push(`检测到未审批删除：${rel} —— 请先在 design/APPROVALS.md 取得人工批准`)
     }
   }
 
@@ -252,7 +299,10 @@ export function regenerateIndex() {
   const recordsDir = path.join(ROOT, 'design', 'records')
   const records = []
   if (fs.existsSync(recordsDir)) {
-    for (const file of fs.readdirSync(recordsDir).filter((f) => f.endsWith('.md')).sort()) {
+    for (const file of fs
+      .readdirSync(recordsDir)
+      .filter((f) => f.endsWith('.md'))
+      .sort()) {
       const raw = readIfExists(path.join(recordsDir, file)) ?? ''
       const { data } = parseFrontMatter(raw)
       if (!data || !data.id) continue
@@ -263,7 +313,7 @@ export function regenerateIndex() {
         status: data.status,
         owner: data.owner,
         reviewer: data.reviewer,
-        file: `design/records/${file}`,
+        file: `design/records/${file}`
       })
     }
   }
@@ -271,9 +321,13 @@ export function regenerateIndex() {
   const payload = {
     version: INDEX_VERSION,
     note: '本文件由 scripts/design-ledger.mjs --fix 生成；手工修改后请立即运行 npm run design:check 校验。',
-    records,
+    records
   }
-  fs.writeFileSync(path.join(ROOT, 'design', 'index.json'), JSON.stringify(payload, null, 2) + '\n', 'utf8')
+  fs.writeFileSync(
+    path.join(ROOT, 'design', 'index.json'),
+    JSON.stringify(payload, null, 2) + '\n',
+    'utf8'
+  )
   return payload
 }
 

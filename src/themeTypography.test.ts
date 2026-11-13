@@ -40,7 +40,8 @@ describe('D7 字号阶梯', () => {
     for (const file of walkTsx(here)) {
       if (file.endsWith('.test.tsx')) continue
       const src = readFileSync(file, 'utf-8')
-      for (const m of src.matchAll(/fontSize:\s*[0-9]/g)) offenders.push(file.replace(here, '') + ':' + m[0])
+      for (const m of src.matchAll(/fontSize:\s*[0-9]/g))
+        offenders.push(file.replace(here, '') + ':' + m[0])
     }
     expect(offenders, offenders.join(', ')).toEqual([])
   })

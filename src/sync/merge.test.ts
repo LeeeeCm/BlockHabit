@@ -18,7 +18,7 @@ function createMockState(overrides: Partial<AppState> = {}): AppState {
     repairBricks: 0,
     showcasePlacements: [],
     foundationNotes: {},
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -45,37 +45,39 @@ describe('mergeAppState facts merge (schema v2)', () => {
       habitId: 'h1',
       date: '2026-03-01',
       at: '2026-03-01T08:00:00.000Z',
-      note: 'Morning run in park',
+      note: 'Morning run in park'
     }
     const checkIn2: CheckIn = {
       id: 'c2',
       habitId: 'h1',
       date: '2026-03-02',
-      at: '2026-03-02T08:00:00.000Z',
+      at: '2026-03-02T08:00:00.000Z'
     }
     const checkIn3: CheckIn = {
       id: 'c3',
       habitId: 'h2',
       date: '2026-03-01',
-      at: '2026-03-01T10:00:00.000Z',
+      at: '2026-03-01T10:00:00.000Z'
     }
     const checkIn1DuplicateId: CheckIn = {
       id: 'c1',
       habitId: 'h1',
       date: '2026-03-01',
       at: '2026-03-01T08:00:00.000Z',
-      starred: true,
+      starred: true
     }
     const checkIn1DuplicateDay: CheckIn = {
       id: 'c1-remote',
       habitId: 'h1',
       date: '2026-03-01',
       at: '2026-03-01T08:05:00.000Z',
-      mood: 'energetic',
+      mood: 'energetic'
     }
 
     const local = createMockState({ checkIns: [checkIn1, checkIn2] })
-    const remote = createMockState({ checkIns: [checkIn1DuplicateId, checkIn1DuplicateDay, checkIn3] })
+    const remote = createMockState({
+      checkIns: [checkIn1DuplicateId, checkIn1DuplicateDay, checkIn3]
+    })
 
     const merged = mergeAppState(local, remote)
 
@@ -98,21 +100,45 @@ describe('mergeAppState facts merge (schema v2)', () => {
       step: 250,
       unit: 'ml',
       frequency: { type: 'daily' },
-      createdAt: '2026-03-01T00:00:00.000Z',
+      createdAt: '2026-03-01T00:00:00.000Z'
     }
     const local = createMockState({
       habits: [waterHabit],
       checkIns: [
-        { id: 'cw1', habitId: 'h_water', date: '2026-03-01', at: '2026-03-01T09:00:00.000Z', value: 250 },
-        { id: 'cw2', habitId: 'h_water', date: '2026-03-01', at: '2026-03-01T11:00:00.000Z', value: 250 },
-      ],
+        {
+          id: 'cw1',
+          habitId: 'h_water',
+          date: '2026-03-01',
+          at: '2026-03-01T09:00:00.000Z',
+          value: 250
+        },
+        {
+          id: 'cw2',
+          habitId: 'h_water',
+          date: '2026-03-01',
+          at: '2026-03-01T11:00:00.000Z',
+          value: 250
+        }
+      ]
     })
     const remote = createMockState({
       habits: [waterHabit],
       checkIns: [
-        { id: 'cw3', habitId: 'h_water', date: '2026-03-01', at: '2026-03-01T14:00:00.000Z', value: 250 },
-        { id: 'cw4', habitId: 'h_water', date: '2026-03-01', at: '2026-03-01T17:00:00.000Z', value: 250 },
-      ],
+        {
+          id: 'cw3',
+          habitId: 'h_water',
+          date: '2026-03-01',
+          at: '2026-03-01T14:00:00.000Z',
+          value: 250
+        },
+        {
+          id: 'cw4',
+          habitId: 'h_water',
+          date: '2026-03-01',
+          at: '2026-03-01T17:00:00.000Z',
+          value: 250
+        }
+      ]
     })
 
     const merged = mergeAppState(local, remote)
@@ -127,7 +153,7 @@ describe('mergeAppState facts merge (schema v2)', () => {
       date: recentDate(1),
       at: recentIso(1),
       placedBlockId: 'b0',
-      blueprintId: 'plant',
+      blueprintId: 'plant'
     }
     const undoneCheckIn: CheckIn = { ...liveCheckIn, deletedAt: recentIso(0, 9) }
 
@@ -147,17 +173,60 @@ describe('mergeAppState facts merge (schema v2)', () => {
     // （旧算法按 ${blueprintId}_${index} 并集会复活 3 块）
     const local = createMockState({
       checkIns: [
-        { id: 'c1', habitId: 'h1', date: recentDate(3), at: recentIso(3), placedBlockId: 'b0', blueprintId: 'plant' },
-        { id: 'c2', habitId: 'h1', date: recentDate(2), at: recentIso(2), placedBlockId: 'b1', blueprintId: 'plant', deletedAt: recentIso(0, 9) },
-        { id: 'c3', habitId: 'h1', date: recentDate(1), at: recentIso(1), placedBlockId: 'b2', blueprintId: 'plant' },
-      ],
+        {
+          id: 'c1',
+          habitId: 'h1',
+          date: recentDate(3),
+          at: recentIso(3),
+          placedBlockId: 'b0',
+          blueprintId: 'plant'
+        },
+        {
+          id: 'c2',
+          habitId: 'h1',
+          date: recentDate(2),
+          at: recentIso(2),
+          placedBlockId: 'b1',
+          blueprintId: 'plant',
+          deletedAt: recentIso(0, 9)
+        },
+        {
+          id: 'c3',
+          habitId: 'h1',
+          date: recentDate(1),
+          at: recentIso(1),
+          placedBlockId: 'b2',
+          blueprintId: 'plant'
+        }
+      ]
     })
     const remote = createMockState({
       checkIns: [
-        { id: 'c1', habitId: 'h1', date: recentDate(3), at: recentIso(3), placedBlockId: 'b0', blueprintId: 'plant' },
-        { id: 'c2', habitId: 'h1', date: recentDate(2), at: recentIso(2), placedBlockId: 'b1', blueprintId: 'plant' },
-        { id: 'c3', habitId: 'h1', date: recentDate(1), at: recentIso(1), placedBlockId: 'b2', blueprintId: 'plant' },
-      ],
+        {
+          id: 'c1',
+          habitId: 'h1',
+          date: recentDate(3),
+          at: recentIso(3),
+          placedBlockId: 'b0',
+          blueprintId: 'plant'
+        },
+        {
+          id: 'c2',
+          habitId: 'h1',
+          date: recentDate(2),
+          at: recentIso(2),
+          placedBlockId: 'b1',
+          blueprintId: 'plant'
+        },
+        {
+          id: 'c3',
+          habitId: 'h1',
+          date: recentDate(1),
+          at: recentIso(1),
+          placedBlockId: 'b2',
+          blueprintId: 'plant'
+        }
+      ]
     })
 
     const merged = mergeAppState(local, remote)
@@ -170,14 +239,28 @@ describe('mergeAppState facts merge (schema v2)', () => {
   it('merged builds equal rebuildBuilds projection (invariant)', () => {
     const local = createMockState({
       checkIns: [
-        { id: 'c1', habitId: 'h1', date: '2026-03-01', at: '2026-03-01T08:00:00.000Z', placedBlockId: 'b0', blueprintId: 'plant' },
+        {
+          id: 'c1',
+          habitId: 'h1',
+          date: '2026-03-01',
+          at: '2026-03-01T08:00:00.000Z',
+          placedBlockId: 'b0',
+          blueprintId: 'plant'
+        }
       ],
-      dayClaims: [claim('2026-03-02', '2026-03-02T20:00:00.000Z', 'd0', 'plant')],
+      dayClaims: [claim('2026-03-02', '2026-03-02T20:00:00.000Z', 'd0', 'plant')]
     })
     const remote = createMockState({
       checkIns: [
-        { id: 'c2', habitId: 'h2', date: '2026-03-03', at: '2026-03-03T08:00:00.000Z', placedBlockId: 'b1', blueprintId: 'castle' },
-      ],
+        {
+          id: 'c2',
+          habitId: 'h2',
+          date: '2026-03-03',
+          at: '2026-03-03T08:00:00.000Z',
+          placedBlockId: 'b1',
+          blueprintId: 'castle'
+        }
+      ]
     })
 
     const merged = mergeAppState(local, remote)
@@ -188,21 +271,29 @@ describe('mergeAppState facts merge (schema v2)', () => {
     const base = {
       id: 'h2',
       frequency: { type: 'daily' } as const,
-      createdAt: '2026-01-02T00:00:00.000Z',
+      createdAt: '2026-01-02T00:00:00.000Z'
     }
-    const localRenamed: Habit = { ...base, name: '读书（新版）', updatedAt: '2026-03-05T00:00:00.000Z' }
-    const remoteOriginal: Habit = { ...base, name: 'Reading', updatedAt: '2026-03-01T00:00:00.000Z' }
+    const localRenamed: Habit = {
+      ...base,
+      name: '读书（新版）',
+      updatedAt: '2026-03-05T00:00:00.000Z'
+    }
+    const remoteOriginal: Habit = {
+      ...base,
+      name: 'Reading',
+      updatedAt: '2026-03-01T00:00:00.000Z'
+    }
 
     const merged = mergeAppState(
       createMockState({ habits: [localRenamed] }),
-      createMockState({ habits: [remoteOriginal] }),
+      createMockState({ habits: [remoteOriginal] })
     )
     expect(merged.habits[0].name).toBe('读书（新版）')
 
     // 反向：远端更新更晚 → 远端胜
     const merged2 = mergeAppState(
       createMockState({ habits: [remoteOriginal] }),
-      createMockState({ habits: [localRenamed] }),
+      createMockState({ habits: [localRenamed] })
     )
     expect(merged2.habits[0].name).toBe('读书（新版）')
   })
@@ -213,32 +304,32 @@ describe('mergeAppState facts merge (schema v2)', () => {
       name: 'Running',
       frequency: { type: 'daily' },
       createdAt: '2026-01-01T00:00:00.000Z',
-      category: 'Sport',
+      category: 'Sport'
     }
     const habit2Local: Habit = {
       id: 'h2',
       name: 'Reading',
       frequency: { type: 'daily' },
       createdAt: '2026-01-02T00:00:00.000Z',
-      pinned: true,
+      pinned: true
     }
     const habit2Remote: Habit = {
       id: 'h2',
       name: 'Reading Books',
       frequency: { type: 'daily' },
       createdAt: '2026-01-02T00:00:00.000Z',
-      archivedAt: '2026-02-01T00:00:00.000Z',
+      archivedAt: '2026-02-01T00:00:00.000Z'
     }
     const habit3Remote: Habit = {
       id: 'h3',
       name: 'Meditation',
       frequency: { type: 'weekly', times: 3 },
-      createdAt: '2026-02-01T00:00:00.000Z',
+      createdAt: '2026-02-01T00:00:00.000Z'
     }
 
     const merged = mergeAppState(
       createMockState({ habits: [habit1, habit2Local] }),
-      createMockState({ habits: [habit2Remote, habit3Remote] }),
+      createMockState({ habits: [habit2Remote, habit3Remote] })
     )
 
     expect(merged.habits.length).toBe(3)
@@ -252,24 +343,24 @@ describe('mergeAppState facts merge (schema v2)', () => {
       id: 'h1',
       name: 'Valid Custom',
       frequency: { type: 'custom', days: [1, 3] },
-      createdAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z'
     }
     const emptyCustomRemote: Habit = {
       id: 'h_empty_remote',
       name: 'Empty Remote',
       frequency: { type: 'custom', days: [] },
-      createdAt: '2026-01-02T00:00:00.000Z',
+      createdAt: '2026-01-02T00:00:00.000Z'
     }
     const emptyCustomLocal: Habit = {
       id: 'h_empty_local',
       name: 'Empty Local',
       frequency: { type: 'custom', days: [] },
-      createdAt: '2026-01-03T00:00:00.000Z',
+      createdAt: '2026-01-03T00:00:00.000Z'
     }
 
     const merged = mergeAppState(
       createMockState({ habits: [validHabit, emptyCustomLocal] }),
-      createMockState({ habits: [emptyCustomRemote] }),
+      createMockState({ habits: [emptyCustomRemote] })
     )
 
     // 空 days 的 custom 习惯被钳制保留（工作日），而非静默消失
@@ -286,13 +377,13 @@ describe('mergeAppState facts merge (schema v2)', () => {
     // 设备 A 撤销了昨天的全勤（deletedAt 晚于 claimedAt）；设备 B 仍领取
     const local = createMockState({
       dayClaims: [claim(recentDate(2), recentIso(2, 20), 'd3', 'plant')],
-      deletedDayClaims: [{ date: recentDate(4), deletedAt: recentIso(4, 21) }],
+      deletedDayClaims: [{ date: recentDate(4), deletedAt: recentIso(4, 21) }]
     })
     const remote = createMockState({
       dayClaims: [
         claim(recentDate(4), recentIso(4, 20), 'd1', 'plant'),
-        claim(recentDate(3), recentIso(3, 20), 'd2', 'plant'),
-      ],
+        claim(recentDate(3), recentIso(3, 20), 'd2', 'plant')
+      ]
     })
 
     const merged = mergeAppState(local, remote)
@@ -305,7 +396,7 @@ describe('mergeAppState facts merge (schema v2)', () => {
   it('re-claim after unclaim restores the day claim (deletedAt older than claimedAt)', () => {
     const local = createMockState({
       dayClaims: [claim(recentDate(0), recentIso(0, 22), 'd1-new', 'plant')],
-      deletedDayClaims: [{ date: recentDate(0), deletedAt: recentIso(0, 21) }],
+      deletedDayClaims: [{ date: recentDate(0), deletedAt: recentIso(0, 21) }]
     })
     const remote = createMockState({})
 
@@ -315,10 +406,10 @@ describe('mergeAppState facts merge (schema v2)', () => {
 
   it('keeps all settings fields (local priority, remote fallback)', () => {
     const local = createMockState({
-      settings: { theme: 'dark', language: 'zh', soundMaterial: 'walnut', enableGentleDecay: false },
+      settings: { theme: 'dark', language: 'zh', soundMaterial: 'walnut', enableGentleDecay: false }
     })
     const remote = createMockState({
-      settings: { theme: 'light', language: 'en', enableGyroscope: true, soundMaterial: 'metal' },
+      settings: { theme: 'light', language: 'en', enableGyroscope: true, soundMaterial: 'metal' }
     })
 
     const merged = mergeAppState(local, remote)
@@ -355,14 +446,14 @@ describe('mergeAppState facts merge (schema v2)', () => {
   it('merges foundationNotes and showcasePlacements (local priority)', () => {
     const local = createMockState({
       foundationNotes: { plant: 'First plant note', tower: 'Tower local note' },
-      showcasePlacements: [{ blueprintId: 'plant', gridX: 0, gridY: 0 }],
+      showcasePlacements: [{ blueprintId: 'plant', gridX: 0, gridY: 0 }]
     })
     const remote = createMockState({
       foundationNotes: { tower: 'Tower remote note', castle: 'Castle note' },
       showcasePlacements: [
         { blueprintId: 'plant', gridX: 1, gridY: 1 },
-        { blueprintId: 'castle', gridX: 2, gridY: 2 },
-      ],
+        { blueprintId: 'castle', gridX: 2, gridY: 2 }
+      ]
     })
 
     const merged = mergeAppState(local, remote)
@@ -370,7 +461,7 @@ describe('mergeAppState facts merge (schema v2)', () => {
     expect(merged.foundationNotes).toEqual({
       plant: 'First plant note',
       tower: 'Tower local note',
-      castle: 'Castle note',
+      castle: 'Castle note'
     })
     expect(merged.showcasePlacements?.length).toBe(2)
     const plantP = merged.showcasePlacements?.find((p) => p.blueprintId === 'plant')
@@ -388,18 +479,18 @@ describe('mergeAppState facts merge (schema v2)', () => {
       date: recentDate(i + 1),
       at: recentIso(i + 1),
       placedBlockId: `b${i}`,
-      blueprintId: 'plant',
+      blueprintId: 'plant'
     })
     // 本地：建满后撤销最后一块（墓碑）；远端：仍全部在册。双方 completed 都含 plant
     const local = createMockState({
       checkIns: Array.from({ length: N }, (_, i) =>
-        i === N - 1 ? { ...mk(i), deletedAt: recentIso(0, 9) } : mk(i),
+        i === N - 1 ? { ...mk(i), deletedAt: recentIso(0, 9) } : mk(i)
       ),
-      completedBlueprintIds: ['plant'],
+      completedBlueprintIds: ['plant']
     })
     const remote = createMockState({
       checkIns: Array.from({ length: N }, (_, i) => mk(i)),
-      completedBlueprintIds: ['plant'],
+      completedBlueprintIds: ['plant']
     })
 
     const merged = mergeAppState(local, remote)
@@ -410,9 +501,24 @@ describe('mergeAppState facts merge (schema v2)', () => {
 
   it('keeps habit with equal updatedAt from local side (same-timestamp tie-break)', () => {
     const ts = '2026-03-05T00:00:00.000Z'
-    const local: Habit = { id: 'h1', name: '本地名', frequency: { type: 'daily' }, createdAt: ts, updatedAt: ts }
-    const remote: Habit = { id: 'h1', name: '远端名', frequency: { type: 'daily' }, createdAt: ts, updatedAt: ts }
-    const merged = mergeAppState(createMockState({ habits: [local] }), createMockState({ habits: [remote] }))
+    const local: Habit = {
+      id: 'h1',
+      name: '本地名',
+      frequency: { type: 'daily' },
+      createdAt: ts,
+      updatedAt: ts
+    }
+    const remote: Habit = {
+      id: 'h1',
+      name: '远端名',
+      frequency: { type: 'daily' },
+      createdAt: ts,
+      updatedAt: ts
+    }
+    const merged = mergeAppState(
+      createMockState({ habits: [local] }),
+      createMockState({ habits: [remote] })
+    )
     expect(merged.habits[0].name).toBe('本地名')
   })
 })

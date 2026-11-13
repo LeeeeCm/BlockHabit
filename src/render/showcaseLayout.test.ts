@@ -6,7 +6,7 @@ import {
   buildRotatedFootprintMap,
   collectSortedCubes,
   compareCubes,
-  rotateBlocksForRender,
+  rotateBlocksForRender
 } from './showcaseLayout'
 import { getModelFootprint, getRotatedFootprint, SHOWCASE_GRID_SIZE } from '../logic/showcase'
 import { DEFAULT_ISO_CONFIG } from './isoGeometry'
@@ -20,12 +20,17 @@ import type { Blueprint, ShowcasePlacement } from '../types'
 const map = { plant: blueprints.plant, coffee: blueprints.coffee }
 const placements: ShowcasePlacement[] = [
   { blueprintId: 'plant', gridX: 2, gridY: 3 },
-  { blueprintId: 'coffee', gridX: 8, gridY: 1 },
+  { blueprintId: 'coffee', gridX: 8, gridY: 1 }
 ]
 
 describe('compareCubes（画家算法）', () => {
   const cube = (worldX: number, worldY: number, worldZ: number) => ({
-    worldX, worldY, worldZ, block: blueprints.plant.blocks[0], blueprintId: 'plant', isDragging: false,
+    worldX,
+    worldY,
+    worldZ,
+    block: blueprints.plant.blocks[0],
+    blueprintId: 'plant',
+    isDragging: false
   })
 
   it('先比 (x+y) 深度', () => {
@@ -60,7 +65,11 @@ describe('collectSortedCubes', () => {
   })
 
   it('未知蓝图被跳过（脏数据不崩）', () => {
-    const cubes = collectSortedCubes([{ blueprintId: 'nope', gridX: 0, gridY: 0 }], map, buildFootprintMap(map))
+    const cubes = collectSortedCubes(
+      [{ blueprintId: 'nope', gridX: 0, gridY: 0 }],
+      map,
+      buildFootprintMap(map)
+    )
     expect(cubes).toEqual([])
   })
 })
@@ -183,14 +192,12 @@ describe('collectSortedCubes / buildOffsetBlocksMap 的 rotations 参数', () =>
     const legacyCubes = collectSortedCubes(placements, map, footprintMap)
     expect(collectSortedCubes(placements, map, footprintMap, {})).toEqual(legacyCubes)
     expect(collectSortedCubes(placements, map, footprintMap, { plant: 0, coffee: 0 })).toEqual(
-      legacyCubes,
+      legacyCubes
     )
 
     const legacyOffsets = buildOffsetBlocksMap(placements, map, footprintMap)
     expect(buildOffsetBlocksMap(placements, map, footprintMap, {})).toEqual(legacyOffsets)
-    expect(buildOffsetBlocksMap(placements, map, footprintMap, { plant: 0 })).toEqual(
-      legacyOffsets,
-    )
+    expect(buildOffsetBlocksMap(placements, map, footprintMap, { plant: 0 })).toEqual(legacyOffsets)
   })
 
   it('带旋转时块世界坐标 = 落位 + 旋转归一化块坐标，且仍全局有序', () => {
@@ -218,7 +225,7 @@ describe('collectSortedCubes / buildOffsetBlocksMap 的 rotations 参数', () =>
     const offsets = buildOffsetBlocksMap(placements, map, footprintMap, { plant: 1 })
     const rotated = rotateBlocksForRender(map.plant.blocks, 1)
     expect(offsets.get('plant')).toEqual(
-      rotated.map((b) => ({ x: placements[0].gridX + b.x, y: placements[0].gridY + b.y })),
+      rotated.map((b) => ({ x: placements[0].gridX + b.x, y: placements[0].gridY + b.y }))
     )
     expect(offsets.get('plant')).toHaveLength(map.plant.blocks.length)
   })

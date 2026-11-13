@@ -7,11 +7,11 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
   rename: vi.fn(),
   remove: vi.fn(),
   mkdir: vi.fn(),
-  readDir: vi.fn(),
+  readDir: vi.fn()
 }))
 vi.mock('@tauri-apps/api/path', () => ({
   appDataDir: async () => 'C:/appdata',
-  join: async (...parts: string[]) => parts.join('/'),
+  join: async (...parts: string[]) => parts.join('/')
 }))
 
 import * as fsPlugin from '@tauri-apps/plugin-fs'
@@ -32,7 +32,7 @@ function validArchive() {
     builds: [],
     activeBlueprintId: 'plant',
     completedBlueprintIds: [],
-    settings: { theme: 'light', language: 'zh' },
+    settings: { theme: 'light', language: 'zh' }
   })
 }
 

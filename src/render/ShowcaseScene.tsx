@@ -7,13 +7,13 @@ import {
   traceIsoGroundPath,
   worldToScreen,
   type IsoCornerRadii,
-  type IsoPalette,
+  type IsoPalette
 } from './iso'
 import {
   canPlaceModel,
   getRotatedFootprint,
   screenToGroundIso,
-  SHOWCASE_GRID_SIZE,
+  SHOWCASE_GRID_SIZE
 } from '../logic/showcase'
 import { drawEcoProps, drawGroundShadow, withAlpha } from './iso'
 import {
@@ -24,7 +24,7 @@ import {
   collectSortedCubes,
   compareCubes,
   rotateBlocksForRender,
-  type RenderCube,
+  type RenderCube
 } from './showcaseLayout'
 import { ecoStageFor } from '../logic/eco'
 import { currentStreakWithResilience } from '../logic/streak'
@@ -34,7 +34,7 @@ import {
   calculateTouchCenter,
   clampZoom,
   isQuickTap,
-  type TouchGestureState,
+  type TouchGestureState
 } from './touchGesture'
 import { triggerHaptic } from '../platform'
 import { useAppStore } from '../store/appStore'
@@ -54,7 +54,6 @@ interface Props {
 
 /** 稳定空表：默认旋转不开时保持引用不变，静态派生 memo 不会因每次渲染新建对象而失效 */
 const EMPTY_ROTATIONS: Record<string, number> = {}
-
 
 interface DragState {
   blueprintId: string
@@ -80,7 +79,7 @@ export function ShowcaseScene({
   onSelectModel,
   rotations = EMPTY_ROTATIONS,
   ecoSeed = 0,
-  selectedId = null,
+  selectedId = null
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const viewRef = useRef({ scale: 0.9, panX: 0, panY: 0, fitted: false })
@@ -147,13 +146,13 @@ export function ShowcaseScene({
   //     rotations 为空时与 footprintMap 完全一致，静态路径行为不变。
   const rotatedFootprintMap = useMemo(
     () => buildRotatedFootprintMap(blueprintsMap, rotations),
-    [blueprintsMap, rotations],
+    [blueprintsMap, rotations]
   )
   // 3. 静态排序列表：所有模型按当前落位展开并排好序；拖拽时仅与"被拖模型"双有序归并，
   //    不再每帧全量重建 + 全量排序（ref 承载保持 draw 引用稳定，不触发监听重绑）
   const sortedStaticCubes = useMemo(
     () => collectSortedCubes(placements, blueprintsMap, footprintMap, rotations),
-    [placements, blueprintsMap, footprintMap, rotations],
+    [placements, blueprintsMap, footprintMap, rotations]
   )
   const sortedStaticCubesRef = useRef(sortedStaticCubes)
   sortedStaticCubesRef.current = sortedStaticCubes
@@ -166,7 +165,7 @@ export function ShowcaseScene({
   // 已落位模型的偏移积木坐标（阴影与植被绘制、命中检测共用；placements/rotations 不变时引用不变）
   const offsetBlocksMap = useMemo(
     () => buildOffsetBlocksMap(placements, blueprintsMap, footprintMap, rotations),
-    [placements, blueprintsMap, footprintMap, rotations],
+    [placements, blueprintsMap, footprintMap, rotations]
   )
   const offsetBlocksRef = useRef(offsetBlocksMap)
   offsetBlocksRef.current = offsetBlocksMap
@@ -180,7 +179,9 @@ export function ShowcaseScene({
       // 底层环境光柔和阴影
       bctx.save()
       bctx.beginPath()
-      botPts.forEach((pt, i) => (i === 0 ? bctx.moveTo(pt.sx, pt.sy + 6) : bctx.lineTo(pt.sx, pt.sy + 6)))
+      botPts.forEach((pt, i) =>
+        i === 0 ? bctx.moveTo(pt.sx, pt.sy + 6) : bctx.lineTo(pt.sx, pt.sy + 6)
+      )
       bctx.closePath()
       bctx.fillStyle = withAlpha(palette.ink, 0.06)
       bctx.fill()
@@ -190,7 +191,9 @@ export function ShowcaseScene({
       if (skirtPts.length > 0) {
         bctx.save()
         bctx.beginPath()
-        skirtPts.forEach((pt, i) => (i === 0 ? bctx.moveTo(pt.sx, pt.sy) : bctx.lineTo(pt.sx, pt.sy)))
+        skirtPts.forEach((pt, i) =>
+          i === 0 ? bctx.moveTo(pt.sx, pt.sy) : bctx.lineTo(pt.sx, pt.sy)
+        )
         bctx.closePath()
         bctx.fillStyle = palette.left
         bctx.fill()
@@ -231,7 +234,7 @@ export function ShowcaseScene({
       bctx.stroke()
       bctx.restore()
     },
-    [baseGeometry, cfg, G],
+    [baseGeometry, cfg, G]
   )
 
   const draw = useCallback(() => {
@@ -294,8 +297,30 @@ export function ShowcaseScene({
       for (const p of placementsRef.current) {
         const offsetBlocks = offsetBlocksRef.current.get(p.blueprintId)
         if (!offsetBlocks) continue
-        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'back', ecoSeedRef.current)
-        drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, ecoStageRef.current, 'front', ecoSeedRef.current)
+        drawEcoProps(
+          ctx,
+          offsetBlocks,
+          cfg,
+          palette,
+          0,
+          0,
+          0,
+          ecoStageRef.current,
+          'back',
+          ecoSeedRef.current
+        )
+        drawEcoProps(
+          ctx,
+          offsetBlocks,
+          cfg,
+          palette,
+          0,
+          0,
+          0,
+          ecoStageRef.current,
+          'front',
+          ecoSeedRef.current
+        )
       }
     }
 
@@ -315,7 +340,7 @@ export function ShowcaseScene({
         const dragRadii: IsoCornerRadii = {
           bottom: 0.9,
           side: 0.6,
-          top: 0.35,
+          top: 0.35
         }
 
         ctx.save()
@@ -351,7 +376,7 @@ export function ShowcaseScene({
       const dragRotation = rotationsRef.current[drag.blueprintId] ?? 0
       const dragBlocks = bp ? rotateBlocksForRender(bp.blocks, dragRotation) : null
       const fp = bp
-        ? footprintRef.current.get(bp.id) ?? getRotatedFootprint(bp.blocks, dragRotation)
+        ? (footprintRef.current.get(bp.id) ?? getRotatedFootprint(bp.blocks, dragRotation))
         : null
       const dragCubes: RenderCube[] = []
       if (bp && fp && dragBlocks) {
@@ -362,7 +387,7 @@ export function ShowcaseScene({
             worldZ: b.z,
             block: b,
             blueprintId: drag.blueprintId,
-            isDragging: true,
+            isDragging: true
           })
         }
         dragCubes.sort(compareCubes)
@@ -399,14 +424,14 @@ export function ShowcaseScene({
       const isHovered =
         (hoveredIdRef.current === blueprintId || selectedIdRef.current === blueprintId) && !drag
       const bonusTier = index !== undefined ? bonusRef.current.get(blueprintId)?.[index] : undefined
-    const isBonus = bonusTier !== undefined
+      const isBonus = bonusTier !== undefined
       drawCube(ctx, px, py + cfg.tileH / 2, cfg, palette, {
         type: block.type,
         color: block.color,
         highlight: isHovered,
         ghost: isDragging && !drag?.isValid,
         bonus: isBonus,
-      bonusTier,
+        bonusTier
       })
     }
   }, [blueprintsMap, cfg, G, footprintMap, renderBase])
@@ -434,14 +459,14 @@ export function ShowcaseScene({
       if (!viewRef.current.fitted) {
         const p0 = worldToScreen(0, 0, 0, cfg)
         const pXY = worldToScreen(G, G, 0, cfg)
-        const sceneW = (G * cfg.tileW)
-        const sceneH = (G * cfg.tileH) + 120
+        const sceneW = G * cfg.tileW
+        const sceneH = G * cfg.tileH + 120
         const scale = Math.min((w - 48) / sceneW, (h - 48) / sceneH, 1.2)
         viewRef.current = {
           scale,
           panX: w / 2 - ((p0.sx + pXY.sx) / 2) * scale,
           panY: h / 2 - ((p0.sy + pXY.sy) / 2) * scale - 20,
-          fitted: true,
+          fitted: true
         }
       }
       draw()
@@ -497,7 +522,7 @@ export function ShowcaseScene({
       }
       return null
     },
-    [blueprintsMap, cfg.tileH, cfg.tileW],
+    [blueprintsMap, cfg.tileH, cfg.tileW]
   )
 
   const touchStateRef = useRef<TouchGestureState | null>(null)
@@ -514,7 +539,7 @@ export function ShowcaseScene({
         maxDisplacement: 0,
         isMultiTouch: false,
         lastPinchDist: 0,
-        lastPinchCenter: { x: t.clientX, y: t.clientY },
+        lastPinchCenter: { x: t.clientX, y: t.clientY }
       }
     } else if (e.touches.length >= 2) {
       const p1 = e.touches[0]
@@ -536,7 +561,7 @@ export function ShowcaseScene({
           maxDisplacement: 999,
           isMultiTouch: true,
           lastPinchDist: dist,
-          lastPinchCenter: center,
+          lastPinchCenter: center
         }
       }
     }
@@ -593,7 +618,7 @@ export function ShowcaseScene({
         state.lastPinchCenter = center
       }
     },
-    [draw],
+    [draw]
   )
 
   const handleTouchEnd = useCallback(
@@ -624,7 +649,7 @@ export function ShowcaseScene({
         state.maxDisplacement = 999
       }
     },
-    [findModelAtScreenPoint, onSelectModel],
+    [findModelAtScreenPoint, onSelectModel]
   )
 
   const handleTouchCancel = useCallback(() => {
@@ -691,7 +716,7 @@ export function ShowcaseScene({
           isValid: true,
           hasMoved: false,
           downPx: mx,
-          downPy: my,
+          downPy: my
         }
       } else {
         // 命中空地：进入沙盘平移状态
@@ -715,7 +740,7 @@ export function ShowcaseScene({
         const bp = blueprintsMap[drag.blueprintId]
         const dragRotation = rotationsRef.current[drag.blueprintId] ?? 0
         const fp = bp
-          ? footprintRef.current.get(bp.id) ?? getRotatedFootprint(bp.blocks, dragRotation)
+          ? (footprintRef.current.get(bp.id) ?? getRotatedFootprint(bp.blocks, dragRotation))
           : { width: 1, depth: 1 }
 
         // 磁吸对齐至整数网格坐标
@@ -729,7 +754,7 @@ export function ShowcaseScene({
           placementsRef.current,
           blueprintsMap,
           G,
-          rotationsRef.current,
+          rotationsRef.current
         )
         canvas.style.cursor = drag.isValid ? 'grabbing' : 'not-allowed'
         draw()
@@ -818,7 +843,7 @@ export function ShowcaseScene({
       const targetY = Math.max(-5, Math.min(5, ((e.beta - 45) / 30) * 5))
       gyroOffsetRef.current = {
         x: gyroOffsetRef.current.x * 0.8 + targetX * 0.2,
-        y: gyroOffsetRef.current.y * 0.8 + targetY * 0.2,
+        y: gyroOffsetRef.current.y * 0.8 + targetY * 0.2
       }
       draw()
     }
@@ -837,7 +862,7 @@ export function ShowcaseScene({
         width: '100%',
         height: '100%',
         display: 'block',
-        touchAction: 'none',
+        touchAction: 'none'
       }}
     />
   )

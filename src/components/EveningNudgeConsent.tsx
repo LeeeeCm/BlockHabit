@@ -8,7 +8,7 @@ import { IconBulb } from './Icons'
 export function EveningNudgeConsent({
   time = '21:00',
   onEnable,
-  onDecline,
+  onDecline
 }: {
   time?: string
   onEnable: () => void
@@ -26,7 +26,7 @@ export function EveningNudgeConsent({
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        flexWrap: 'wrap',
+        flexWrap: 'wrap'
       }}
     >
       <div style={{ display: 'flex', gap: 8, flex: '1 1 240px', minWidth: 0 }}>
@@ -35,7 +35,14 @@ export function EveningNudgeConsent({
           <div style={{ fontSize: 'var(--fs-body)', fontWeight: 600, color: 'var(--ink)' }}>
             {t.eveningNudge.consentTitle}
           </div>
-          <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginTop: 2, lineHeight: 1.5 }}>
+          <div
+            style={{
+              fontSize: 'var(--fs-small)',
+              color: 'var(--ink-2)',
+              marginTop: 2,
+              lineHeight: 1.5
+            }}
+          >
             {t.eveningNudge.consentBody(time)}
           </div>
         </div>

@@ -11,20 +11,40 @@ function fakeState(over: Partial<AppState> = {}): AppState {
     schemaVersion: 2,
     habits: [
       { id: 'h1', name: 'A', frequency: { type: 'daily' }, createdAt: '2026-01-01T00:00:00.000Z' },
-      { id: 'h2', name: 'B', frequency: { type: 'daily' }, createdAt: '2026-01-01T00:00:00.000Z', archivedAt: '2026-02-01T00:00:00.000Z' },
+      {
+        id: 'h2',
+        name: 'B',
+        frequency: { type: 'daily' },
+        createdAt: '2026-01-01T00:00:00.000Z',
+        archivedAt: '2026-02-01T00:00:00.000Z'
+      }
     ],
     checkIns: [{ id: 'c1', habitId: 'h1', date: '2026-01-02', at: '2026-01-02T08:00:00.000Z' }],
     builds: [
-      { id: 'b1', blueprintId: 'plant', index: 0, placedAt: '2026-01-02T08:00:00.000Z', fromHabitId: 'h1', bonus: false },
+      {
+        id: 'b1',
+        blueprintId: 'plant',
+        index: 0,
+        placedAt: '2026-01-02T08:00:00.000Z',
+        fromHabitId: 'h1',
+        bonus: false
+      }
     ],
     activeBlueprintId: 'plant',
     completedBlueprintIds: ['coffee'],
     settings: { theme: 'dark', language: 'zh' },
-    dayClaims: [{ date: '2026-01-02', claimedAt: '2026-01-02T09:00:00.000Z', blockId: 'b1', blueprintId: 'plant' }],
+    dayClaims: [
+      {
+        date: '2026-01-02',
+        claimedAt: '2026-01-02T09:00:00.000Z',
+        blockId: 'b1',
+        blueprintId: 'plant'
+      }
+    ],
     repairBricks: 3,
     foundationNotes: { plant: 'note' },
     reminderLog: { h1: '2026-01-02' },
-    ...over,
+    ...over
   } as AppState
 }
 
@@ -45,7 +65,18 @@ describe('diagnostics · 数据体量汇总', () => {
   })
 
   it('空状态不抛错，计数为 0', () => {
-    const s = summarizeData(fakeState({ habits: [], checkIns: [], builds: [], completedBlueprintIds: [], dayClaims: [], repairBricks: 0, foundationNotes: {}, reminderLog: {} }))
+    const s = summarizeData(
+      fakeState({
+        habits: [],
+        checkIns: [],
+        builds: [],
+        completedBlueprintIds: [],
+        dayClaims: [],
+        repairBricks: 0,
+        foundationNotes: {},
+        reminderLog: {}
+      })
+    )
     expect(s.habits).toBe(0)
     expect(s.checkIns).toBe(0)
     expect(s.repairBricks).toBe(0)
@@ -61,7 +92,12 @@ describe('diagnostics · 报告文本', () => {
   const base = 'BlockHabit Diagnostics'
 
   it('包含数据体量、帧率、崩溃计数三个区块', () => {
-    const text = formatDiagnosticsReport({ base, summary, frames: { frames: 72, durationMs: 1200, fps: 60, worstFrameMs: 21.5 }, crashCount: 2 })
+    const text = formatDiagnosticsReport({
+      base,
+      summary,
+      frames: { frames: 72, durationMs: 1200, fps: 60, worstFrameMs: 21.5 },
+      crashCount: 2
+    })
     expect(text).toContain('Data summary (local only)')
     expect(text).toContain('Render sampling')
     expect(text).toContain('60 fps')

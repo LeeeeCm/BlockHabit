@@ -8,7 +8,14 @@ import { prepareImport } from './adapter'
 function v1Archive() {
   return {
     schemaVersion: 1,
-    habits: [{ id: 'h1', name: '读书', frequency: { type: 'daily' }, createdAt: '2026-01-01T00:00:00.000Z' }],
+    habits: [
+      {
+        id: 'h1',
+        name: '读书',
+        frequency: { type: 'daily' },
+        createdAt: '2026-01-01T00:00:00.000Z'
+      }
+    ],
     checkIns: [
       {
         id: 'c1',
@@ -16,8 +23,8 @@ function v1Archive() {
         date: '2026-01-02',
         at: '2026-01-02T08:00:00.000Z',
         placedBlockId: 'b1',
-        rewardBlockIndex: 0,
-      },
+        rewardBlockIndex: 0
+      }
     ],
     builds: [
       {
@@ -26,7 +33,7 @@ function v1Archive() {
         index: 0,
         placedAt: '2026-01-02T08:00:00.000Z',
         fromHabitId: 'h1',
-        bonus: false,
+        bonus: false
       },
       // v1 的全勤块：fromHabitId 为 '__day__'，迁移时按日期匹配回填 blockId
       {
@@ -35,14 +42,14 @@ function v1Archive() {
         index: 1,
         placedAt: '2026-01-02T12:00:00.000Z',
         fromHabitId: '__day__',
-        bonus: true,
-      },
+        bonus: true
+      }
     ],
     activeBlueprintId: 'plant',
     completedBlueprintIds: [],
     settings: { theme: 'light', language: 'zh' },
     // v1 形态：字符串数组
-    dayClaims: ['2026-01-02'],
+    dayClaims: ['2026-01-02']
   }
 }
 

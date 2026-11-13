@@ -6,14 +6,20 @@ import {
   canRotatePlacement,
   findNextAvailablePlacement,
   isDecorationUnlocked,
-  SHOWCASE_GRID_SIZE,
+  SHOWCASE_GRID_SIZE
 } from '../logic/showcase'
 import { ShowcaseScene } from '../render/ShowcaseScene'
 import { PolaroidModal } from '../components/PolaroidModal'
 import { GuideTip } from '../components/GuideTip'
 import { hasSeenTip, markTipSeen } from '../platform/guideTips'
 import { getBlueprintName, useI18n } from '../i18n'
-import { IconBulb, IconRotateCcw, IconRotateCw, IconShuffle, IconSparkle } from '../components/Icons'
+import {
+  IconBulb,
+  IconRotateCcw,
+  IconRotateCw,
+  IconShuffle,
+  IconSparkle
+} from '../components/Icons'
 import type { ShowcasePlacement } from '../types'
 
 /** 旋转按钮触控目标（D-20261111-068 验收：移动端 ≥44px） */
@@ -133,7 +139,7 @@ export default function Showcase() {
       showcasePlacements,
       blueprints,
       rotations,
-      SHOWCASE_GRID_SIZE,
+      SHOWCASE_GRID_SIZE
     )
     if (!ok) {
       showToast(t.showcase.rotateBlocked, 2400)
@@ -167,12 +173,20 @@ export default function Showcase() {
           flexWrap: 'wrap',
           rowGap: 8,
           padding: '14px 22px',
-          borderBottom: '1px solid var(--line)',
+          borderBottom: '1px solid var(--line)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
           <span style={{ fontWeight: 700, fontSize: 'var(--fs-title)' }}>{t.showcase.title}</span>
-          <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <span
+            style={{
+              fontSize: 'var(--fs-small)',
+              color: 'var(--ink-2)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5
+            }}
+          >
             <IconBulb size={13} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span>{decorationMode ? t.showcase.decorationHint : t.showcase.dragHint}</span>
           </span>
@@ -193,7 +207,7 @@ export default function Showcase() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 5,
-                ...(decorationMode ? { borderColor: 'var(--ink)', color: 'var(--ink)' } : null),
+                ...(decorationMode ? { borderColor: 'var(--ink)', color: 'var(--ink)' } : null)
               }}
             >
               <IconSparkle size={12} />
@@ -205,7 +219,14 @@ export default function Showcase() {
             <button
               className="btn ghost"
               onClick={handleAutoArrange}
-              style={{ fontSize: 'var(--fs-small)', padding: '4px 12px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+              style={{
+                fontSize: 'var(--fs-small)',
+                padding: '4px 12px',
+                borderRadius: 999,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5
+              }}
               title={t.showcase.autoArrange}
             >
               <IconSparkle size={12} style={{ color: 'var(--accent)' }} />
@@ -223,7 +244,7 @@ export default function Showcase() {
               borderRadius: 999,
               padding: '3px 12px',
               fontSize: 'var(--fs-small)',
-              fontWeight: 600,
+              fontWeight: 600
             }}
           >
             <span style={{ color: 'var(--progress-green)' }}>●</span>
@@ -257,7 +278,7 @@ export default function Showcase() {
               border: '1px solid var(--line)',
               fontSize: 'var(--fs-body)',
               color: 'var(--ink-2)',
-              lineHeight: 1.6,
+              lineHeight: 1.6
             }}
           >
             {t.showcase.emptyHint}
@@ -286,7 +307,7 @@ export default function Showcase() {
             border: '1px solid var(--line)',
             borderRadius: 'var(--r-md)',
             backdropFilter: 'blur(8px)',
-            zIndex: 20,
+            zIndex: 20
           }}
         >
           {decorationSelectedId && (
@@ -299,7 +320,7 @@ export default function Showcase() {
                   maxWidth: 150,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {getBlueprintName(decorationSelectedId, lang)}
@@ -320,7 +341,7 @@ export default function Showcase() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: 'var(--r-md)',
-                  color: 'var(--ink)',
+                  color: 'var(--ink)'
                 }}
               >
                 <IconRotateCcw size={16} />
@@ -341,7 +362,7 @@ export default function Showcase() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: 'var(--r-md)',
-                  color: 'var(--ink)',
+                  color: 'var(--ink)'
                 }}
               >
                 <IconRotateCw size={16} />
@@ -359,7 +380,7 @@ export default function Showcase() {
               borderRadius: 'var(--r-md)',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 5,
+              gap: 5
             }}
           >
             <IconShuffle size={13} />

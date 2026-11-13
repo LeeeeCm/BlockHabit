@@ -28,7 +28,7 @@ function renderHookHelper<T>(useHook: () => T) {
         root.unmount()
       })
       container.remove()
-    },
+    }
   }
 }
 
@@ -57,7 +57,7 @@ describe('useSync hook', () => {
       autoSyncIntervalMinutes: 15,
       lastSyncAt: null,
       lastSyncStatus: 'idle' as const,
-      lastSyncError: null,
+      lastSyncError: null
     }
     saveWebDavConfig(sample)
     // B1：新字段 rememberPassword 缺省为 true（旧配置兼容）
@@ -84,7 +84,7 @@ describe('useSync hook', () => {
       endpoint: 'https://dav.test/dav/',
       username: 'user',
       password: 'pwd',
-      enabled: false,
+      enabled: false
     })
     useAppStore.setState({ hydrated: false })
     const { result, unmount } = renderHookHelper(() => useSync())
@@ -107,7 +107,7 @@ describe('useSync hook', () => {
       endpoint: 'https://dav.test/dav/',
       username: 'user',
       password: 'pwd',
-      enabled: true,
+      enabled: true
     })
 
     // Mock fetch: GET -> 404, PROPFIND -> 207 (目录存在、文件不存在), PUT -> 201
@@ -143,7 +143,7 @@ describe('useSync hook', () => {
       endpoint: 'https://dav.test/dav/',
       username: 'user',
       password: 'pwd',
-      enabled: true,
+      enabled: true
     })
 
     const remoteState = {
@@ -153,8 +153,8 @@ describe('useSync hook', () => {
           id: 'remote-h1',
           name: 'Remote Habit',
           frequency: { type: 'daily' },
-          createdAt: '2026-01-01T00:00:00.000Z',
-        },
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
       ],
       checkIns: [],
       builds: [],
@@ -163,7 +163,7 @@ describe('useSync hook', () => {
       completedBlueprintIds: ['castle'],
       settings: { theme: 'light', language: 'zh' },
       dayClaims: [],
-      repairBricks: 1,
+      repairBricks: 1
     }
 
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
@@ -196,29 +196,57 @@ describe('useSync hook', () => {
       endpoint: 'https://dav.test/dav/',
       username: 'user',
       password: 'pwd',
-      enabled: true,
+      enabled: true
     })
     // 本地已有习惯
     useAppStore.setState({
-      habits: [{ id: 'local-h1', name: 'Local', frequency: { type: 'daily' }, createdAt: '2026-01-01T00:00:00.000Z' }],
+      habits: [
+        {
+          id: 'local-h1',
+          name: 'Local',
+          frequency: { type: 'daily' },
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
+      ]
     })
 
     const remote1 = {
-      schemaVersion: 2, habits: [], checkIns: [], builds: [], activeBlueprintId: 'plant',
-      completedBlueprintIds: [], settings: { theme: 'light', language: 'zh' }, dayClaims: [],
+      schemaVersion: 2,
+      habits: [],
+      checkIns: [],
+      builds: [],
+      activeBlueprintId: 'plant',
+      completedBlueprintIds: [],
+      settings: { theme: 'light', language: 'zh' },
+      dayClaims: []
     }
     const remote2 = {
       schemaVersion: 2,
-      habits: [{ id: 'remote-h2', name: 'Concurrent', frequency: { type: 'daily' }, createdAt: '2026-01-02T00:00:00.000Z' }],
-      checkIns: [], builds: [], activeBlueprintId: 'plant',
-      completedBlueprintIds: [], settings: { theme: 'light', language: 'zh' }, dayClaims: [],
+      habits: [
+        {
+          id: 'remote-h2',
+          name: 'Concurrent',
+          frequency: { type: 'daily' },
+          createdAt: '2026-01-02T00:00:00.000Z'
+        }
+      ],
+      checkIns: [],
+      builds: [],
+      activeBlueprintId: 'plant',
+      completedBlueprintIds: [],
+      settings: { theme: 'light', language: 'zh' },
+      dayClaims: []
     }
 
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(new Response(JSON.stringify(remote1), { status: 200, headers: { ETag: '"e1"' } }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(remote1), { status: 200, headers: { ETag: '"e1"' } })
+      )
       .mockResolvedValueOnce(new Response(null, { status: 412 })) // 第一次 PUT 条件写失败
-      .mockResolvedValueOnce(new Response(JSON.stringify(remote2), { status: 200, headers: { ETag: '"e2"' } }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(remote2), { status: 200, headers: { ETag: '"e2"' } })
+      )
       .mockResolvedValueOnce(new Response(null, { status: 204 })) // 重试 PUT 成功
 
     const { result, unmount } = renderHookHelper(() => useSync())
@@ -241,11 +269,17 @@ describe('useSync hook', () => {
       endpoint: 'https://dav.test/dav/',
       username: 'user',
       password: 'pwd',
-      enabled: true,
+      enabled: true
     })
     const remote = {
-      schemaVersion: 2, habits: [], checkIns: [], builds: [], activeBlueprintId: 'plant',
-      completedBlueprintIds: [], settings: { theme: 'light', language: 'zh' }, dayClaims: [],
+      schemaVersion: 2,
+      habits: [],
+      checkIns: [],
+      builds: [],
+      activeBlueprintId: 'plant',
+      completedBlueprintIds: [],
+      settings: { theme: 'light', language: 'zh' },
+      dayClaims: []
     }
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(new Response(JSON.stringify(remote), { status: 200 }))
@@ -269,10 +303,11 @@ describe('useSync hook', () => {
       endpoint: 'https://dav.test/dav/',
       username: 'user',
       password: 'pwd',
-      enabled: true,
+      enabled: true
     })
-    vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(new Response('{oops-not-json', { status: 200 }))
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response('{oops-not-json', { status: 200 })
+    )
 
     const { result, unmount } = renderHookHelper(() => useSync())
     let ok = true
@@ -288,7 +323,7 @@ describe('useSync hook', () => {
       endpoint: 'https://dav.test/dav/',
       username: 'user',
       password: 'pwd',
-      enabled: true,
+      enabled: true
     })
     const remoteFuture = {
       schemaVersion: 2,
@@ -300,7 +335,7 @@ describe('useSync hook', () => {
       activeBlueprintId: 'plant',
       completedBlueprintIds: [],
       settings: { theme: 'light', language: 'zh' },
-      dayClaims: [],
+      dayClaims: []
     }
     let putCalls = 0
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {

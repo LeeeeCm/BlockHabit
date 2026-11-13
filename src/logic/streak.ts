@@ -89,7 +89,7 @@ export function currentStreakWithResilience(
   habit: Habit,
   checkIns: CheckIn[],
   today: Date,
-  enableGentleDecay: boolean = true,
+  enableGentleDecay: boolean = true
 ): StreakStatus {
   if (!enableGentleDecay) {
     return { streak: currentStreak(habit, checkIns, today), inRestPeriod: false, missedDays: 0 }
@@ -106,7 +106,8 @@ export function currentStreakWithResilience(
     const dYesterday = addDays(new Date(today), -1)
     const dDayBefore = addDays(new Date(today), -2)
     const doneToday = days.has(todayStr)
-    const missedYesterday = isHabitDueOnDay(habit, dateKey(dYesterday)) && !days.has(dateKey(dYesterday))
+    const missedYesterday =
+      isHabitDueOnDay(habit, dateKey(dYesterday)) && !days.has(dateKey(dYesterday))
     const dueDayBefore = isHabitDueOnDay(habit, dateKey(dDayBefore))
     const doneDayBefore = !dueDayBefore || days.has(dateKey(dDayBefore))
 
@@ -114,7 +115,12 @@ export function currentStreakWithResilience(
     if (doneToday && missedYesterday && doneDayBefore) {
       const pastStreak = currentStreak(habit, checkIns, dDayBefore)
       if (pastStreak > 0) {
-        return { streak: pastStreak + 1, inRestPeriod: false, missedDays: 0, protectedContinuation: true }
+        return {
+          streak: pastStreak + 1,
+          inRestPeriod: false,
+          missedDays: 0,
+          protectedContinuation: true
+        }
       }
     }
 

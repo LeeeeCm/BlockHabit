@@ -20,7 +20,7 @@ import {
   truncateToWidth,
   wrapTextToWidth,
   yearbookMarkdownFileName,
-  yearbookPngFileName,
+  yearbookPngFileName
 } from './yearbookCanvas'
 
 /**
@@ -41,7 +41,7 @@ function createFakeContext(): { ctx: CanvasRenderingContext2D; calls: RecordedCa
     measureText: (text: string) => ({ width: String(text).length * 7 }),
     createLinearGradient: () => gradient,
     createRadialGradient: () => gradient,
-    getTransform: () => ({ a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 }),
+    getTransform: () => ({ a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 })
   }
   const proxy = new Proxy(target, {
     get(obj, prop) {
@@ -54,7 +54,7 @@ function createFakeContext(): { ctx: CanvasRenderingContext2D; calls: RecordedCa
     set(obj, prop, value) {
       obj[prop as string] = value
       return true
-    },
+    }
   })
   return { ctx: proxy as unknown as CanvasRenderingContext2D, calls }
 }
@@ -67,7 +67,7 @@ function emptyModel() {
     dayClaims: [],
     deletedDayClaims: [],
     foundationNotes: {},
-    completedBlueprintIds: [],
+    completedBlueprintIds: []
   }
   return buildYearbook(state, 2026)
 }
@@ -80,7 +80,7 @@ function dataModel() {
     index,
     placedAt: new Date(2026, 2, 1 + (index % 3), 12).toISOString(),
     fromHabitId: 'h1',
-    bonus: false,
+    bonus: false
   }))
   const state: YearbookState = {
     habits: [
@@ -88,8 +88,8 @@ function dataModel() {
         id: 'h1',
         name: '晨间冥想',
         frequency: { type: 'daily' },
-        createdAt: '2026-01-01T08:00:00.000Z',
-      },
+        createdAt: '2026-01-01T08:00:00.000Z'
+      }
     ],
     checkIns: [
       {
@@ -97,8 +97,8 @@ function dataModel() {
         habitId: 'h1',
         date: '2026-03-02',
         at: new Date(2026, 2, 2, 8, 0).toISOString(),
-        note: '窗外有雨。',
-      },
+        note: '窗外有雨。'
+      }
     ],
     builds,
     dayClaims: [
@@ -106,12 +106,12 @@ function dataModel() {
         date: '2026-03-02',
         claimedAt: new Date(2026, 2, 2, 21, 0).toISOString(),
         blockId: 'dc-1',
-        blueprintId: 'plant',
-      },
+        blueprintId: 'plant'
+      }
     ],
     deletedDayClaims: [],
     foundationNotes: { plant: '从一颗种子开始。' },
-    completedBlueprintIds: ['plant'],
+    completedBlueprintIds: ['plant']
   }
   return buildYearbook(state, 2026)
 }
@@ -120,7 +120,7 @@ function dataModel() {
 function stubPngBlob(canvas: HTMLCanvasElement, blob: Blob | null): void {
   Object.defineProperty(canvas, 'toBlob', {
     configurable: true,
-    value: (callback: (value: Blob | null) => void) => callback(blob),
+    value: (callback: (value: Blob | null) => void) => callback(blob)
   })
 }
 
@@ -135,13 +135,14 @@ function stubDownloadEnvironment() {
 
   const anchors: HTMLAnchorElement[] = []
   const originalCreateElement = document.createElement.bind(document)
-  const createElement = vi
-    .spyOn(document, 'createElement')
-    .mockImplementation(((tagName: string, options?: ElementCreationOptions) => {
-      const element = originalCreateElement(tagName, options)
-      if (tagName === 'a') anchors.push(element as HTMLAnchorElement)
-      return element
-    }) as typeof document.createElement)
+  const createElement = vi.spyOn(document, 'createElement').mockImplementation(((
+    tagName: string,
+    options?: ElementCreationOptions
+  ) => {
+    const element = originalCreateElement(tagName, options)
+    if (tagName === 'a') anchors.push(element as HTMLAnchorElement)
+    return element
+  }) as typeof document.createElement)
   const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
 
   return {
@@ -153,13 +154,13 @@ function stubDownloadEnvironment() {
       click.mockRestore()
       Object.defineProperty(URL, 'createObjectURL', {
         configurable: true,
-        value: originalCreateObjectURL,
+        value: originalCreateObjectURL
       })
       Object.defineProperty(URL, 'revokeObjectURL', {
         configurable: true,
-        value: originalRevokeObjectURL,
+        value: originalRevokeObjectURL
       })
-    },
+    }
   }
 }
 
@@ -174,11 +175,11 @@ function stubClipboard(write?: (items: unknown[]) => Promise<void>) {
       constructor(items: Record<string, Blob>) {
         this.items = items
       }
-    },
+    }
   })
   Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
-    value: write ? { write: vi.fn(write) } : undefined,
+    value: write ? { write: vi.fn(write) } : undefined
   })
   return () => {
     if (originalItem) Object.defineProperty(globalThis, 'ClipboardItem', originalItem)
@@ -228,7 +229,7 @@ describe('年鉴布局（纯函数）', () => {
       layout.buildings,
       layout.shape,
       layout.quote,
-      layout.footer,
+      layout.footer
     ]
     for (const rect of sections) {
       expect(rect.x).toBeGreaterThanOrEqual(0)
@@ -238,7 +239,7 @@ describe('年鉴布局（纯函数）', () => {
     }
     for (let index = 1; index < sections.length; index++) {
       expect(sections[index].y).toBeGreaterThanOrEqual(
-        sections[index - 1].y + sections[index - 1].h,
+        sections[index - 1].y + sections[index - 1].h
       )
     }
   })
@@ -289,13 +290,11 @@ describe('年鉴布局（纯函数）', () => {
     expect(rows).toHaveLength(6)
     for (const row of rows) {
       expect(row.thumb.x + row.thumb.w).toBeLessThanOrEqual(layout.buildings.x + layout.buildings.w)
-      expect(row.thumb.y + row.thumb.h).toBeLessThanOrEqual(
-        layout.buildings.y + layout.buildings.h,
-      )
+      expect(row.thumb.y + row.thumb.h).toBeLessThanOrEqual(layout.buildings.y + layout.buildings.h)
       expect(row.textWidth).toBeGreaterThan(0)
     }
     expect(rows[5].row.y + rows[5].row.h).toBeLessThanOrEqual(
-      layout.buildings.y + layout.buildings.h,
+      layout.buildings.y + layout.buildings.h
     )
   })
 })
@@ -326,7 +325,7 @@ describe('模型适配（纯函数）', () => {
 
   it('truncateToWidth / wrapTextToWidth：按测量宽度截断与折行', () => {
     const measureCtx = {
-      measureText: (text: string) => ({ width: text.length * 10 }),
+      measureText: (text: string) => ({ width: text.length * 10 })
     } as unknown as Pick<CanvasRenderingContext2D, 'measureText'>
     expect(truncateToWidth(measureCtx, '短', 100)).toBe('短')
     const truncated = truncateToWidth(measureCtx, '这是一段很长的文字', 60)
@@ -361,7 +360,7 @@ describe('绘制与导出', () => {
       model: emptyModel(),
       palette: readYearbookPalette(),
       t: zh,
-      lang: 'zh',
+      lang: 'zh'
     })
     await Promise.resolve()
     // 字体未就绪前不设置画布尺寸（避免 CJK 掉字后无法重绘）
@@ -381,7 +380,7 @@ describe('绘制与导出', () => {
       model: dataModel(),
       palette: readYearbookPalette(),
       t: zh,
-      lang: 'zh',
+      lang: 'zh'
     })
     const texts = fake.calls
       .filter((call) => call.name === 'fillText')
@@ -404,7 +403,7 @@ describe('绘制与导出', () => {
       model: emptyModel(),
       palette: readYearbookPalette(),
       t: zh,
-      lang: 'zh',
+      lang: 'zh'
     })
     const texts = fake.calls
       .filter((call) => call.name === 'fillText')
@@ -437,7 +436,7 @@ describe('绘制与导出', () => {
   it('剪贴板被拒绝（NotAllowedError）：自动降级下载 PNG，返回 downloaded', async () => {
     const download = stubDownloadEnvironment()
     const restoreClipboard = stubClipboard(() =>
-      Promise.reject(new DOMException('Write permission denied.', 'NotAllowedError')),
+      Promise.reject(new DOMException('Write permission denied.', 'NotAllowedError'))
     )
     try {
       const canvas = document.createElement('canvas')
@@ -490,6 +489,8 @@ describe('绘制与导出', () => {
     const left = cells.filter((_, index) => index < 6)
     const right = cells.filter((_, index) => index >= 6)
     expect(left.every((cell) => cell.row.x + cell.row.w <= right[0].row.x)).toBe(true)
-    expect(cells.every((cell) => cell.row.y + cell.row.h <= layout.buildings.y + layout.buildings.h)).toBe(true)
+    expect(
+      cells.every((cell) => cell.row.y + cell.row.h <= layout.buildings.y + layout.buildings.h)
+    ).toBe(true)
   })
 })

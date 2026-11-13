@@ -5,17 +5,24 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
   readTextFile: vi.fn(),
   writeTextFile: vi.fn(),
   remove: vi.fn(),
-  stat: vi.fn(),
+  stat: vi.fn()
 }))
 vi.mock('@tauri-apps/api/path', () => ({
   appDataDir: async () => 'C:/appdata',
-  join: async (...parts: string[]) => parts.join('/'),
+  join: async (...parts: string[]) => parts.join('/')
 }))
 vi.mock('@tauri-apps/plugin-opener', () => ({ openPath: vi.fn(), revealItemInDir: vi.fn() }))
 
 import * as fsPlugin from '@tauri-apps/plugin-fs'
 import * as opener from '@tauri-apps/plugin-opener'
-import { createBackup, kindOfName, listBackups, openDataDir, parseStamp, readBackup } from './backups'
+import {
+  createBackup,
+  kindOfName,
+  listBackups,
+  openDataDir,
+  parseStamp,
+  readBackup
+} from './backups'
 
 const readDir = vi.mocked(fsPlugin.readDir)
 const readTextFile = vi.mocked(fsPlugin.readTextFile)
@@ -37,7 +44,7 @@ function archive(extra: Record<string, unknown> = {}) {
     activeBlueprintId: 'plant',
     completedBlueprintIds: [],
     settings: { theme: 'light', language: 'zh' },
-    ...extra,
+    ...extra
   })
 }
 
@@ -76,14 +83,14 @@ describe('backups · 列表', () => {
       entry('blockhabit-backup-2026-11-10T02-00-00-000Z.json'),
       entry('blockhabit-manual-2026-11-09T05-00-00-000Z.json'),
       entry('blockhabit.json.corrupt-backup'),
-      entry('other-file.txt'),
+      entry('other-file.txt')
     ] as never)
     const list = await listBackups()
     expect(list.map((b) => b.name)).toEqual([
       'blockhabit-backup-2026-11-10T02-00-00-000Z.json',
       'blockhabit-manual-2026-11-09T05-00-00-000Z.json',
       'blockhabit-backup-2026-11-08T01-00-00-000Z.json',
-      'blockhabit.json.corrupt-backup',
+      'blockhabit.json.corrupt-backup'
     ])
     expect(list.map((b) => b.kind)).toEqual(['auto', 'manual', 'auto', 'corrupt'])
     expect(list.every((b) => b.size === 1234)).toBe(true)
@@ -120,14 +127,21 @@ describe('backups · 读取与恢复', () => {
     readTextFile.mockResolvedValue(
       JSON.stringify({
         schemaVersion: 1,
-        habits: [{ id: 'h1', name: '读书', frequency: { type: 'daily' }, createdAt: '2026-01-01T00:00:00.000Z' }],
+        habits: [
+          {
+            id: 'h1',
+            name: '读书',
+            frequency: { type: 'daily' },
+            createdAt: '2026-01-01T00:00:00.000Z'
+          }
+        ],
         checkIns: [],
         builds: [],
         activeBlueprintId: 'plant',
         completedBlueprintIds: [],
         settings: { theme: 'light', language: 'zh' },
-        dayClaims: [],
-      }),
+        dayClaims: []
+      })
     )
     const state = await readBackup('blockhabit-backup-2026-11-10T02-00-00-000Z.json')
     expect(state).not.toBeNull()
@@ -138,7 +152,9 @@ describe('backups · 读取与恢复', () => {
 describe('backups · 创建与目录', () => {
   it('createBackup 写入 manual 前缀文件并保留最多 5 份', async () => {
     readDir.mockResolvedValue(
-      Array.from({ length: 6 }, (_, i) => entry('blockhabit-manual-2026-11-0' + (i + 1) + 'T00-00-00-000Z.json')) as never,
+      Array.from({ length: 6 }, (_, i) =>
+        entry('blockhabit-manual-2026-11-0' + (i + 1) + 'T00-00-00-000Z.json')
+      ) as never
     )
     const ok = await createBackup(JSON.parse(archive()))
     expect(ok).toBe(true)

@@ -24,9 +24,36 @@ export const MINI_SIZE_ORDER: MiniSize[] = ['pocket', 'standard', 'display']
 
 export const MINI_PRESETS: Record<MiniSize, MiniPreset> = {
   // footer 含 32px 命中区（D-059 验收：胶囊/清单行 ≥32px），预算按真实内容高度修正
-  pocket: { w: 220, h: 150, headerH: 34, footerH: 72, stageMinH: 36, maxPills: 1, showProgressText: false, showTodayList: false },
-  standard: { w: 280, h: 400, headerH: 34, footerH: 124, stageMinH: 180, maxPills: 3, showProgressText: true, showTodayList: false },
-  display: { w: 420, h: 560, headerH: 36, footerH: 170, stageMinH: 260, maxPills: 5, showProgressText: true, showTodayList: true },
+  pocket: {
+    w: 220,
+    h: 150,
+    headerH: 34,
+    footerH: 72,
+    stageMinH: 36,
+    maxPills: 1,
+    showProgressText: false,
+    showTodayList: false
+  },
+  standard: {
+    w: 280,
+    h: 400,
+    headerH: 34,
+    footerH: 124,
+    stageMinH: 180,
+    maxPills: 3,
+    showProgressText: true,
+    showTodayList: false
+  },
+  display: {
+    w: 420,
+    h: 560,
+    headerH: 36,
+    footerH: 170,
+    stageMinH: 260,
+    maxPills: 5,
+    showProgressText: true,
+    showTodayList: true
+  }
 }
 
 export interface LogicalRect {
@@ -47,22 +74,31 @@ export function presetFits(preset: MiniPreset): boolean {
 }
 
 /** 窗口右下角默认位置（逻辑像素） */
-export function defaultMiniPosition(workArea: LogicalRect, preset: MiniPreset, margin = 16): LogicalPoint {
+export function defaultMiniPosition(
+  workArea: LogicalRect,
+  preset: MiniPreset,
+  margin = 16
+): LogicalPoint {
   return {
     x: Math.round(workArea.x + workArea.width - preset.w - margin),
-    y: Math.round(workArea.y + workArea.height - preset.h - margin),
+    y: Math.round(workArea.y + workArea.height - preset.h - margin)
   }
 }
 
 /** 把位置钳制进当前显示器工作区（含任务栏）；显示器被拔掉时调用方负责换 primaryMonitor */
-export function clampMiniPosition(pos: LogicalPoint, workArea: LogicalRect, preset: MiniPreset, margin = 8): LogicalPoint {
+export function clampMiniPosition(
+  pos: LogicalPoint,
+  workArea: LogicalRect,
+  preset: MiniPreset,
+  margin = 8
+): LogicalPoint {
   const minX = workArea.x + margin
   const minY = workArea.y + margin
   const maxX = workArea.x + workArea.width - preset.w - margin
   const maxY = workArea.y + workArea.height - preset.h - margin
   return {
     x: Math.round(Math.min(Math.max(pos.x, minX), Math.max(minX, maxX))),
-    y: Math.round(Math.min(Math.max(pos.y, minY), Math.max(minY, maxY))),
+    y: Math.round(Math.min(Math.max(pos.y, minY), Math.max(minY, maxY)))
   }
 }
 
@@ -97,7 +133,8 @@ export function loadWindowLayout(): WindowLayoutV1 {
       }
     }
     const mini = p.mini as Record<string, unknown> | undefined
-    if (mini && isFiniteNumber(mini.x) && isFiniteNumber(mini.y)) layout.mini = { x: mini.x, y: mini.y }
+    if (mini && isFiniteNumber(mini.x) && isFiniteNumber(mini.y))
+      layout.mini = { x: mini.x, y: mini.y }
     return layout
   } catch {
     return { ...EMPTY_LAYOUT }

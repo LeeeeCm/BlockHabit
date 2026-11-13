@@ -10,14 +10,14 @@ import {
   buildYearbook,
   yearbookMarkdown,
   yearbookSummaryText,
-  type YearbookState,
+  type YearbookState
 } from '../logic/yearbook'
 import {
   copyYearbookPng,
   drawYearbook,
   readYearbookPalette,
   saveYearbookPng,
-  yearbookMarkdownFileName,
+  yearbookMarkdownFileName
 } from '../render/yearbookCanvas'
 
 interface Props {
@@ -48,9 +48,9 @@ export function YearbookModal({ onClose }: Props) {
       dayClaims,
       deletedDayClaims,
       foundationNotes,
-      completedBlueprintIds,
+      completedBlueprintIds
     }),
-    [habits, checkIns, builds, dayClaims, deletedDayClaims, foundationNotes, completedBlueprintIds],
+    [habits, checkIns, builds, dayClaims, deletedDayClaims, foundationNotes, completedBlueprintIds]
   )
 
   const years = useMemo(() => availableYears(state), [state])
@@ -81,7 +81,7 @@ export function YearbookModal({ onClose }: Props) {
       model,
       palette: readYearbookPalette(),
       t,
-      lang,
+      lang
     }).catch((error: unknown) => {
       if (alive) console.warn('[yearbook] canvas draw failed', error)
     })
@@ -90,13 +90,10 @@ export function YearbookModal({ onClose }: Props) {
     }
   }, [model, t, lang])
 
-  const handleSelectYear = useCallback(
-    (next: number) => {
-      triggerHaptic('selection')
-      setYear(next)
-    },
-    [],
-  )
+  const handleSelectYear = useCallback((next: number) => {
+    triggerHaptic('selection')
+    setYear(next)
+  }, [])
 
   const handleTabKeyDown = useCallback(
     (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -117,7 +114,7 @@ export function YearbookModal({ onClose }: Props) {
       handleSelectYear(years[nextIndex])
       requestAnimationFrame(() => tabRefs.current[nextIndex]?.focus())
     },
-    [handleSelectYear, years],
+    [handleSelectYear, years]
   )
 
   async function handleSavePng() {
@@ -145,7 +142,7 @@ export function YearbookModal({ onClose }: Props) {
           : result === 'downloaded'
             ? t.yearbook.copyFallbackToast
             : t.yearbook.copyFail,
-        2500,
+        2500
       )
     } finally {
       setBusy(false)
@@ -191,7 +188,7 @@ export function YearbookModal({ onClose }: Props) {
           maxHeight: '92vh',
           display: 'flex',
           flexDirection: 'column',
-          gap: 12,
+          gap: 12
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -201,7 +198,7 @@ export function YearbookModal({ onClose }: Props) {
               fontWeight: 700,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 6
             }}
           >
             <IconGallery size={18} />
@@ -240,7 +237,7 @@ export function YearbookModal({ onClose }: Props) {
                 gap: 6,
                 flexShrink: 0,
                 overflowY: 'auto',
-                paddingRight: 2,
+                paddingRight: 2
               }}
             >
               {years.map((value, index) => {
@@ -267,7 +264,7 @@ export function YearbookModal({ onClose }: Props) {
                       textAlign: 'left',
                       background: selected ? 'var(--ink)' : undefined,
                       color: selected ? 'var(--bg)' : undefined,
-                      borderColor: selected ? 'var(--ink)' : undefined,
+                      borderColor: selected ? 'var(--ink)' : undefined
                     }}
                   >
                     {t.yearbook.yearTitle(value)}
@@ -283,7 +280,7 @@ export function YearbookModal({ onClose }: Props) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                overflow: 'auto',
+                overflow: 'auto'
               }}
             >
               {hasCanvas ? (
@@ -299,7 +296,7 @@ export function YearbookModal({ onClose }: Props) {
                     border: '1px solid var(--line)',
                     borderRadius: 'var(--r-sm)',
                     background: 'var(--surface)',
-                    display: 'block',
+                    display: 'block'
                   }}
                 />
               ) : (
@@ -323,7 +320,7 @@ export function YearbookModal({ onClose }: Props) {
             alignItems: 'center',
             gap: 10,
             paddingTop: 10,
-            borderTop: '1px solid var(--line)',
+            borderTop: '1px solid var(--line)'
           }}
         >
           {hasCanvas && (

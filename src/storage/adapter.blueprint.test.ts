@@ -15,7 +15,7 @@ function base(over: Record<string, unknown> = {}) {
     activeBlueprintId: 'plant',
     completedBlueprintIds: [],
     settings: { theme: 'light', language: 'zh' },
-    ...over,
+    ...over
   }
 }
 
@@ -27,7 +27,7 @@ function block(over: Record<string, unknown> = {}) {
     placedAt: new Date().toISOString(),
     fromHabitId: 'h1',
     bonus: false,
-    ...over,
+    ...over
   }
 }
 
@@ -62,8 +62,8 @@ describe('存档蓝图外键校验', () => {
     const state = sanitizeState(
       base({
         builds: [block(), block({ id: 'b2', blueprintId: 'ghost-castle', index: 1 })],
-        completedBlueprintIds: ['ghost-castle'],
-      }),
+        completedBlueprintIds: ['ghost-castle']
+      })
     )
     expect(state).not.toBeNull()
     expect(state!.builds).toHaveLength(1)

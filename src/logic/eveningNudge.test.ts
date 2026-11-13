@@ -13,7 +13,7 @@ function ctx(over: Partial<EveningNudgeContext> = {}): EveningNudgeContext {
     pendingCount: 2,
     day: DAY,
     lastNudgedDay: null,
-    ...over,
+    ...over
   }
 }
 
@@ -24,18 +24,36 @@ describe('shouldEveningNudge', () => {
   })
 
   it('stays silent before the configured time', () => {
-    expect(shouldEveningNudge(ctx({ now: at(20, 59) }))).toMatchObject({ fire: false, reason: 'before-time' })
+    expect(shouldEveningNudge(ctx({ now: at(20, 59) }))).toMatchObject({
+      fire: false,
+      reason: 'before-time'
+    })
   })
 
   it('respects the global reminders switch', () => {
-    expect(shouldEveningNudge(ctx({ remindersEnabled: false }))).toMatchObject({ fire: false, reason: 'global-off' })
+    expect(shouldEveningNudge(ctx({ remindersEnabled: false }))).toMatchObject({
+      fire: false,
+      reason: 'global-off'
+    })
   })
 
   it('stays silent when disabled, invalid time, nothing pending, or already nudged today', () => {
-    expect(shouldEveningNudge(ctx({ enabled: false }))).toMatchObject({ fire: false, reason: 'disabled' })
-    expect(shouldEveningNudge(ctx({ time: '25:99' }))).toMatchObject({ fire: false, reason: 'invalid-time' })
-    expect(shouldEveningNudge(ctx({ pendingCount: 0 }))).toMatchObject({ fire: false, reason: 'nothing-pending' })
-    expect(shouldEveningNudge(ctx({ lastNudgedDay: DAY }))).toMatchObject({ fire: false, reason: 'already-nudged' })
+    expect(shouldEveningNudge(ctx({ enabled: false }))).toMatchObject({
+      fire: false,
+      reason: 'disabled'
+    })
+    expect(shouldEveningNudge(ctx({ time: '25:99' }))).toMatchObject({
+      fire: false,
+      reason: 'invalid-time'
+    })
+    expect(shouldEveningNudge(ctx({ pendingCount: 0 }))).toMatchObject({
+      fire: false,
+      reason: 'nothing-pending'
+    })
+    expect(shouldEveningNudge(ctx({ lastNudgedDay: DAY }))).toMatchObject({
+      fire: false,
+      reason: 'already-nudged'
+    })
   })
 
   it('nudges again on a new day', () => {

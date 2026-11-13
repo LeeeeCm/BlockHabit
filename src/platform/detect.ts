@@ -5,8 +5,7 @@ export function detectPlatform(): PlatformType {
     return 'desktop'
   }
 
-  const isIPad =
-    /macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1
+  const isIPad = /macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1
 
   const inTauriMobile =
     '__TAURI_INTERNALS__' in window &&

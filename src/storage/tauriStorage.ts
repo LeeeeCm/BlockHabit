@@ -103,7 +103,7 @@ export function createTauriStorageAdapter(): StorageAdapter {
       } catch {
         // 备份失败不阻塞导入
       }
-    },
+    }
   }
 }
 

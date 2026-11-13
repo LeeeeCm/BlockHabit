@@ -13,7 +13,7 @@ describe('persistence save-failure surfacing', () => {
         if (fail) return Promise.reject(new Error('disk full'))
         saved.push(s)
         return Promise.resolve()
-      },
+      }
     }
     await initPersistence(adapter)
     useAppStore.setState({ hydrated: true })

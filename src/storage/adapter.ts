@@ -63,7 +63,8 @@ function isValidHabitElement(h: unknown): boolean {
   const f = h.frequency
   if (!isRecord(f)) return false
   if (f.type === 'daily') return true
-  if (f.type === 'weekly') return typeof f.times === 'number' && Number.isFinite(f.times) && f.times > 0
+  if (f.type === 'weekly')
+    return typeof f.times === 'number' && Number.isFinite(f.times) && f.times > 0
   if (f.type === 'custom') {
     return (
       Array.isArray(f.days) &&
@@ -106,7 +107,8 @@ function isValidHabitElementLenient(h: unknown): boolean {
   const f = h.frequency
   if (!isRecord(f)) return false
   if (f.type === 'daily') return true
-  if (f.type === 'weekly') return typeof f.times === 'number' && Number.isFinite(f.times) && f.times > 0
+  if (f.type === 'weekly')
+    return typeof f.times === 'number' && Number.isFinite(f.times) && f.times > 0
   if (f.type === 'custom') return Array.isArray(f.days)
   return false
 }
@@ -122,12 +124,15 @@ function isValidDayClaimElement(c: unknown): boolean {
 }
 
 function isValidDeletedDayClaimElement(c: unknown): boolean {
-  return isRecord(c) && typeof c.date === 'string' && DATE_RE.test(c.date) && isParseableDate(c.deletedAt)
+  return (
+    isRecord(c) &&
+    typeof c.date === 'string' &&
+    DATE_RE.test(c.date) &&
+    isParseableDate(c.deletedAt)
+  )
 }
 
-export type ValidateResult =
-  | { ok: true; state: AppState }
-  | { ok: false; error: string }
+export type ValidateResult = { ok: true; state: AppState } | { ok: false; error: string }
 
 /**
  * 严格校验（导入 / 远程同步用）：任一元素非法即整体拒绝。
@@ -135,13 +140,19 @@ export type ValidateResult =
  */
 export function validateState(v: unknown): ValidateResult {
   if (!isRecord(v)) return { ok: false, error: 'not-an-object' }
-  if (typeof v.schemaVersion !== 'number' || !Number.isInteger(v.schemaVersion) || v.schemaVersion < 1) {
+  if (
+    typeof v.schemaVersion !== 'number' ||
+    !Number.isInteger(v.schemaVersion) ||
+    v.schemaVersion < 1
+  ) {
     return { ok: false, error: 'schema-version' }
   }
   if (v.schemaVersion > SCHEMA_VERSION) return { ok: false, error: 'schema-version' }
   if (isFutureContentVersion(v.contentVersion)) return { ok: false, error: 'content-version' }
-  if (!Array.isArray(v.habits) || !v.habits.every(isValidHabitElement)) return { ok: false, error: 'habits' }
-  if (!Array.isArray(v.checkIns) || !v.checkIns.every(isValidCheckInElement)) return { ok: false, error: 'checkIns' }
+  if (!Array.isArray(v.habits) || !v.habits.every(isValidHabitElement))
+    return { ok: false, error: 'habits' }
+  if (!Array.isArray(v.checkIns) || !v.checkIns.every(isValidCheckInElement))
+    return { ok: false, error: 'checkIns' }
   if (
     !Array.isArray(v.builds) ||
     !v.builds.every(isValidBlockElement) ||
@@ -149,7 +160,10 @@ export function validateState(v: unknown): ValidateResult {
   ) {
     return { ok: false, error: 'builds' }
   }
-  if (v.dayClaims !== undefined && (!Array.isArray(v.dayClaims) || !v.dayClaims.every(isValidDayClaimElement))) {
+  if (
+    v.dayClaims !== undefined &&
+    (!Array.isArray(v.dayClaims) || !v.dayClaims.every(isValidDayClaimElement))
+  ) {
     return { ok: false, error: 'dayClaims' }
   }
   if (
@@ -159,7 +173,10 @@ export function validateState(v: unknown): ValidateResult {
     return { ok: false, error: 'deletedDayClaims' }
   }
   if (!isKnownBlueprintId(v.activeBlueprintId)) return { ok: false, error: 'activeBlueprintId' }
-  if (!Array.isArray(v.completedBlueprintIds) || !v.completedBlueprintIds.every(isKnownBlueprintId)) {
+  if (
+    !Array.isArray(v.completedBlueprintIds) ||
+    !v.completedBlueprintIds.every(isKnownBlueprintId)
+  ) {
     return { ok: false, error: 'completedBlueprintIds' }
   }
   if (!isRecord(v.settings)) return { ok: false, error: 'settings' }
@@ -171,29 +188,37 @@ export function validateState(v: unknown): ValidateResult {
  */
 export function sanitizeState(v: unknown): AppState | null {
   if (!isRecord(v)) return null
-  if (typeof v.schemaVersion !== 'number' || !Number.isInteger(v.schemaVersion) || v.schemaVersion < 1) return null
+  if (
+    typeof v.schemaVersion !== 'number' ||
+    !Number.isInteger(v.schemaVersion) ||
+    v.schemaVersion < 1
+  )
+    return null
   if (v.schemaVersion > SCHEMA_VERSION) return null
   if (!isRecord(v.settings)) return null
   if (!Array.isArray(v.completedBlueprintIds)) return null
   // 外键回落：未知蓝图不让渲染层抛错（否则白屏），统一收敛到第一座蓝图
-  const activeBlueprintId = isKnownBlueprintId(v.activeBlueprintId) ? v.activeBlueprintId : blueprintOrder[0]
+  const activeBlueprintId = isKnownBlueprintId(v.activeBlueprintId)
+    ? v.activeBlueprintId
+    : blueprintOrder[0]
   const completedBlueprintIds = v.completedBlueprintIds.filter(isKnownBlueprintId)
   const habits = Array.isArray(v.habits)
-    ? v.habits
-        .filter(isValidHabitElementLenient)
-        .map((h) => {
-          // custom 空 days 钳制为工作日（保留习惯，与 merge 侧语义一致）；
-          // 注意宽容谓词在前，否则空 days 在过滤阶段已被丢弃、钳制不可达
-          const freq = (h as Record<string, unknown>).frequency as Record<string, unknown> | undefined
-          if (
-            freq &&
-            freq.type === 'custom' &&
-            (!Array.isArray(freq.days) || (freq.days as unknown[]).length === 0)
-          ) {
-            return { ...(h as Record<string, unknown>), frequency: { type: 'custom', days: [1, 2, 3, 4, 5] } }
+    ? v.habits.filter(isValidHabitElementLenient).map((h) => {
+        // custom 空 days 钳制为工作日（保留习惯，与 merge 侧语义一致）；
+        // 注意宽容谓词在前，否则空 days 在过滤阶段已被丢弃、钳制不可达
+        const freq = (h as Record<string, unknown>).frequency as Record<string, unknown> | undefined
+        if (
+          freq &&
+          freq.type === 'custom' &&
+          (!Array.isArray(freq.days) || (freq.days as unknown[]).length === 0)
+        ) {
+          return {
+            ...(h as Record<string, unknown>),
+            frequency: { type: 'custom', days: [1, 2, 3, 4, 5] }
           }
-          return h
-        })
+        }
+        return h
+      })
     : []
   const checkIns = Array.isArray(v.checkIns) ? v.checkIns.filter(isValidCheckInElement) : []
   const builds = Array.isArray(v.builds)
@@ -207,7 +232,7 @@ export function sanitizeState(v: unknown): AppState | null {
     checkIns,
     builds,
     activeBlueprintId,
-    completedBlueprintIds,
+    completedBlueprintIds
   } as AppState)
 }
 
@@ -238,7 +263,8 @@ function migrateV1toV2(s: Record<string, unknown>): Record<string, unknown> {
     // ISO 串的 UTC 日期前缀 + 本地时区日期键，二者都指向同一天的块
     const localKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     for (const key of new Set([b.placedAt.slice(0, 10), localKey])) {
-      if (!dayBlockByDate.has(key)) dayBlockByDate.set(key, { id: b.id, blueprintId: b.blueprintId })
+      if (!dayBlockByDate.has(key))
+        dayBlockByDate.set(key, { id: b.id, blueprintId: b.blueprintId })
     }
   }
   const activeBp = typeof s.activeBlueprintId === 'string' ? s.activeBlueprintId : ''
@@ -250,7 +276,7 @@ function migrateV1toV2(s: Record<string, unknown>): Record<string, unknown> {
         date,
         claimedAt: `${date}T12:00:00.000Z`,
         blockId: matched?.id ?? `migrated-${date}`,
-        blueprintId: matched?.blueprintId ?? activeBp,
+        blueprintId: matched?.blueprintId ?? activeBp
       }
     })
   const checkIns = Array.isArray(s.checkIns)
@@ -258,7 +284,9 @@ function migrateV1toV2(s: Record<string, unknown>): Record<string, unknown> {
         if (!c || typeof c !== 'object') return c
         const { rewardBlockIndex: _dropped, ...rest } = c
         const bp =
-          typeof rest.placedBlockId === 'string' ? blueprintByBlockId.get(rest.placedBlockId) : undefined
+          typeof rest.placedBlockId === 'string'
+            ? blueprintByBlockId.get(rest.placedBlockId)
+            : undefined
         return bp ? { ...rest, blueprintId: bp } : rest
       })
     : s.checkIns
@@ -267,16 +295,19 @@ function migrateV1toV2(s: Record<string, unknown>): Record<string, unknown> {
 }
 
 const MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {
-  1: migrateV1toV2,
+  1: migrateV1toV2
 }
 
 export function loadAndMigrate(
-  v: unknown,
+  v: unknown
 ): { state: AppState } | { state: null; needsUpgrade?: boolean } {
   if (!isRecord(v)) return { state: null }
   // B1 内容版本门：必须在 sanitize 之前拦截，否则未知 blueprint 会被静默清洗并落盘
   if (isFutureContentVersion(v.contentVersion)) return { state: null, needsUpgrade: true }
-  let version = typeof v.schemaVersion === 'number' && Number.isInteger(v.schemaVersion) && v.schemaVersion >= 1 ? v.schemaVersion : 1
+  let version =
+    typeof v.schemaVersion === 'number' && Number.isInteger(v.schemaVersion) && v.schemaVersion >= 1
+      ? v.schemaVersion
+      : 1
   if (version > SCHEMA_VERSION) return { state: null, needsUpgrade: true }
   let current: Record<string, unknown> = v
   while (version < SCHEMA_VERSION) {
@@ -348,7 +379,8 @@ export function normalizeState(s: AppState): AppState {
           : 100,
       eveningNudgeEnabled: s.settings?.eveningNudgeEnabled === true,
       eveningNudgeTime:
-        typeof s.settings?.eveningNudgeTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s.settings.eveningNudgeTime)
+        typeof s.settings?.eveningNudgeTime === 'string' &&
+        /^([01]\d|2[0-3]):[0-5]\d$/.test(s.settings.eveningNudgeTime)
           ? s.settings.eveningNudgeTime
           : '21:00',
       miniWidgetSize:
@@ -357,27 +389,38 @@ export function normalizeState(s: AppState): AppState {
         s.settings?.miniWidgetSize === 'standard'
           ? s.settings.miniWidgetSize
           : 'standard',
-      miniWidgetAlwaysOnTop: s.settings?.miniWidgetAlwaysOnTop === true,
+      miniWidgetAlwaysOnTop: s.settings?.miniWidgetAlwaysOnTop === true
     },
     dayClaims: Array.isArray(s.dayClaims)
       ? (s.dayClaims as unknown[]).flatMap((c) => {
           if (typeof c === 'string' && DATE_RE.test(c)) {
             // 防御性兼容 v1 遗留字符串
-            return [{ date: c, claimedAt: `${c}T12:00:00.000Z`, blockId: `migrated-${c}`, blueprintId: '' }]
+            return [
+              {
+                date: c,
+                claimedAt: `${c}T12:00:00.000Z`,
+                blockId: `migrated-${c}`,
+                blueprintId: ''
+              }
+            ]
           }
           return isValidDayClaimElement(c) ? [c as DayClaim] : []
         })
       : [],
     deletedDayClaims: Array.isArray(s.deletedDayClaims)
-      ? (s.deletedDayClaims as unknown[]).filter(isValidDeletedDayClaimElement).map((c) => c as DeletedDayClaim)
+      ? (s.deletedDayClaims as unknown[])
+          .filter(isValidDeletedDayClaimElement)
+          .map((c) => c as DeletedDayClaim)
       : [],
-    repairBricks: typeof s.repairBricks === 'number' ? Math.max(0, Math.min(REPAIR_MAX, s.repairBricks)) : 0,
-    repairBrickMonth: typeof s.repairBrickMonth === 'string' && /^\d{4}-\d{2}$/.test(s.repairBrickMonth) ? s.repairBrickMonth : undefined,
+    repairBricks:
+      typeof s.repairBricks === 'number' ? Math.max(0, Math.min(REPAIR_MAX, s.repairBricks)) : 0,
+    repairBrickMonth:
+      typeof s.repairBrickMonth === 'string' && /^\d{4}-\d{2}$/.test(s.repairBrickMonth)
+        ? s.repairBrickMonth
+        : undefined,
     showcasePlacements: Array.isArray(s.showcasePlacements) ? s.showcasePlacements : [],
     foundationNotes:
-      typeof s.foundationNotes === 'object' && s.foundationNotes !== null
-        ? s.foundationNotes
-        : {},
+      typeof s.foundationNotes === 'object' && s.foundationNotes !== null ? s.foundationNotes : {},
     reminderLog:
       typeof s.reminderLog === 'object' && s.reminderLog !== null
         ? Object.fromEntries(
@@ -386,19 +429,16 @@ export function normalizeState(s: AppState): AppState {
                 isRecord(entry[1]) &&
                 typeof entry[1].date === 'string' &&
                 DATE_RE.test(entry[1].date) &&
-                entry[1].action === 'skipped',
-            ),
+                entry[1].action === 'skipped'
+            )
           )
-        : {},
+        : {}
   }
 }
 
 function backupCorruptRaw(raw: string): void {
   try {
-    localStorage.setItem(
-      CORRUPT_BACKUP_KEY,
-      JSON.stringify({ raw, at: new Date().toISOString() }),
-    )
+    localStorage.setItem(CORRUPT_BACKUP_KEY, JSON.stringify({ raw, at: new Date().toISOString() }))
   } catch {
     // 备份失败不阻塞启动
   }
@@ -444,6 +484,6 @@ export function createLocalStorageAdapter(): StorageAdapter {
       } catch {
         // 备份失败不阻塞导入
       }
-    },
+    }
   }
 }

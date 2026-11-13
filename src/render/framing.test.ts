@@ -21,7 +21,8 @@ describe('framingWeight', () => {
 
   it('过渡区单调递增，且在 0..1 之间', () => {
     const samples = [0.26, 0.3, 0.4, 0.5, 0.59].map((r) => framingWeight(Math.round(r * 190), 190))
-    for (let i = 1; i < samples.length; i++) expect(samples[i]).toBeGreaterThanOrEqual(samples[i - 1])
+    for (let i = 1; i < samples.length; i++)
+      expect(samples[i]).toBeGreaterThanOrEqual(samples[i - 1])
     for (const v of samples) {
       expect(v).toBeGreaterThanOrEqual(0)
       expect(v).toBeLessThanOrEqual(1)

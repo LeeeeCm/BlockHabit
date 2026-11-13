@@ -1,9 +1,7 @@
 export type HabitPeriod = 'any' | 'morning' | 'afternoon' | 'evening'
 export type HabitKind = 'instant' | 'focus' | 'counter'
 export type HabitFrequency =
-  | { type: 'daily' }
-  | { type: 'weekly'; times: number }
-  | { type: 'custom'; days: number[] } // 1=周一, 2=周二 ... 7=周日
+  { type: 'daily' } | { type: 'weekly'; times: number } | { type: 'custom'; days: number[] } // 1=周一, 2=周二 ... 7=周日
 
 /** 提醒窗口："HH:mm"（24 小时制，同一天内，start < end） */
 export interface HabitReminder {

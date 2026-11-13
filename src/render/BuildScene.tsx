@@ -7,7 +7,7 @@ import {
   isPointInsideCube,
   paletteFromDocument,
   rotateCoord,
-  worldToScreen,
+  worldToScreen
 } from './iso'
 import { drawGroundBase, drawGroundShadow, drawEcoProps } from './iso'
 import { blendBounds, framingWeight, measureBounds } from './framing'
@@ -18,7 +18,7 @@ import {
   animState,
   cascadeState,
   planCascade,
-  type CascadePlan,
+  type CascadePlan
 } from './sceneMotion'
 import { currentStreakWithResilience } from '../logic/streak'
 import { ecoStageFor } from '../logic/eco'
@@ -29,7 +29,7 @@ import {
   calculateTouchCenter,
   clampZoom,
   isQuickTap,
-  type TouchGestureState,
+  type TouchGestureState
 } from './touchGesture'
 import { triggerHaptic } from '../platform'
 import { prefersReducedMotion } from '../platform/dom'
@@ -55,14 +55,14 @@ export function BuildScene({
   rotation = 0,
   interactiveInspect = false,
   xrayMode = false,
-  onAnimated,
+  onAnimated
 }: Props) {
   const { t } = useI18n()
   // 悬停气泡文案经 ref 承载：指针监听只注册一次，语言切换后仍取最新值
   const bubbleLabelsRef = useRef({ bonusHabit: '', deletedHabit: '' })
   bubbleLabelsRef.current = {
     bonusHabit: t.today.fullCard.bonusHabitName,
-    deletedHabit: t.today.fullCard.deletedHabitName,
+    deletedHabit: t.today.fullCard.deletedHabitName
   }
   const builds = useAppStore((s) => s.builds)
   const checkIns = useAppStore((s) => s.checkIns)
@@ -82,7 +82,10 @@ export function BuildScene({
 
   // 1. 蓝图几何包围盒与中心点（纯蓝图静态，不随帧刷新）
   const { cx, cy } = useMemo(() => {
-    let minBx = Infinity, maxBx = -Infinity, minBy = Infinity, maxBy = -Infinity
+    let minBx = Infinity,
+      maxBx = -Infinity,
+      minBy = Infinity,
+      maxBy = -Infinity
     for (const b of blueprint.blocks) {
       minBx = Math.min(minBx, b.x)
       maxBx = Math.max(maxBx, b.x)
@@ -91,7 +94,7 @@ export function BuildScene({
     }
     return {
       cx: Math.round((minBx + maxBx) / 2),
-      cy: Math.round((minBy + maxBy) / 2),
+      cy: Math.round((minBy + maxBy) / 2)
     }
   }, [blueprint])
 
@@ -133,7 +136,7 @@ export function BuildScene({
         map.set(pb.index, {
           pb,
           ci,
-          habitName: ci ? habitMap.get(ci.habitId) : undefined,
+          habitName: ci ? habitMap.get(ci.habitId) : undefined
         })
       }
     }
@@ -168,8 +171,26 @@ export function BuildScene({
   const enableAmbient = useAppStore((s) => s.settings.enableAmbientLighting !== false)
   const enableGyroscope = useAppStore((s) => Boolean(s.settings.enableGyroscope))
   const gyroOffsetRef = useRef({ x: 0, y: 0 })
-  const stateRef = useRef({ blueprint, placedCount, animateIndex, rotation, enableAmbient, enableGyroscope, ecoStage, xrayMode })
-  stateRef.current = { blueprint, placedCount, animateIndex, rotation, enableAmbient, enableGyroscope, ecoStage, xrayMode }
+  const stateRef = useRef({
+    blueprint,
+    placedCount,
+    animateIndex,
+    rotation,
+    enableAmbient,
+    enableGyroscope,
+    ecoStage,
+    xrayMode
+  })
+  stateRef.current = {
+    blueprint,
+    placedCount,
+    animateIndex,
+    rotation,
+    enableAmbient,
+    enableGyroscope,
+    ecoStage,
+    xrayMode
+  }
   // 动画/重绘 effect 经 ref 调用 draw：调用方（BlockDropModal）的 onAnimated 回调身份
   // 变化不再重建 draw、不再重置动画计时（修复掉落动画播两遍）
   const drawRef = useRef<() => void>(() => {})
@@ -178,7 +199,14 @@ export function BuildScene({
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    const { blueprint: bp, placedCount: pc, animateIndex: ai, rotation: rot, enableAmbient: ambient, enableGyroscope: gyroEnabled } = stateRef.current
+    const {
+      blueprint: bp,
+      placedCount: pc,
+      animateIndex: ai,
+      rotation: rot,
+      enableAmbient: ambient,
+      enableGyroscope: gyroEnabled
+    } = stateRef.current
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight)
@@ -195,9 +223,7 @@ export function BuildScene({
     const cfg = DEFAULT_ISO_CONFIG
     drawGroundBase(ctx, bp.blocks, cfg, palette, rot, cx, cy)
     // 接触阴影跟随已放置积木的脚印（开荒期不应出现比建筑大几圈的阴影）
-    const placedBlocks = cubes
-      .filter((c) => c.i < pc)
-      .map((c) => ({ x: c.b.x, y: c.b.y }))
+    const placedBlocks = cubes.filter((c) => c.i < pc).map((c) => ({ x: c.b.x, y: c.b.y }))
     drawGroundShadow(ctx, placedBlocks, cfg, palette, rot, cx, cy)
     // 植被 back 层：左/右侧灌木（积木之前绘制，被建筑自然遮挡、只在侧面探出）
     drawEcoProps(ctx, bp.blocks, cfg, palette, rot, cx, cy, stateRef.current.ecoStage, 'back')
@@ -251,7 +277,7 @@ export function BuildScene({
             : ('streak' as const)
           : undefined,
         ghost: isGhostXRay,
-        highlight: isHovered || isGlowXRay || Boolean(isNew && !animating),
+        highlight: isHovered || isGlowXRay || Boolean(isNew && !animating)
       }
 
       // 级联铺设：逐层落下 + 果冻回弹
@@ -343,7 +369,7 @@ export function BuildScene({
         maxDisplacement: 0,
         isMultiTouch: false,
         lastPinchDist: 0,
-        lastPinchCenter: { x: t.clientX, y: t.clientY },
+        lastPinchCenter: { x: t.clientX, y: t.clientY }
       }
     } else if (e.touches.length >= 2) {
       const p1 = e.touches[0]
@@ -365,7 +391,7 @@ export function BuildScene({
           maxDisplacement: 999,
           isMultiTouch: true,
           lastPinchDist: dist,
-          lastPinchCenter: center,
+          lastPinchCenter: center
         }
       }
     }
@@ -424,7 +450,7 @@ export function BuildScene({
         state.lastPinchCenter = center
       }
     },
-    [draw],
+    [draw]
   )
 
   const handleTouchEnd = useCallback(
@@ -462,7 +488,9 @@ export function BuildScene({
               const meta = derivedRef.current.blockMetaByIndex.get(hit.i)
               const ci = meta?.ci
               const labels = bubbleLabelsRef.current
-              const habitName = meta?.habitName || (ci ? labels.deletedHabit : meta?.pb?.bonus ? labels.bonusHabit : '—')
+              const habitName =
+                meta?.habitName ||
+                (ci ? labels.deletedHabit : meta?.pb?.bonus ? labels.bonusHabit : '—')
               setHoveredBlock({
                 index: hit.i,
                 x: state.startX - rect.left,
@@ -471,7 +499,7 @@ export function BuildScene({
                 date: ci?.date || '',
                 note: ci?.note,
                 mood: ci?.mood,
-                starred: ci?.starred,
+                starred: ci?.starred
               })
               draw()
             } else if (hoveredIndexRef.current !== null) {
@@ -496,7 +524,7 @@ export function BuildScene({
         state.maxDisplacement = 999
       }
     },
-    [draw],
+    [draw]
   )
 
   const handleTouchCancel = useCallback(() => {
@@ -545,9 +573,9 @@ export function BuildScene({
           bounds,
           allBounds,
           width: canvas.clientWidth,
-          height: canvas.clientHeight,
+          height: canvas.clientHeight
         }),
-        fitted: true,
+        fitted: true
       }
     }
     const resize = () => {
@@ -567,9 +595,9 @@ export function BuildScene({
             viewRef.current,
             { w: prev.w, h: prev.h },
             { w, h },
-            { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 },
+            { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 }
           ),
-          fitted: viewRef.current.fitted,
+          fitted: viewRef.current.fitted
         }
       }
       prevSizeRef.current = { w, h }
@@ -605,7 +633,9 @@ export function BuildScene({
       animRef.current = reduced ? null : { index: animateIndex, start: performance.now() }
       if (reduced) onAnimatedRef.current?.()
     } else if (placedCount > 0 && !animRef.current) {
-      cascadeRef.current = reduced ? null : planCascade(stateRef.current.blueprint.blocks, placedCount)
+      cascadeRef.current = reduced
+        ? null
+        : planCascade(stateRef.current.blueprint.blocks, placedCount)
     }
     drawRef.current()
   }, [placedCount, animateIndex])
@@ -680,7 +710,9 @@ export function BuildScene({
           const meta = derivedRef.current.blockMetaByIndex.get(hit.i)
           const ci = meta?.ci
           const labels = bubbleLabelsRef.current
-          const habitName = meta?.habitName || (ci ? labels.deletedHabit : meta?.pb?.bonus ? labels.bonusHabit : '—')
+          const habitName =
+            meta?.habitName ||
+            (ci ? labels.deletedHabit : meta?.pb?.bonus ? labels.bonusHabit : '—')
           setHoveredBlock({
             index: hit.i,
             x: e.clientX - rect.left,
@@ -689,12 +721,12 @@ export function BuildScene({
             date: ci?.date || '',
             note: ci?.note,
             mood: ci?.mood,
-            starred: ci?.starred,
+            starred: ci?.starred
           })
           draw()
         } else {
           setHoveredBlock((prev) =>
-            prev ? { ...prev, x: e.clientX - rect.left, y: e.clientY - rect.top } : null,
+            prev ? { ...prev, x: e.clientX - rect.left, y: e.clientY - rect.top } : null
           )
         }
       } else if (hoveredIndexRef.current !== null) {
@@ -752,7 +784,7 @@ export function BuildScene({
       const targetY = Math.max(-5, Math.min(5, ((e.beta - 45) / 30) * 5))
       gyroOffsetRef.current = {
         x: gyroOffsetRef.current.x * 0.8 + targetX * 0.2,
-        y: gyroOffsetRef.current.y * 0.8 + targetY * 0.2,
+        y: gyroOffsetRef.current.y * 0.8 + targetY * 0.2
       }
       draw()
     }

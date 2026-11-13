@@ -17,7 +17,7 @@ function baseState(): AppState {
     repairBrickMonth: '2026-11',
     showcasePlacements: [{ blueprintId: 'plant', gridX: 1, gridY: 1 }],
     foundationNotes: { plant: 'hello' },
-    reminderLog: { h1: { date: '2026-11-10', action: 'skipped' } },
+    reminderLog: { h1: { date: '2026-11-10', action: 'skipped' } }
   }
 }
 

@@ -13,7 +13,7 @@ describe('persistence flush timing', () => {
       const saveSpy = vi.fn(() => Promise.resolve())
       const adapter: StorageAdapter = {
         load: async () => ({ state: null }),
-        save: saveSpy,
+        save: saveSpy
       }
       await initPersistence(adapter)
       useAppStore.setState({ hydrated: true })

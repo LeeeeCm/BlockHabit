@@ -7,13 +7,17 @@ import {
   loadWindowLayout,
   presetFits,
   saveWindowLayout,
-  WINDOW_LAYOUT_KEY,
+  WINDOW_LAYOUT_KEY
 } from './miniWindow'
 
 const AREA = { x: 0, y: 0, width: 1920, height: 1040 }
 
 afterEach(() => {
-  try { localStorage.removeItem(WINDOW_LAYOUT_KEY) } catch { /* jsdom 之外忽略 */ }
+  try {
+    localStorage.removeItem(WINDOW_LAYOUT_KEY)
+  } catch {
+    /* jsdom 之外忽略 */
+  }
 })
 
 describe('mini presets', () => {
@@ -32,7 +36,10 @@ describe('mini presets', () => {
 
 describe('position helpers', () => {
   it('places the mini window at the bottom-right with margin', () => {
-    expect(defaultMiniPosition(AREA, MINI_PRESETS.standard)).toEqual({ x: 1920 - 280 - 16, y: 1040 - 400 - 16 })
+    expect(defaultMiniPosition(AREA, MINI_PRESETS.standard)).toEqual({
+      x: 1920 - 280 - 16,
+      y: 1040 - 400 - 16
+    })
   })
 
   it('clamps positions outside the work area back inside', () => {
@@ -42,7 +49,11 @@ describe('position helpers', () => {
   })
 
   it('handles a work area smaller than the preset without NaN', () => {
-    const p = clampMiniPosition({ x: 10, y: 10 }, { x: 0, y: 0, width: 200, height: 120 }, MINI_PRESETS.standard)
+    const p = clampMiniPosition(
+      { x: 10, y: 10 },
+      { x: 0, y: 0, width: 200, height: 120 },
+      MINI_PRESETS.standard
+    )
     expect(Number.isFinite(p.x)).toBe(true)
     expect(Number.isFinite(p.y)).toBe(true)
   })
@@ -50,8 +61,16 @@ describe('position helpers', () => {
 
 describe('window layout persistence', () => {
   it('round-trips main and mini positions', () => {
-    saveWindowLayout({ version: 1, main: { w: 1200, h: 800, x: 40, y: 60 }, mini: { x: 900, y: 300 } })
-    expect(loadWindowLayout()).toEqual({ version: 1, main: { w: 1200, h: 800, x: 40, y: 60 }, mini: { x: 900, y: 300 } })
+    saveWindowLayout({
+      version: 1,
+      main: { w: 1200, h: 800, x: 40, y: 60 },
+      mini: { x: 900, y: 300 }
+    })
+    expect(loadWindowLayout()).toEqual({
+      version: 1,
+      main: { w: 1200, h: 800, x: 40, y: 60 },
+      mini: { x: 900, y: 300 }
+    })
   })
 
   it('falls back to empty layout on bad JSON / missing keys', () => {

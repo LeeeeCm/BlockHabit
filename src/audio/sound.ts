@@ -77,126 +77,126 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
   if (material === 'mute') return
   void withAudioContext((ctx) => {
     const now = ctx.currentTime
-  switch (material) {
-    case 'walnut': {
-      // 沉静原木：短促低频木质击打 (正弦波 280Hz -> 85Hz，低通共鸣)
-      const osc = ctx.createOscillator()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(280, now)
-      osc.frequency.exponentialRampToValueAtTime(85, now + 0.055)
+    switch (material) {
+      case 'walnut': {
+        // 沉静原木：短促低频木质击打 (正弦波 280Hz -> 85Hz，低通共鸣)
+        const osc = ctx.createOscillator()
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(280, now)
+        osc.frequency.exponentialRampToValueAtTime(85, now + 0.055)
 
-      const filter = ctx.createBiquadFilter()
-      filter.type = 'lowpass'
-      filter.frequency.setValueAtTime(450, now)
+        const filter = ctx.createBiquadFilter()
+        filter.type = 'lowpass'
+        filter.frequency.setValueAtTime(450, now)
 
-      const gain = ctx.createGain()
-      gain.gain.setValueAtTime(0.42, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055)
+        const gain = ctx.createGain()
+        gain.gain.setValueAtTime(0.42, now)
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055)
 
-      osc.connect(filter)
-      filter.connect(gain)
-      gain.connect(getMasterGain(ctx))
-      osc.start(now)
-      osc.stop(now + 0.06)
-      break
+        osc.connect(filter)
+        filter.connect(gain)
+        gain.connect(getMasterGain(ctx))
+        osc.start(now)
+        osc.stop(now + 0.06)
+        break
+      }
+      case 'crystal': {
+        // 空灵晶体：高频双音晶体撞击 (2200Hz + 3300Hz, 35ms 泛音衰减)
+        const osc1 = ctx.createOscillator()
+        const osc2 = ctx.createOscillator()
+        osc1.type = 'sine'
+        osc2.type = 'triangle'
+        osc1.frequency.setValueAtTime(2200, now)
+        osc2.frequency.setValueAtTime(3300, now)
+
+        const gain = ctx.createGain()
+        gain.gain.setValueAtTime(0.22, now)
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04)
+
+        osc1.connect(gain)
+        osc2.connect(gain)
+        gain.connect(getMasterGain(ctx))
+        osc1.start(now)
+        osc2.start(now)
+        osc1.stop(now + 0.045)
+        osc2.stop(now + 0.045)
+        break
+      }
+      case 'metal': {
+        // 机械合金：微高通带通冲击 + 750Hz 机械微谐振
+        const bufferSize = Math.floor(ctx.sampleRate * 0.018)
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+        const output = noiseBuffer.getChannelData(0)
+        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1
+        const whiteNoise = ctx.createBufferSource()
+        whiteNoise.buffer = noiseBuffer
+
+        const filter = ctx.createBiquadFilter()
+        filter.type = 'bandpass'
+        filter.frequency.setValueAtTime(1800, now)
+        filter.Q.setValueAtTime(3.5, now)
+
+        const noiseGain = ctx.createGain()
+        noiseGain.gain.setValueAtTime(0.28, now)
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02)
+        whiteNoise.connect(filter)
+        filter.connect(noiseGain)
+        noiseGain.connect(getMasterGain(ctx))
+        whiteNoise.start(now)
+
+        const osc = ctx.createOscillator()
+        osc.type = 'square'
+        osc.frequency.setValueAtTime(750, now)
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.03)
+        const oscGain = ctx.createGain()
+        oscGain.gain.setValueAtTime(0.16, now)
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03)
+        osc.connect(oscGain)
+        oscGain.connect(getMasterGain(ctx))
+        osc.start(now)
+        osc.stop(now + 0.035)
+        break
+      }
+      case 'classic':
+      default: {
+        // 经典塑料乐高咬合 (原有高通微噪 + 三角波)
+        const bufferSize = Math.floor(ctx.sampleRate * 0.025)
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+        const output = noiseBuffer.getChannelData(0)
+        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1
+        const whiteNoise = ctx.createBufferSource()
+        whiteNoise.buffer = noiseBuffer
+
+        const filter = ctx.createBiquadFilter()
+        filter.type = 'highpass'
+        filter.frequency.setValueAtTime(1200, now)
+
+        const noiseGain = ctx.createGain()
+        noiseGain.gain.setValueAtTime(0.35, now)
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025)
+
+        whiteNoise.connect(filter)
+        filter.connect(noiseGain)
+        noiseGain.connect(getMasterGain(ctx))
+        whiteNoise.start(now)
+
+        const osc = ctx.createOscillator()
+        osc.type = 'triangle'
+        osc.frequency.setValueAtTime(320, now)
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.03)
+
+        const oscGain = ctx.createGain()
+        oscGain.gain.setValueAtTime(0.3, now)
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03)
+
+        osc.connect(oscGain)
+        oscGain.connect(getMasterGain(ctx))
+
+        osc.start(now)
+        osc.stop(now + 0.035)
+        break
+      }
     }
-    case 'crystal': {
-      // 空灵晶体：高频双音晶体撞击 (2200Hz + 3300Hz, 35ms 泛音衰减)
-      const osc1 = ctx.createOscillator()
-      const osc2 = ctx.createOscillator()
-      osc1.type = 'sine'
-      osc2.type = 'triangle'
-      osc1.frequency.setValueAtTime(2200, now)
-      osc2.frequency.setValueAtTime(3300, now)
-
-      const gain = ctx.createGain()
-      gain.gain.setValueAtTime(0.22, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04)
-
-      osc1.connect(gain)
-      osc2.connect(gain)
-      gain.connect(getMasterGain(ctx))
-      osc1.start(now)
-      osc2.start(now)
-      osc1.stop(now + 0.045)
-      osc2.stop(now + 0.045)
-      break
-    }
-    case 'metal': {
-      // 机械合金：微高通带通冲击 + 750Hz 机械微谐振
-      const bufferSize = Math.floor(ctx.sampleRate * 0.018)
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
-      const output = noiseBuffer.getChannelData(0)
-      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1
-      const whiteNoise = ctx.createBufferSource()
-      whiteNoise.buffer = noiseBuffer
-
-      const filter = ctx.createBiquadFilter()
-      filter.type = 'bandpass'
-      filter.frequency.setValueAtTime(1800, now)
-      filter.Q.setValueAtTime(3.5, now)
-
-      const noiseGain = ctx.createGain()
-      noiseGain.gain.setValueAtTime(0.28, now)
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02)
-      whiteNoise.connect(filter)
-      filter.connect(noiseGain)
-      noiseGain.connect(getMasterGain(ctx))
-      whiteNoise.start(now)
-
-      const osc = ctx.createOscillator()
-      osc.type = 'square'
-      osc.frequency.setValueAtTime(750, now)
-      osc.frequency.exponentialRampToValueAtTime(150, now + 0.03)
-      const oscGain = ctx.createGain()
-      oscGain.gain.setValueAtTime(0.16, now)
-      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03)
-      osc.connect(oscGain)
-      oscGain.connect(getMasterGain(ctx))
-      osc.start(now)
-      osc.stop(now + 0.035)
-      break
-    }
-    case 'classic':
-    default: {
-      // 经典塑料乐高咬合 (原有高通微噪 + 三角波)
-      const bufferSize = Math.floor(ctx.sampleRate * 0.025)
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
-      const output = noiseBuffer.getChannelData(0)
-      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1
-      const whiteNoise = ctx.createBufferSource()
-      whiteNoise.buffer = noiseBuffer
-
-      const filter = ctx.createBiquadFilter()
-      filter.type = 'highpass'
-      filter.frequency.setValueAtTime(1200, now)
-
-      const noiseGain = ctx.createGain()
-      noiseGain.gain.setValueAtTime(0.35, now)
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025)
-
-      whiteNoise.connect(filter)
-      filter.connect(noiseGain)
-      noiseGain.connect(getMasterGain(ctx))
-      whiteNoise.start(now)
-
-      const osc = ctx.createOscillator()
-      osc.type = 'triangle'
-      osc.frequency.setValueAtTime(320, now)
-      osc.frequency.exponentialRampToValueAtTime(80, now + 0.03)
-
-      const oscGain = ctx.createGain()
-      oscGain.gain.setValueAtTime(0.3, now)
-      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03)
-
-      osc.connect(oscGain)
-      oscGain.connect(getMasterGain(ctx))
-
-      osc.start(now)
-      osc.stop(now + 0.035)
-      break
-    }
-  }
   })
 }
 
@@ -207,21 +207,21 @@ export function playSnapSound(overrideMaterial?: SoundMaterial): void {
 export function playJellySound(): void {
   void withAudioContext((ctx) => {
     const now = ctx.currentTime
-  const osc = ctx.createOscillator()
-  osc.type = 'sine'
-  osc.frequency.setValueAtTime(160, now)
-  osc.frequency.exponentialRampToValueAtTime(260, now + 0.08)
-  osc.frequency.exponentialRampToValueAtTime(180, now + 0.18)
+    const osc = ctx.createOscillator()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(160, now)
+    osc.frequency.exponentialRampToValueAtTime(260, now + 0.08)
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.18)
 
-  const gain = ctx.createGain()
-  gain.gain.setValueAtTime(0.18, now)
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22)
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.18, now)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22)
 
-  osc.connect(gain)
-  gain.connect(getMasterGain(ctx))
+    osc.connect(gain)
+    gain.connect(getMasterGain(ctx))
 
-  osc.start(now)
-  osc.stop(now + 0.24)
+    osc.start(now)
+    osc.stop(now + 0.24)
   })
 }
 
@@ -232,26 +232,26 @@ export function playJellySound(): void {
 export function playCelebrationSound(): void {
   void withAudioContext((ctx) => {
     const now = ctx.currentTime
-  // 经典 C 大调五度和弦：C5 (523Hz), E5 (659Hz), G5 (784Hz), C6 (1046Hz)
-  const notes = [523.25, 659.25, 783.99, 1046.5]
+    // 经典 C 大调五度和弦：C5 (523Hz), E5 (659Hz), G5 (784Hz), C6 (1046Hz)
+    const notes = [523.25, 659.25, 783.99, 1046.5]
 
-  notes.forEach((freq, idx) => {
-    const osc = ctx.createOscillator()
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(freq, now + idx * 0.06)
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(freq, now + idx * 0.06)
 
-    const gain = ctx.createGain()
-    const startTime = now + idx * 0.06
-    gain.gain.setValueAtTime(0.001, startTime)
-    gain.gain.linearRampToValueAtTime(0.12, startTime + 0.04)
-    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 1.2)
+      const gain = ctx.createGain()
+      const startTime = now + idx * 0.06
+      gain.gain.setValueAtTime(0.001, startTime)
+      gain.gain.linearRampToValueAtTime(0.12, startTime + 0.04)
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 1.2)
 
-    osc.connect(gain)
-    gain.connect(getMasterGain(ctx))
+      osc.connect(gain)
+      gain.connect(getMasterGain(ctx))
 
-    osc.start(startTime)
-    osc.stop(startTime + 1.25)
-  })
+      osc.start(startTime)
+      osc.stop(startTime + 1.25)
+    })
   })
 }
 
@@ -309,36 +309,36 @@ const PENTATONIC_FREQS = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66
 export function playComboChime(comboIndex: number = 0): void {
   void withAudioContext((ctx) => {
     const now = ctx.currentTime
-  const freq = PENTATONIC_FREQS[Math.min(comboIndex, PENTATONIC_FREQS.length - 1)]
+    const freq = PENTATONIC_FREQS[Math.min(comboIndex, PENTATONIC_FREQS.length - 1)]
 
-  // 主音：温暖清脆木琴/积木敲击声
-  const osc = ctx.createOscillator()
-  osc.type = 'triangle'
-  osc.frequency.setValueAtTime(freq, now)
+    // 主音：温暖清脆木琴/积木敲击声
+    const osc = ctx.createOscillator()
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(freq, now)
 
-  // 泛音：微小八度高光
-  const overtone = ctx.createOscillator()
-  overtone.type = 'sine'
-  overtone.frequency.setValueAtTime(freq * 2, now)
+    // 泛音：微小八度高光
+    const overtone = ctx.createOscillator()
+    overtone.type = 'sine'
+    overtone.frequency.setValueAtTime(freq * 2, now)
 
-  const gain = ctx.createGain()
-  gain.gain.setValueAtTime(0.001, now)
-  gain.gain.linearRampToValueAtTime(0.22, now + 0.015)
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38)
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.001, now)
+    gain.gain.linearRampToValueAtTime(0.22, now + 0.015)
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38)
 
-  const overtoneGain = ctx.createGain()
-  overtoneGain.gain.setValueAtTime(0.001, now)
-  overtoneGain.gain.linearRampToValueAtTime(0.08, now + 0.01)
-  overtoneGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25)
+    const overtoneGain = ctx.createGain()
+    overtoneGain.gain.setValueAtTime(0.001, now)
+    overtoneGain.gain.linearRampToValueAtTime(0.08, now + 0.01)
+    overtoneGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25)
 
-  osc.connect(gain)
-  gain.connect(getMasterGain(ctx))
-  overtone.connect(overtoneGain)
-  overtoneGain.connect(getMasterGain(ctx))
+    osc.connect(gain)
+    gain.connect(getMasterGain(ctx))
+    overtone.connect(overtoneGain)
+    overtoneGain.connect(getMasterGain(ctx))
 
-  osc.start(now)
-  osc.stop(now + 0.4)
-  overtone.start(now)
-  overtone.stop(now + 0.3)
+    osc.start(now)
+    osc.stop(now + 0.4)
+    overtone.start(now)
+    overtone.stop(now + 0.3)
   })
 }

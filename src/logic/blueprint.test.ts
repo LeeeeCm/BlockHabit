@@ -7,7 +7,7 @@ const blocks: BlockDef[] = [
   { x: 0, y: 0, z: 0, type: 'basic' },
   { x: 1, y: 0, z: 0, type: 'gate' },
   { x: 0, y: 0, z: 1, type: 'basic' },
-  { x: 1, y: 0, z: 1, type: 'window' },
+  { x: 1, y: 0, z: 1, type: 'window' }
 ]
 
 describe('nextSlot', () => {

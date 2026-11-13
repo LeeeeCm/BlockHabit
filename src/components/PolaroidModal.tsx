@@ -54,11 +54,10 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
 
   // 提取参与本建筑拼搭的所有随笔
   const blueprintNotes = useMemo(() => {
-    const bpBuildIds = builds
-      .filter((b) => b.blueprintId === blueprint.id)
-      .map((b) => b.id)
+    const bpBuildIds = builds.filter((b) => b.blueprintId === blueprint.id).map((b) => b.id)
     const list = checkIns.filter(
-      (c) => !c.deletedAt && c.placedBlockId && bpBuildIds.includes(c.placedBlockId) && c.note?.trim(),
+      (c) =>
+        !c.deletedAt && c.placedBlockId && bpBuildIds.includes(c.placedBlockId) && c.note?.trim()
     )
     list.sort((a, b) => {
       if (a.starred && !b.starred) return -1
@@ -118,7 +117,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         ghost: 'rgba(0,0,0,0.06)',
         line: '#94a3b8',
         accent: '#c25e3e',
-        ink: '#0f172a',
+        ink: '#0f172a'
       }
       const cfg = DEFAULT_ISO_CONFIG
 
@@ -132,7 +131,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         palette,
         cfg,
         bonusByIndex,
-        spriteScale: 2,
+        spriteScale: 2
       })
       ctx.restore()
 
@@ -158,7 +157,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         ctx.fillText(
           t.polaroid.cardDetails(blueprint.blocks.length, completionDate),
           photoX,
-          photoY + photoH + 74,
+          photoY + photoH + 74
         )
       } else {
         ctx.fillStyle = '#64748b'
@@ -166,7 +165,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
         ctx.fillText(
           t.polaroid.cardDetails(blueprint.blocks.length, completionDate),
           photoX,
-          photoY + photoH + 64,
+          photoY + photoH + 64
         )
       }
 
@@ -295,7 +294,11 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
 
       ctx.fillStyle = '#a8a29e'
       ctx.font = '600 11px "Rubik", "MiSans", sans-serif'
-      ctx.fillText(`${t.polaroid.cardDetails(blueprint.blocks.length, completionDate)}`, 38, footerY + 20)
+      ctx.fillText(
+        `${t.polaroid.cardDetails(blueprint.blocks.length, completionDate)}`,
+        38,
+        footerY + 20
+      )
 
       ctx.textAlign = 'right'
       ctx.fillText('BLOCKHABIT CHRONICLE', W - 38, footerY + 20)
@@ -351,11 +354,26 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          maxWidth: 560,
+          maxWidth: 560
         }}
       >
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ fontSize: 'var(--fs-title)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: 12
+          }}
+        >
+          <span
+            style={{
+              fontSize: 'var(--fs-title)',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
             <IconCamera size={18} />
             <span>{isBack ? t.polaroid.modalTitleBack : t.polaroid.modalTitle}</span>
           </span>
@@ -381,11 +399,19 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
             boxShadow: '0 16px 48px rgba(0,0,0,0.18)',
             border: '1px solid var(--line)',
             display: 'block',
-            transition: 'transform var(--dur-lg) var(--ease-bounce)',
+            transition: 'transform var(--dur-lg) var(--ease-bounce)'
           }}
         />
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 10,
+            marginTop: 18,
+            flexWrap: 'wrap',
+            justifyContent: 'center'
+          }}
+        >
           <button
             className="btn ghost"
             onClick={() => setIsBack((prev) => !prev)}

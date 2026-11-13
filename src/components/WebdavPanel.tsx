@@ -5,14 +5,14 @@ import {
   PROVIDER_PRESETS,
   buildEndpoint,
   normalizeServerBase,
-  type ProviderId,
+  type ProviderId
 } from '../sync/providers'
 import {
   createFetchTransport,
   runWebDavDiagnosis,
   sanitizeDiagnosticDetail,
   type DiagnoseResult,
-  type DiagnoseStage,
+  type DiagnoseStage
 } from '../sync/diagnose'
 import { httpFetch, isTauriRuntime } from '../platform/http'
 import type { SyncStatus, WebDavConfig } from '../sync/types'
@@ -72,7 +72,7 @@ export function WebdavPanel({ sync, onToast }: Props) {
     error: syncError,
     lastSyncAt,
     syncNow,
-    getLastError,
+    getLastError
   } = sync
   const [endpoint, setEndpoint] = useState(syncConfig.endpoint)
   const [username, setUsername] = useState(syncConfig.username)
@@ -85,7 +85,9 @@ export function WebdavPanel({ sync, onToast }: Props) {
   const storedPassword = syncConfig.password
   /** 本次会话开始时的已保存密码：用户清空输入框时回退到它，而不是把密码改成空串 */
   const baselinePasswordRef = useRef(storedPassword)
-  const [providerId, setProviderId] = useState<ProviderId>(() => detectProvider(syncConfig.endpoint))
+  const [providerId, setProviderId] = useState<ProviderId>(() =>
+    detectProvider(syncConfig.endpoint)
+  )
   const [diagnosis, setDiagnosis] = useState<DiagnoseResult | null>(null)
   const [diagnosing, setDiagnosing] = useState(false)
   const diagnoseAbortRef = useRef<AbortController | null>(null)
@@ -113,7 +115,7 @@ export function WebdavPanel({ sync, onToast }: Props) {
       cors: t.settings.syncErrors.cors,
       conflict: t.settings.syncErrors.conflict,
       'no-collection': t.settings.syncErrors.noCollection,
-      http: t.settings.syncErrors.http,
+      http: t.settings.syncErrors.http
     }
     return map[code] ?? t.settings.syncErrors.network
   }
@@ -171,7 +173,7 @@ export function WebdavPanel({ sync, onToast }: Props) {
         username,
         password: passwordToUse,
         transport: createFetchTransport(httpFetch),
-        signal: controller.signal,
+        signal: controller.signal
       })
       setDiagnosis(result)
       if (result.cancelled) {
@@ -180,7 +182,7 @@ export function WebdavPanel({ sync, onToast }: Props) {
           cleanup && !cleanup.ok
             ? t.settings.webdav.testCancelledCleanupFail
             : t.settings.webdav.testCancelled,
-          3000,
+          3000
         )
       } else {
         onToast(result.ok ? t.settings.webdav.testSuccess : t.settings.webdav.testFail, 3000)
@@ -237,7 +239,10 @@ export function WebdavPanel({ sync, onToast }: Props) {
     const lines = [
       `${t.settings.webdav.testButton}: ${diagnosis.ok ? t.settings.webdav.testSuccess : t.settings.webdav.testFail}`,
       `endpoint: ${sanitizeDiagnosticDetail(endpoint, [passwordToUse, username])}`,
-      ...diagnosis.stages.map((s) => `${s.stage}: ${s.ok ? 'ok' : s.code}${s.status ? ` (${s.status})` : ''}${s.detail ? ` ${s.detail}` : ''}`),
+      ...diagnosis.stages.map(
+        (s) =>
+          `${s.stage}: ${s.ok ? 'ok' : s.code}${s.status ? ` (${s.status})` : ''}${s.detail ? ` ${s.detail}` : ''}`
+      )
     ]
     try {
       await navigator.clipboard.writeText(lines.join('\n'))
@@ -248,303 +253,365 @@ export function WebdavPanel({ sync, onToast }: Props) {
   }
   return (
     <>
-            {/* D-20261110-061：服务商预设 */}
-            <div className="field" style={{ marginBottom: 10 }}>
-              <label>{t.settings.webdav.providerLabel}</label>
-              <div className="seg">
-                {PROVIDER_ORDER.map((id) => {
-                  const label =
-                    id === 'nextcloud'
-                      ? t.settings.webdav.providerNextcloud
-                      : id === 'jianguoyun'
-                        ? t.settings.webdav.providerJianguoyun
-                        : id === 'synology'
-                          ? t.settings.webdav.providerSynology
-                          : t.settings.webdav.providerGeneric
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      className={providerId === id ? 'active' : ''}
-                      onClick={() => applyProvider(id)}
-                    >
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
-              {PROVIDER_PRESETS[providerId].requiresAppPassword && (
-                <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 4, lineHeight: 1.5 }}>
-                  {t.settings.webdav.appPasswordHint}
-                </div>
+      {/* D-20261110-061：服务商预设 */}
+      <div className="field" style={{ marginBottom: 10 }}>
+        <label>{t.settings.webdav.providerLabel}</label>
+        <div className="seg">
+          {PROVIDER_ORDER.map((id) => {
+            const label =
+              id === 'nextcloud'
+                ? t.settings.webdav.providerNextcloud
+                : id === 'jianguoyun'
+                  ? t.settings.webdav.providerJianguoyun
+                  : id === 'synology'
+                    ? t.settings.webdav.providerSynology
+                    : t.settings.webdav.providerGeneric
+            return (
+              <button
+                key={id}
+                type="button"
+                className={providerId === id ? 'active' : ''}
+                onClick={() => applyProvider(id)}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+        {PROVIDER_PRESETS[providerId].requiresAppPassword && (
+          <div
+            style={{
+              fontSize: 'var(--fs-caption)',
+              color: 'var(--ink-2)',
+              marginTop: 4,
+              lineHeight: 1.5
+            }}
+          >
+            {t.settings.webdav.appPasswordHint}
+          </div>
+        )}
+      </div>
+
+      <div className="field" style={{ marginBottom: 10 }}>
+        <label>{t.settings.webdav.serverUrl}</label>
+        <input
+          type="text"
+          placeholder="https://dav.example.com/sync/"
+          value={endpoint}
+          readOnly={!PROVIDER_PRESETS[providerId].requiresServer}
+          onChange={(e) => {
+            setEndpoint(e.target.value)
+            updateSyncConfig({ endpoint: e.target.value })
+          }}
+          disabled={isSyncing}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+        <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+          <label>{t.settings.webdav.username}</label>
+          <input
+            type="text"
+            placeholder={t.settings.webdav.username}
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value)
+              updateSyncConfig({ username: e.target.value })
+            }}
+            disabled={isSyncing}
+          />
+        </div>
+        <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+          <label>{t.settings.webdav.password}</label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            placeholder={
+              storedPassword && !passwordInput
+                ? t.settings.webdav.passwordStoredPlaceholder
+                : t.settings.webdav.passwordPlaceholder
+            }
+            value={passwordInput}
+            onChange={(e) => {
+              const value = e.target.value
+              setPasswordInput(value)
+              // 清空输入框 = 回退到本次会话开始时的已保存密码，而不是把密码改成空串
+              updateSyncConfig({ password: value === '' ? baselinePasswordRef.current : value })
+            }}
+            disabled={isSyncing || diagnosing}
+            style={{
+              border: '1.5px solid var(--line)',
+              background: 'var(--bg)',
+              padding: '9px 12px',
+              borderRadius: 'var(--r-sm)',
+              outline: 'none',
+              width: '100%',
+              color: 'var(--ink)'
+            }}
+          />
+          {storedPassword && !passwordInput && (
+            <div
+              style={{
+                fontSize: 'var(--fs-caption)',
+                color: 'var(--ink-2)',
+                marginTop: 3,
+                lineHeight: 1.5
+              }}
+            >
+              {t.settings.webdav.passwordKeepHint}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* B1：凭据落盘策略 —— 关闭后密码只留在本次运行内存，localStorage 不写密码 */}
+      <div className="field" style={{ marginBottom: 10 }}>
+        <label>{t.settings.webdav.rememberPassword}</label>
+        <div className="seg">
+          <button
+            type="button"
+            className={syncConfig.rememberPassword !== false ? 'active' : ''}
+            disabled={isSyncing}
+            onClick={() => updateSyncConfig({ rememberPassword: true })}
+          >
+            {t.settings.webdav.rememberPasswordOn}
+          </button>
+          <button
+            type="button"
+            className={syncConfig.rememberPassword === false ? 'active' : ''}
+            disabled={isSyncing}
+            onClick={() => updateSyncConfig({ rememberPassword: false })}
+          >
+            {t.settings.webdav.rememberPasswordOff}
+          </button>
+        </div>
+        <div
+          style={{
+            fontSize: 'var(--fs-caption)',
+            color: 'var(--ink-2)',
+            marginTop: 3,
+            lineHeight: 1.5
+          }}
+        >
+          {syncConfig.rememberPassword === false
+            ? t.settings.webdav.rememberPasswordHintOff
+            : syncConfig.credentialStore === 'os'
+              ? t.settings.webdav.rememberPasswordHintOs
+              : t.settings.webdav.rememberPasswordHintOn}
+        </div>
+      </div>
+      {/* D-20261110-061：独立测试连接 + 分步结果（不触发同步合并） */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+        <button
+          className="btn ghost"
+          style={{ flex: 1, padding: '7px 0' }}
+          disabled={isSyncing || (!diagnosing && !endpoint.trim())}
+          onClick={() => (diagnosing ? cancelDiagnosis() : void runConnectionTest())}
+        >
+          {diagnosing ? t.settings.webdav.cancelTest : t.settings.webdav.testButton}
+        </button>
+        <button
+          className="btn ghost"
+          style={{ flex: 1, padding: '7px 0' }}
+          disabled={isSyncing || diagnosing || !(passwordInput || storedPassword)}
+          onClick={clearCredentials}
+        >
+          {t.settings.webdav.clearCredentials}
+        </button>
+      </div>
+
+      {diagnosis && (
+        <div
+          aria-live="polite"
+          style={{
+            border: '1px solid var(--line)',
+            borderRadius: 'var(--r-sm)',
+            padding: '8px 10px',
+            marginBottom: 10,
+            background: 'var(--surface)'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 8,
+              fontSize: 'var(--fs-small)',
+              fontWeight: 600,
+              color: diagnosis.ok && !diagnosis.cancelled ? 'var(--progress-green)' : 'var(--ink)'
+            }}
+          >
+            <span>
+              {diagnosis.cancelled
+                ? t.settings.webdav.testCancelled
+                : diagnosis.ok
+                  ? t.settings.webdav.testSuccess
+                  : t.settings.webdav.testFail}
+            </span>
+            <span style={{ color: 'var(--ink-2)', fontWeight: 400 }}>
+              {Math.round(diagnosis.elapsedMs)} ms
+            </span>
+          </div>
+          {diagnosis.stages.map((stage) => (
+            <div
+              key={stage.stage}
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: 6,
+                marginTop: 4,
+                fontSize: 'var(--fs-caption)',
+                color: 'var(--ink-2)'
+              }}
+            >
+              <span
+                style={{ color: stage.ok ? 'var(--progress-green)' : 'var(--ink)', flexShrink: 0 }}
+              >
+                {stage.ok ? '✓' : '✕'}
+              </span>
+              <span style={{ flexShrink: 0, minWidth: 40 }}>{stageLabel(stage.stage)}</span>
+              {!stage.ok && (
+                <span
+                  style={{
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {stage.detail || stage.code}
+                </span>
               )}
             </div>
-
-            <div className="field" style={{ marginBottom: 10 }}>
-              <label>{t.settings.webdav.serverUrl}</label>
-              <input
-                type="text"
-                placeholder="https://dav.example.com/sync/"
-                value={endpoint}
-                readOnly={!PROVIDER_PRESETS[providerId].requiresServer}
-                onChange={(e) => {
-                  setEndpoint(e.target.value)
-                  updateSyncConfig({ endpoint: e.target.value })
-                }}
-                disabled={isSyncing}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-              <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                <label>{t.settings.webdav.username}</label>
-                <input
-                  type="text"
-                  placeholder={t.settings.webdav.username}
-                  value={username}
-                  onChange={(e) => {
-                    setUsername(e.target.value)
-                    updateSyncConfig({ username: e.target.value })
-                  }}
-                  disabled={isSyncing}
-                />
-              </div>
-              <div className="field" style={{ flex: 1, marginBottom: 0 }}>
-                <label>{t.settings.webdav.password}</label>
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder={
-                    storedPassword && !passwordInput
-                      ? t.settings.webdav.passwordStoredPlaceholder
-                      : t.settings.webdav.passwordPlaceholder
-                  }
-                  value={passwordInput}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    setPasswordInput(value)
-                    // 清空输入框 = 回退到本次会话开始时的已保存密码，而不是把密码改成空串
-                    updateSyncConfig({ password: value === '' ? baselinePasswordRef.current : value })
-                  }}
-                  disabled={isSyncing || diagnosing}
-                  style={{
-                    border: '1.5px solid var(--line)',
-                    background: 'var(--bg)',
-                    padding: '9px 12px',
-                    borderRadius: 'var(--r-sm)',
-                    outline: 'none',
-                    width: '100%',
-                    color: 'var(--ink)',
-                  }}
-                />
-                {storedPassword && !passwordInput && (
-                  <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3, lineHeight: 1.5 }}>
-                    {t.settings.webdav.passwordKeepHint}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* B1：凭据落盘策略 —— 关闭后密码只留在本次运行内存，localStorage 不写密码 */}
-            <div className="field" style={{ marginBottom: 10 }}>
-              <label>{t.settings.webdav.rememberPassword}</label>
-              <div className="seg">
-                <button
-                  type="button"
-                  className={syncConfig.rememberPassword !== false ? 'active' : ''}
-                  disabled={isSyncing}
-                  onClick={() => updateSyncConfig({ rememberPassword: true })}
-                >
-                  {t.settings.webdav.rememberPasswordOn}
-                </button>
-                <button
-                  type="button"
-                  className={syncConfig.rememberPassword === false ? 'active' : ''}
-                  disabled={isSyncing}
-                  onClick={() => updateSyncConfig({ rememberPassword: false })}
-                >
-                  {t.settings.webdav.rememberPasswordOff}
-                </button>
-              </div>
-              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3, lineHeight: 1.5 }}>
-                {syncConfig.rememberPassword === false
-                  ? t.settings.webdav.rememberPasswordHintOff
-                  : syncConfig.credentialStore === 'os'
-                    ? t.settings.webdav.rememberPasswordHintOs
-                    : t.settings.webdav.rememberPasswordHintOn}
-              </div>
-            </div>
-            {/* D-20261110-061：独立测试连接 + 分步结果（不触发同步合并） */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-              <button
-                className="btn ghost"
-                style={{ flex: 1, padding: '7px 0' }}
-                disabled={isSyncing || (!diagnosing && !endpoint.trim())}
-                onClick={() => (diagnosing ? cancelDiagnosis() : void runConnectionTest())}
-              >
-                {diagnosing ? t.settings.webdav.cancelTest : t.settings.webdav.testButton}
-              </button>
-              <button
-                className="btn ghost"
-                style={{ flex: 1, padding: '7px 0' }}
-                disabled={isSyncing || diagnosing || !(passwordInput || storedPassword)}
-                onClick={clearCredentials}
-              >
-                {t.settings.webdav.clearCredentials}
-              </button>
-            </div>
-
-            {diagnosis && (
-              <div
-                aria-live="polite"
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: 'var(--r-sm)',
-                  padding: '8px 10px',
-                  marginBottom: 10,
-                  background: 'var(--surface)',
-                }}
-              >
+          ))}
+          {diagnosis.cancelled &&
+            (() => {
+              const cleanup = diagnosis.stages.find((stage) => stage.stage === 'cleanup')
+              return cleanup && !cleanup.ok ? (
                 <div
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                    fontSize: 'var(--fs-small)',
-                    fontWeight: 600,
-                    color: diagnosis.ok && !diagnosis.cancelled ? 'var(--progress-green)' : 'var(--ink)',
+                    fontSize: 'var(--fs-caption)',
+                    color: 'var(--ink-2)',
+                    marginTop: 6,
+                    lineHeight: 1.5
                   }}
                 >
-                  <span>
-                    {diagnosis.cancelled
-                      ? t.settings.webdav.testCancelled
-                      : diagnosis.ok
-                        ? t.settings.webdav.testSuccess
-                        : t.settings.webdav.testFail}
-                  </span>
-                  <span style={{ color: 'var(--ink-2)', fontWeight: 400 }}>{Math.round(diagnosis.elapsedMs)} ms</span>
+                  {t.settings.webdav.testCancelledCleanupFail}
                 </div>
-                {diagnosis.stages.map((stage) => (
-                  <div
-                    key={stage.stage}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 6,
-                      marginTop: 4,
-                      fontSize: 'var(--fs-caption)',
-                      color: 'var(--ink-2)',
-                    }}
-                  >
-                    <span style={{ color: stage.ok ? 'var(--progress-green)' : 'var(--ink)', flexShrink: 0 }}>
-                      {stage.ok ? '✓' : '✕'}
-                    </span>
-                    <span style={{ flexShrink: 0, minWidth: 40 }}>{stageLabel(stage.stage)}</span>
-                    {!stage.ok && (
-                      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {stage.detail || stage.code}
-                      </span>
-                    )}
-                  </div>
-                ))}
-                {diagnosis.cancelled &&
-                  (() => {
-                    const cleanup = diagnosis.stages.find((stage) => stage.stage === 'cleanup')
-                    return cleanup && !cleanup.ok ? (
-                      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 6, lineHeight: 1.5 }}>
-                        {t.settings.webdav.testCancelledCleanupFail}
-                      </div>
-                    ) : null
-                  })()}
-                {!diagnosis.ok &&
-                  (() => {
-                    const hint = diagnosisHint(diagnosis.stages.find((stage) => !stage.ok)?.code)
-                    return hint ? (
-                      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 6, lineHeight: 1.5 }}>
-                        {hint}
-                      </div>
-                    ) : null
-                  })()}
-                {!diagnosis.ok && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                    <button
-                      className="btn ghost"
-                      style={{ padding: '3px 10px', fontSize: 'var(--fs-caption)' }}
-                      onClick={() => void copyDiagnosis()}
-                    >
-                      {t.settings.webdav.copyError}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 自动同步开关与间隔：接线 useSync 既有的启动/定时同步逻辑 */}
-            <div className="field" style={{ marginBottom: 10 }}>
-              <label>{t.settings.webdav.autoSync}</label>
-              <div className="seg">
-                <button
-                  type="button"
-                  className={syncConfig.enabled ? 'active' : ''}
-                  disabled={isSyncing || !endpoint.trim()}
-                  onClick={() => updateSyncConfig({ enabled: true })}
+              ) : null
+            })()}
+          {!diagnosis.ok &&
+            (() => {
+              const hint = diagnosisHint(diagnosis.stages.find((stage) => !stage.ok)?.code)
+              return hint ? (
+                <div
+                  style={{
+                    fontSize: 'var(--fs-caption)',
+                    color: 'var(--ink-2)',
+                    marginTop: 6,
+                    lineHeight: 1.5
+                  }}
                 >
-                  {t.settings.webdav.autoSyncOn}
-                </button>
-                <button
-                  type="button"
-                  className={!syncConfig.enabled ? 'active' : ''}
-                  disabled={isSyncing || !endpoint.trim()}
-                  onClick={() => updateSyncConfig({ enabled: false })}
-                >
-                  {t.settings.webdav.autoSyncOff}
-                </button>
-              </div>
-              <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
-                {syncConfig.enabled
-                  ? t.settings.webdav.autoSyncHintOn
-                  : t.settings.webdav.autoSyncHintOff}
-              </div>
-              {syncConfig.enabled && (
-                <div className="seg" style={{ marginTop: 8 }}>
-                  {([15, 30, 60, 180] as const).map((mins) => (
-                    <button
-                      key={mins}
-                      type="button"
-                      className={(syncConfig.autoSyncIntervalMinutes ?? 30) === mins ? 'active' : ''}
-                      disabled={isSyncing}
-                      onClick={() => updateSyncConfig({ autoSyncIntervalMinutes: mins })}
-                    >
-                      {mins === 15
-                        ? t.settings.webdav.interval15m
-                        : mins === 30
-                          ? t.settings.webdav.interval30m
-                          : mins === 60
-                            ? t.settings.webdav.interval1h
-                            : t.settings.webdav.interval3h}
-                    </button>
-                  ))}
+                  {hint}
                 </div>
-              )}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 4 }}>
-              <div style={{ fontSize: 'var(--fs-caption)', color: syncStatus === 'error' ? 'var(--danger)' : 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {isSyncing
-                  ? t.settings.webdav.syncing
-                  : syncError
-                    ? (syncErrorText(syncError) ?? syncError)
-                    : lastSyncAt
-                      ? `${t.settings.webdav.lastSync}${new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      : t.settings.webdav.notSynced}
-              </div>
+              ) : null
+            })()}
+          {!diagnosis.ok && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
               <button
-                className="btn primary"
-                onClick={() => void handleSync()}
-                disabled={isSyncing || !endpoint.trim()}
-                style={{ padding: '6px 16px', fontSize: 'var(--fs-body)', flexShrink: 0 }}
+                className="btn ghost"
+                style={{ padding: '3px 10px', fontSize: 'var(--fs-caption)' }}
+                onClick={() => void copyDiagnosis()}
               >
-                {isSyncing ? t.settings.webdav.syncingBtn : t.settings.webdav.syncNowBtn}
+                {t.settings.webdav.copyError}
               </button>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* 自动同步开关与间隔：接线 useSync 既有的启动/定时同步逻辑 */}
+      <div className="field" style={{ marginBottom: 10 }}>
+        <label>{t.settings.webdav.autoSync}</label>
+        <div className="seg">
+          <button
+            type="button"
+            className={syncConfig.enabled ? 'active' : ''}
+            disabled={isSyncing || !endpoint.trim()}
+            onClick={() => updateSyncConfig({ enabled: true })}
+          >
+            {t.settings.webdav.autoSyncOn}
+          </button>
+          <button
+            type="button"
+            className={!syncConfig.enabled ? 'active' : ''}
+            disabled={isSyncing || !endpoint.trim()}
+            onClick={() => updateSyncConfig({ enabled: false })}
+          >
+            {t.settings.webdav.autoSyncOff}
+          </button>
+        </div>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
+          {syncConfig.enabled
+            ? t.settings.webdav.autoSyncHintOn
+            : t.settings.webdav.autoSyncHintOff}
+        </div>
+        {syncConfig.enabled && (
+          <div className="seg" style={{ marginTop: 8 }}>
+            {([15, 30, 60, 180] as const).map((mins) => (
+              <button
+                key={mins}
+                type="button"
+                className={(syncConfig.autoSyncIntervalMinutes ?? 30) === mins ? 'active' : ''}
+                disabled={isSyncing}
+                onClick={() => updateSyncConfig({ autoSyncIntervalMinutes: mins })}
+              >
+                {mins === 15
+                  ? t.settings.webdav.interval15m
+                  : mins === 30
+                    ? t.settings.webdav.interval30m
+                    : mins === 60
+                      ? t.settings.webdav.interval1h
+                      : t.settings.webdav.interval3h}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+          marginTop: 4
+        }}
+      >
+        <div
+          style={{
+            fontSize: 'var(--fs-caption)',
+            color: syncStatus === 'error' ? 'var(--danger)' : 'var(--ink-2)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {isSyncing
+            ? t.settings.webdav.syncing
+            : syncError
+              ? (syncErrorText(syncError) ?? syncError)
+              : lastSyncAt
+                ? `${t.settings.webdav.lastSync}${new Date(lastSyncAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                : t.settings.webdav.notSynced}
+        </div>
+        <button
+          className="btn primary"
+          onClick={() => void handleSync()}
+          disabled={isSyncing || !endpoint.trim()}
+          style={{ padding: '6px 16px', fontSize: 'var(--fs-body)', flexShrink: 0 }}
+        >
+          {isSyncing ? t.settings.webdav.syncingBtn : t.settings.webdav.syncNowBtn}
+        </button>
+      </div>
     </>
   )
 }

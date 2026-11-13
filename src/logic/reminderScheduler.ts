@@ -95,7 +95,7 @@ export function scanHabitReminder(ctx: ReminderScanContext): ReminderScanResult 
     if (inWindow) {
       return {
         track: { ...track, snoozeUntilMs: undefined },
-        notify: { stage: dueSoon ? 'due-soon' : 'start' },
+        notify: { stage: dueSoon ? 'due-soon' : 'start' }
       }
     }
     return { track: { ...track, snoozeUntilMs: undefined } }
@@ -105,7 +105,7 @@ export function scanHabitReminder(ctx: ReminderScanContext): ReminderScanResult 
   if (!track.startNotified && inWindow) {
     return {
       track: { ...track, startNotified: true },
-      notify: { stage: dueSoon ? 'due-soon' : 'start' },
+      notify: { stage: dueSoon ? 'due-soon' : 'start' }
     }
   }
 
@@ -113,7 +113,7 @@ export function scanHabitReminder(ctx: ReminderScanContext): ReminderScanResult 
   if (dueSoon && track.startNotified && !track.dueSoonNotified) {
     return {
       track: { ...track, dueSoonNotified: true },
-      notify: { stage: 'due-soon' },
+      notify: { stage: 'due-soon' }
     }
   }
 

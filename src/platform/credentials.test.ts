@@ -7,7 +7,7 @@ import {
   isOsCredentialStoreReady,
   probeCredentialStore,
   removeCredential,
-  setCredential,
+  setCredential
 } from './credentials'
 
 /**

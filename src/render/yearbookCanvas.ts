@@ -56,7 +56,7 @@ export function readYearbookPalette(doc: Document = document): YearbookPalette {
     ink: read('--ink', '#0a0a0a'),
     ink2: read('--ink-2', '#6b6b6b'),
     line: read('--line', '#e8e8e8'),
-    accent: read('--accent', '#f5b301'),
+    accent: read('--accent', '#f5b301')
   }
 }
 
@@ -96,7 +96,7 @@ export interface YearbookLayoutOptions {
 export function computeYearbookLayout(
   width: number = YEARBOOK_CANVAS.width,
   height: number = YEARBOOK_CANVAS.height,
-  options: YearbookLayoutOptions = {},
+  options: YearbookLayoutOptions = {}
 ): YearbookLayout {
   const margin = Math.round(width * 0.078)
   const innerWidth = width - margin * 2
@@ -105,10 +105,7 @@ export function computeYearbookLayout(
 
   const rows = Math.max(
     1,
-    Math.min(
-      YEARBOOK_MAX_BUILDINGS,
-      Math.floor(options.buildingRows ?? YEARBOOK_MAX_BUILDINGS),
-    ),
+    Math.min(YEARBOOK_MAX_BUILDINGS, Math.floor(options.buildingRows ?? YEARBOOK_MAX_BUILDINGS))
   )
   const buildingRowHeight = 52
   const buildingsTop = y(0.5167)
@@ -131,7 +128,7 @@ export function computeYearbookLayout(
     buildings: { x: margin, y: buildingsTop, w: innerWidth, h: buildingsHeight },
     shape: { x: margin, y: shapeTop, w: innerWidth, h: shapeHeight },
     quote: { x: margin, y: quoteTop, w: innerWidth, h: quoteHeight },
-    footer: { x: margin, y: footerTop, w: innerWidth, h: footerHeight },
+    footer: { x: margin, y: footerTop, w: innerWidth, h: footerHeight }
   }
 }
 
@@ -142,14 +139,14 @@ export function metricCellRects(
   cols = 4,
   rowHeight = 56,
   gap = 10,
-  cellHeight = 46,
+  cellHeight = 46
 ): Rect[] {
   const cellWidth = (area.w - gap * (cols - 1)) / cols
   return Array.from({ length: count }, (_, index) => ({
     x: area.x + (index % cols) * (cellWidth + gap),
     y: area.y + Math.floor(index / cols) * rowHeight,
     w: cellWidth,
-    h: cellHeight,
+    h: cellHeight
   }))
 }
 
@@ -164,7 +161,7 @@ export function monthGridRects(
   rowHeight = 17,
   labelWidth = 40,
   cell = 13,
-  gap = 2,
+  gap = 2
 ): MonthRowLayout[] {
   const pitch = cell + gap
   return Array.from({ length: 12 }, (_, index) => {
@@ -175,8 +172,8 @@ export function monthGridRects(
         x: area.x + labelWidth + day * pitch,
         y: rowY,
         w: cell,
-        h: cell,
-      })),
+        h: cell
+      }))
     }
   })
 }
@@ -203,7 +200,7 @@ export function buildingGridRects(area: Rect, rows: number, cols = 1): BuildingR
         row,
         thumb: { x, y: row.y + 2, w: thumbSize, h: thumbSize },
         textX: x + thumbSize + 14,
-        textWidth: colWidth - thumbSize - 14,
+        textWidth: colWidth - thumbSize - 14
       })
     }
   }
@@ -219,7 +216,7 @@ export function buildingRowRects(area: Rect, count: number): BuildingRowLayout[]
 export function truncateToWidth(
   ctx: Pick<CanvasRenderingContext2D, 'measureText'>,
   text: string,
-  maxWidth: number,
+  maxWidth: number
 ): string {
   if (maxWidth <= 0) return ''
   if (ctx.measureText(text).width <= maxWidth) return text
@@ -233,7 +230,7 @@ export function wrapTextToWidth(
   ctx: Pick<CanvasRenderingContext2D, 'measureText'>,
   text: string,
   maxWidth: number,
-  maxLines = 2,
+  maxLines = 2
 ): string[] {
   const lines: string[] = []
   let rest = text
@@ -266,7 +263,7 @@ function setFont(
   ctx: CanvasRenderingContext2D,
   weight: FontWeight,
   size: number,
-  family = FONT_SANS,
+  family = FONT_SANS
 ): void {
   ctx.font = `${weight} ${size}px ${family}`
 }
@@ -276,7 +273,7 @@ function drawRule(
   x1: number,
   x2: number,
   y: number,
-  color: string,
+  color: string
 ): void {
   ctx.strokeStyle = color
   ctx.lineWidth = 1
@@ -290,7 +287,7 @@ function sectionTitle(
   ctx: CanvasRenderingContext2D,
   area: Rect,
   text: string,
-  palette: YearbookPalette,
+  palette: YearbookPalette
 ): void {
   setFont(ctx, 600, 12)
   ctx.fillStyle = palette.ink2
@@ -311,7 +308,7 @@ function drawBuildingThumb(
   ctx: CanvasRenderingContext2D,
   blueprint: Blueprint,
   rect: Rect,
-  palette: IsoPalette,
+  palette: IsoPalette
 ): void {
   ctx.save()
   ctx.beginPath()
@@ -325,7 +322,7 @@ function drawBuildingThumb(
     pad: 3,
     maxScale: 0.7,
     // 缩略图很小：精灵固定 1x 烘焙，避免每个小图都在 2x 下重烘焙撑大缓存
-    spriteScale: 1,
+    spriteScale: 1
   })
   ctx.restore()
 }
@@ -335,7 +332,7 @@ function drawHeader(
   layout: YearbookLayout,
   model: YearbookModel,
   palette: YearbookPalette,
-  t: TranslationSchema,
+  t: TranslationSchema
 ): void {
   const area = layout.header
   setFont(ctx, 700, 12, FONT_NUM)
@@ -359,7 +356,7 @@ function drawOverview(
   layout: YearbookLayout,
   model: YearbookModel,
   palette: YearbookPalette,
-  t: TranslationSchema,
+  t: TranslationSchema
 ): void {
   const area = layout.overview
   sectionTitle(ctx, area, t.yearbook.sections.overview, palette)
@@ -370,9 +367,12 @@ function drawOverview(
     { label: t.yearbook.metrics.blocks, value: String(model.stats.blocks) },
     { label: t.yearbook.metrics.buildings, value: String(model.stats.completedBuildings) },
     { label: t.yearbook.metrics.allClear, value: String(model.stats.perfectDays) },
-    { label: t.yearbook.metrics.longestStreak, value: t.yearbook.streakDays(model.stats.longestStreak) },
+    {
+      label: t.yearbook.metrics.longestStreak,
+      value: t.yearbook.streakDays(model.stats.longestStreak)
+    },
     { label: t.yearbook.metrics.focusHours, value: t.yearbook.focusHoursValue(hours) },
-    { label: t.yearbook.metrics.notes, value: String(model.stats.notes) },
+    { label: t.yearbook.metrics.notes, value: String(model.stats.notes) }
   ]
   const cells = metricCellRects({ ...area, y: area.y + 26 })
   cells.forEach((cell, index) => {
@@ -392,7 +392,7 @@ function drawMonthsLegend(
   right: number,
   baseline: number,
   palette: YearbookPalette,
-  t: TranslationSchema,
+  t: TranslationSchema
 ): void {
   setFont(ctx, 500, 10)
   const low = t.yearbook.monthsLegendLow
@@ -424,7 +424,7 @@ function drawMonths(
   layout: YearbookLayout,
   model: YearbookModel,
   palette: YearbookPalette,
-  t: TranslationSchema,
+  t: TranslationSchema
 ): void {
   const area = layout.months
   sectionTitle(ctx, area, t.yearbook.sections.months, palette)
@@ -470,7 +470,7 @@ function drawBuildings(
   palette: YearbookPalette,
   isoPalette: IsoPalette,
   t: TranslationSchema,
-  lang: Language,
+  lang: Language
 ): void {
   const area = layout.buildings
   sectionTitle(ctx, area, t.yearbook.sections.buildings, palette)
@@ -516,7 +516,7 @@ function drawBuildings(
     ctx.fillText(
       truncateToWidth(ctx, t.yearbook.buildingDate(entry.completedAt ?? ''), textWidth),
       textX,
-      row.y + 32,
+      row.y + 32
     )
 
     if (entry.foundationNote) {
@@ -539,7 +539,7 @@ function drawShape(
   layout: YearbookLayout,
   model: YearbookModel,
   palette: YearbookPalette,
-  t: TranslationSchema,
+  t: TranslationSchema
 ): void {
   const area = layout.shape
   sectionTitle(ctx, area, t.yearbook.sections.shape, palette)
@@ -551,15 +551,15 @@ function drawShape(
       value:
         model.timeShape.peakWeekday !== null
           ? t.common.weekdayLabel(t.common.weekdaysShort[model.timeShape.peakWeekday - 1] ?? '')
-          : t.yearbook.noData,
+          : t.yearbook.noData
     },
     {
       label: t.yearbook.busiestPeriod,
       value:
         model.timeShape.peakHour !== null
           ? formatPeakHour(model.timeShape.peakHour)
-          : t.yearbook.noData,
-    },
+          : t.yearbook.noData
+    }
   ]
   columns.forEach((column, index) => {
     const x = area.x + index * columnWidth
@@ -587,7 +587,7 @@ function drawQuote(
   layout: YearbookLayout,
   model: YearbookModel,
   palette: YearbookPalette,
-  t: TranslationSchema,
+  t: TranslationSchema
 ): void {
   const area = layout.quote
 
@@ -621,10 +621,10 @@ function drawQuote(
     truncateToWidth(
       ctx,
       `${t.yearbook.quoteFrom(habitLabel(t, model.quote.habitName))} · ${model.quote.date}`,
-      area.w,
+      area.w
     ),
     area.x,
-    startY + lines.length * lineHeight + 6,
+    startY + lines.length * lineHeight + 6
   )
 }
 
@@ -633,7 +633,7 @@ function drawFooter(
   layout: YearbookLayout,
   model: YearbookModel,
   palette: YearbookPalette,
-  t: TranslationSchema,
+  t: TranslationSchema
 ): void {
   const area = layout.footer
   drawRule(ctx, area.x, area.x + area.w, area.y, palette.line)
@@ -670,7 +670,7 @@ export interface YearbookDrawOptions {
 /** 把年鉴绘制到 canvas（物理尺寸 = 逻辑尺寸 × DPR） */
 export async function drawYearbook(
   canvas: HTMLCanvasElement,
-  options: YearbookDrawOptions,
+  options: YearbookDrawOptions
 ): Promise<void> {
   await waitForYearbookFonts()
 
@@ -688,7 +688,7 @@ export async function drawYearbook(
   const buildingOverflow = Math.max(0, model.buildings.length - YEARBOOK_MAX_BUILDINGS_TOTAL)
   const layout = computeYearbookLayout(width, height, {
     buildingRows,
-    overflow: buildingOverflow > 0,
+    overflow: buildingOverflow > 0
   })
 
   ctx.fillStyle = palette.bg
@@ -771,7 +771,7 @@ export type YearbookCopyResult = 'copied' | 'downloaded' | 'failed'
 
 export async function copyYearbookPng(
   canvas: HTMLCanvasElement,
-  year: number,
+  year: number
 ): Promise<YearbookCopyResult> {
   const blob = await canvasToPngBlob(canvas)
   if (!blob) return 'failed'

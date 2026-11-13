@@ -19,7 +19,9 @@ export interface DialogA11yOptions {
  * - 打开时聚焦面板或 initialFocusRef，关闭后恢复先前焦点。
  * 配合面板元素上的 role="dialog" / aria-modal="true" 使用（ref 挂在面板容器上）。
  */
-export function useDialogA11y(opts: DialogA11yOptions): { ref: React.RefObject<HTMLDivElement | null> } {
+export function useDialogA11y(opts: DialogA11yOptions): {
+  ref: React.RefObject<HTMLDivElement | null>
+} {
   const ref = useRef<HTMLDivElement | null>(null)
   const prevFocusRef = useRef<HTMLElement | null>(null)
   const onCloseRef = useRef(opts.onClose)
@@ -48,7 +50,7 @@ export function useDialogA11y(opts: DialogA11yOptions): { ref: React.RefObject<H
       }
       if (e.key !== 'Tab') return
       const focusables = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
-        (el) => el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement,
+        (el) => el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement
       )
       if (focusables.length === 0) {
         e.preventDefault()

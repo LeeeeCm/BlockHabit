@@ -11,7 +11,7 @@ import {
   formatPeakHour,
   yearbookMarkdown,
   yearbookSummaryText,
-  type YearbookState,
+  type YearbookState
 } from './yearbook'
 
 /**
@@ -36,13 +36,19 @@ function makeCheckIn(
   id: string,
   habitId: string,
   date: string,
-  overrides: Partial<CheckIn> = {},
+  overrides: Partial<CheckIn> = {}
 ): CheckIn {
   return { id, habitId, date, at: atLocal(date), ...overrides }
 }
 
 function makeClaim(date: string, overrides: Partial<DayClaim> = {}): DayClaim {
-  return { date, claimedAt: atLocal(date, 21), blockId: `block-${date}`, blueprintId: 'plant', ...overrides }
+  return {
+    date,
+    claimedAt: atLocal(date, 21),
+    blockId: `block-${date}`,
+    blueprintId: 'plant',
+    ...overrides
+  }
 }
 
 /** 用某蓝图真实容量生成一组积木（日期循环取用） */
@@ -54,7 +60,7 @@ function makeBlocks(blueprintId: string, dates: string[]): PlacedBlock[] {
     index,
     placedAt: atLocal(dates[Math.min(index, dates.length - 1)], 12),
     fromHabitId: 'h1',
-    bonus: false,
+    bonus: false
   }))
 }
 
@@ -67,7 +73,7 @@ function makeState(overrides: Partial<YearbookState> = {}): YearbookState {
     deletedDayClaims: [],
     foundationNotes: {},
     completedBlueprintIds: [],
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -78,7 +84,7 @@ describe('availableYears', () => {
         makeCheckIn('c1', 'h1', '2026-03-01'),
         makeCheckIn('c2', 'h1', '2026-03-02'),
         makeCheckIn('c3', 'h1', '2024-06-01'),
-        makeCheckIn('c4', 'h1', '2023-06-01', { deletedAt: atLocal('2023-06-02') }),
+        makeCheckIn('c4', 'h1', '2023-06-01', { deletedAt: atLocal('2023-06-02') })
       ],
       builds: [
         ...makeBlocks('plant', ['2025-12-30']),
@@ -89,10 +95,10 @@ describe('availableYears', () => {
           placedAt: atLocal('2020-01-05', 12),
           fromHabitId: 'h1',
           bonus: false,
-          deletedAt: atLocal('2020-01-06'),
-        },
+          deletedAt: atLocal('2020-01-06')
+        }
       ],
-      dayClaims: [makeClaim('2022-05-01')],
+      dayClaims: [makeClaim('2022-05-01')]
     })
     expect(availableYears(state)).toEqual([2026, 2025, 2024, 2022])
   })
@@ -114,7 +120,7 @@ describe('buildYearbook 空数据', () => {
       perfectDays: 0,
       longestStreak: 0,
       focusMinutes: 0,
-      notes: 0,
+      notes: 0
     })
     expect(model.months).toHaveLength(12)
     expect(model.months[1].days).toHaveLength(28)
@@ -138,8 +144,8 @@ describe('墓碑与时间口径', () => {
         makeCheckIn('c2', 'h1', '2026-02-02', {
           actualMinutes: 50,
           note: '被撤销',
-          deletedAt: atLocal('2026-02-03'),
-        }),
+          deletedAt: atLocal('2026-02-03')
+        })
       ],
       builds: [
         {
@@ -148,7 +154,7 @@ describe('墓碑与时间口径', () => {
           index: 0,
           placedAt: atLocal('2026-02-01', 12),
           fromHabitId: 'h1',
-          bonus: false,
+          bonus: false
         },
         {
           id: 'b2',
@@ -157,11 +163,11 @@ describe('墓碑与时间口径', () => {
           placedAt: atLocal('2026-02-02', 12),
           fromHabitId: 'h1',
           bonus: false,
-          deletedAt: atLocal('2026-02-03'),
-        },
+          deletedAt: atLocal('2026-02-03')
+        }
       ],
       dayClaims: [makeClaim('2026-02-01'), makeClaim('2026-02-02')],
-      deletedDayClaims: [{ date: '2026-02-02', deletedAt: atLocal('2026-02-03', 22) }],
+      deletedDayClaims: [{ date: '2026-02-02', deletedAt: atLocal('2026-02-03', 22) }]
     })
     const model = buildYearbook(state, 2026)
     expect(model.stats.checkIns).toBe(1)
@@ -175,9 +181,14 @@ describe('墓碑与时间口径', () => {
   it('全勤墓碑按 claimedAt/deletedAt 时间 LWW：晚于撤销的重新领取有效', () => {
     const state = makeState({
       dayClaims: [
-        { date: '2026-01-01', claimedAt: atLocal('2026-01-02', 9), blockId: 'b', blueprintId: 'plant' },
+        {
+          date: '2026-01-01',
+          claimedAt: atLocal('2026-01-02', 9),
+          blockId: 'b',
+          blueprintId: 'plant'
+        }
       ],
-      deletedDayClaims: [{ date: '2026-01-01', deletedAt: atLocal('2026-01-01', 23) }],
+      deletedDayClaims: [{ date: '2026-01-01', deletedAt: atLocal('2026-01-01', 23) }]
     })
     expect(buildYearbook(state, 2026).stats.perfectDays).toBe(1)
   })
@@ -189,8 +200,8 @@ describe('墓碑与时间口径', () => {
         makeCheckIn('a', 'h1', '2025-12-31'),
         makeCheckIn('b', 'h1', '2026-01-01'),
         makeCheckIn('c', 'h1', '2026-12-31'),
-        makeCheckIn('d', 'h1', '2027-01-01'),
-      ],
+        makeCheckIn('d', 'h1', '2027-01-01')
+      ]
     })
     const model = buildYearbook(state, 2026)
     expect(model.stats.checkIns).toBe(2)
@@ -213,7 +224,7 @@ describe('闰年与月度完成度', () => {
     const model = buildYearbook(
       makeState({ habits: [habit], checkIns: [makeCheckIn('c1', 'h1', '2026-03-12')] }),
       2026,
-      now,
+      now
     )
     const days = model.months[2].days
     expect(days[0].ratio).toBe(-1) // 3-01 习惯尚未创建
@@ -228,7 +239,7 @@ describe('闰年与月度完成度', () => {
     const state = makeState({
       habits: [makeHabit('h1')],
       checkIns: [makeCheckIn('c1', 'h1', '2026-05-01'), makeCheckIn('c2', 'h1', '2026-05-02')],
-      dayClaims: [makeClaim('2026-05-01')],
+      dayClaims: [makeClaim('2026-05-01')]
     })
     const model = buildYearbook(state, 2026)
     expect(model.months[4].checkIns).toBe(2)
@@ -241,7 +252,7 @@ describe('建筑年表', () => {
   it('块数达标才落成：落成日 = max(placedAt) 本地日期，含铭言与建造天数', () => {
     const state = makeState({
       builds: makeBlocks('plant', ['2026-03-01', '2026-03-05', '2026-03-12']),
-      foundationNotes: { plant: '  从一颗种子开始。 ' },
+      foundationNotes: { plant: '  从一颗种子开始。 ' }
     })
     const model = buildYearbook(state, 2026)
     expect(model.buildings).toHaveLength(1)
@@ -272,9 +283,9 @@ describe('建筑年表', () => {
           index: 0,
           placedAt: atLocal('2026-05-01', 12),
           fromHabitId: 'h1',
-          bonus: false,
-        },
-      ],
+          bonus: false
+        }
+      ]
     })
     expect(completionDateOf(state, 'unknown-blueprint')).toBeNull()
   })
@@ -287,7 +298,7 @@ describe('建筑年表', () => {
 
   it('多座建筑按落成日升序排列', () => {
     const state = makeState({
-      builds: [...makeBlocks('coffee', ['2026-06-01']), ...makeBlocks('plant', ['2026-02-01'])],
+      builds: [...makeBlocks('coffee', ['2026-06-01']), ...makeBlocks('plant', ['2026-02-01'])]
     })
     const model = buildYearbook(state, 2026)
     expect(model.buildings.map((b) => b.blueprintId)).toEqual(['plant', 'coffee'])
@@ -301,7 +312,7 @@ describe('建筑年表', () => {
       index,
       placedAt: iso,
       fromHabitId: 'h1',
-      bonus: false,
+      bonus: false
     }))
     expect(completionDateOf(makeState({ builds: blocks }), 'plant')).toBe(dateKey(new Date(iso)))
   })
@@ -313,7 +324,7 @@ describe('时间形状', () => {
       makeHabit('h1', { name: 'A', createdAt: '2026-01-01T00:00:00.000Z' }),
       makeHabit('h2', { name: 'B', createdAt: '2026-01-02T00:00:00.000Z' }),
       makeHabit('h3', { name: 'C', createdAt: '2026-01-03T00:00:00.000Z' }),
-      makeHabit('h4', { name: 'D', createdAt: '2026-01-04T00:00:00.000Z' }),
+      makeHabit('h4', { name: 'D', createdAt: '2026-01-04T00:00:00.000Z' })
     ]
     const checkIns = [
       makeCheckIn('c1', 'h1', '2026-02-01'),
@@ -323,24 +334,24 @@ describe('时间形状', () => {
       makeCheckIn('c5', 'h3', '2026-02-01'),
       makeCheckIn('c6', 'h4', '2026-02-01'),
       makeCheckIn('c7', 'h4', '2026-02-02'),
-      makeCheckIn('c8', 'h4', '2026-02-03'),
+      makeCheckIn('c8', 'h4', '2026-02-03')
     ]
     const model = buildYearbook(makeState({ habits, checkIns }), 2026)
     expect(model.timeShape.topHabits).toEqual([
       { habitId: 'h4', name: 'D', count: 3 },
       { habitId: 'h1', name: 'A', count: 2 },
-      { habitId: 'h2', name: 'B', count: 2 },
+      { habitId: 'h2', name: 'B', count: 2 }
     ])
   })
 
   it('已归档习惯的历史打卡仍计入 Top 习惯（归档不删历史）', () => {
     const habit = makeHabit('h1', {
       name: '已归档',
-      archivedAt: '2026-03-01T00:00:00.000Z',
+      archivedAt: '2026-03-01T00:00:00.000Z'
     })
     const model = buildYearbook(
       makeState({ habits: [habit], checkIns: [makeCheckIn('c1', 'h1', '2026-02-01')] }),
-      2026,
+      2026
     )
     expect(model.timeShape.topHabits[0]).toEqual({ habitId: 'h1', name: '已归档', count: 1 })
   })
@@ -350,7 +361,7 @@ describe('时间形状', () => {
       makeCheckIn('c1', 'h1', '2026-02-02', { at: atLocal('2026-02-02', 8) }),
       makeCheckIn('c2', 'h1', '2026-02-03', { at: atLocal('2026-02-03', 8) }),
       makeCheckIn('c3', 'h1', '2026-02-04', { at: atLocal('2026-02-04', 21) }),
-      makeCheckIn('c4', 'h1', '2026-02-05', { at: atLocal('2026-02-05', 21) }),
+      makeCheckIn('c4', 'h1', '2026-02-05', { at: atLocal('2026-02-05', 21) })
     ]
     const model = buildYearbook(makeState({ habits: [makeHabit('h1')], checkIns }), 2026)
     expect(model.timeShape.peakHour).toBe(8)
@@ -372,14 +383,14 @@ describe('当年一句随笔', () => {
       checkIns: [
         makeCheckIn('c1', 'h1', '2026-04-01', { note: '普通但很长很长很长的一段话' }),
         makeCheckIn('c2', 'h1', '2026-04-02', { note: '短', starred: true }),
-        makeCheckIn('c3', 'h1', '2026-04-03', { note: '另一个普通' }),
-      ],
+        makeCheckIn('c3', 'h1', '2026-04-03', { note: '另一个普通' })
+      ]
     })
     expect(buildYearbook(state, 2026).quote).toEqual({
       text: '短',
       habitName: '读书',
       date: '2026-04-02',
-      starred: true,
+      starred: true
     })
   })
 
@@ -390,8 +401,8 @@ describe('当年一句随笔', () => {
       checkIns: [
         makeCheckIn('c1', 'h1', '2026-04-05', { note: '一二三四五' }),
         makeCheckIn('c2', 'h1', '2026-04-01', { note: '甲乙丙丁戊' }),
-        makeCheckIn('c3', 'h1', '2026-04-03', { note: '短句' }),
-      ],
+        makeCheckIn('c3', 'h1', '2026-04-03', { note: '短句' })
+      ]
     })
     const quote = buildYearbook(state, 2026).quote
     expect(quote?.text).toBe('甲乙丙丁戊')
@@ -404,8 +415,8 @@ describe('当年一句随笔', () => {
       habits,
       checkIns: [
         makeCheckIn('c1', 'h1', '2026-04-01', { note: '   ' }),
-        makeCheckIn('c2', 'h1', '2025-04-01', { note: '去年的随笔' }),
-      ],
+        makeCheckIn('c2', 'h1', '2025-04-01', { note: '去年的随笔' })
+      ]
     })
     expect(buildYearbook(state, 2026).quote).toBeNull()
     expect(buildYearbook(state, 2025).quote?.text).toBe('去年的随笔')
@@ -421,7 +432,7 @@ describe('最长全勤连击与专注', () => {
       '2026-01-02',
       '2026-01-04',
       '2026-01-05',
-      '2026-01-06',
+      '2026-01-06'
     ]
     const state = makeState({ dayClaims: dates.map((date) => makeClaim(date)) })
     const model = buildYearbook(state, 2026)
@@ -437,8 +448,8 @@ describe('最长全勤连击与专注', () => {
         makeCheckIn('c1', 'h1', '2026-02-01', { actualMinutes: 20 }),
         makeCheckIn('c2', 'h1', '2026-02-02', { actualMinutes: 30 }),
         makeCheckIn('c3', 'h1', '2026-02-03'),
-        makeCheckIn('c4', 'h1', '2026-02-04', { actualMinutes: -5 }),
-      ],
+        makeCheckIn('c4', 'h1', '2026-02-04', { actualMinutes: -5 })
+      ]
     })
     expect(buildYearbook(state, 2026).stats.focusMinutes).toBe(50)
   })
@@ -449,11 +460,11 @@ describe('摘要与 Markdown 导出', () => {
     habits: [makeHabit('h1', { name: '晨间冥想' })],
     checkIns: [
       makeCheckIn('c1', 'h1', '2026-03-01', { note: '窗外有雨。' }),
-      makeCheckIn('c2', 'h1', '2026-03-02'),
+      makeCheckIn('c2', 'h1', '2026-03-02')
     ],
     builds: makeBlocks('plant', ['2026-03-01', '2026-03-12']),
     dayClaims: [makeClaim('2026-03-01'), makeClaim('2026-03-02')],
-    foundationNotes: { plant: '从一颗种子开始。' },
+    foundationNotes: { plant: '从一颗种子开始。' }
   })
 
   it('yearbookSummaryText 含年份、统计与建筑名（zh / en 各自语言）', () => {

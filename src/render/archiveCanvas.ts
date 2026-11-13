@@ -7,7 +7,7 @@ import {
   drawGroundBase,
   worldToScreen,
   type IsoConfig,
-  type IsoPalette,
+  type IsoPalette
 } from './iso'
 
 /**
@@ -34,7 +34,7 @@ export const ARCHIVE_BUILDING_PALETTE: IsoPalette = {
   ghost: '#dcdcdc',
   line: '#e8e8e8',
   accent: '#f5b301',
-  ink: '#0a0a0a',
+  ink: '#0a0a0a'
 }
 
 export interface CanvasBounds {
@@ -47,7 +47,7 @@ export interface CanvasBounds {
 /** 屏幕空间包围盒（含凸点顶部与块体底部），与图鉴/画报一致 */
 export function measureBlueprintBounds(
   blueprint: Blueprint,
-  cfg: IsoConfig = DEFAULT_ISO_CONFIG,
+  cfg: IsoConfig = DEFAULT_ISO_CONFIG
 ): CanvasBounds {
   let minX = Infinity
   let maxX = -Infinity
@@ -69,7 +69,7 @@ export function paintBlueprintToContext(
   blueprint: Blueprint,
   size: number,
   palette: IsoPalette = ARCHIVE_BUILDING_PALETTE,
-  cfg: IsoConfig = DEFAULT_ISO_CONFIG,
+  cfg: IsoConfig = DEFAULT_ISO_CONFIG
 ): void {
   const blocks = blueprint.blocks
   if (blocks.length === 0) return
@@ -109,7 +109,7 @@ export function paintBlueprintToContext(
       spriteScale: ARCHIVE_BUILDING_DPR,
       type: block.type,
       color: block.color,
-      noStuds: above !== undefined,
+      noStuds: above !== undefined
     })
   }
   ctx.restore()
@@ -135,7 +135,7 @@ function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
  */
 export async function renderBuildingPng(
   blueprintId: string,
-  size: number = ARCHIVE_BUILDING_SIZE,
+  size: number = ARCHIVE_BUILDING_SIZE
 ): Promise<Uint8Array | null> {
   if (typeof document === 'undefined') return null
   const blueprint = blueprints[blueprintId]

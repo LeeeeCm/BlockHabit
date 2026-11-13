@@ -15,7 +15,7 @@ describe('appStore checkIn & uncheckIn block economy', () => {
       completedBlueprintIds: [],
       settings: { theme: 'light', language: 'zh' },
       dayClaims: [],
-      deletedDayClaims: [],
+      deletedDayClaims: []
     })
   })
 
@@ -36,7 +36,11 @@ describe('appStore checkIn & uncheckIn block economy', () => {
 
   it('checkIn records actualMinutes when supplied from focus timer', () => {
     const store = useAppStore.getState()
-    const habit = store.addHabit('深度编程', { type: 'daily' }, { kind: 'focus', targetMinutes: 30 })
+    const habit = store.addHabit(
+      '深度编程',
+      { type: 'daily' },
+      { kind: 'focus', targetMinutes: 30 }
+    )
 
     store.checkIn(habit.id, 18)
     const updated = useAppStore.getState()
@@ -137,9 +141,16 @@ describe('appStore checkIn & uncheckIn block economy', () => {
 
     // 预置此前连续 6 天的全勤领取记录
     const dayMs = 86_400_000
-    const prevDays = Array.from({ length: 6 }, (_, i) => dateKey(new Date(Date.now() - (i + 1) * dayMs)))
+    const prevDays = Array.from({ length: 6 }, (_, i) =>
+      dateKey(new Date(Date.now() - (i + 1) * dayMs))
+    )
     useAppStore.setState({
-      dayClaims: prevDays.map((d) => ({ date: d, claimedAt: `${d}T12:00:00.000Z`, blockId: '', blueprintId: 'plant' })),
+      dayClaims: prevDays.map((d) => ({
+        date: d,
+        claimedAt: `${d}T12:00:00.000Z`,
+        blockId: '',
+        blueprintId: 'plant'
+      }))
     })
 
     const claimRes = store.checkInDay()
@@ -162,7 +173,7 @@ describe('appStore checkIn & uncheckIn block economy', () => {
       index: i,
       placedAt: new Date().toISOString(),
       fromHabitId: 'seed',
-      bonus: false,
+      bonus: false
     }))
     useAppStore.setState({ builds: dummyBuilds })
 
@@ -203,11 +214,11 @@ describe('appStore checkIn & uncheckIn block economy', () => {
       index: i,
       placedAt: new Date().toISOString(),
       fromHabitId: 'seed',
-      bonus: false,
+      bonus: false
     }))
     useAppStore.setState({
       builds: fullBuilds,
-      completedBlueprintIds: ['plant'],
+      completedBlueprintIds: ['plant']
     })
 
     // 后续在已建成的蓝图上打卡，不应再报告 complete: true
@@ -227,7 +238,7 @@ describe('appStore checkIn & uncheckIn block economy', () => {
       index: i,
       placedAt: new Date().toISOString(),
       fromHabitId: 'seed',
-      bonus: false,
+      bonus: false
     }))
     useAppStore.setState({ builds: almostFull })
 
@@ -251,7 +262,7 @@ describe('appStore checkIn & uncheckIn block economy', () => {
       index: i,
       placedAt: new Date().toISOString(),
       fromHabitId: 'seed',
-      bonus: false,
+      bonus: false
     }))
     useAppStore.setState({ builds: almostFull, repairBricks: 0 })
 
@@ -269,7 +280,9 @@ describe('appStore checkIn & uncheckIn block economy', () => {
       repairBrickMonth: monthKeyOf(),
       habits: useAppStore
         .getState()
-        .habits.map((h) => (h.id === habit.id ? { ...h, createdAt: '2026-08-01T00:00:00.000Z' } : h)),
+        .habits.map((h) =>
+          h.id === habit.id ? { ...h, createdAt: '2026-08-01T00:00:00.000Z' } : h
+        )
     })
 
     const res = store.useRepairBrick(habit.id, '2026-08-20')
@@ -282,7 +295,14 @@ describe('appStore checkIn & uncheckIn block economy', () => {
   it('useRepairBrick rejects dates before the habit was created (A12)', () => {
     const store = useAppStore.getState()
     const habit = store.addHabit('新建习惯', { type: 'daily' })
-    useAppStore.setState({ repairBricks: 1, habits: useAppStore.getState().habits.map((h) => (h.id === habit.id ? { ...h, createdAt: '2026-11-01T00:00:00.000Z' } : h)) })
+    useAppStore.setState({
+      repairBricks: 1,
+      habits: useAppStore
+        .getState()
+        .habits.map((h) =>
+          h.id === habit.id ? { ...h, createdAt: '2026-11-01T00:00:00.000Z' } : h
+        )
+    })
 
     const res = store.useRepairBrick(habit.id, '2026-10-01')
     expect(res.ok).toBe(false)
@@ -303,12 +323,16 @@ describe('appStore checkIn & uncheckIn block economy', () => {
 
   it('counter habit accumulates value and awards block when target is met', () => {
     const store = useAppStore.getState()
-    const habit = store.addHabit('喝水 2000ml', { type: 'daily' }, {
-      kind: 'counter',
-      targetValue: 2000,
-      unit: 'ml',
-      step: 500,
-    })
+    const habit = store.addHabit(
+      '喝水 2000ml',
+      { type: 'daily' },
+      {
+        kind: 'counter',
+        targetValue: 2000,
+        unit: 'ml',
+        step: 500
+      }
+    )
 
     // Step 1: 500ml -> no block yet
     const res1 = store.checkIn(habit.id, undefined, undefined, 500)
@@ -389,7 +413,9 @@ describe('appStore checkIn & uncheckIn block economy', () => {
       repairBrickMonth: '2020-01', // 很久以前的月份 → 触发补足
       habits: useAppStore
         .getState()
-        .habits.map((h) => (h.id === habit.id ? { ...h, createdAt: '2026-08-01T00:00:00.000Z' } : h)),
+        .habits.map((h) =>
+          h.id === habit.id ? { ...h, createdAt: '2026-08-01T00:00:00.000Z' } : h
+        )
     })
 
     const res = store.useRepairBrick(habit.id, '2026-08-20')
@@ -404,7 +430,8 @@ describe('appStore checkIn & uncheckIn block economy', () => {
     const habit = store.addHabit('连续跑步', { type: 'daily' })
     const today = new Date()
     // 本地日期键（不能用 toISOString：UTC+8 的凌晨会退到前一天，导致连击被误判为中断）
-    const key = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const key = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     // 造 29 天连续打卡（今天之前），再打卡第 30 天
     const checkIns = Array.from({ length: 29 }, (_, i) => {
       const d = new Date(today)

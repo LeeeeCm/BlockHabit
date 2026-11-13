@@ -16,13 +16,17 @@ describe('counter habit block award (anti-exploit)', () => {
       completedBlueprintIds: [],
       settings: { theme: 'light', language: 'zh' },
       dayClaims: [],
-      deletedDayClaims: [],
+      deletedDayClaims: []
     })
   })
 
   it('达标前不掉块，达标时掉一块，之后递减再递增不再掉块', () => {
     const store = useAppStore.getState()
-    const habit = store.addHabit('喝水', { type: 'daily' }, { kind: 'counter', targetValue: 3, step: 1 })
+    const habit = store.addHabit(
+      '喝水',
+      { type: 'daily' },
+      { kind: 'counter', targetValue: 3, step: 1 }
+    )
     const id = habit.id
 
     useAppStore.getState().checkIn(id) // 1 / 3
@@ -41,7 +45,11 @@ describe('counter habit block award (anti-exploit)', () => {
 
   it('首次跨阈值后即使继续加量也不再掉块', () => {
     const store = useAppStore.getState()
-    const habit = store.addHabit('俯卧撑', { type: 'daily' }, { kind: 'counter', targetValue: 2, step: 1 })
+    const habit = store.addHabit(
+      '俯卧撑',
+      { type: 'daily' },
+      { kind: 'counter', targetValue: 2, step: 1 }
+    )
     useAppStore.getState().checkIn(habit.id)
     useAppStore.getState().checkIn(habit.id)
     expect(useAppStore.getState().builds).toHaveLength(1)

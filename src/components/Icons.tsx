@@ -11,7 +11,7 @@ function Svg({
   size = 24,
   style,
   strokeWidth = 1.9,
-  children,
+  children
 }: IconProps & { children: React.ReactNode; strokeWidth?: number }) {
   return (
     <svg
@@ -227,7 +227,11 @@ export function IconPoster(props: IconProps) {
 export function IconSparkle(props: IconProps) {
   return (
     <Svg {...props}>
-      <path d="M12 3c0 4.5 4.5 9 9 9-4.5 0-9 4.5-9 9 0-4.5-4.5-9-9-9 4.5 0 9-4.5 9-9z" fill="currentColor" stroke="none" />
+      <path
+        d="M12 3c0 4.5 4.5 9 9 9-4.5 0-9 4.5-9 9 0-4.5-4.5-9-9-9 4.5 0 9-4.5 9-9z"
+        fill="currentColor"
+        stroke="none"
+      />
     </Svg>
   )
 }
@@ -309,7 +313,6 @@ export function IconFlip(props: IconProps) {
   )
 }
 
-
 /** 灯泡灵感提示：圆头灯泡线条，替代彩色 Emoji 💡 */
 export function IconBulb(props: IconProps) {
   return (
@@ -359,7 +362,7 @@ export function IconMoodCalm(props: IconProps) {
 export function IconMood({
   mood,
   size = 14,
-  style,
+  style
 }: IconProps & { mood: 'energetic' | 'hard' | 'spark' | 'calm' }) {
   switch (mood) {
     case 'energetic':
@@ -512,7 +515,16 @@ export function IconRequired() {
 export function IconOptional() {
   return (
     <svg width="9" height="9" viewBox="0 0 9 9" aria-hidden>
-      <rect x="1" y="1" width="7" height="7" rx="2" fill="none" stroke="var(--ink-2)" strokeWidth="1.4" />
+      <rect
+        x="1"
+        y="1"
+        width="7"
+        height="7"
+        rx="2"
+        fill="none"
+        stroke="var(--ink-2)"
+        strokeWidth="1.4"
+      />
     </svg>
   )
 }

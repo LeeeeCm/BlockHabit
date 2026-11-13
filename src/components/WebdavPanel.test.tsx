@@ -20,13 +20,16 @@ vi.mock('../platform/http', () => ({
       const abort = () => reject(new DOMException('Aborted', 'AbortError'))
       if (init?.signal?.aborted) return abort()
       init?.signal?.addEventListener('abort', abort, { once: true })
-    }),
+    })
 }))
 
 let root: Root | null = null
 let container: HTMLDivElement | null = null
 
-function makeSync(overrides: Partial<WebDavConfig> = {}): { sync: SyncController; updateConfig: ReturnType<typeof vi.fn> } {
+function makeSync(overrides: Partial<WebDavConfig> = {}): {
+  sync: SyncController
+  updateConfig: ReturnType<typeof vi.fn>
+} {
   const updateConfig = vi.fn()
   const sync: SyncController = {
     config: {
@@ -34,7 +37,7 @@ function makeSync(overrides: Partial<WebDavConfig> = {}): { sync: SyncController
       endpoint: 'https://dav.example.com/dav/',
       username: 'alice',
       password: 'saved-secret',
-      ...overrides,
+      ...overrides
     },
     updateConfig,
     isSyncing: false,
@@ -42,7 +45,7 @@ function makeSync(overrides: Partial<WebDavConfig> = {}): { sync: SyncController
     error: null,
     lastSyncAt: null,
     syncNow: async () => true,
-    getLastError: () => null,
+    getLastError: () => null
   }
   return { sync, updateConfig }
 }
@@ -59,7 +62,9 @@ function renderPanel(sync: SyncController, onToast = vi.fn()): HTMLDivElement {
 }
 
 function buttonByText(rootEl: HTMLElement, text: string): HTMLButtonElement {
-  const found = Array.from(rootEl.querySelectorAll('button')).find((b) => (b.textContent ?? '').includes(text))
+  const found = Array.from(rootEl.querySelectorAll('button')).find((b) =>
+    (b.textContent ?? '').includes(text)
+  )
   if (!found) throw new Error('button not found: ' + text)
   return found as HTMLButtonElement
 }

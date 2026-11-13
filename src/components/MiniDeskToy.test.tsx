@@ -2,11 +2,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useAppStore } from '../store/appStore'
-import {
-  FOCUS_SESSIONS_STORAGE_KEY,
-  readFocusSessions,
-  useTimerStore,
-} from '../store/timerStore'
+import { FOCUS_SESSIONS_STORAGE_KEY, readFocusSessions, useTimerStore } from '../store/timerStore'
 import { MINI_PRESETS } from '../platform/miniWindow'
 import { getTranslation } from '../i18n'
 import { MiniDeskToy } from './MiniDeskToy'
@@ -14,7 +10,7 @@ import { MiniDeskToy } from './MiniDeskToy'
 vi.mock('../audio/sound', () => ({
   playSnapSound: vi.fn(),
   playJellySound: vi.fn(),
-  playCelebrationSound: vi.fn(),
+  playCelebrationSound: vi.fn()
 }))
 
 // 摆件用 triggerHaptic 做手感反馈；测试里不触达平台层
@@ -22,7 +18,7 @@ vi.mock('../platform', () => ({ triggerHaptic: vi.fn() }))
 
 const mockTodayKey = vi.hoisted(() => vi.fn().mockReturnValue('2026-09-30'))
 vi.mock('../logic/useTodayKey', () => ({
-  useTodayKey: () => mockTodayKey(),
+  useTodayKey: () => mockTodayKey()
 }))
 // store 的 checkIn 也必须使用同一个 mock 天，否则打卡落真实今天、断言落 mock 天
 vi.mock('../logic/dates', async (importOriginal) => {
@@ -49,8 +45,8 @@ describe('MiniDeskToy component', () => {
         matches: false,
         media: q,
         addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      }),
+        removeEventListener: vi.fn()
+      })
     })
 
     container = document.createElement('div')
@@ -61,25 +57,25 @@ describe('MiniDeskToy component', () => {
           id: 'h1',
           name: '晨跑',
           frequency: { type: 'daily' },
-          createdAt: '2026-09-01T00:00:00.000Z',
+          createdAt: '2026-09-01T00:00:00.000Z'
         },
         {
           id: 'h2',
           name: '阅读',
           frequency: { type: 'daily' },
-          createdAt: '2026-09-01T00:00:00.000Z',
-        },
+          createdAt: '2026-09-01T00:00:00.000Z'
+        }
       ],
       checkIns: [
         {
           id: 'c1',
           habitId: 'h1',
           date: '2026-09-30',
-          at: '2026-09-30T08:00:00.000Z',
-        },
+          at: '2026-09-30T08:00:00.000Z'
+        }
       ],
       activeBlueprintId: 'plant',
-      builds: [],
+      builds: []
     })
   })
 
@@ -92,7 +88,15 @@ describe('MiniDeskToy component', () => {
   it('renders pending habits using responsive useTodayKey', () => {
     const root = createRoot(container)
     act(() => {
-      root.render(<MiniDeskToy size="standard" pinned={false} onTogglePin={vi.fn()} onExpand={vi.fn()} onClose={vi.fn()} />)
+      root.render(
+        <MiniDeskToy
+          size="standard"
+          pinned={false}
+          onTogglePin={vi.fn()}
+          onExpand={vi.fn()}
+          onClose={vi.fn()}
+        />
+      )
     })
 
     // h1 已在 2026-09-30 打卡，h2 未打卡 -> 待办中只有阅读
@@ -110,7 +114,15 @@ describe('MiniDeskToy component', () => {
   it('performs quick check-in when clicking pending habit button', () => {
     const root = createRoot(container)
     act(() => {
-      root.render(<MiniDeskToy size="standard" pinned={false} onTogglePin={vi.fn()} onExpand={vi.fn()} onClose={vi.fn()} />)
+      root.render(
+        <MiniDeskToy
+          size="standard"
+          pinned={false}
+          onTogglePin={vi.fn()}
+          onExpand={vi.fn()}
+          onClose={vi.fn()}
+        />
+      )
     })
 
     const btn = container.querySelector('.pill-action') as HTMLButtonElement
@@ -132,7 +144,15 @@ describe('MiniDeskToy component', () => {
     mockTodayKey.mockReturnValue('2026-09-30')
     const root = createRoot(container)
     act(() => {
-      root.render(<MiniDeskToy size="standard" pinned={false} onTogglePin={vi.fn()} onExpand={vi.fn()} onClose={vi.fn()} />)
+      root.render(
+        <MiniDeskToy
+          size="standard"
+          pinned={false}
+          onTogglePin={vi.fn()}
+          onExpand={vi.fn()}
+          onClose={vi.fn()}
+        />
+      )
     })
 
     // 2026-09-30 时：h1 已打卡，h2 未打卡 -> 待办中只有阅读
@@ -141,7 +161,15 @@ describe('MiniDeskToy component', () => {
     // 跨过午夜至 2026-10-01，两项均未在新日期打卡 -> 待办变为 2 项
     mockTodayKey.mockReturnValue('2026-10-01')
     act(() => {
-      root.render(<MiniDeskToy size="standard" pinned={false} onTogglePin={vi.fn()} onExpand={vi.fn()} onClose={vi.fn()} />)
+      root.render(
+        <MiniDeskToy
+          size="standard"
+          pinned={false}
+          onTogglePin={vi.fn()}
+          onExpand={vi.fn()}
+          onClose={vi.fn()}
+        />
+      )
     })
 
     expect(container.querySelectorAll('.pill-action').length).toBe(2)
@@ -161,7 +189,7 @@ describe('MiniDeskToy component', () => {
           onTogglePin={vi.fn()}
           onExpand={vi.fn()}
           onClose={vi.fn()}
-        />,
+        />
       )
     })
     const pills = container.querySelectorAll('.pill-action')
@@ -181,13 +209,15 @@ describe('MiniDeskToy component', () => {
           onTogglePin={vi.fn()}
           onExpand={vi.fn()}
           onClose={vi.fn()}
-        />,
+        />
       )
     })
     expect(container.querySelectorAll('.pill-action').length).toBe(0)
     expect(container.textContent).toContain('Today')
     expect(container.textContent).toContain('阅读')
-    const rows = [...container.querySelectorAll('button')].filter((b) => b.textContent?.includes('阅读'))
+    const rows = [...container.querySelectorAll('button')].filter((b) =>
+      b.textContent?.includes('阅读')
+    )
     expect(rows.length).toBeGreaterThan(0)
     expect((rows[0] as HTMLElement).style.minHeight).toBe('32px')
     act(() => root.unmount())
@@ -203,7 +233,15 @@ describe('MiniDeskToy component', () => {
     const renderToy = (size: 'pocket' | 'standard' | 'display') => {
       const root = createRoot(container)
       act(() => {
-        root.render(<MiniDeskToy size={size} pinned={false} onTogglePin={vi.fn()} onExpand={vi.fn()} onClose={vi.fn()} />)
+        root.render(
+          <MiniDeskToy
+            size={size}
+            pinned={false}
+            onTogglePin={vi.fn()}
+            onExpand={vi.fn()}
+            onClose={vi.fn()}
+          />
+        )
       })
       return root
     }
@@ -240,7 +278,7 @@ describe('MiniDeskToy component', () => {
     it('ready：到点显示「确认落块 / 再等 5 分钟 / 放弃」，确认后才 checkIn 并清除会话', () => {
       act(() => {
         useTimerStore.setState({
-          sessions: { h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE } },
+          sessions: { h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE } }
         })
       })
       const root = renderToy('standard')
@@ -256,12 +294,14 @@ describe('MiniDeskToy component', () => {
         buttons.some(
           (b) =>
             b.textContent?.includes(en.focusCompanion.giveUp) ||
-            b.getAttribute('aria-label') === en.focusCompanion.giveUp,
-        ),
+            b.getAttribute('aria-label') === en.focusCompanion.giveUp
+        )
       ).toBe(true)
 
       act(() => confirm!.click())
-      expect(useAppStore.getState().checkIns.some((c) => c.habitId === 'h2' && c.date === '2026-09-30')).toBe(true)
+      expect(
+        useAppStore.getState().checkIns.some((c) => c.habitId === 'h2' && c.date === '2026-09-30')
+      ).toBe(true)
       expect(useTimerStore.getState().sessions.h2).toBeUndefined()
       expect(localStorage.getItem(FOCUS_SESSIONS_STORAGE_KEY)).toBeNull()
 
@@ -274,12 +314,14 @@ describe('MiniDeskToy component', () => {
     it('再等 5 分钟：延长后回到 focusing，extensions 持久化，且上限 2 次后按钮消失', () => {
       act(() => {
         useTimerStore.setState({
-          sessions: { h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE } },
+          sessions: { h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE } }
         })
       })
       const root = renderToy('standard')
       const findExtend = () =>
-        [...container.querySelectorAll('button')].find((b) => b.textContent?.includes(en.focusCompanion.extendFive))
+        [...container.querySelectorAll('button')].find((b) =>
+          b.textContent?.includes(en.focusCompanion.extendFive)
+        )
 
       act(() => findExtend()!.click())
       expect(useTimerStore.getState().sessions.h2.extensions).toBe(1)
@@ -289,14 +331,22 @@ describe('MiniDeskToy component', () => {
       // 再次到点 → 再延长一次（上限 2 次）
       act(() => {
         useTimerStore.setState({
-          sessions: { h2: { ...useTimerStore.getState().sessions.h2, startedAt: Date.now() - 31 * MINUTE } },
+          sessions: {
+            h2: { ...useTimerStore.getState().sessions.h2, startedAt: Date.now() - 31 * MINUTE }
+          }
         })
       })
       act(() => findExtend()!.click())
       expect(useTimerStore.getState().sessions.h2.extensions).toBe(2)
       act(() => {
         useTimerStore.setState({
-          sessions: { h2: { ...useTimerStore.getState().sessions.h2, startedAt: Date.now() - 36 * MINUTE, targetMs: 25 * MINUTE } },
+          sessions: {
+            h2: {
+              ...useTimerStore.getState().sessions.h2,
+              startedAt: Date.now() - 36 * MINUTE,
+              targetMs: 25 * MINUTE
+            }
+          }
         })
       })
       panel = container.querySelector('[data-testid="focus-panel"]') as HTMLElement
@@ -310,8 +360,8 @@ describe('MiniDeskToy component', () => {
         useTimerStore.setState({
           sessions: {
             h1: { startedAt: Date.now() - 5 * MINUTE, targetMs: 25 * MINUTE }, // 晨跑：还在专注
-            h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE }, // 阅读：已到点待确认
-          },
+            h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE } // 阅读：已到点待确认
+          }
         })
       })
       const root = renderToy('standard')
@@ -323,7 +373,7 @@ describe('MiniDeskToy component', () => {
 
       // 确认阅读落块后，主面板切到另一个仍在专注的会话（不再被藏起来）
       const confirm = [...container.querySelectorAll('button')].find((b) =>
-        b.textContent?.includes(en.focusCompanion.confirmCheckIn),
+        b.textContent?.includes(en.focusCompanion.confirmCheckIn)
       )
       act(() => confirm!.click())
       expect(useTimerStore.getState().sessions.h2).toBeUndefined()
@@ -341,8 +391,8 @@ describe('MiniDeskToy component', () => {
         useTimerStore.setState({
           sessions: {
             h1: { startedAt: Date.now() - 5 * MINUTE, targetMs: 25 * MINUTE }, // 20 分钟后到点
-            h2: { startedAt: Date.now() - 21 * MINUTE, targetMs: 25 * MINUTE, extensions: 1 }, // 有效 30 分钟 → 9 分钟后到点
-          },
+            h2: { startedAt: Date.now() - 21 * MINUTE, targetMs: 25 * MINUTE, extensions: 1 } // 有效 30 分钟 → 9 分钟后到点
+          }
         })
       })
       const root = renderToy('standard')
@@ -358,8 +408,8 @@ describe('MiniDeskToy component', () => {
         useTimerStore.setState({
           sessions: {
             h1: { startedAt: Date.now() - 5 * MINUTE, targetMs: 25 * MINUTE },
-            h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE },
-          },
+            h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE }
+          }
         })
       })
       const root = renderToy('pocket')
@@ -372,7 +422,7 @@ describe('MiniDeskToy component', () => {
     it('放弃：二次确认后清除会话，且不产生任何打卡', () => {
       act(() => {
         useTimerStore.setState({
-          sessions: { h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE } },
+          sessions: { h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE } }
         })
       })
       const before = useAppStore.getState().checkIns.length
@@ -381,14 +431,14 @@ describe('MiniDeskToy component', () => {
         [...container.querySelectorAll('button')].find(
           (b) =>
             b.textContent?.includes(en.focusCompanion.giveUp) ||
-            b.getAttribute('aria-label') === en.focusCompanion.giveUp,
+            b.getAttribute('aria-label') === en.focusCompanion.giveUp
         )
 
       act(() => findGiveUp()!.click())
       expect(container.textContent).toContain(en.focusCompanion.giveUpConfirm)
 
       const confirmBtn = [...container.querySelectorAll('button')].find((b) =>
-        b.textContent?.includes(en.focusCompanion.giveUp),
+        b.textContent?.includes(en.focusCompanion.giveUp)
       )
       act(() => confirmBtn!.click())
       expect(useTimerStore.getState().sessions.h2).toBeUndefined()
@@ -402,8 +452,8 @@ describe('MiniDeskToy component', () => {
         FOCUS_SESSIONS_STORAGE_KEY,
         JSON.stringify({
           version: 1,
-          sessions: { h2: { startedAt: Date.now() - 40 * MINUTE, targetMs: 25 * MINUTE } },
-        }),
+          sessions: { h2: { startedAt: Date.now() - 40 * MINUTE, targetMs: 25 * MINUTE } }
+        })
       )
       useTimerStore.setState({ sessions: readFocusSessions() })
       const checkInsBefore = useAppStore.getState().checkIns.length
@@ -415,5 +465,4 @@ describe('MiniDeskToy component', () => {
       act(() => root.unmount())
     })
   })
-
 })

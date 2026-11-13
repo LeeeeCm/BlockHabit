@@ -1,12 +1,7 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest'
-import {
-  calculatePinchDistance,
-  calculateTouchCenter,
-  clampZoom,
-  isQuickTap,
-} from './touchGesture'
+import { calculatePinchDistance, calculateTouchCenter, clampZoom, isQuickTap } from './touchGesture'
 import { BuildScene } from './BuildScene'
 import { ShowcaseScene } from './ShowcaseScene'
 import * as platform from '../platform'
@@ -53,8 +48,8 @@ describe('Scene Touch Gestures Integration', () => {
     id: 'bp_sample',
     blocks: [
       { x: 0, y: 0, z: 0, type: 'basic' },
-      { x: 1, y: 0, z: 0, type: 'basic' },
-    ],
+      { x: 1, y: 0, z: 0, type: 'basic' }
+    ]
   }
 
   function createTouchEvent(type: string, touches: Array<{ clientX: number; clientY: number }>) {
@@ -70,18 +65,18 @@ describe('Scene Touch Gestures Integration', () => {
       {
         canvas: document.createElement('canvas'),
         createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
-        createRadialGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
+        createRadialGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() })
       },
       {
         get: (target, prop) => {
           if (prop in target) return (target as Record<string | symbol, unknown>)[prop]
           return vi.fn()
-        },
-      },
+        }
+      }
     )
-    HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue(
-      mockCtx as unknown as CanvasRenderingContext2D,
-    )
+    HTMLCanvasElement.prototype.getContext = vi
+      .fn()
+      .mockReturnValue(mockCtx as unknown as CanvasRenderingContext2D)
     window.ResizeObserver = class ResizeObserver {
       observe() {}
       unobserve() {}
@@ -103,8 +98,8 @@ describe('Scene Touch Gestures Integration', () => {
         React.createElement(BuildScene, {
           blueprint: mockBlueprint,
           placedCount: 2,
-          interactiveInspect: true,
-        }),
+          interactiveInspect: true
+        })
       )
     })
 
@@ -123,14 +118,14 @@ describe('Scene Touch Gestures Integration', () => {
       canvas.dispatchEvent(
         createTouchEvent('touchstart', [
           { clientX: 100, clientY: 100 },
-          { clientX: 200, clientY: 100 },
-        ]),
+          { clientX: 200, clientY: 100 }
+        ])
       )
       canvas.dispatchEvent(
         createTouchEvent('touchmove', [
           { clientX: 80, clientY: 100 },
-          { clientX: 240, clientY: 100 },
-        ]),
+          { clientX: 240, clientY: 100 }
+        ])
       )
       canvas.dispatchEvent(createTouchEvent('touchend', []))
     })
@@ -164,9 +159,7 @@ describe('Scene Touch Gestures Integration', () => {
 
     const onSelectModel = vi.fn()
     const onUpdatePlacement = vi.fn()
-    const placements: ShowcasePlacement[] = [
-      { blueprintId: 'bp_sample', gridX: 2, gridY: 2 },
-    ]
+    const placements: ShowcasePlacement[] = [{ blueprintId: 'bp_sample', gridX: 2, gridY: 2 }]
 
     act(() => {
       root.render(
@@ -174,8 +167,8 @@ describe('Scene Touch Gestures Integration', () => {
           placements,
           blueprintsMap: { bp_sample: mockBlueprint },
           onSelectModel,
-          onUpdatePlacement,
-        }),
+          onUpdatePlacement
+        })
       )
     })
 
@@ -194,14 +187,14 @@ describe('Scene Touch Gestures Integration', () => {
       canvas.dispatchEvent(
         createTouchEvent('touchstart', [
           { clientX: 50, clientY: 50 },
-          { clientX: 150, clientY: 50 },
-        ]),
+          { clientX: 150, clientY: 50 }
+        ])
       )
       canvas.dispatchEvent(
         createTouchEvent('touchmove', [
           { clientX: 40, clientY: 50 },
-          { clientX: 180, clientY: 50 },
-        ]),
+          { clientX: 180, clientY: 50 }
+        ])
       )
       canvas.dispatchEvent(createTouchEvent('touchend', []))
     })

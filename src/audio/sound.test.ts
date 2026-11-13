@@ -5,7 +5,7 @@ import {
   playCelebrationSound,
   playComboChime,
   setSoundMuted,
-  _resetAudioContextForTest,
+  _resetAudioContextForTest
 } from './sound'
 
 describe('Web Audio sound synthesis', () => {
@@ -57,23 +57,31 @@ describe('Web Audio sound synthesis', () => {
       createOscillator() {
         return {
           type: 'sine',
-          frequency: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+          frequency: {
+            setValueAtTime: vi.fn(),
+            exponentialRampToValueAtTime: vi.fn(),
+            linearRampToValueAtTime: vi.fn()
+          },
           connect: vi.fn(),
           start: startSpy,
-          stop: vi.fn(),
+          stop: vi.fn()
         }
       }
       createGain() {
         return {
-          gain: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
-          connect: vi.fn(),
+          gain: {
+            setValueAtTime: vi.fn(),
+            exponentialRampToValueAtTime: vi.fn(),
+            linearRampToValueAtTime: vi.fn()
+          },
+          connect: vi.fn()
         }
       }
       createBiquadFilter() {
         return {
           type: 'lowpass',
           frequency: { setValueAtTime: vi.fn() },
-          connect: vi.fn(),
+          connect: vi.fn()
         }
       }
     } as unknown as typeof window.AudioContext

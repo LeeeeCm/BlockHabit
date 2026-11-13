@@ -11,7 +11,7 @@ import {
   buildBuildingsReadme,
   type ArchiveBuilding,
   type ArchiveManifest,
-  type ArchiveManifestFile,
+  type ArchiveManifestFile
 } from './archiveManifest'
 export * from './archiveManifest'
 import { buildZip, sha256Hex, utf8Decode, utf8Encode } from './archiveZip'
@@ -56,7 +56,6 @@ export function archiveZipFileName(now: Date = new Date()): string {
   return `${ARCHIVE_FOLDER_PREFIX}${archiveStamp(now)}.zip`
 }
 
-
 /* ---------------- 深度比较 / 凭据断言 ---------------- */
 
 export function deepEqualJson(a: unknown, b: unknown): boolean {
@@ -100,7 +99,10 @@ export type CredentialCheck = { ok: true } | { ok: false; reason: 'key' | 'value
  * 防御性断言：序列化结果中不得出现凭据字段/已知凭据值。
  * 凭据（WebDAV 配置）本就存在独立 localStorage key，不在 AppState 里；这里是第二道闸。
  */
-export function assertNoCredentials(text: string, secrets: Array<string | undefined | null> = []): CredentialCheck {
+export function assertNoCredentials(
+  text: string,
+  secrets: Array<string | undefined | null> = []
+): CredentialCheck {
   if (CREDENTIAL_KEY_RE.test(text)) return { ok: false, reason: 'key' }
   for (const secret of secrets) {
     const value = typeof secret === 'string' ? secret.trim() : ''
@@ -117,7 +119,9 @@ export function completedBuildings(state: AppState): ArchiveBuilding[] {
   for (const blueprintId of Object.keys(blueprints)) {
     const capacity = BLUEPRINT_CAPACITY[blueprintId]
     if (!capacity) continue
-    const blocks = state.builds.filter((block) => !block.deletedAt && block.blueprintId === blueprintId)
+    const blocks = state.builds.filter(
+      (block) => !block.deletedAt && block.blueprintId === blueprintId
+    )
     if (blocks.length < capacity) continue
     let maxMs = -Infinity
     for (const block of blocks) {
@@ -130,10 +134,13 @@ export function completedBuildings(state: AppState): ArchiveBuilding[] {
       blueprintId,
       completedAt: dateKey(new Date(maxMs)),
       blocks: capacity,
-      foundationNote: note ? note : undefined,
+      foundationNote: note ? note : undefined
     })
   }
-  out.sort((a, b) => a.completedAt.localeCompare(b.completedAt) || a.blueprintId.localeCompare(b.blueprintId))
+  out.sort(
+    (a, b) =>
+      a.completedAt.localeCompare(b.completedAt) || a.blueprintId.localeCompare(b.blueprintId)
+  )
   return out
 }
 
@@ -181,7 +188,9 @@ export function formatChecksums(files: ArchiveManifestFile[]): string {
 }
 
 /** 组装档案包（纯逻辑，不写盘）：校验 round-trip、凭据、计算 sha256、生成 README/manifest/checksums */
-export async function buildArchivePackage(input: ArchivePackageInput): Promise<ArchivePackageResult> {
+export async function buildArchivePackage(
+  input: ArchivePackageInput
+): Promise<ArchivePackageResult> {
   let parsed: unknown
   try {
     parsed = JSON.parse(input.stateJson)
@@ -201,7 +210,8 @@ export async function buildArchivePackage(input: ArchivePackageInput): Promise<A
   const completed = completedBuildings(input.state)
   const warnings: string[] = []
   const renderedByBlueprint = new Map<string, Uint8Array | null>()
-  for (const rendered of input.buildings) renderedByBlueprint.set(rendered.blueprintId, rendered.png)
+  for (const rendered of input.buildings)
+    renderedByBlueprint.set(rendered.blueprintId, rendered.png)
 
   const files: ArchiveSourceFile[] = []
   const pushText = (path: string, text: string): void => {
@@ -221,7 +231,11 @@ export async function buildArchivePackage(input: ArchivePackageInput): Promise<A
   // manifest 文件清单：先算除 README/manifest/checksums 之外的文件，再补文本
   const manifestFiles: ArchiveManifestFile[] = []
   for (const file of files) {
-    manifestFiles.push({ path: file.path, bytes: file.bytes.length, sha256: await sha256Hex(file.bytes) })
+    manifestFiles.push({
+      path: file.path,
+      bytes: file.bytes.length,
+      sha256: await sha256Hex(file.bytes)
+    })
   }
 
   // README 需要完整文件清单，先占位再生成最终版本（顺序：README 在最前）
@@ -232,13 +246,13 @@ export async function buildArchivePackage(input: ArchivePackageInput): Promise<A
     appContentVersion: CONTENT_VERSION,
     exportedAt,
     files: manifestFiles,
-    buildings: completed,
+    buildings: completed
   })
   const readmeFile: ArchiveSourceFile = { path: 'README.md', bytes: utf8Encode(provisionalReadme) }
   const readmeEntry: ArchiveManifestFile = {
     path: 'README.md',
     bytes: readmeFile.bytes.length,
-    sha256: await sha256Hex(readmeFile.bytes),
+    sha256: await sha256Hex(readmeFile.bytes)
   }
   const checksumFiles = [readmeEntry, ...manifestFiles]
   checksumFiles.sort((a, b) => a.path.localeCompare(b.path))
@@ -251,7 +265,7 @@ export async function buildArchivePackage(input: ArchivePackageInput): Promise<A
     appContentVersion: CONTENT_VERSION,
     exportedAt,
     platform: input.platform,
-    files: checksumFiles,
+    files: checksumFiles
   }
 
   const orderedFiles: ArchiveSourceFile[] = [
@@ -260,17 +274,28 @@ export async function buildArchivePackage(input: ArchivePackageInput): Promise<A
     { path: 'data/blockhabit-state.json', bytes: utf8Encode(input.stateJson) },
     { path: 'data/checksums.txt', bytes: utf8Encode(checksums) },
     { path: 'buildings/README.md', bytes: utf8Encode(buildBuildingsReadme(completed)) },
-    ...pngEntries,
+    ...pngEntries
   ]
 
-  return { ok: true, package: { files: orderedFiles, manifest, stateJson: input.stateJson, checksums, warnings } }
+  return {
+    ok: true,
+    package: { files: orderedFiles, manifest, stateJson: input.stateJson, checksums, warnings }
+  }
 }
 
 /* ---------------- 浏览器下载 ---------------- */
 
 /** Blob + 临时 <a> 下载（不经过 base64，避免体积膨胀）；失败返回 false */
-export function downloadBlobFile(filename: string, bytes: Uint8Array, mime = 'application/zip'): boolean {
-  if (typeof document === 'undefined' || typeof Blob === 'undefined' || typeof URL === 'undefined') {
+export function downloadBlobFile(
+  filename: string,
+  bytes: Uint8Array,
+  mime = 'application/zip'
+): boolean {
+  if (
+    typeof document === 'undefined' ||
+    typeof Blob === 'undefined' ||
+    typeof URL === 'undefined'
+  ) {
     return false
   }
   try {
@@ -348,7 +373,7 @@ export function createTauriArchiveFs(): ArchiveFs {
     async reveal(path: string) {
       const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
       await revealItemInDir(path)
-    },
+    }
   }
 }
 
@@ -444,7 +469,7 @@ async function writePackageToFolder(
   files: ArchiveSourceFile[],
   now: Date,
   onProgress: ((progress: ArchiveProgress) => void) | undefined,
-  signal: AbortSignal | undefined,
+  signal: AbortSignal | undefined
 ): Promise<{ dir: string; readmePath: string }> {
   const stamp = archiveStamp(now)
   const appData = await fs.appDataDir()
@@ -529,7 +554,7 @@ export async function runArchiveExport(options: RunArchiveOptions): Promise<Arch
       lang: options.lang,
       secrets: options.secrets,
       buildings: rendered,
-      exportedAt: now,
+      exportedAt: now
     })
     if (!built.ok) return { ok: false, cancelled: false, error: built.error }
     const pkg = built.package
@@ -547,12 +572,18 @@ export async function runArchiveExport(options: RunArchiveOptions): Promise<Arch
         files: pkg.files.length,
         bytes: zip.length,
         manifest: pkg.manifest,
-        warnings: pkg.warnings,
+        warnings: pkg.warnings
       }
     }
 
     tmpMayExist = true
-    const written = await writePackageToFolder(fs, pkg.files, now, options.onProgress, options.signal)
+    const written = await writePackageToFolder(
+      fs,
+      pkg.files,
+      now,
+      options.onProgress,
+      options.signal
+    )
     tmpMayExist = false
     try {
       await fs.reveal(written.readmePath)
@@ -567,7 +598,7 @@ export async function runArchiveExport(options: RunArchiveOptions): Promise<Arch
       files: pkg.files.length,
       bytes,
       manifest: pkg.manifest,
-      warnings: pkg.warnings,
+      warnings: pkg.warnings
     }
   } catch (error) {
     if (tmpMayExist) {
@@ -580,7 +611,11 @@ export async function runArchiveExport(options: RunArchiveOptions): Promise<Arch
       }
     }
     if (isAbortError(error)) return { ok: false, cancelled: true }
-    return { ok: false, cancelled: false, error: error instanceof Error ? error.message : 'unknown' }
+    return {
+      ok: false,
+      cancelled: false,
+      error: error instanceof Error ? error.message : 'unknown'
+    }
   } finally {
     archiveExporting = false
   }

@@ -29,7 +29,7 @@ export const CONTENT_PACK_V2_IDS: readonly string[] = [
   'clocktower',
   'bridge',
   'observatory',
-  'library',
+  'library'
 ] as const
 
 /** 内容包 v3 追加的 5 座（顺序即解锁顺序，追加在 v2 之后；D-20261111-070） */
@@ -38,7 +38,7 @@ export const CONTENT_PACK_V3_IDS: readonly string[] = [
   'bookshop',
   'postoffice',
   'firestation',
-  'watertower',
+  'watertower'
 ] as const
 
 /**
@@ -54,25 +54,27 @@ export const CONTENT_PACKS: ContentPack[] = [
     id: 'base',
     version: 1,
     releasedAt: '2026-11-10',
-    blueprintIds: [...BASE_PACK_IDS],
+    blueprintIds: [...BASE_PACK_IDS]
   },
   {
     id: 'city-life',
     version: 2,
     releasedAt: '2026-11-11',
-    blueprintIds: [...CONTENT_PACK_V2_IDS],
+    blueprintIds: [...CONTENT_PACK_V2_IDS]
   },
   {
     id: 'city-life-2',
     version: 3,
     releasedAt: '2026-11-11',
-    blueprintIds: [...CONTENT_PACK_V3_IDS],
-  },
+    blueprintIds: [...CONTENT_PACK_V3_IDS]
+  }
 ]
 
 /** 把任意输入归一化为合法内容版本：缺省/非法 → 当前版本 */
 export function normalizeContentVersion(value: unknown): number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 1 ? value : CONTENT_VERSION
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1
+    ? value
+    : CONTENT_VERSION
 }
 
 /** 存档里的内容版本高于本安装包 → 必须走 needsUpgrade，禁止 sanitize */

@@ -6,7 +6,7 @@ import {
   drawGroundBase,
   worldToScreen,
   type IsoConfig,
-  type IsoPalette,
+  type IsoPalette
 } from './iso'
 
 /**
@@ -53,7 +53,7 @@ export interface ModelPadding {
 /** 等距模型在屏幕空间的包围盒（含凸点顶部与块体底部） */
 export function measureModelBounds(
   blocks: BlockDef[],
-  cfg: IsoConfig = DEFAULT_ISO_CONFIG,
+  cfg: IsoConfig = DEFAULT_ISO_CONFIG
 ): ModelBounds {
   if (blocks.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 }
   let minX = Infinity
@@ -82,7 +82,7 @@ export function fitModelInto(
   viewport: Rect,
   pad: number | ModelPadding = 6,
   maxScale = 1,
-  baseline = 0.5,
+  baseline = 0.5
 ): ModelFit {
   const padX = typeof pad === 'number' ? pad : pad.x
   const padY = typeof pad === 'number' ? pad : pad.y
@@ -96,7 +96,7 @@ export function fitModelInto(
   return {
     scale,
     panX: viewport.x + viewport.w / 2 - centerX * scale,
-    panY: viewport.y + viewport.h * baseline - centerY * scale,
+    panY: viewport.y + viewport.h * baseline - centerY * scale
   }
 }
 
@@ -177,7 +177,7 @@ export function paintModel(ctx: CanvasRenderingContext2D, options: PaintModelOpt
       color: options.ignoreBlockColor ? undefined : block.color,
       noStuds: above !== undefined,
       bonus: options.bonusByIndex ? options.bonusByIndex[index] === true : false,
-      spriteScale: options.spriteScale,
+      spriteScale: options.spriteScale
     })
   }
 }
@@ -198,7 +198,7 @@ export interface PaintModelStageOptions extends PaintModelOptions {
  */
 export function paintModelStage(
   ctx: CanvasRenderingContext2D,
-  options: PaintModelStageOptions,
+  options: PaintModelStageOptions
 ): ModelFit {
   const boundsBlocks = options.boundsBlocks ?? options.groundBlocks ?? options.blocks
   const bounds = options.bounds ?? measureModelBounds(boundsBlocks, options.cfg)
@@ -207,7 +207,7 @@ export function paintModelStage(
     options.viewport,
     options.pad ?? 6,
     options.maxScale ?? 1,
-    options.baseline ?? 0.5,
+    options.baseline ?? 0.5
   )
   ctx.save()
   ctx.translate(fit.panX, fit.panY)
@@ -234,11 +234,10 @@ export interface ModelCanvasOptions {
  */
 export function prepareModelCanvas(
   canvas: HTMLCanvasElement,
-  options: ModelCanvasOptions,
+  options: ModelCanvasOptions
 ): CanvasRenderingContext2D | null {
   const ratio =
-    options.dpr ??
-    Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 2)
+    options.dpr ?? Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 2)
   canvas.width = options.width * ratio
   canvas.height = options.height * ratio
   const ctx = canvas.getContext('2d')

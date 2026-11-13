@@ -19,7 +19,7 @@ function reset() {
     dayClaims: [],
     deletedDayClaims: [],
     reminderLog: {},
-    repairBricks: 0,
+    repairBricks: 0
   })
 }
 
@@ -39,8 +39,8 @@ describe('uncheckIn 保守路径（不丢无法推导的块）', () => {
           date: day,
           at: new Date().toISOString(),
           placedBlockId: 'b1',
-          blueprintId: 'plant',
-        },
+          blueprintId: 'plant'
+        }
       ],
       // legacy-1 无法由任何打卡/全勤事实推导（模拟旧档）
       builds: [
@@ -50,7 +50,7 @@ describe('uncheckIn 保守路径（不丢无法推导的块）', () => {
           index: 0,
           placedAt: '2026-01-01T00:00:00.000Z',
           fromHabitId: habit.id,
-          bonus: false,
+          bonus: false
         },
         {
           id: 'legacy-1',
@@ -58,9 +58,9 @@ describe('uncheckIn 保守路径（不丢无法推导的块）', () => {
           index: 1,
           placedAt: '2025-12-01T00:00:00.000Z',
           fromHabitId: habit.id,
-          bonus: false,
-        },
-      ],
+          bonus: false
+        }
+      ]
     })
 
     const res = useAppStore.getState().uncheckIn(habit.id, day)
@@ -82,12 +82,26 @@ describe('uncheckIn 保守路径（不丢无法推导的块）', () => {
 
     useAppStore.setState({
       checkIns: [
-        { id: 'c1', habitId: habit.id, date: day, at: '2026-01-01T00:00:00.000Z', placedBlockId: 'b1', blueprintId: 'plant' },
-        { id: 'c2', habitId: habit.id, date: day, at: '2026-01-02T00:00:00.000Z' },
+        {
+          id: 'c1',
+          habitId: habit.id,
+          date: day,
+          at: '2026-01-01T00:00:00.000Z',
+          placedBlockId: 'b1',
+          blueprintId: 'plant'
+        },
+        { id: 'c2', habitId: habit.id, date: day, at: '2026-01-02T00:00:00.000Z' }
       ],
       builds: [
-        { id: 'b1', blueprintId: 'plant', index: 0, placedAt: '2026-01-01T00:00:00.000Z', fromHabitId: habit.id, bonus: false },
-      ],
+        {
+          id: 'b1',
+          blueprintId: 'plant',
+          index: 0,
+          placedAt: '2026-01-01T00:00:00.000Z',
+          fromHabitId: habit.id,
+          bonus: false
+        }
+      ]
     })
 
     useAppStore.getState().uncheckIn(habit.id, day)

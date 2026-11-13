@@ -21,10 +21,7 @@ export function findScrollableParent(el: HTMLElement | null): HTMLElement | null
   while (curr && curr !== document.body && curr !== document.documentElement) {
     const style = window.getComputedStyle(curr)
     const oy = style.overflowY
-    if (
-      (oy === 'auto' || oy === 'scroll') &&
-      curr.scrollHeight > curr.clientHeight
-    ) {
+    if ((oy === 'auto' || oy === 'scroll') && curr.scrollHeight > curr.clientHeight) {
       return curr
     }
     curr = curr.parentElement
@@ -88,7 +85,7 @@ export function initSmoothScroll(): () => void {
         element: scrollable,
         currentY: scrollable.scrollTop,
         targetY: scrollable.scrollTop,
-        animId: null,
+        animId: null
       }
     }
 

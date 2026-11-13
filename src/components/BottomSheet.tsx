@@ -29,7 +29,7 @@ export function BottomSheet({
   maxHeight = '85vh',
   className,
   contentStyle,
-  escEnabled = true,
+  escEnabled = true
 }: BottomSheetProps) {
   const { t } = useI18n()
   const isSheetOpen = open
@@ -96,7 +96,7 @@ export function BottomSheet({
         zIndex: 1000,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-end'
       }}
     >
       {/* 半透明遮罩与毛玻璃背景 */}
@@ -108,7 +108,7 @@ export function BottomSheet({
           inset: 0,
           background: 'var(--overlay)',
           backdropFilter: 'blur(4px)',
-          WebkitBackdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)'
         }}
       />
 
@@ -132,7 +132,7 @@ export function BottomSheet({
           transform: `translateY(${dragY}px)`,
           transition: isDragging ? 'none' : 'transform var(--dur-md) var(--ease-out)',
           willChange: 'transform',
-          overflow: 'hidden',
+          overflow: 'hidden'
         }}
       >
         {/* 顶部手势拖拽把手 */}
@@ -159,7 +159,7 @@ export function BottomSheet({
             padding: '10px 0 6px',
             cursor: 'pointer',
             touchAction: 'none',
-            width: '100%',
+            width: '100%'
           }}
         >
           <div
@@ -167,7 +167,7 @@ export function BottomSheet({
               width: 36,
               height: 4.5,
               borderRadius: 3,
-              background: 'color-mix(in srgb, var(--ink) 25%, transparent)',
+              background: 'color-mix(in srgb, var(--ink) 25%, transparent)'
             }}
           />
         </div>
@@ -186,7 +186,7 @@ export function BottomSheet({
               padding: '6px 20px 10px',
               borderBottom: '1px solid var(--line)',
               flexShrink: 0,
-              touchAction: 'none',
+              touchAction: 'none'
             }}
           >
             <h3
@@ -199,7 +199,7 @@ export function BottomSheet({
                 color: 'var(--ink)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'nowrap'
               }}
             >
               {title}
@@ -222,7 +222,7 @@ export function BottomSheet({
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: 0,
-                flexShrink: 0,
+                flexShrink: 0
               }}
             >
               <IconClose size={16} />
@@ -238,7 +238,7 @@ export function BottomSheet({
             WebkitOverflowScrolling: 'touch',
             flex: 1,
             minHeight: 0,
-            ...contentStyle,
+            ...contentStyle
           }}
         >
           {children}
@@ -251,7 +251,7 @@ export function BottomSheet({
               padding: '12px 20px',
               borderTop: '1px solid var(--line)',
               background: 'var(--surface)',
-              flexShrink: 0,
+              flexShrink: 0
             }}
           >
             {footer}

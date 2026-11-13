@@ -8,7 +8,8 @@
 export async function ensureNotifyPermission(): Promise<boolean> {
   try {
     if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-      const { isPermissionGranted, requestPermission } = await import('@tauri-apps/plugin-notification')
+      const { isPermissionGranted, requestPermission } =
+        await import('@tauri-apps/plugin-notification')
       if (await isPermissionGranted()) return true
       const granted = await requestPermission()
       return granted === 'granted'

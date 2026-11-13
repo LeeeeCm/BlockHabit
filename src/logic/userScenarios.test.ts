@@ -18,7 +18,7 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
       repairBricks: 2,
       showcasePlacements: [],
       foundationNotes: {},
-      hydrated: true,
+      hydrated: true
     })
   })
 
@@ -27,7 +27,7 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
       id: 'habit-water',
       name: '每日喝水',
       frequency: { type: 'daily' },
-      createdAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z'
     }
     const yesterday = dateKey(new Date(Date.now() - 86400000))
     const today = todayKey()
@@ -40,9 +40,9 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
           id: 'c-yesterday',
           habitId: habit.id,
           date: yesterday,
-          at: `${yesterday}T12:00:00.000Z`,
-        },
-      ],
+          at: `${yesterday}T12:00:00.000Z`
+        }
+      ]
     })
 
     // 跨越午夜来到今日：检查今日尚未打卡且今日处于待办状态
@@ -66,7 +66,7 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
       id: 'habit-read',
       name: '阅读 30 分钟',
       frequency: { type: 'daily' },
-      createdAt: '2026-03-01T00:00:00.000Z',
+      createdAt: '2026-03-01T00:00:00.000Z'
     }
     useAppStore.setState({ habits: [habit] })
 
@@ -89,7 +89,7 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
       id: 'habit-run',
       name: '跑步',
       frequency: { type: 'daily' },
-      createdAt: '2026-03-01T00:00:00.000Z',
+      createdAt: '2026-03-01T00:00:00.000Z'
     }
     useAppStore.setState({ habits: [habit] })
 
@@ -107,7 +107,7 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
         index: idx,
         placedAt: `${d}T09:00:00.000Z`,
         fromHabitId: habit.id,
-        bonus: false,
+        bonus: false
       })
       checkIns.push({
         id: cId,
@@ -115,7 +115,7 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
         date: d,
         at: `${d}T09:00:00.000Z`,
         placedBlockId: bId,
-        blueprintId: 'plant',
+        blueprintId: 'plant'
       })
     })
 
@@ -137,7 +137,7 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
       id: `habit-${i}`,
       name: `测试习惯 ${i}`,
       frequency: { type: 'daily' },
-      createdAt: '2025-01-01T00:00:00.000Z',
+      createdAt: '2025-01-01T00:00:00.000Z'
     }))
 
     // 生成 1200 条打卡历史
@@ -154,7 +154,7 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
           at: `${dStr}T10:00:00.000Z`,
           actualMinutes: 25,
           mood: 'energetic',
-          note: `Day ${dayOffset} reflection notes for habit ${hIdx}`,
+          note: `Day ${dayOffset} reflection notes for habit ${hIdx}`
         })
       }
     }
@@ -194,7 +194,7 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
       index: i,
       placedAt: `2026-03-01T0${i}:00:00.000Z`,
       fromHabitId: 'h-1',
-      bonus: false,
+      bonus: false
     }))
 
     const checkIns: CheckIn[] = builds.map((b, i) => ({
@@ -202,16 +202,18 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
       habitId: 'h-1',
       date: `2026-03-0${(i % 5) + 1}`,
       at: b.placedAt,
-      placedBlockId: b.id,
+      placedBlockId: b.id
     }))
 
     useAppStore.setState({
-      habits: [{ id: 'h-1', name: '积木习惯', frequency: { type: 'daily' }, createdAt: '2026-03-01' }],
+      habits: [
+        { id: 'h-1', name: '积木习惯', frequency: { type: 'daily' }, createdAt: '2026-03-01' }
+      ],
       builds,
       checkIns,
       activeBlueprintId: 'plant',
       completedBlueprintIds: ['plant'],
-      showcasePlacements: [{ blueprintId: 'plant', gridX: 3, gridY: 3 }],
+      showcasePlacements: [{ blueprintId: 'plant', gridX: 3, gridY: 3 }]
     })
 
     expect(useAppStore.getState().completedBlueprintIds).toContain('plant')

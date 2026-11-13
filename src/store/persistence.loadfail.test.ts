@@ -11,7 +11,7 @@ describe('persistence suspension when archive read fails', () => {
     const saveSpy = vi.fn(() => Promise.resolve())
     const adapter: StorageAdapter = {
       load: async () => ({ state: null, loadFailed: true, detail: 'EBUSY' }),
-      save: saveSpy,
+      save: saveSpy
     }
     await initPersistence(adapter)
     useAppStore.setState({ hydrated: true })

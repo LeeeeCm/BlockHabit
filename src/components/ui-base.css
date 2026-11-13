@@ -46,7 +46,9 @@
   height: 30px;
   border-radius: 9px;
   color: var(--ink-2);
-  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default);
+  transition:
+    background var(--dur-xs) var(--ease-default),
+    color var(--dur-xs) var(--ease-default);
 }
 .win-btn:hover {
   background: color-mix(in srgb, var(--ink) 9%, transparent);
@@ -82,7 +84,10 @@
   font-size: var(--fs-body);
   color: var(--ink-2);
   border-radius: var(--r-md);
-  transition: background var(--dur-sm) var(--ease-default), color var(--dur-sm) var(--ease-default), transform var(--dur-sm) var(--ease-default);
+  transition:
+    background var(--dur-sm) var(--ease-default),
+    color var(--dur-sm) var(--ease-default),
+    transform var(--dur-sm) var(--ease-default);
 }
 
 .tabbar button:hover {
@@ -103,7 +108,9 @@
   height: 38px;
   color: var(--ink-2);
   border-radius: var(--r-sm);
-  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default);
+  transition:
+    background var(--dur-xs) var(--ease-default),
+    color var(--dur-xs) var(--ease-default);
 }
 .icon-btn:hover {
   color: var(--ink);
@@ -117,7 +124,10 @@
   font-size: var(--fs-subhead);
   border-radius: var(--r-sm);
   background: var(--surface);
-  transition: background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default), transform var(--dur-xs) var(--ease-default);
+  transition:
+    background var(--dur-xs) var(--ease-default),
+    color var(--dur-xs) var(--ease-default),
+    transform var(--dur-xs) var(--ease-default);
 }
 .btn:hover {
   background: var(--ink);

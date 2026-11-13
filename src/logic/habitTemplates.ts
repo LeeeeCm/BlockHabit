@@ -17,7 +17,7 @@ export const habitTemplates: HabitTemplate[] = [
   { id: 'read', period: 'evening' },
   { id: 'walk', period: 'any' },
   { id: 'sleep', period: 'evening' },
-  { id: 'ledger', period: 'evening' },
+  { id: 'ledger', period: 'evening' }
 ]
 
 /** 模板统一用最简频率：每日、瞬时打卡；用户点完可随时编辑 */

@@ -8,7 +8,7 @@ import type { TodayBriefState } from '../logic/todayBrief'
  */
 export function TodayBrief({
   brief,
-  onStartFirst,
+  onStartFirst
 }: {
   brief: TodayBriefState
   onStartFirst: () => void
@@ -20,7 +20,10 @@ export function TodayBrief({
       : t.todayBrief.idle(brief.total)
   const milestone =
     brief.remainingBlocks > 0
-      ? t.todayBrief.milestone(getBlueprintName(brief.activeBlueprintId, lang), brief.remainingBlocks)
+      ? t.todayBrief.milestone(
+          getBlueprintName(brief.activeBlueprintId, lang),
+          brief.remainingBlocks
+        )
       : brief.nextBlueprintId
         ? t.todayBrief.nextReady(getBlueprintName(brief.nextBlueprintId, lang))
         : null
@@ -37,14 +40,28 @@ export function TodayBrief({
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        flexWrap: 'wrap',
+        flexWrap: 'wrap'
       }}
     >
       <div style={{ flex: '1 1 260px', minWidth: 0 }}>
-        <div style={{ fontSize: 'var(--fs-subhead)', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.35 }}>
+        <div
+          style={{
+            fontSize: 'var(--fs-subhead)',
+            fontWeight: 700,
+            color: 'var(--ink)',
+            lineHeight: 1.35
+          }}
+        >
           {t.todayBrief.greetings[brief.greeting]}
         </div>
-        <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginTop: 2, lineHeight: 1.5 }}>
+        <div
+          style={{
+            fontSize: 'var(--fs-small)',
+            color: 'var(--ink-2)',
+            marginTop: 2,
+            lineHeight: 1.5
+          }}
+        >
           {facts}
         </div>
         {milestone && (
@@ -56,11 +73,13 @@ export function TodayBrief({
               display: 'flex',
               alignItems: 'center',
               gap: 5,
-              minWidth: 0,
+              minWidth: 0
             }}
           >
             <IconBuild size={12} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{milestone}</span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {milestone}
+            </span>
           </div>
         )}
       </div>
@@ -68,14 +87,14 @@ export function TodayBrief({
         <button
           className="btn primary"
           onClick={onStartFirst}
-        style={{
-          padding: '7px 16px',
-          borderRadius: 999,
-          fontSize: 'var(--fs-body)',
+          style={{
+            padding: '7px 16px',
+            borderRadius: 999,
+            fontSize: 'var(--fs-body)',
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            flexShrink: 0,
+            flexShrink: 0
           }}
         >
           <IconCheck size={15} />

@@ -10,7 +10,7 @@ import {
   sanitizeDiagnosticDetail,
   type DiagnoseRequestInit,
   type DiagnoseResponse,
-  type DiagnoseTransport,
+  type DiagnoseTransport
 } from './diagnose'
 
 const STAGES = ['address', 'connection', 'auth', 'readwrite', 'cleanup'] as const
@@ -19,13 +19,11 @@ const PASSWORD = 'secret-password'
 const BASE_OPTIONS = {
   endpoint: 'https://dav.example.com/dav/',
   username: 'alice',
-  password: PASSWORD,
+  password: PASSWORD
 }
 
 type Step =
-  | DiagnoseResponse
-  | Error
-  | ((url: string, init: DiagnoseRequestInit) => DiagnoseResponse)
+  DiagnoseResponse | Error | ((url: string, init: DiagnoseRequestInit) => DiagnoseResponse)
 
 interface RecordedCall {
   url: string
@@ -61,9 +59,13 @@ async function runSuccess(overrides: Partial<typeof BASE_OPTIONS> = {}) {
       return response(201)
     },
     () => response(200, putBody),
-    response(204),
+    response(204)
   ])
-  const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, ...overrides, transport: harness.transport })
+  const result = await runWebDavDiagnosis({
+    ...BASE_OPTIONS,
+    ...overrides,
+    transport: harness.transport
+  })
   return { ...harness, result }
 }
 
@@ -114,7 +116,12 @@ describe('diagnose：WebDAV 分步连接自检', () => {
     expect(result.ok).toBe(false)
     expect(result.stages.map((stage) => stage.stage)).toEqual([...STAGES])
     expect(result.stages[0]).toMatchObject({ stage: 'address', ok: true, code: 'ok' })
-    expect(result.stages[1]).toMatchObject({ stage: 'connection', ok: true, code: 'ok', status: 401 })
+    expect(result.stages[1]).toMatchObject({
+      stage: 'connection',
+      ok: true,
+      code: 'ok',
+      status: 401
+    })
     expect(result.stages[2]).toMatchObject({ stage: 'auth', ok: false, code: 'auth', status: 401 })
     expect(result.stages[3]).toMatchObject({ stage: 'readwrite', ok: true, code: 'skipped' })
     expect(result.stages[4]).toMatchObject({ stage: 'cleanup', ok: true, code: 'skipped' })
@@ -122,7 +129,13 @@ describe('diagnose：WebDAV 分步连接自检', () => {
   })
 
   it('连接 401 + 认证 207 → 全部通过', async () => {
-    const { transport } = makeTransport([response(401), response(207), response(201), response(200), response(204)])
+    const { transport } = makeTransport([
+      response(401),
+      response(207),
+      response(201),
+      response(200),
+      response(204)
+    ])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
     expect(result.ok).toBe(true)
   })
@@ -130,26 +143,46 @@ describe('diagnose：WebDAV 分步连接自检', () => {
   it('认证 403 → forbidden', async () => {
     const { transport } = makeTransport([response(207), response(403)])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
-    expect(result.stages[2]).toMatchObject({ stage: 'auth', ok: false, code: 'forbidden', status: 403 })
+    expect(result.stages[2]).toMatchObject({
+      stage: 'auth',
+      ok: false,
+      code: 'forbidden',
+      status: 403
+    })
     expect(result.ok).toBe(false)
   })
 
   it('认证 404 → not-found（目录不存在）', async () => {
     const { transport } = makeTransport([response(404), response(404)])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
-    expect(result.stages[2]).toMatchObject({ stage: 'auth', ok: false, code: 'not-found', status: 404 })
+    expect(result.stages[2]).toMatchObject({
+      stage: 'auth',
+      ok: false,
+      code: 'not-found',
+      status: 404
+    })
   })
 
   it('认证 405 → method（服务器不支持 PROPFIND）', async () => {
     const { transport } = makeTransport([response(405), response(405)])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
-    expect(result.stages[2]).toMatchObject({ stage: 'auth', ok: false, code: 'method', status: 405 })
+    expect(result.stages[2]).toMatchObject({
+      stage: 'auth',
+      ok: false,
+      code: 'method',
+      status: 405
+    })
   })
 
   it('PUT 507 → quota，且不尝试清理（未创建文件）', async () => {
     const { transport, calls } = makeTransport([response(207), response(207), response(507)])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
-    expect(result.stages[3]).toMatchObject({ stage: 'readwrite', ok: false, code: 'quota', status: 507 })
+    expect(result.stages[3]).toMatchObject({
+      stage: 'readwrite',
+      ok: false,
+      code: 'quota',
+      status: 507
+    })
     expect(result.stages[4]).toMatchObject({ stage: 'cleanup', ok: true, code: 'skipped' })
     expect(calls).toHaveLength(3)
     expect(result.ok).toBe(false)
@@ -158,7 +191,12 @@ describe('diagnose：WebDAV 分步连接自检', () => {
   it('PUT 405 → method', async () => {
     const { transport } = makeTransport([response(207), response(207), response(405)])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
-    expect(result.stages[3]).toMatchObject({ stage: 'readwrite', ok: false, code: 'method', status: 405 })
+    expect(result.stages[3]).toMatchObject({
+      stage: 'readwrite',
+      ok: false,
+      code: 'method',
+      status: 405
+    })
   })
 
   it('GET 读回 500：readwrite 失败但 cleanup 仍会 DELETE 临时文件', async () => {
@@ -167,10 +205,15 @@ describe('diagnose：WebDAV 分步连接自检', () => {
       response(207),
       response(201),
       response(500),
-      response(204),
+      response(204)
     ])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
-    expect(result.stages[3]).toMatchObject({ stage: 'readwrite', ok: false, code: 'http', status: 500 })
+    expect(result.stages[3]).toMatchObject({
+      stage: 'readwrite',
+      ok: false,
+      code: 'http',
+      status: 500
+    })
     expect(result.stages[4]).toMatchObject({ stage: 'cleanup', ok: true, code: 'ok', status: 204 })
     expect(calls[4].init.method).toBe('DELETE')
     expect(result.ok).toBe(false)
@@ -182,10 +225,15 @@ describe('diagnose：WebDAV 分步连接自检', () => {
       response(207),
       response(201),
       response(200, 'not-the-same-payload'),
-      response(204),
+      response(204)
     ])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
-    expect(result.stages[3]).toMatchObject({ stage: 'readwrite', ok: false, code: 'http', detail: 'readback mismatch' })
+    expect(result.stages[3]).toMatchObject({
+      stage: 'readwrite',
+      ok: false,
+      code: 'http',
+      detail: 'readback mismatch'
+    })
     expect(calls[4].init.method).toBe('DELETE')
     expect(result.ok).toBe(false)
   })
@@ -196,7 +244,7 @@ describe('diagnose：WebDAV 分步连接自检', () => {
       response(207),
       response(201),
       response(200),
-      response(405),
+      response(405)
     ])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
     expect(result.stages[4].ok).toBe(false)
@@ -208,7 +256,13 @@ describe('diagnose：WebDAV 分步连接自检', () => {
   })
 
   it('清理 DELETE 404 视为已经删掉（幂等成功）', async () => {
-    const { transport } = makeTransport([response(207), response(207), response(201), response(200), response(404)])
+    const { transport } = makeTransport([
+      response(207),
+      response(207),
+      response(201),
+      response(200),
+      response(404)
+    ])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
     expect(result.stages[4]).toMatchObject({ stage: 'cleanup', ok: true, code: 'ok', status: 404 })
     expect(result.ok).toBe(true)
@@ -232,7 +286,7 @@ describe('diagnose：WebDAV 分步连接自检', () => {
 
   it('TLS 证书错误文本 → tls', async () => {
     const { transport } = makeTransport([
-      new Error('error trying to connect: invalid peer certificate: UnknownIssuer'),
+      new Error('error trying to connect: invalid peer certificate: UnknownIssuer')
     ])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
     expect(result.stages[1]).toMatchObject({ ok: false, code: 'tls' })
@@ -254,7 +308,11 @@ describe('diagnose：WebDAV 分步连接自检', () => {
 
   it('http:// 端点 → address insecure-http，且不发起任何请求', async () => {
     const { transport, calls } = makeTransport([response(207)])
-    const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, endpoint: 'http://dav.example.com/dav/', transport })
+    const result = await runWebDavDiagnosis({
+      ...BASE_OPTIONS,
+      endpoint: 'http://dav.example.com/dav/',
+      transport
+    })
     expect(result.stages[0]).toMatchObject({ stage: 'address', ok: false, code: 'insecure-http' })
     expect(result.stages.slice(1).every((stage) => stage.code === 'skipped')).toBe(true)
     expect(calls).toHaveLength(0)
@@ -274,7 +332,9 @@ describe('diagnose：WebDAV 分步连接自检', () => {
     const noScheme = await runSuccess({ endpoint: 'dav.example.com/dav' })
     expect(noScheme.calls[0].url).toBe('https://dav.example.com/dav/')
 
-    const fileUrl = await runSuccess({ endpoint: 'https://dav.example.com/dav/blockhabit-data.json' })
+    const fileUrl = await runSuccess({
+      endpoint: 'https://dav.example.com/dav/blockhabit-data.json'
+    })
     expect(fileUrl.calls[0].url).toBe('https://dav.example.com/dav/')
 
     const chinese = await runSuccess({ endpoint: 'https://dav.example.com/备份/' })
@@ -283,7 +343,9 @@ describe('diagnose：WebDAV 分步连接自检', () => {
   })
 
   it('地址里的 userinfo 不会进入请求 URL 或结果', async () => {
-    const { calls, result } = await runSuccess({ endpoint: 'https://alice:secret-password@dav.example.com/dav/' })
+    const { calls, result } = await runSuccess({
+      endpoint: 'https://alice:secret-password@dav.example.com/dav/'
+    })
     expect(calls[0].url).toBe('https://dav.example.com/dav/')
     expect(JSON.stringify(result)).not.toContain('secret-password')
   })
@@ -297,7 +359,7 @@ describe('diagnose：WebDAV 分步连接自检', () => {
   it('失败结果里不含密码：错误文本中的密码与 Basic 凭据都被脱敏', async () => {
     const authHeader = 'Basic ' + btoa('alice:' + PASSWORD)
     const { transport } = makeTransport([
-      new Error(`connect failed for alice:${PASSWORD} header=${authHeader}`),
+      new Error(`connect failed for alice:${PASSWORD} header=${authHeader}`)
     ])
     const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport })
     const serialized = JSON.stringify(result)
@@ -312,7 +374,7 @@ describe('diagnose：WebDAV 分步连接自检', () => {
       [response(401), response(401)],
       [response(207), response(403)],
       [response(207), response(207), response(507)],
-      [response(207), response(207), response(201), response(500), response(204)],
+      [response(207), response(207), response(201), response(500), response(204)]
     ]
     for (const script of scripts) {
       const { transport } = makeTransport(script)
@@ -327,7 +389,11 @@ describe('diagnose：用户取消（B1）', () => {
     const { transport, calls } = makeTransport([response(207)])
     const controller = new AbortController()
     controller.abort()
-    const result = await runWebDavDiagnosis({ ...BASE_OPTIONS, transport, signal: controller.signal })
+    const result = await runWebDavDiagnosis({
+      ...BASE_OPTIONS,
+      transport,
+      signal: controller.signal
+    })
     expect(result.cancelled).toBe(true)
     expect(result.ok).toBe(false)
     expect(result.stages.map((stage) => stage.stage)).toEqual([...STAGES])
@@ -351,7 +417,7 @@ describe('diagnose：用户取消（B1）', () => {
       ...BASE_OPTIONS,
       transport,
       signal: controller.signal,
-      timeoutMs: 5000,
+      timeoutMs: 5000
     })
     const deadline = Date.now() + 1000
     while (calls.length === 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 1))
@@ -385,7 +451,7 @@ describe('diagnose：用户取消（B1）', () => {
       ...BASE_OPTIONS,
       transport,
       signal: controller.signal,
-      timeoutMs: 5000,
+      timeoutMs: 5000
     })
     const deadline = Date.now() + 1000
     while (!calls.some((call) => call.init.method === 'GET') && Date.now() < deadline) {
@@ -419,7 +485,12 @@ describe('diagnose：用户取消（B1）', () => {
       return Promise.resolve(response(405))
     }
     const controller = new AbortController()
-    const pending = runWebDavDiagnosis({ ...BASE_OPTIONS, transport, signal: controller.signal, timeoutMs: 5000 })
+    const pending = runWebDavDiagnosis({
+      ...BASE_OPTIONS,
+      transport,
+      signal: controller.signal,
+      timeoutMs: 5000
+    })
     const deadline = Date.now() + 1000
     while (!calls.some((call) => call.init.method === 'GET') && Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, 1))
@@ -444,18 +515,28 @@ describe('diagnose：工具函数', () => {
 
   it('normalizeCollectionUrl：补协议、补尾斜杠、去 query/userinfo、拒绝非 http(s)', () => {
     expect(normalizeCollectionUrl('dav.example.com/dav')).toBe('https://dav.example.com/dav/')
-    expect(normalizeCollectionUrl('https://dav.example.com/dav?token=x#h')).toBe('https://dav.example.com/dav/')
-    expect(normalizeCollectionUrl('https://u:p@dav.example.com/dav/')).toBe('https://dav.example.com/dav/')
-    expect(normalizeCollectionUrl('https://dav.example.com/file.json')).toBe('https://dav.example.com/')
+    expect(normalizeCollectionUrl('https://dav.example.com/dav?token=x#h')).toBe(
+      'https://dav.example.com/dav/'
+    )
+    expect(normalizeCollectionUrl('https://u:p@dav.example.com/dav/')).toBe(
+      'https://dav.example.com/dav/'
+    )
+    expect(normalizeCollectionUrl('https://dav.example.com/file.json')).toBe(
+      'https://dav.example.com/'
+    )
     expect(normalizeCollectionUrl('ftp://dav.example.com/')).toBeNull()
     expect(normalizeCollectionUrl('')).toBeNull()
   })
 
   it('sanitizeDiagnosticDetail：抹密码 / Basic / userinfo，折叠空白并截断', () => {
-    expect(sanitizeDiagnosticDetail('bad secret-password here', ['secret-password'])).toBe('bad *** here')
-    expect(sanitizeDiagnosticDetail('Authorization: Basic dXNlcjpwYXNz')).toBe('Authorization: Basic ***')
+    expect(sanitizeDiagnosticDetail('bad secret-password here', ['secret-password'])).toBe(
+      'bad *** here'
+    )
+    expect(sanitizeDiagnosticDetail('Authorization: Basic dXNlcjpwYXNz')).toBe(
+      'Authorization: Basic ***'
+    )
     expect(sanitizeDiagnosticDetail('fetch https://alice:pw@host/dav failed')).toBe(
-      'fetch https://***@host/dav failed',
+      'fetch https://***@host/dav failed'
     )
     expect(sanitizeDiagnosticDetail('a\n\n  b\tc')).toBe('a b c')
     const long = sanitizeDiagnosticDetail('x'.repeat(500))
@@ -469,11 +550,17 @@ describe('diagnose：工具函数', () => {
     timeout.name = 'TimeoutError'
     expect(classifyTransportError(timeout).code).toBe('timeout')
     expect(classifyTransportError(new Error('request timed out')).code).toBe('timeout')
-    expect(classifyTransportError(new Error('invalid peer certificate: UnknownIssuer')).code).toBe('tls')
-    expect(classifyTransportError(new Error('getaddrinfo ENOTFOUND dav.example.com')).code).toBe('unreachable')
+    expect(classifyTransportError(new Error('invalid peer certificate: UnknownIssuer')).code).toBe(
+      'tls'
+    )
+    expect(classifyTransportError(new Error('getaddrinfo ENOTFOUND dav.example.com')).code).toBe(
+      'unreachable'
+    )
     expect(classifyTransportError(new Error('connect ECONNREFUSED')).code).toBe('unreachable')
     expect(classifyTransportError(new Error('weird internal thing')).code).toBe('unknown')
-    expect(classifyTransportError(new Error('weird internal thing')).detail).toContain('weird internal thing')
+    expect(classifyTransportError(new Error('weird internal thing')).detail).toContain(
+      'weird internal thing'
+    )
   })
 
   it('createFetchTransport：把 fetch 形状适配成 transport，并透传 method/headers/body', async () => {
@@ -487,16 +574,21 @@ describe('diagnose：工具函数', () => {
         headers: {
           forEach: (callback: (value: string, key: string) => void) => {
             callback('application/xml', 'Content-Type')
-          },
-        },
+          }
+        }
       } as unknown as Response
     }
     const transport = createFetchTransport(fakeFetch)
     const result = await transport('https://dav.example.com/dav/', {
       method: 'PROPFIND',
-      headers: { Depth: '0' },
+      headers: { Depth: '0' }
     })
-    expect(result).toEqual({ status: 207, ok: true, text: 'multi-status', headers: { 'content-type': 'application/xml' } })
+    expect(result).toEqual({
+      status: 207,
+      ok: true,
+      text: 'multi-status',
+      headers: { 'content-type': 'application/xml' }
+    })
     expect(seen[0].url).toBe('https://dav.example.com/dav/')
     expect(seen[0].init?.method).toBe('PROPFIND')
     expect(seen[0].init?.headers).toEqual({ Depth: '0' })
@@ -506,6 +598,8 @@ describe('diagnose：工具函数', () => {
     const transport = createFetchTransport(async () => {
       throw new Error('dns error: Name or service not known')
     })
-    await expect(transport('https://dav.example.com/', { method: 'PROPFIND' })).rejects.toThrow('dns error')
+    await expect(transport('https://dav.example.com/', { method: 'PROPFIND' })).rejects.toThrow(
+      'dns error'
+    )
   })
 })

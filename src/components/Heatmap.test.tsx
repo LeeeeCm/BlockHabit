@@ -14,7 +14,7 @@ const habit: Habit = {
   id: 'h1',
   name: '读书',
   frequency: { type: 'daily' },
-  createdAt: '2026-01-01T00:00:00.000Z',
+  createdAt: '2026-01-01T00:00:00.000Z'
 }
 
 describe('Heatmap 键盘可达（C5）', () => {
@@ -44,7 +44,7 @@ describe('Heatmap 键盘可达（C5）', () => {
           cell={13}
           weeks={13}
           onDayClick={onDayClick}
-        />,
+        />
       )
     })
     return Array.from(container.querySelectorAll('button')) as HTMLButtonElement[]
@@ -91,13 +91,17 @@ describe('Heatmap 键盘可达（C5）', () => {
     const cells = render()
     let current = cells.find((c) => c.tabIndex === 0) as HTMLButtonElement
     act(() => {
-      current.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }))
+      current.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true })
+      )
     })
     current = cells.find((c) => c.tabIndex === 0) as HTMLButtonElement
     expect(cells.indexOf(current) % 7).toBe(0)
 
     act(() => {
-      current.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }))
+      current.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true })
+      )
     })
     current = cells.find((c) => c.tabIndex === 0) as HTMLButtonElement
     expect(cells.indexOf(current) % 7).toBe(6)
@@ -107,7 +111,9 @@ describe('Heatmap 键盘可达（C5）', () => {
     const onDayClick = vi.fn()
     const cells = render(onDayClick)
     // 未来日期：ratio = -1 且 future，clickable=false
-    const disabledCell = cells.find((c) => c.getAttribute('aria-disabled') === 'true') as HTMLButtonElement
+    const disabledCell = cells.find(
+      (c) => c.getAttribute('aria-disabled') === 'true'
+    ) as HTMLButtonElement
     expect(disabledCell).toBeDefined()
     expect(disabledCell.disabled).toBe(false)
     act(() => {

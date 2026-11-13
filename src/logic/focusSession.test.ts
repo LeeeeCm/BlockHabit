@@ -13,7 +13,7 @@ import {
   trayPhaseFor,
   trayStatusFor,
   viewFocusSessions,
-  viewSession,
+  viewSession
 } from './focusSession'
 import { getTranslation } from '../i18n'
 import {
@@ -22,7 +22,7 @@ import {
   readFocusSessions,
   useTimerStore,
   writeFocusSessions,
-  type TimerSession,
+  type TimerSession
 } from '../store/timerStore'
 
 const MINUTE = 60_000
@@ -102,9 +102,11 @@ describe('focusSession：专注状态机（纯逻辑）', () => {
 
   it('effectiveTargetMs：每次延长 +5 分钟', () => {
     expect(effectiveTargetMs({ startedAt: 1, targetMs: TARGET })).toBe(TARGET)
-    expect(effectiveTargetMs({ startedAt: 1, targetMs: TARGET, extensions: 1 })).toBe(TARGET + EXTEND_MINUTES * MINUTE)
+    expect(effectiveTargetMs({ startedAt: 1, targetMs: TARGET, extensions: 1 })).toBe(
+      TARGET + EXTEND_MINUTES * MINUTE
+    )
     expect(effectiveTargetMs({ startedAt: 1, targetMs: TARGET, extensions: 2 })).toBe(
-      TARGET + 2 * EXTEND_MINUTES * MINUTE,
+      TARGET + 2 * EXTEND_MINUTES * MINUTE
     )
   })
 
@@ -145,14 +147,14 @@ describe('focusSession：专注状态机（纯逻辑）', () => {
     const now = 1_000_000 + 10 * MINUTE
     const sessions = {
       slow: { startedAt: 1_000_000, targetMs: 60 * MINUTE },
-      quick: { startedAt: 1_000_000, targetMs: 20 * MINUTE },
+      quick: { startedAt: 1_000_000, targetMs: 20 * MINUTE }
     }
     expect(primarySessionId(sessions, now)).toBe('quick')
     expect(primarySessionId({}, now)).toBeNull()
 
     const tie = {
       later: { startedAt: 1_000_000 + 1000, targetMs: 20 * MINUTE },
-      earlier: { startedAt: 1_000_000, targetMs: 20 * MINUTE + 1000 },
+      earlier: { startedAt: 1_000_000, targetMs: 20 * MINUTE + 1000 }
     }
     expect(primarySessionId(tie, now)).toBe('earlier')
 
@@ -177,7 +179,7 @@ describe('B4 收尾：多会话展示规则、通知计划与托盘相位（纯�
   it('viewFocusSessions：ready 优先于 focusing，即使 focusing 更早到点', () => {
     const sessions = {
       focusingSoon: { startedAt: NOW - 24 * MINUTE, targetMs: 25 * MINUTE }, // 1 分钟后到点
-      readyAlready: { startedAt: NOW - 40 * MINUTE, targetMs: 25 * MINUTE }, // 已到点 15 分钟
+      readyAlready: { startedAt: NOW - 40 * MINUTE, targetMs: 25 * MINUTE } // 已到点 15 分钟
     }
     const view = viewFocusSessions(sessions, NOW)
     expect(view.ordered.map((entry) => entry.id)).toEqual(['readyAlready', 'focusingSoon'])
@@ -190,7 +192,7 @@ describe('B4 收尾：多会话展示规则、通知计划与托盘相位（纯�
   it('viewFocusSessions：同相位按最早到点排序（延长后的有效目标参与计算）', () => {
     const sessions = {
       extended: { startedAt: NOW - 20 * MINUTE, targetMs: 20 * MINUTE, extensions: 1 }, // 有效 25 分钟 → 5 分钟后到点
-      plain: { startedAt: NOW - 10 * MINUTE, targetMs: 20 * MINUTE }, // 10 分钟后到点
+      plain: { startedAt: NOW - 10 * MINUTE, targetMs: 20 * MINUTE } // 10 分钟后到点
     }
     const view = viewFocusSessions(sessions, NOW)
     expect(view.ordered.map((entry) => entry.id)).toEqual(['extended', 'plain'])
@@ -201,21 +203,24 @@ describe('B4 收尾：多会话展示规则、通知计划与托盘相位（纯�
   it('viewFocusSessions：同到点时刻按 startedAt 早者优先，完全并列时按 id 兜底（确定性）', () => {
     const tieEnd = {
       later: { startedAt: NOW - 5 * MINUTE, targetMs: 25 * MINUTE }, // 同时到点
-      earlier: { startedAt: NOW - 10 * MINUTE, targetMs: 30 * MINUTE },
+      earlier: { startedAt: NOW - 10 * MINUTE, targetMs: 30 * MINUTE }
     }
     expect(viewFocusSessions(tieEnd, NOW).primaryId).toBe('earlier')
 
     const sameEverything = {
       b: { startedAt: NOW - 10 * MINUTE, targetMs: 30 * MINUTE },
-      a: { startedAt: NOW - 10 * MINUTE, targetMs: 30 * MINUTE },
+      a: { startedAt: NOW - 10 * MINUTE, targetMs: 30 * MINUTE }
     }
-    expect(viewFocusSessions(sameEverything, NOW).ordered.map((entry) => entry.id)).toEqual(['a', 'b'])
+    expect(viewFocusSessions(sameEverything, NOW).ordered.map((entry) => entry.id)).toEqual([
+      'a',
+      'b'
+    ])
   })
 
   it('viewFocusSessions：过期会话不参与展示与计数', () => {
     const sessions = {
       alive: { startedAt: NOW - 5 * MINUTE, targetMs: 25 * MINUTE },
-      stale: { startedAt: NOW - (25 * MINUTE + SESSION_TTL_MS + 1), targetMs: 25 * MINUTE },
+      stale: { startedAt: NOW - (25 * MINUTE + SESSION_TTL_MS + 1), targetMs: 25 * MINUTE }
     }
     const view = viewFocusSessions(sessions, NOW)
     expect(view.ordered.map((entry) => entry.id)).toEqual(['alive'])
@@ -227,30 +232,44 @@ describe('B4 收尾：多会话展示规则、通知计划与托盘相位（纯�
     const valid = new Set(['h1'])
     expect(planFocusNotifications({}, NOW, valid)).toEqual([])
     // focusing 不通知
-    expect(planFocusNotifications({ h1: { startedAt: NOW - 10 * MINUTE, targetMs: 25 * MINUTE } }, NOW, valid)).toEqual([])
+    expect(
+      planFocusNotifications(
+        { h1: { startedAt: NOW - 10 * MINUTE, targetMs: 25 * MINUTE } },
+        NOW,
+        valid
+      )
+    ).toEqual([])
     // 过期不打扰
     expect(
       planFocusNotifications(
         { h1: { startedAt: NOW - (25 * MINUTE + SESSION_TTL_MS + 1), targetMs: 25 * MINUTE } },
         NOW,
-        valid,
-      ),
+        valid
+      )
     ).toEqual([])
     // ready 且未提醒 → 一条计划，notifiedAt = now（App 必须先落盘再弹）
     expect(
-      planFocusNotifications({ h1: { startedAt: NOW - 26 * MINUTE, targetMs: 25 * MINUTE } }, NOW, valid),
+      planFocusNotifications(
+        { h1: { startedAt: NOW - 26 * MINUTE, targetMs: 25 * MINUTE } },
+        NOW,
+        valid
+      )
     ).toEqual([{ habitId: 'h1', notifiedAt: NOW }])
     // notifiedAt 已落盘 → 不再通知（重启不重复）
     expect(
       planFocusNotifications(
         { h1: { startedAt: NOW - 26 * MINUTE, targetMs: 25 * MINUTE, notifiedAt: NOW - 1000 } },
         NOW,
-        valid,
-      ),
+        valid
+      )
     ).toEqual([])
     // 习惯已删除/归档（不在有效集合）→ 不通知
     expect(
-      planFocusNotifications({ h1: { startedAt: NOW - 26 * MINUTE, targetMs: 25 * MINUTE } }, NOW, new Set(['h2'])),
+      planFocusNotifications(
+        { h1: { startedAt: NOW - 26 * MINUTE, targetMs: 25 * MINUTE } },
+        NOW,
+        new Set(['h2'])
+      )
     ).toEqual([])
   })
 
@@ -258,45 +277,62 @@ describe('B4 收尾：多会话展示规则、通知计划与托盘相位（纯�
     const plans = planFocusNotifications(
       {
         later: { startedAt: NOW - 30 * MINUTE, targetMs: 25 * MINUTE }, // 已到点 5 分钟
-        earlier: { startedAt: NOW - 40 * MINUTE, targetMs: 25 * MINUTE }, // 已到点 15 分钟
+        earlier: { startedAt: NOW - 40 * MINUTE, targetMs: 25 * MINUTE } // 已到点 15 分钟
       },
       NOW,
-      new Set(['earlier', 'later']),
+      new Set(['earlier', 'later'])
     )
     expect(plans.map((plan) => plan.habitId)).toEqual(['earlier', 'later'])
     expect(plans.every((plan) => plan.notifiedAt === NOW)).toBe(true)
   })
 
   it('focusing→ready 只通知一次：notifiedAt 先落盘再通知的契约（store 往返）', () => {
-    useTimerStore.setState({ sessions: { h1: { startedAt: NOW - 24 * MINUTE, targetMs: 25 * MINUTE } } })
-    expect(planFocusNotifications(useTimerStore.getState().sessions, NOW, new Set(['h1']))).toEqual([])
+    useTimerStore.setState({
+      sessions: { h1: { startedAt: NOW - 24 * MINUTE, targetMs: 25 * MINUTE } }
+    })
+    expect(planFocusNotifications(useTimerStore.getState().sessions, NOW, new Set(['h1']))).toEqual(
+      []
+    )
 
     const readyNow = NOW + 2 * MINUTE
-    const plans = planFocusNotifications(useTimerStore.getState().sessions, readyNow, new Set(['h1']))
+    const plans = planFocusNotifications(
+      useTimerStore.getState().sessions,
+      readyNow,
+      new Set(['h1'])
+    )
     expect(plans).toHaveLength(1)
     // App 的顺序：先 markNotified 落盘，再弹通知
     useTimerStore.getState().markNotified(plans[0].habitId, plans[0].notifiedAt)
     expect(useTimerStore.getState().sessions.h1.notifiedAt).toBe(readyNow)
     expect(readFocusSessions(readyNow).h1.notifiedAt).toBe(readyNow)
     // 下一秒再扫不会重复通知
-    expect(planFocusNotifications(useTimerStore.getState().sessions, readyNow + 1000, new Set(['h1']))).toEqual([])
+    expect(
+      planFocusNotifications(useTimerStore.getState().sessions, readyNow + 1000, new Set(['h1']))
+    ).toEqual([])
   })
 
   it('trayPhaseFor：ready 优先于 focusing；无会话 / 过期返回 null', () => {
     expect(trayPhaseFor({}, NOW)).toBeNull()
-    expect(trayPhaseFor({ h1: { startedAt: NOW - 5 * MINUTE, targetMs: 25 * MINUTE } }, NOW)).toBe('focusing')
-    expect(trayPhaseFor({ h1: { startedAt: NOW - 26 * MINUTE, targetMs: 25 * MINUTE } }, NOW)).toBe('ready')
+    expect(trayPhaseFor({ h1: { startedAt: NOW - 5 * MINUTE, targetMs: 25 * MINUTE } }, NOW)).toBe(
+      'focusing'
+    )
+    expect(trayPhaseFor({ h1: { startedAt: NOW - 26 * MINUTE, targetMs: 25 * MINUTE } }, NOW)).toBe(
+      'ready'
+    )
     expect(
       trayPhaseFor(
         {
           focusing: { startedAt: NOW - 5 * MINUTE, targetMs: 25 * MINUTE },
-          ready: { startedAt: NOW - 26 * MINUTE, targetMs: 25 * MINUTE },
+          ready: { startedAt: NOW - 26 * MINUTE, targetMs: 25 * MINUTE }
         },
-        NOW,
-      ),
+        NOW
+      )
     ).toBe('ready')
     expect(
-      trayPhaseFor({ h1: { startedAt: NOW - (25 * MINUTE + SESSION_TTL_MS + 1), targetMs: 25 * MINUTE } }, NOW),
+      trayPhaseFor(
+        { h1: { startedAt: NOW - (25 * MINUTE + SESSION_TTL_MS + 1), targetMs: 25 * MINUTE } },
+        NOW
+      )
     ).toBeNull()
   })
 
@@ -307,9 +343,9 @@ describe('B4 收尾：多会话展示规则、通知计划与托盘相位（纯�
     expect(trayStatusFor(base, null, zh)).toBe(base)
     expect(trayStatusFor(base, 'focusing', zh)).toBe('今日进度 2/3 · 花园 5/100 · 专注中')
     expect(trayStatusFor(base, 'ready', zh)).toBe('今日进度 2/3 · 花园 5/100 · 时间到，确认后落块')
-    expect(trayStatusFor(base, 'focusing', en)).toBe("今日进度 2/3 · 花园 5/100 · Focusing")
+    expect(trayStatusFor(base, 'focusing', en)).toBe('今日进度 2/3 · 花园 5/100 · Focusing')
     expect(trayStatusFor(base, 'ready', en)).toBe(
-      '今日进度 2/3 · 花园 5/100 · Time is up; confirm to place the block',
+      '今日进度 2/3 · 花园 5/100 · Time is up; confirm to place the block'
     )
   })
 })
@@ -371,8 +407,8 @@ describe('timerStore：专注会话设备本地持久化', () => {
       sessions: {
         keep: { startedAt: Date.now() - MINUTE, targetMs: TARGET },
         archived: { startedAt: Date.now() - MINUTE, targetMs: TARGET },
-        stale: { startedAt: 1_000_000, targetMs: TARGET },
-      },
+        stale: { startedAt: 1_000_000, targetMs: TARGET }
+      }
     })
     useTimerStore.getState().prune(new Set(['keep']), Date.now())
     const ids = Object.keys(useTimerStore.getState().sessions)
@@ -389,7 +425,10 @@ describe('timerStore：专注会话设备本地持久化', () => {
     expect(readFocusSessions()).toEqual({})
     localStorage.setItem(
       FOCUS_SESSIONS_STORAGE_KEY,
-      JSON.stringify({ version: 1, sessions: { bad: { startedAt: 'x', targetMs: 1 }, ok: { startedAt: 1000, targetMs: 60000 } } }),
+      JSON.stringify({
+        version: 1,
+        sessions: { bad: { startedAt: 'x', targetMs: 1 }, ok: { startedAt: 1000, targetMs: 60000 } }
+      })
     )
     const restored = readFocusSessions(2000)
     expect(Object.keys(restored)).toEqual(['ok'])

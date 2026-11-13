@@ -22,7 +22,7 @@ function read(): Prefs {
     const p = parsed as Record<string, unknown>
     return {
       consent: p.consent === 'enabled' || p.consent === 'declined' ? p.consent : undefined,
-      lastNudgedDay: typeof p.lastNudgedDay === 'string' ? p.lastNudgedDay : undefined,
+      lastNudgedDay: typeof p.lastNudgedDay === 'string' ? p.lastNudgedDay : undefined
     }
   } catch {
     return {}

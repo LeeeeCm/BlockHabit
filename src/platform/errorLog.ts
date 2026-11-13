@@ -78,10 +78,13 @@ function persist(): void {
 /** 把任意 throw 值归一化成可读的 message + stack */
 function describeError(
   error: unknown,
-  fallbackMessage?: string,
+  fallbackMessage?: string
 ): { message: string; stack?: string } {
   if (error instanceof Error) {
-    return { message: error.message || fallbackMessage || error.name || 'Error', stack: error.stack || undefined }
+    return {
+      message: error.message || fallbackMessage || error.name || 'Error',
+      stack: error.stack || undefined
+    }
   }
   if (typeof error === 'string' && error) {
     return { message: error }
@@ -110,17 +113,17 @@ export function recordCrash(
   kind: CrashLogKind,
   error: unknown,
   fallbackMessage?: string,
-  extraStack?: string,
+  extraStack?: string
 ): CrashLogEntry {
   hydrate()
   const described = describeError(error, fallbackMessage)
   const stackParts = [described.stack, extraStack].filter(
-    (part): part is string => typeof part === 'string' && part.length > 0,
+    (part): part is string => typeof part === 'string' && part.length > 0
   )
   const entry: CrashLogEntry = {
     at: new Date().toISOString(),
     kind,
-    message: described.message,
+    message: described.message
   }
   if (stackParts.length > 0) entry.stack = stackParts.join('\n')
 
@@ -181,7 +184,7 @@ export function buildDiagnosticsText(now: Date = new Date()): string {
     '----------',
     logs,
     '',
-    'Generated locally by BlockHabit. No data was uploaded.',
+    'Generated locally by BlockHabit. No data was uploaded.'
   ].join('\n')
 }
 

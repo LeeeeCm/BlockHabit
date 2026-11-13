@@ -7,7 +7,7 @@ import {
   prepareImport,
   STATE_KEY,
   CORRUPT_BACKUP_KEY,
-  SCHEMA_VERSION,
+  SCHEMA_VERSION
 } from './adapter'
 import type { AppState } from '../types'
 
@@ -20,7 +20,7 @@ function emptyState(): AppState {
     activeBlueprintId: 'castle',
     completedBlueprintIds: [],
     settings: { theme: 'light', language: 'zh' },
-    dayClaims: [],
+    dayClaims: []
   }
 }
 
@@ -30,7 +30,7 @@ function validState(): AppState {
     id: 'h1',
     name: '读书',
     frequency: { type: 'daily' },
-    createdAt: '2026-08-22T10:00:00.000Z',
+    createdAt: '2026-08-22T10:00:00.000Z'
   })
   s.checkIns.push({ id: 'c1', habitId: 'h1', date: '2026-08-22', at: '2026-08-22T10:30:00.000Z' })
   s.builds.push({
@@ -39,7 +39,7 @@ function validState(): AppState {
     index: 0,
     placedAt: '2026-08-22T10:30:00.000Z',
     fromHabitId: 'h1',
-    bonus: false,
+    bonus: false
   })
   return s
 }
@@ -181,20 +181,46 @@ describe('v1 → v2 migration', () => {
     return {
       schemaVersion: 1,
       habits: [
-        { id: 'h1', name: '读书', frequency: { type: 'daily' }, createdAt: '2026-08-01T00:00:00.000Z' },
+        {
+          id: 'h1',
+          name: '读书',
+          frequency: { type: 'daily' },
+          createdAt: '2026-08-01T00:00:00.000Z'
+        }
       ],
       checkIns: [
         // v1 遗留：带 rewardBlockIndex、无 blueprintId
-        { id: 'c1', habitId: 'h1', date: '2026-08-10', at: '2026-08-10T09:00:00.000Z', placedBlockId: 'b1', rewardBlockIndex: 0 },
+        {
+          id: 'c1',
+          habitId: 'h1',
+          date: '2026-08-10',
+          at: '2026-08-10T09:00:00.000Z',
+          placedBlockId: 'b1',
+          rewardBlockIndex: 0
+        }
       ],
       builds: [
-        { id: 'b1', blueprintId: 'castle', index: 0, placedAt: '2026-08-10T09:00:00.000Z', fromHabitId: 'h1', bonus: false },
-        { id: 'day1', blueprintId: 'castle', index: 1, placedAt: '2026-08-10T20:00:00.000Z', fromHabitId: '__day__', bonus: true },
+        {
+          id: 'b1',
+          blueprintId: 'castle',
+          index: 0,
+          placedAt: '2026-08-10T09:00:00.000Z',
+          fromHabitId: 'h1',
+          bonus: false
+        },
+        {
+          id: 'day1',
+          blueprintId: 'castle',
+          index: 1,
+          placedAt: '2026-08-10T20:00:00.000Z',
+          fromHabitId: '__day__',
+          bonus: true
+        }
       ],
       activeBlueprintId: 'castle',
       completedBlueprintIds: [],
       settings: { theme: 'light', language: 'zh' },
-      dayClaims: ['2026-08-10'],
+      dayClaims: ['2026-08-10']
     }
   }
 
@@ -204,7 +230,12 @@ describe('v1 → v2 migration', () => {
     if (!r.state) return
     expect(r.state.schemaVersion).toBe(SCHEMA_VERSION)
     expect(r.state.dayClaims).toEqual([
-      { date: '2026-08-10', claimedAt: '2026-08-10T12:00:00.000Z', blockId: 'day1', blueprintId: 'castle' },
+      {
+        date: '2026-08-10',
+        claimedAt: '2026-08-10T12:00:00.000Z',
+        blockId: 'day1',
+        blueprintId: 'castle'
+      }
     ])
     expect(r.state.deletedDayClaims).toEqual([])
   })

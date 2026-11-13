@@ -8,7 +8,15 @@ import { GalleryDialog } from '../components/GalleryDialog'
 import { PolaroidModal } from '../components/PolaroidModal'
 import { FoundationNoteDialog } from '../components/FoundationNoteDialog'
 import { GuideTip } from '../components/GuideTip'
-import { IconCamera, IconEcho, IconFoundation, IconGallery, IconRotateCcw, IconRotateCw, IconSparkle } from '../components/Icons'
+import {
+  IconCamera,
+  IconEcho,
+  IconFoundation,
+  IconGallery,
+  IconRotateCcw,
+  IconRotateCw,
+  IconSparkle
+} from '../components/Icons'
 import { triggerHaptic } from '../platform'
 import { hasSeenTip, markTipSeen } from '../platform/guideTips'
 export default function Build() {
@@ -45,7 +53,7 @@ export default function Build() {
   useEffect(() => {
     setCeremonyShown(
       builds.filter((b) => b.blueprintId === activeBlueprintId).length >=
-        getBlueprint(activeBlueprintId).blocks.length,
+        getBlueprint(activeBlueprintId).blocks.length
     )
   }, [activeBlueprintId])
 
@@ -70,21 +78,31 @@ export default function Build() {
           alignItems: 'center',
           gap: 14,
           padding: '14px 20px',
-          borderBottom: '1px solid var(--line)',
+          borderBottom: '1px solid var(--line)'
         }}
       >
-        <span style={{ fontWeight: 700, fontSize: 'var(--fs-title)' }}>{getBlueprintName(blueprint.id, lang)}</span>
+        <span style={{ fontWeight: 700, fontSize: 'var(--fs-title)' }}>
+          {getBlueprintName(blueprint.id, lang)}
+        </span>
         <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-body)' }}>
           {t.build.blocksCount(placedCount, total)}
         </span>
-        <div style={{ flex: 1, height: 6, background: 'var(--line)', maxWidth: 260, borderRadius: 999 }}>
+        <div
+          style={{
+            flex: 1,
+            height: 6,
+            background: 'var(--line)',
+            maxWidth: 260,
+            borderRadius: 999
+          }}
+        >
           <div
             style={{
               width: `${progressRatio * 100}%`,
               height: '100%',
               background: complete ? 'var(--progress-green)' : 'var(--ink)',
               borderRadius: 999,
-              transition: 'width var(--dur-xl) var(--ease-bounce)',
+              transition: 'width var(--dur-xl) var(--ease-bounce)'
             }}
           />
         </div>
@@ -117,11 +135,33 @@ export default function Build() {
         {enableAmbientLighting && (
           <span
             className="btn ghost"
-            style={{ padding: '7px 12px', fontSize: 'var(--fs-body)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'default' }}
+            style={{
+              padding: '7px 12px',
+              fontSize: 'var(--fs-body)',
+              borderRadius: 999,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              cursor: 'default'
+            }}
             title={t.build.ambientHint}
           >
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
-            {period === 'dawn' ? t.build.ambientDawn : period === 'dusk' ? t.build.ambientDusk : period === 'night' ? t.build.ambientNight : t.build.ambientNoon}
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: 'var(--accent)',
+                flexShrink: 0
+              }}
+            />
+            {period === 'dawn'
+              ? t.build.ambientDawn
+              : period === 'dusk'
+                ? t.build.ambientDusk
+                : period === 'night'
+                  ? t.build.ambientNight
+                  : t.build.ambientNoon}
           </span>
         )}
         <button
@@ -160,7 +200,7 @@ export default function Build() {
             fontSize: 'var(--fs-caption)',
             color: 'var(--ink-2)',
             borderBottom: '1px solid var(--line)',
-            lineHeight: 1.5,
+            lineHeight: 1.5
           }}
         >
           {t.build.allDoneHint(blueprintOrder.length)}
@@ -181,7 +221,7 @@ export default function Build() {
             borderRadius: 999,
             border: '1px solid var(--line)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            zIndex: 5,
+            zIndex: 5
           }}
         >
           <button
@@ -199,7 +239,7 @@ export default function Build() {
               color: 'var(--ink-2)',
               minWidth: 32,
               textAlign: 'center',
-              userSelect: 'none',
+              userSelect: 'none'
             }}
           >
             {rotation * 90}°
@@ -238,7 +278,7 @@ export default function Build() {
               alignItems: 'baseline',
               gap: 8,
               cursor: 'pointer',
-              zIndex: 5,
+              zIndex: 5
             }}
             onClick={() => setFoundationModalOpen(true)}
             title={t.reflections.brickInspectEditHint}
@@ -252,7 +292,7 @@ export default function Build() {
                 opacity: 0.9,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'nowrap'
               }}
             >
               “{foundationNote}”
@@ -268,7 +308,7 @@ export default function Build() {
               bottom: 18,
               color: 'var(--ink-2)',
               fontSize: 'var(--fs-body)',
-              lineHeight: 1.7,
+              lineHeight: 1.7
             }}
           >
             <span style={{ whiteSpace: 'pre-line' }}>
@@ -299,7 +339,7 @@ export default function Build() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 18,
-              zIndex: 10,
+              zIndex: 10
             }}
           >
             <Confetti />
@@ -336,7 +376,7 @@ export default function Build() {
                     borderRadius: 999,
                     fontSize: 'var(--fs-small)',
                     color: 'var(--ink-2)',
-                    background: 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                    background: 'color-mix(in srgb, var(--ink) 6%, transparent)'
                   }}
                   title={t.build.allDoneHint(blueprintOrder.length)}
                 >
@@ -359,9 +399,14 @@ export default function Build() {
       </div>
 
       {galleryOpen && <GalleryDialog onClose={() => setGalleryOpen(false)} />}
-      {polaroidOpen && <PolaroidModal blueprint={blueprint} onClose={() => setPolaroidOpen(false)} />}
+      {polaroidOpen && (
+        <PolaroidModal blueprint={blueprint} onClose={() => setPolaroidOpen(false)} />
+      )}
       {foundationModalOpen && (
-        <FoundationNoteDialog blueprintId={blueprint.id} onClose={() => setFoundationModalOpen(false)} />
+        <FoundationNoteDialog
+          blueprintId={blueprint.id}
+          onClose={() => setFoundationModalOpen(false)}
+        />
       )}
     </div>
   )
@@ -376,7 +421,7 @@ function Confetti() {
       dur: 1.4 + Math.random() * 1.2,
       size: 5 + Math.random() * 7,
       color: colors[i % colors.length],
-      rot: Math.random() * 360,
+      rot: Math.random() * 360
     }))
   }, [])
   return (
@@ -392,7 +437,7 @@ function Confetti() {
             height: p.size,
             background: p.color,
             transform: `rotate(${p.rot}deg)`,
-            animation: `confetti-fall ${p.dur}s ${p.delay}s ease-in forwards`,
+            animation: `confetti-fall ${p.dur}s ${p.delay}s ease-in forwards`
           }}
         />
       ))}

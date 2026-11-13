@@ -74,7 +74,7 @@ function mergeHabits(localHabits: Habit[], remoteHabits: Habit[]): Habit[] {
 function mergeCheckIns(
   localCheckIns: CheckIn[],
   remoteCheckIns: CheckIn[],
-  habits: Habit[] = [],
+  habits: Habit[] = []
 ): CheckIn[] {
   const merged: CheckIn[] = []
   const idMap = new Map<string, number>()
@@ -101,7 +101,7 @@ function mergeCheckIns(
       const combined: CheckIn = {
         ...other,
         ...base,
-        note: (base.note && base.note.trim()) ? base.note : other.note,
+        note: base.note && base.note.trim() ? base.note : other.note,
         mood: base.mood || other.mood,
         starred: Boolean(base.starred || other.starred),
         placedBlockId: base.placedBlockId || other.placedBlockId,
@@ -110,7 +110,7 @@ function mergeCheckIns(
         value: base.value ?? other.value,
         bonus: base.bonus ?? other.bonus,
         // 墓碑一旦出现即生效（不可逆），任一侧携带即保留
-        deletedAt: base.deletedAt ?? other.deletedAt,
+        deletedAt: base.deletedAt ?? other.deletedAt
       }
       merged[existingIndex] = combined
       if (c.id) idMap.set(c.id, existingIndex)
@@ -141,7 +141,7 @@ function mergeDayClaims(
   localClaims: DayClaim[],
   remoteClaims: DayClaim[],
   localDeleted: { date: string; deletedAt: string }[],
-  remoteDeleted: { date: string; deletedAt: string }[],
+  remoteDeleted: { date: string; deletedAt: string }[]
 ): { claims: DayClaim[]; deleted: { date: string; deletedAt: string }[] } {
   const claimByDate = new Map<string, DayClaim>()
   for (const c of remoteClaims || []) {
@@ -159,7 +159,7 @@ function mergeDayClaims(
         date: c.date,
         claimedAt: c.claimedAt,
         blockId: c.blockId || existing.blockId,
-        blueprintId: c.blueprintId || existing.blueprintId,
+        blueprintId: c.blueprintId || existing.blueprintId
       })
     }
   }
@@ -204,17 +204,17 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
     local.dayClaims || [],
     remote.dayClaims || [],
     local.deletedDayClaims || [],
-    remote.deletedDayClaims || [],
+    remote.deletedDayClaims || []
   )
 
   // 墓碑 GC：清理超过 90 天的删除墓碑，防止存档无限膨胀
   // （已知限制：离线超过 90 天的设备参与合并时，对应删除可能复活一次）
   const gcCutoff = Date.now() - 90 * 86_400_000
   const gcCheckIns = checkIns.filter(
-    (c) => !c.deletedAt || new Date(c.deletedAt).getTime() >= gcCutoff,
+    (c) => !c.deletedAt || new Date(c.deletedAt).getTime() >= gcCutoff
   )
   const gcDeletedClaims = deletedDayClaims.filter(
-    (d) => new Date(d.deletedAt).getTime() >= gcCutoff,
+    (d) => new Date(d.deletedAt).getTime() >= gcCutoff
   )
 
   // 积木层 = 事实投影（合并后重建，不再按 index 并集）
@@ -229,7 +229,7 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
 
   const foundationNotes: Record<string, string> = {
     ...(remote.foundationNotes || {}),
-    ...(local.foundationNotes || {}),
+    ...(local.foundationNotes || {})
   }
 
   const placementMap = new Map<string, { blueprintId: string; gridX: number; gridY: number }>()
@@ -241,7 +241,7 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
   const reminderLog: Record<string, ReminderLogEntry> = {}
   const reminderLogIds = new Set([
     ...Object.keys(local.reminderLog || {}),
-    ...Object.keys(remote.reminderLog || {}),
+    ...Object.keys(remote.reminderLog || {})
   ])
   for (const id of reminderLogIds) {
     const l = local.reminderLog?.[id]
@@ -254,7 +254,7 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
   // 设置全字段并集（本地优先，缺字段回退远端）
   const settings = {
     ...(remote.settings || {}),
-    ...(local.settings || {}),
+    ...(local.settings || {})
   }
 
   const activeBlueprintId = local.activeBlueprintId || remote.activeBlueprintId || 'plant'
@@ -263,12 +263,14 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
   // 重建投影后块数不足者剔除。展台摆放随之对账：无法判定完成态的（真实数据中不存在）保守保留。
   const completedSet = new Set([
     ...(local.completedBlueprintIds || []),
-    ...(remote.completedBlueprintIds || []),
+    ...(remote.completedBlueprintIds || [])
   ])
-  const activeCompleted = Array.from(completedSet).filter((id) => {
-    const total = blueprintBlockCount(id)
-    return total !== null && rebuildCountForBlueprint(builds, id) >= total
-  }).sort()
+  const activeCompleted = Array.from(completedSet)
+    .filter((id) => {
+      const total = blueprintBlockCount(id)
+      return total !== null && rebuildCountForBlueprint(builds, id) >= total
+    })
+    .sort()
   const showcasePlacementsFiltered = showcasePlacements.filter((p) => {
     if (!completedSet.has(p.blueprintId)) return true
     const total = blueprintBlockCount(p.blueprintId)
@@ -283,7 +285,7 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
     contentVersion: Math.max(
       CONTENT_VERSION,
       local.contentVersion ?? CONTENT_VERSION,
-      remote.contentVersion ?? CONTENT_VERSION,
+      remote.contentVersion ?? CONTENT_VERSION
     ),
     habits,
     checkIns: gcCheckIns,
@@ -297,7 +299,7 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
     repairBrickMonth,
     showcasePlacements: showcasePlacementsFiltered,
     foundationNotes,
-    reminderLog,
+    reminderLog
   }
 }
 

@@ -8,7 +8,7 @@ import {
   CONTENT_PACKS,
   CONTENT_PACK_V2_IDS,
   CONTENT_PACK_V3_IDS,
-  CONTENT_VERSION,
+  CONTENT_VERSION
 } from './manifest'
 import { APPROVED_BLUEPRINT_COLORS } from './palette'
 
@@ -34,7 +34,7 @@ function isCompletelyFloating(block: BlockDef, occupied: Set<string>): boolean {
     [1, 0],
     [-1, 0],
     [0, 1],
-    [0, -1],
+    [0, -1]
   ]
   return !neighbors.some(([dx, dy]) => occupied.has(`${block.x + dx},${block.y + dy},${block.z}`))
 }
@@ -62,17 +62,10 @@ const BASE_ORDER = [
   'monument',
   'pyramid',
   'robot',
-  'castle',
+  'castle'
 ]
 
-const V2_ORDER = [
-  'treehouse',
-  'greenhouse',
-  'clocktower',
-  'bridge',
-  'observatory',
-  'library',
-]
+const V2_ORDER = ['treehouse', 'greenhouse', 'clocktower', 'bridge', 'observatory', 'library']
 
 /** 基础 12 座的权威块数（D-067 配色只改 color 字段，几何/块数必须逐座不变） */
 const BASE_BLOCK_COUNTS: Record<string, number> = {
@@ -87,7 +80,7 @@ const BASE_BLOCK_COUNTS: Record<string, number> = {
   monument: 147,
   pyramid: 165,
   robot: 165,
-  castle: 190,
+  castle: 190
 }
 
 /** 内容包 v2 的权威块数（D-067：treehouse +4 树冠、bridge +2 灯柱） */
@@ -97,7 +90,7 @@ const V2_BLOCK_COUNTS: Record<string, number> = {
   clocktower: 99,
   bridge: 101,
   observatory: 90,
-  library: 108,
+  library: 108
 }
 
 /** 内容包 v3 的权威块数（D-20261111-070） */
@@ -106,7 +99,7 @@ const V3_BLOCK_COUNTS: Record<string, number> = {
   bookshop: 104,
   postoffice: 92,
   firestation: 112,
-  watertower: 94,
+  watertower: 94
 }
 
 /**
@@ -132,7 +125,7 @@ const OLD_18_FINGERPRINTS: Record<string, string> = {
   clocktower: '46dcb4df',
   bridge: '4343cede',
   observatory: '76d2da80',
-  library: 'ba2282b4',
+  library: 'ba2282b4'
 }
 
 const ZH = getTranslation('zh')
@@ -204,10 +197,10 @@ describe('内容包 manifest（B1 / D-20261111-070）', () => {
     expect(blueprintOrder.slice(0, 18)).toEqual([...BASE_ORDER, ...V2_ORDER])
     for (const id of [...BASE_ORDER, ...V2_ORDER]) {
       expect(blueprints[id].blocks.length, `${id} 块数`).toBe(
-        BASE_BLOCK_COUNTS[id] ?? V2_BLOCK_COUNTS[id],
+        BASE_BLOCK_COUNTS[id] ?? V2_BLOCK_COUNTS[id]
       )
       expect(fingerprint(blueprints[id].blocks), `${id} 逐块指纹（几何/顺序/色值）`).toBe(
-        OLD_18_FINGERPRINTS[id],
+        OLD_18_FINGERPRINTS[id]
       )
     }
   })
@@ -218,7 +211,7 @@ describe('内容包 manifest（B1 / D-20261111-070）', () => {
         if (!block.color) continue
         expect(
           APPROVED_BLUEPRINT_COLORS.has(block.color),
-          `${id} 使用了未批准颜色 ${block.color}`,
+          `${id} 使用了未批准颜色 ${block.color}`
         ).toBe(true)
       }
     }
@@ -287,7 +280,10 @@ describe('内容包 v2 的 6 座结构', () => {
       expect(new Set(keys).size, `${id} duplicate coords`).toBe(keys.length)
       const occupied = new Set(keys)
       const floating = blocks.filter((block) => isCompletelyFloating(block, occupied))
-      expect(floating, `${id} floating: ${floating.map((b) => `${b.x},${b.y},${b.z}`).join(' ')}`).toEqual([])
+      expect(
+        floating,
+        `${id} floating: ${floating.map((b) => `${b.x},${b.y},${b.z}`).join(' ')}`
+      ).toEqual([])
       for (const block of blocks) {
         expect(['basic', 'window', 'gate'], `${id} bad type`).toContain(block.type)
       }
@@ -353,7 +349,10 @@ describe('内容包 v3 的 5 座结构（D-20261111-070）', () => {
       expect(new Set(keys).size, `${id} duplicate coords`).toBe(keys.length)
       const occupied = new Set(keys)
       const floating = blocks.filter((block) => isCompletelyFloating(block, occupied))
-      expect(floating, `${id} floating: ${floating.map((b) => `${b.x},${b.y},${b.z}`).join(' ')}`).toEqual([])
+      expect(
+        floating,
+        `${id} floating: ${floating.map((b) => `${b.x},${b.y},${b.z}`).join(' ')}`
+      ).toEqual([])
       for (const block of blocks) {
         expect(['basic', 'window', 'gate'], `${id} bad type`).toContain(block.type)
       }

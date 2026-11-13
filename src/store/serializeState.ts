@@ -23,7 +23,7 @@ export function serializeState(state: AppState): AppState {
     repairBrickMonth,
     showcasePlacements,
     foundationNotes,
-    reminderLog,
+    reminderLog
   } = state
   return {
     schemaVersion,
@@ -41,6 +41,6 @@ export function serializeState(state: AppState): AppState {
     repairBrickMonth,
     showcasePlacements,
     foundationNotes,
-    reminderLog,
+    reminderLog
   }
 }
