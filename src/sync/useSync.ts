@@ -116,7 +116,7 @@ async function dropWebDavSecret(config: WebDavConfig): Promise<void> {
 }
 
 /**
- * C4 §4 方案 B 的探测 / 迁移 / 回填（启动时调用一次）：
+ * C4 §4 方案 B 的探测 / 迁移 / 回填（useSync 首次挂载时调用一次，即启动后首次打开设置页）：
  * 1) 探测 OS 凭据存储；不可用则什么都不做，完全保持旧行为。
  * 2) rememberPassword=false：磁盘与凭据管理器里都不该有密码 → 清掉后返回。
  * 3) 老存档里有明文密码：搬进凭据管理器，成功后立刻把 localStorage 里的明文清掉（隐私优先）。
@@ -208,7 +208,9 @@ export function useSync() {
     })
   }, [])
 
-  // C4 §4 方案 B：挂载即探测 / 迁移 / 回填（异步，不阻塞首屏；失败保持原样）
+  // C4 §4 方案 B：挂载即探测 / 迁移 / 回填（异步，不阻塞首屏；失败保持原样）。
+  // 注意：useSync 由 SettingsDialog 调用，SettingsDialog 只在「打开设置」时挂载——
+  // 因此迁移/回填发生在启动后首次打开设置页，而不是进程启动瞬间（既有的同步挂载方式，未改）。
   useEffect(() => {
     let cancelled = false
     void (async () => {
