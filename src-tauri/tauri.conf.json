@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "BlockHabit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "identifier": "com.blockhabit.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -43,8 +43,10 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "",
-      "endpoints": [],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU5RUQwM0QyOEI3OThGQzMKUldURGozbUwwZ1B0V1RkeWpxM2NHSkJFMGhhUzhKZUhhL08ramc4VTNOS2JzaXJSR3BYaDJwV3gK",
+      "endpoints": [
+        "https://github.com/LeeeeCm/BlockHabit/releases/latest/download/latest.json"
+      ],
       "windows": {
         "installMode": "passive"
       }

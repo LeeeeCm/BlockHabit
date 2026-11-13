@@ -30,3 +30,10 @@ dist-ssr
 .qoder/
 *.zip
 vite.log
+
+# 签名密钥材料（TAURI_SIGNING_PRIVATE_KEY 等）绝不入库 —— 私钥只放仓库外与 CI secrets
+*.key
+*.key.pub
+*.pem
+*.pfx
+*.p12
