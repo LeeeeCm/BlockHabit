@@ -2,13 +2,13 @@
 id: D-20261110-056
 date: 2026-11-10
 title: 启动流畅：水合完成前不渲染空态，重页面懒加载 + 空闲预取
-status: proposed
+status: approved
 owner: lead
 surface: [global, today, build, showcase, stats]
 axioms: [A4, A5]
 files: [src/App.tsx, src/main.tsx, src/App.test.tsx]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -53,3 +53,7 @@ initPersistence 是异步的（Tauri 读文件 / localStorage 读档），但 Ap
 - 2026-11-10 追加修正（实测驱动）：页面 React.lazy 首次切页有 ~300ms 的 Suspense 延迟提交空白（证据见 `.tmp-perf/report.md` §5，非动态 import，同页二次切换 12–18ms），已回退 Build/Showcase/Stats 为静态 import；水合门与 MiniDeskToy 懒加载保留。切页恢复即时（~13–18ms），冷启动仍受水合门保护。
 - 2026-11-10 规格对齐：水合未完成时渲染主题一致的空白壳（`aria-busy`、`--bg`），不渲染标题栏/底栏，避免读档窗口内误点；spec §2.5 已同步为最终口径。
 - 2026-11-10 实施校正：`src/main.tsx` 最终未改动（原 files 字段为计划范围）；页面静态 import 回退后验收 #2 的「独立 chunk」不再适用，以本条与上一条变更履历为最终口径。
+
+## 批量审核（2026-11-14）
+
+- 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。

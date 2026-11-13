@@ -2,13 +2,13 @@
 id: D-20261110-048
 date: 2026-11-10
 title: 六项待决事项按建议决议：F4 批依赖并落地原生 HTTP、D1 公理改写、D2 保留装饰色、LICENSE=MIT
-status: proposed
+status: approved
 owner: lead
 surface: [settings]
 axioms: [A1, A7]
 files: [LICENSE, package.json, src/platform/http.ts, src/sync/webdav.ts, src-tauri/Cargo.toml, src-tauri/src/lib.rs, src-tauri/capabilities/default.json, design/AESTHETIC.md, design/ART.md]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景
@@ -99,3 +99,15 @@ HTTP 客户端的 TLS 栈（rustls + 证书）是主要增量，无法靠裁剪�
 
 ### 3) 验证边界
 本环境只能证明「编译 / 类型 / 单测 / 出包」链路；**真实 WebDAV 连通性需要桌面窗口 + 一台 WebDAV 服务器**（如 Nextcloud）人工验证。
+
+## 批量审核（2026-11-14）
+
+- 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。
+
+## 履历补充：F6 决议已被取代（2026-11-14）
+
+- 本记录第 5 项「F6 updater：暂不接入」的理由是「无代码签名证书时接 updater 无法安全验证」，该结论**已被取代**：
+  D-20261111-069（approved）与 `docs/release/updater-and-keyring-assessment.md`（C4 评估）确认 Tauri 2 updater 用**自带 minisign 签名**即可验证更新包
+  （不依赖 Windows Authenticode），并已落地 `@tauri-apps/plugin-updater` / `@tauri-apps/plugin-process` 与设置页「版本与更新」手动检查入口。
+- 因此「F6 暂不接 updater」只记录了 2026-11-10 当时的判断，**不再是当前结论**；以 D-20261111-069 / C4 为准。
+- 本条为追加式说明，不修改上文任何已写内容（AGENTS.md §2 禁止删除/改写既有记录）。

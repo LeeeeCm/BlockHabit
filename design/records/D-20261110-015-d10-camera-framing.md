@@ -2,13 +2,13 @@
 id: D-20261110-015
 date: 2026-11-10
 title: 实施 D10：建造页自适应取景（开荒期放大 1.5×，地基虚线仍完整可见）
-status: proposed
+status: approved
 owner: lead
 surface: [build]
 axioms: [A3, A4]
 files: [src/render/framing.ts, src/render/framing.test.ts, src/render/BuildScene.tsx]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -67,3 +67,7 @@ reviewer: pending
 ## 变更履历
 
 - 2026-11-10 created (lead)
+
+## 批量审核（2026-11-14）
+
+- 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。

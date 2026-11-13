@@ -2,13 +2,13 @@
 id: D-20261110-007
 date: 2026-11-10
 title: 实施批次 A（数据安全三项 P0）与 B2（counter 刷块）：读档失败态、写盘串行化、蓝图外键校验
-status: proposed
+status: approved
 owner: lead
 surface: [settings, today]
 axioms: [A6, A7]
 files: [src/storage/adapter.ts, src/storage/tauriStorage.ts, src/store/appStore.ts, src/logic/blueprints/index.ts, src/App.tsx, src/i18n/types.ts, src/i18n/locales/zh.ts, src/i18n/locales/en.ts, src/sync/useSync.test.ts]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -75,3 +75,7 @@ const shouldAwardBlock = !isCounter || (!awardedToday && reachedTarget)
 ## 变更履历
 
 - 2026-11-10 created (lead) —— 批次 A 的 A1/A2/A3 与批次 B 的 B2 已实现并通过新增回归用例
+
+## 批量审核（2026-11-14）
+
+- 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。

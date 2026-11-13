@@ -2,13 +2,13 @@
 id: D-20261110-055
 date: 2026-11-10
 title: 晚间收尾提醒：首次打卡后自愿开启，只在还有未完成习惯时提醒一次
-status: proposed
+status: approved
 owner: lead
 surface: [today, settings, global]
 axioms: [A5, A7]
 files: [src/logic/eveningNudge.ts, src/components/ReminderWatcher.tsx, src/pages/Today.tsx, src/components/SettingsDialog.tsx, src/types.ts, src/store/appStore.ts, src/storage/adapter.ts, src/i18n/locales/zh.ts, src/i18n/locales/en.ts, src/i18n/types.ts]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -54,3 +54,7 @@ reviewer: pending
 - 2026-11-10 implemented in worktree (lead); 待人类审核：状态保持 proposed，审核后由人类改为 approved/implemented
 - 2026-11-10 实施补充：系统通知权限申请放在用户点「开启提醒」的当下（授权卡与设置开关两处），避免 21:00 提醒时才弹系统权限框；浏览器/Tauri 均走 platform/notify 的 ensureNotifyPermission。
 - 2026-11-10 实施校正：实际新增文件包含 `src/platform/eveningNudgePrefs.ts`（consent 与 lastNudgedDay 的 localStorage 读写），原 files 字段漏列。
+
+## 批量审核（2026-11-14）
+
+- 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。

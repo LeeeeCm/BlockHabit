@@ -2,13 +2,13 @@
 id: D-20261110-044
 date: 2026-11-10
 title: 实施 E5：BuildScene 906 → 786 行（拆出动画时间线 / 取景数学 / 读砖气泡），逐像素零差异
-status: proposed
+status: approved
 owner: lead
 surface: [build]
 axioms: [A5]
 files: [src/render/sceneMotion.ts, src/render/sceneCamera.ts, src/components/BrickInspectPopover.tsx, src/render/BuildScene.tsx, src/render/sceneMotion.test.ts, src/render/sceneCamera.test.ts]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -56,3 +56,7 @@ reviewer: pending
 ## 变更履历
 
 - 2026-11-10 created (lead)
+
+## 批量审核（2026-11-14）
+
+- 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。

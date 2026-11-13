@@ -2,13 +2,13 @@
 id: D-20261110-008
 date: 2026-11-10
 title: 实施 A4（ErrorBoundary + 全局错误捕获 + 本地崩溃日志）、A5a（旧档导入可达）、A6（损坏档不静默清空）
-status: proposed
+status: approved
 owner: lead
 surface: [today, build, stats, settings]
 axioms: [A4, A6]
 files: [src/components/ErrorBoundary.tsx, src/platform/errorLog.ts, src/main.tsx, src/components/SettingsDialog.tsx, src/storage/adapter.ts, src/storage/tauriStorage.ts, src/store/appStore.ts, src/App.tsx, src/i18n/types.ts, src/i18n/locales/zh.ts, src/i18n/locales/en.ts]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -59,3 +59,7 @@ reviewer: pending
 ## 变更履历
 
 - 2026-11-10 created (lead) —— A4 由 fix-boundary 实施、A5a/A6 由 lead 实施，全部通过验证
+
+## 批量审核（2026-11-14）
+
+- 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。

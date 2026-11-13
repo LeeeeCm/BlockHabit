@@ -2,13 +2,13 @@
 id: D-20261110-020
 date: 2026-11-10
 title: 实施 E3：积木精灵缓存升级为 LRU + 字节预算（高 DPR 下内存封顶 24MB）
-status: proposed
+status: approved
 owner: lead
 surface: [build, showcase, today]
 axioms: [A2, A3]
 files: [src/render/iso.ts, src/render/spriteCache.test.ts]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -73,3 +73,7 @@ while (size > 0 && (size >= MAX_SPRITE_CACHE || bytes + incoming > MAX_SPRITE_BY
 ## 变更履历
 
 - 2026-11-10 created (lead)
+
+## 批量审核（2026-11-14）
+
+- 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。

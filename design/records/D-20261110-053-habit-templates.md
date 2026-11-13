@@ -2,13 +2,13 @@
 id: D-20261110-053
 date: 2026-11-10
 title: 习惯模板：空态提供 5 个一键起步选项，降低第一次创建的门槛
-status: proposed
+status: approved
 owner: lead
 surface: [today]
 axioms: [A2, A4, A6]
 files: [src/logic/habitTemplates.ts, src/components/HabitTemplates.tsx, src/pages/Today.tsx, src/i18n/locales/zh.ts, src/i18n/locales/en.ts, src/i18n/types.ts]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -56,3 +56,7 @@ reviewer: pending
 - 2026-11-10 created (lead)
 - 2026-11-10 implemented in worktree (lead); 待人类审核：状态保持 proposed，审核后由人类改为 approved/implemented
 - 2026-11-10 实施校正：模板中文名精简为「喝水 / 阅读 / 走动 / 早睡 / 记账」（原表为「喝一杯水 / 读 10 分钟…」，一行放不下 5 枚胶囊）；创建参数与验收其余不变。
+
+## 批量审核（2026-11-14）
+
+- 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。

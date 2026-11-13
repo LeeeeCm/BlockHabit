@@ -2,13 +2,13 @@
 id: D-20261110-006
 date: 2026-11-10
 title: 全面优化方案：合并 89 条审计为 46 条，A–G 七批落地
-status: proposed
+status: approved
 owner: lead
 surface: [today, build, stats, showcase, settings, tray, mini-widget, dialogs]
 axioms: [A1, A2, A3, A4, A5, A6, A7]
 files: [docs/superpowers/specs/2026-11-10-blockhabit-optimization-plan.md]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -64,3 +64,7 @@ reviewer: pending
 ## 变更履历
 
 - 2026-11-10 created (lead)
+
+## 批量审核（2026-11-14）
+
+- 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。
