@@ -83,13 +83,17 @@
 - `latest.json` 公网可访问（`releases/latest/download/latest.json` HTTP 200），version=0.2.1、url 指向 v0.2.1 资产。
 - 签名结构性校验：把 pubkey 与 .sig 解码后比对 minisign key id，均为 `c38f798bd203ed59` —— 签名确实由配置里那把公钥对应的私钥签出。
 - CI 绿：`36c5d34`、`fae5a0b`、`8ac03c9` 三次 push 的 CI 均 success（含新增 Format check / Production build）。
+- `npm run release:check -- --version 0.2.1 --download` 11/11 通过（含 sha256 与 GitHub digest 比对）。
 - 首次 Release 触发在 `Verify updater config` 失败（该步骤未注入 secrets 环境变量），已在 `fae5a0b` 修复后重跑成功。
 - 未覆盖：真实「旧版本 → 检查更新 → 安装 → 重启」闭环需真机执行，见 `docs/release/real-device-acceptance.md` §6（T6）。
 
 ### 验证
 
-- `npx tsc --noEmit` 0 错；`npm test` **108 文件 / 1124 用例全绿**；`design:check` **73 条**；
+- `npx tsc --noEmit` 0 错；`npm test` **109 文件 / 1133 用例全绿**；`design:check` **73 条**；
   `format:check`、`check:versions`（0.2.1）通过；`cargo test --lib` 6 例通过。
+- 新增 `npm run release:check -- --version 0.2.1`（`scripts/check-release.mjs`，9 例单测）：一条命令核对
+  Release 存在性、资产齐全、latest.json 公网 200、version 一致、url 指向本 tag、`.sig` 与 signature 逐字节一致、
+  安装包可下；`--download` 再加 sha256 与 GitHub digest 比对。发布后实测 **11/11 通过**。
 - `npm run tauri build -- --config src-tauri/tauri.release.conf.json`（`VITE_UPDATER_ENABLED=1` +
   签名密钥）成功，产出带 `.sig` 的 NSIS/MSI 安装包（体积见发布报告）。
 - 仍未自动完成：T6（自动更新真机流程）与 T7（关键动作前强制结束进程验证）需真机人工执行，

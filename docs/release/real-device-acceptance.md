@@ -132,7 +132,8 @@
 
 > 2026-11-14 起发布链路已配置：签名密钥在仓库外、公钥/endpoints 已写入 `plugins.updater`、
 > 两个 Actions secrets 已设置、仓库已转 public、0.2.1 已由 Release workflow 出签名包并上传 `latest.json`。
-> 因此 T6 从「条件项」变为**可执行项**。C4 评估见 `docs/release/updater-and-keyring-assessment.md`（文件名见下）。
+> 因此 T6 从「条件项」变为**可执行项**。首次触发 Release workflow 时在 `Verify updater config` 失败（该步骤未注入 secrets 环境变量），
+> 修复后重跑成功，产物即当前 `v0.2.1`（见发布报告 §11.1）。C4 评估见 `docs/release/updater-and-keyring-assessment.md`。
 
 ### 6.0 测试载荷（0.2.1 起新增，缺一不可）
 
@@ -158,7 +159,7 @@
 | 6. 回滚演练 | 坏版本只能发更高版本修复；不会自动降级；数据层 `contentVersion` 门禁保护旧档 |
 | 7. 升级后内容版本协同 | 新内容版本存档在旧设备上触发 needsUpgrade（不落盘、不丢数据）；提示用户全部设备升级 |
 
-**自动化覆盖**：updater 适配层 10 例（默认构建不 import 插件/不发请求、四态、错误脱敏、句柄释放）+ AboutPanel 9 例（禁用/最新/可用/失败/取消不误报）；真实下载→签名校验→安装→重启必须真机。
+**自动化覆盖**：updater 适配层 12 例（默认构建不 import 插件/不发请求、四态、错误脱敏、句柄释放、`beforeInstall` 先于下载、握手失败即中止）+ AboutPanel 10 例（禁用/最新/可用/失败/取消不误报/安装交付 forceFlush）；真实下载→签名校验→安装→重启必须真机。
 
 ---
 
@@ -232,7 +233,7 @@
 
 **本轮定向测试结果**：相关模块定向运行全部通过；`npx tsc --noEmit` 0 错误；`npm run format:check` 通过。
 
-> 说明：最终全量门禁以 Lead 提交前实测为准：`npm test` **104 文件 / 1090 用例全绿**、`design:check` **70 条**、`check:versions` 通过、`tauri build --no-bundle` 成功；本清单只引用与验收模块相关的定向结果。
+> 说明：最终全量门禁以 Lead 提交前实测为准（0.2.1）：`npx tsc --noEmit` 0 错、`npm test` **109 文件 / 1133 用例全绿**、`design:check` **73 条**、`format:check`、`check:versions` 0.2.1、`npm run build`、`tauri build --config src-tauri/tauri.release.conf.json`（签名）均通过；本清单只引用与验收模块相关的定向结果。
 
 ---
 
@@ -261,7 +262,8 @@
 
 ## 11. 已知限制与风险（验收时不要误报）
 
-- **手动更新默认禁用**：发布链路（签名密钥/端点/latest.json）未配置时，「版本与更新」按钮禁用是预期行为，不是 bug；当前版本仍需手动下载覆盖安装（README §已知限制）。
+- **旧版本没有更新通道**：0.2.0 及更早的安装包里 `plugins.updater` 的 pubkey/endpoints 为空，按钮会诚实禁用——这是预期，不是 bug；这些版本只能手动下载覆盖安装。0.2.1 起按钮可用。
+- **关机/注销不保证送达 ExitRequested**：`tao 0.37.1` 不处理 `WM_QUERYENDSESSION`（见 D-20261110-019 履历）；关键动作已立即落盘，最多丢一次非关键设置的防抖窗口，**不得**因此判定存档损坏。
 - **装饰旋转仅会话态**：D-20261111-068 明确不写存档，切页/重开均复原（「本次会话」指在展台页内）；store 落位二次校验仍按基础 footprint，极端旋转拖拽可能回弹（无数据损坏）。
 - **移动端新按钮尺寸**：装饰开关/检查更新按钮未强制 44px（旋转按钮已 44×44）；移动端为实验态，不阻塞发布。
 - **通知依赖进程存活**：应用完全退出后不会提醒；开机自启可缓解（README §平台范围）。
@@ -272,30 +274,39 @@
 
 ---
 
-## 12. 发布后自检脚本（复制到 PowerShell 直接跑）
+## 12. 发布后自检（一条命令）
 
-```powershell
-# 1) Release 是否存在、资产是否齐全
-gh release view v0.2.1 --repo LeeeeCm/BlockHabit
+发布后/回归时跑：
 
-# 2) latest.json 是否公网可访问且内容自洽（不需要登录）
-$r = Invoke-WebRequest -UseBasicParsing https://github.com/LeeeCm/BlockHabit/releases/latest/download/latest.json
-$j = $r.Content | ConvertFrom-Json
-$j.version
-$j.platforms.'windows-x86_64'.url
-$j.platforms.'windows-x86_64'.signature.Substring(0, 40) + '...'
-
-# 3) 安装包与 .sig 是否公开可下（只看响应头，不下载整包）
-(Invoke-WebRequest -UseBasicParsing -Method Head $j.platforms.'windows-x86_64'.url).StatusCode
-
-# 4) 下载安装包并核对 .sig 与 latest.json 的 signature 完全一致
-$tmp = Join-Path $env:TEMP 'bh-update-check'
-New-Item -ItemType Directory -Force -Path $tmp | Out-Null
-Invoke-WebRequest -UseBasicParsing $j.platforms.'windows-x86_64'.url -OutFile (Join-Path $tmp 'setup.exe')
-Invoke-WebRequest -UseBasicParsing ($j.platforms.'windows-x86_64'.url + '.sig') -OutFile (Join-Path $tmp 'setup.exe.sig')
-$sig = (Get-Content -Raw (Join-Path $tmp 'setup.exe.sig')).Trim()
-if ($sig -eq $j.platforms.'windows-x86_64'.signature) { 'SIG-MATCH' } else { 'SIG-MISMATCH' }
+```bash
+npm run release:check -- --version 0.2.1            # 11 项检查，只走公开 HTTP + gh CLI
+npm run release:check -- --version 0.2.1 --download # 额外下载安装包并核对 sha256 与 GitHub digest
 ```
+
+它会依次核对：latest.json 公网 200、version 与期望一致、GitHub Release 存在且非 draft/prerelease、
+资产含 `*latest.json` / `*x64-setup.exe` / `*x64-setup.exe.sig`、latest.json 的 url 指向本 tag 的安装包、
+`.sig` 与 latest.json 的 signature **逐字节一致**、安装包 HEAD 200（`--download` 时再加 sha256 比对）。
+任一项失败退出码为 1，并打印失败项。
+
+> 为什么不用 PowerShell 的 `Invoke-WebRequest`：本仓库开发机是 **Windows PowerShell 5.1**，
+> 未做 IE 首启配置时 `Invoke-WebRequest` 会抛 `NonInteractive` 而拿不到内容（实测踩过）。
+> 脚本用 Node 的全局 `fetch`，与 PowerShell 版本无关；纯逻辑部分有 9 例单测（`scripts/check-release.test.mjs`）。
+>
+> 仓库 owner 是 **`LeeeeCm`**（四个 e），手工拼 URL 时注意别少写一个。
+
+最新一次实测（2026-11-14 发布后）：
+
+| # | 检查 | 结果 |
+| --- | --- | --- |
+| 1 | latest.json 公网可读 | ✔ HTTP 200 |
+| 2 | latest.json version | ✔ 0.2.1 |
+| 3 | GitHub Release 存在 | ✔ v0.2.1 |
+| 4 | 非 draft / 非 prerelease | ✔ |
+| 5–7 | 资产含 latest.json / exe / .sig | ✔ 4 个资产齐全 |
+| 8 | url 指向本 Release 的安装包 | ✔ |
+| 9 | .sig 与 signature 逐字节一致 | ✔ 420B == 420B |
+| 10 | 安装包 HEAD 200 | ✔ |
+| 11 | （--download）sha256 与 digest | ✔ `0dc798f4…` |
 
 ### 12.1 重跑 0.2.0 起点包（T6 需要「带 updater 的旧安装包」）
 

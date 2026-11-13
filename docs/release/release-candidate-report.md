@@ -145,7 +145,7 @@ npm run tauri build -- --no-bundle
     `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 两个 Actions secrets 已设置。
   - 仓库由 private 改为 **public**（Release 资产需公开，updater 不带 token）；转公开前的历史扫描结论见 §10。
   - 版本 0.2.0 → **0.2.1**（三处构建入口 + `Cargo.lock`），`npm run check:versions` 通过。
-- **门禁（本轮实测）**：`npx tsc --noEmit` 0；`npm test` **108 文件 / 1124 用例**；
+- **门禁（本轮实测）**：`npx tsc --noEmit` 0；`npm test` **109 文件 / 1133 用例**；
   `design:check` **73 条**；`format:check` 通过；`check:versions` 0.2.1 通过；
   `cargo test --lib` 6 例；`npm run build` 成功；`npm run tauri build -- --config
   src-tauri/tauri.release.conf.json`（`VITE_UPDATER_ENABLED=1` + 签名密钥）成功并产出 `.sig`。
@@ -220,3 +220,59 @@ KEYID MATCH: true
    已注入两个 secrets（只做非空判断，不打印），并补 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 非空校验。
 2. 本地复现时设 `TAURI_SIGNING_PRIVATE_KEY_PATH` 会报「A public key has been found, but no private key」——
    bundler 只认 `TAURI_SIGNING_PRIVATE_KEY`（内容）。已写进 runbook §1.3。
+
+## 12. 独立验证（第十二轮 verifier）
+
+- 结论：**PASS**，P0 = 0。
+- 实测（verifier 自己跑的数字）：`tsc --noEmit` 0；`npm test` **108 文件 / 1124 用例**；`design:check` **73 条**；
+  `format:check`；`check:versions` 0.2.1；`npm run build`；`cargo test --lib` **6 passed**；GitHub CI 在 `36c5d34` 独立 success。
+- 设计记录纪律：58 条记录用 `c827233` 旧全文逐字比对，只替换 status/reviewer 后是 HEAD 的**严格前缀**（58/58 通过）；
+  `307eba9` 的 60 个文件全为 M（无 A/D）；`git log --diff-filter=D -- design/` 全历史 0；index 73/73 approved。
+- 代码审查：`should_handshake` 不会锁死进程；`beforeInstall` 失败即中止安装；`rememberPassword=false` 全路径无明文；
+  `credentials` 非 Tauri 不谎报；并用**破坏性实验**（把 `appStore` 的 `rotations` 改 `undefined` → 3 failed / 4 passed）证明新测试断言可失败，随后已还原。
+- 发布侧独立核验：Release 4 资产、latest.json 公网 200、exe sha256 与 GitHub digest 一致、`.sig` 与 signature 逐字节相同、
+  minisign keyid 与 `tauri.conf` 公钥一致、fixture 经 `prepareImport` 可导入（23 座 / 2485 块）。
+
+### 缺陷处置
+
+| 级别 | 项 | 处置 |
+| --- | --- | --- |
+| P1 | `real-device-acceptance.md` §12 脚本把仓库 owner 写成 `LeeeCm`（少一个 e）→ 第 2 步 404 | ✅ **已修**：改为 `LeeeeCm`，并加 `$ErrorActionPreference='Stop'`、每步状态码断言、`-cne` 失败即 throw（不再出现「失败后仍打印 SIG-MATCH」） |
+| P2 | §12 脚本无 fail-fast，失败仍打印 SIG-MATCH 且 exit 0 | ✅ **已修**（同上） |
+| P2 | 4 个文件超过 800 行：Today 766→947、MiniDeskToy 717→905、SettingsDialog 745→830、en.ts 774→806 | ⚠️ **接受并记录**：唯一原因是 `bb719e9` 的 Prettier 重排（`printWidth 100` 把长行拆开），**没有新增逻辑**；格式化前四个文件都 < 800。约定仍然有效：下次往这四个文件加逻辑时先拆分 |
+| P2 | `36c5d34` 提交时文档已写「已出签名包并上传 latest.json」，但该次 Release run 实际失败 | ✅ 已在 §11.1 与真机清单 T6 表头写明「首次触发失败 → 修复后重跑成功」，不再有前后矛盾 |
+| P3 | 部分文档数字陈旧（updater 10 例 / 104 文件 / 1090 用例 / 70 条） | ✅ 已更新为 12 例 / 108 文件 / 1124 用例 / 73 条 |
+| P3 | `update.close()` 在安装成功后未调用 | ⚠️ 接受：安装成功即进程被安装器接管退出，句柄随进程回收；保持与已发布二进制一致，不在发布后改逻辑 |
+| P3 | `credential_set("")` 不会删除旧条目 | ⚠️ 接受：前端只在密码非空时调用 set、清空走 `credential_delete`；保持与已发布二进制一致 |
+| P3 | `QuitGate` 不复位（理论） | ⚠️ 接受：`begin_quit` 只发起一次且 1.5s 后必然 `app.exit(0)`，进程生命周期内不存在「握手后继续运行」的分支 |
+| P3 | 自动同步只在设置页挂载期间运行 | ⚠️ 既有行为（`useSync` 由 `SettingsDialog` 调用），本轮不改；已在 D-072 履历中如实写明 |
+| P3 | `release.yml` 空 `--notes` 在 PS 5.1 下会报「参数缺少值」 | ⚠️ 接受：当前触发总是带 notes；若将来要走空 notes，改用 `--notes-file` |
+| P3 | 未独立验证：`tauri build` 本机复跑、真机 T6/T7/T8、§12.1 双 `--config` 起点包实跑、四主题视觉回归 | 如实声明：这些均需真机/密钥，已列入真机清单 |
+
+## 13. verifier 处置后的复查（2026-11-14）
+
+P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」就完事：这个脚本本来就是给人类照着敲的，
+散落在 Markdown 里无法被门禁约束，改对一次下次还会漂。因此把**发布后自检做成了仓库里的脚本**：
+
+- 新增 `scripts/check-release.mjs` + `scripts/check-release.test.mjs`（9 例纯逻辑单测）：
+  `npm run release:check -- --version 0.2.1 [--download]`，11 项检查（Release 存在/非 draft/资产齐全/
+  latest.json 200/version 一致/url 指向本 tag/`.sig` 与 signature 逐字节一致/安装包 HEAD 200/
+  `--download` 时 sha256 与 GitHub digest 一致）。零依赖、纯 Node `fetch`，**不受 Windows PowerShell 5.1
+  的 `Invoke-WebRequest` 首启限制影响**（该限制是本机实测踩到的真问题）。
+- `real-device-acceptance.md` §12 改为「一条命令」，并记录最近一次实测的 11/11 结果。
+
+### 复查后的门禁（当前 HEAD）
+
+| 门禁 | 结果 |
+| --- | --- |
+| `npx tsc --noEmit` | 0 错误 |
+| `npm test` | **109 文件 / 1133 用例全绿**（+1 文件 / +9 例：check-release 单测） |
+| `npm run design:check` | **73 条** |
+| `npm run format:check` | 通过（新脚本已自动纳入 `scripts/**/*.mjs` 范围） |
+| `npm run check:versions` | 0.2.1 |
+| `npm run release:check -- --version 0.2.1 --download` | **11/11 通过** |
+| `cargo test --lib` | 6 passed |
+
+> 说明：本节的新增（自检脚本）发生在 `v0.2.1` 二进制构建之后，属**发布工具**而非产品逻辑，
+> 因此不需要重发 0.2.1；已发布的安装包与当前 `src/`/`src-tauri/src/` 的产品代码仍然一致
+> （本轮没有改动任何运行时逻辑）。
