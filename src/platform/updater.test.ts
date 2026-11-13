@@ -136,6 +136,45 @@ describe('updater：启用后（VITE_UPDATER_ENABLED=1 且 Tauri 运行时）', 
     expect(processPlugin.relaunch).toHaveBeenCalledTimes(1)
   })
 
+  it('安装前先跑存档握手：beforeInstall 在下载安装之前完成', async () => {
+    const update = makeUpdate()
+    plugin.check.mockResolvedValue(update)
+    const updater = await loadUpdater()
+    await updater.checkForUpdate()
+
+    const order: string[] = []
+    update.downloadAndInstall.mockImplementationOnce(async () => {
+      order.push('download')
+    })
+    const result = await updater.installUpdate(undefined, {
+      beforeInstall: () => {
+        order.push('flush')
+      }
+    })
+
+    expect(result).toEqual({ status: 'installed' })
+    expect(order).toEqual(['flush', 'download'])
+  })
+
+  it('存档握手失败 → save-failed，且绝不覆盖安装', async () => {
+    const update = makeUpdate()
+    plugin.check.mockResolvedValue(update)
+    const updater = await loadUpdater()
+    await updater.checkForUpdate()
+
+    const result = await updater.installUpdate(undefined, {
+      beforeInstall: () => Promise.reject(new Error('disk busy'))
+    })
+
+    expect(result.status).toBe('error')
+    if (result.status === 'error') {
+      expect(result.error.code).toBe('save-failed')
+      expect(result.error.message).toBe('Error: disk busy')
+    }
+    expect(update.downloadAndInstall).not.toHaveBeenCalled()
+    expect(processPlugin.relaunch).not.toHaveBeenCalled()
+  })
+
   it('未检查就安装 → not-checked（不发起下载）', async () => {
     const updater = await loadUpdater()
     const result = await updater.installUpdate()

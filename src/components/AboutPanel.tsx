@@ -4,6 +4,7 @@ import type { Language } from '../i18n'
 import { blueprintOrder, blueprints } from '../logic/blueprints'
 import { CONTENT_VERSION } from '../logic/blueprints/manifest'
 import { APP_VERSION } from '../platform/errorLog'
+import { forceFlush } from '../store/appStore'
 import {
   checkForUpdate,
   discardPendingUpdate,
@@ -127,7 +128,8 @@ export function AboutPanel() {
   const handleInstall = async (): Promise<void> => {
     if (updateState.kind !== 'available') return
     setUpdateState({ ...updateState, installing: true })
-    const result = await installUpdate()
+    // A10 存档握手：安装器会直接结束进程，安装前先把在途写入落盘
+    const result = await installUpdate(undefined, { beforeInstall: forceFlush })
     if (!mounted.current) return
     // Windows 上安装成功后应用会被安装器退出并重启；其它平台由适配层 relaunch。
     if (result.status === 'error') setUpdateState({ kind: 'error', detail: result.error.message })

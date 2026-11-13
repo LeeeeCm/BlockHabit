@@ -27,9 +27,22 @@ export type UpdateInstallResult =
 
 export interface UpdaterErrorInfo {
   /** 稳定的错误码，UI 不直接展示；便于日志与后续文案映射 */
-  code: 'check-failed' | 'install-failed' | 'not-checked'
+  code: 'check-failed' | 'install-failed' | 'not-checked' | 'save-failed'
   /** 脱敏后的单行摘要：只保留错误类型与 message，不含栈/敏感环境信息 */
   message: string
+}
+
+/**
+ * 安装前的存档握手（A10 / on_before_exit）。
+ *
+ * 为什么必须在调用安装前做：Windows 上 `tauri-plugin-updater` 是「起安装器 →
+ * `std::process::exit(0)`」，进程由插件直接结束，Tauri 的 `RunEvent::ExitRequested`
+ * 根本不会跑到前端，因此前端没有第二次机会落盘。安装前先把在途写入等干净，
+ * 才不会丢掉「刚打完卡就点更新」时的那一次打卡。
+ */
+export interface UpdateInstallOptions {
+  /** 安装前调用（通常传 store 的 forceFlush）；抛错则中止安装，不冒险丢数据 */
+  beforeInstall?: () => Promise<void> | void
 }
 
 /** 下载进度（字节数；contentLength 在服务端未提供时为 null） */
@@ -120,9 +133,12 @@ export async function checkForUpdate(): Promise<UpdateCheckResult> {
  * Windows：下载完成后启动安装器并退出应用（安装器默认重启应用）；
  * 其它平台：安装后需要显式 relaunch，这里按需懒加载 process 插件。
  * 进度回调仅回传字节计数，UI 可自行决定是否展示；回调异常不影响安装。
+ * 安装前会先 await options.beforeInstall()（存档握手）；它失败则中止安装并返回
+ * save-failed，宁可让用户重试，也不在未落盘的情况下覆盖安装。
  */
 export async function installUpdate(
-  onProgress?: (progress: UpdateProgress) => void
+  onProgress?: (progress: UpdateProgress) => void,
+  options?: UpdateInstallOptions
 ): Promise<UpdateInstallResult> {
   if (!isUpdaterEnabled()) return { status: 'disabled' }
   const update = pendingUpdate
@@ -147,6 +163,17 @@ export async function installUpdate(
   }
 
   try {
+    // on_before_exit 存档握手：安装器会直接结束进程，这是最后一次落盘机会
+    if (options?.beforeInstall) {
+      try {
+        await options.beforeInstall()
+      } catch (error) {
+        return {
+          status: 'error',
+          error: { code: 'save-failed', message: describeError(error) }
+        }
+      }
+    }
     await update.downloadAndInstall((event) => {
       if (event.event === 'Started') {
         downloadedBytes = 0

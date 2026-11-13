@@ -68,3 +68,26 @@ if let tauri::RunEvent::ExitRequested { api, .. } = event {
 ## 批量审核（2026-11-14）
 
 - 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。
+
+## 落地复核与补齐（2026-11-14）
+
+- 复核结论：本文描述的 `RunEvent::ExitRequested` 拦截与握手去重**当时并未随记录一起落地**——
+  `src-tauri/src/lib.rs` 里仍是 `.run(generate_context!())`，`QuitGate` 没有任何 `ExitRequested` 入口，
+  也没有去重标志。本轮按本记录的设计原样补齐（不是新方案）：
+  - 抽出纯函数 `should_handshake(code, confirmed)`：`code == None` 且未确认才拦截；
+  - `.build(...).run(|app, event| ...)` 里 `api.prevent_exit()` + `begin_quit(app.clone())`；
+  - 新增 `QuitHandshake(AtomicBool)` 用 `swap` 去重，保证只 emit 一次、只起一个等待线程；
+  - 超时抽成常量 `QUIT_HANDSHAKE_TIMEOUT = 1500ms`。
+- **为什么 `code == Some(_)` 必须放行**：托盘退出与 `tauri-plugin-updater` 的 Windows 安装器都走 `AppHandle::exit()`；
+  在那种路径上 `prevent_exit()` 会让进程永远退不出去（安装器装完应用却不退出）。`cargo test --lib` 的三个用例把这条钉死。
+- **安装器路径的补充（本轮新增，记录在此）**：`tauri-plugin-updater` 在 Windows 上是「起安装器 → `std::process::exit(0)`」，
+  Tauri 的退出事件根本不会跑到前端。因此「安装前 flush」只能在**前端**做：
+  `src/platform/updater.ts` 的 `installUpdate()` 新增可选 `beforeInstall` 回调，在 `downloadAndInstall()` 之前 await；
+  失败则中止安装并返回稳定码 `save-failed`（宁可不更新，也不在未落盘时覆盖安装）。
+  `src/components/AboutPanel.tsx` 传入 store 的 `forceFlush`。
+- **诚实的边界（未解决项）**：`tao 0.37.1` 明确不处理 `WM_QUERYENDSESSION`（源码注释："we don't process `WM_QUERYENDSESSION` yet"），
+  所以 Windows 关机/注销时 tao 会直接结束消息循环，`ExitRequested` 不保证送达。因此本记录的「系统退出」覆盖到的是
+  「关闭最后一个窗口 / 程序化退出」；真·关机场景的兜底是既有的「关键动作立即落盘」（打卡/撤销/领取/导入都走 `requestFlushNow()`），
+  最多丢一次非关键设置的防抖窗口。这一点已同步写进 `docs/release/real-device-acceptance.md` 的 T7 清单。
+- 补测：`src/platform/updater.test.ts` 新增 2 例（`beforeInstall` 必须在下载安装之前完成；握手失败 → `save-failed` 且不下载不重启）；
+  `src/components/AboutPanel.test.tsx` 断言安装时把 `forceFlush` 交给了适配层。`cargo test --lib` 3 例 + `npm test` 全绿。

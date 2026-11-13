@@ -184,6 +184,10 @@ describe('AboutPanel：版本与更新（D-20261111-069）', () => {
       findButton(node, '下载并安装')?.click()
     })
     expect(updaterMock.install).toHaveBeenCalledTimes(1)
+    // A10 存档握手：安装前必须把前端 flush 回调交给适配层
+    expect(updaterMock.install.mock.calls[0]?.[1]).toMatchObject({
+      beforeInstall: expect.any(Function)
+    })
   })
 
   it('点击检查失败 → 显示失败与脱敏详情，可复制，不伪装成已是最新', async () => {
