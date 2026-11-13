@@ -53,6 +53,10 @@ jobs:
 
       - name: Verify updater config
         shell: pwsh
+        env:
+          # 只用于「非空校验」，不打印、不落盘；真正的签名只在 Build signed bundle 里做
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           $conf = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
           $u = $conf.plugins.updater
@@ -64,6 +68,9 @@ jobs:
           }
           if (-not $env:TAURI_SIGNING_PRIVATE_KEY) {
             throw "缺少 TAURI_SIGNING_PRIVATE_KEY secret。"
+          }
+          if (-not $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD) {
+            throw "缺少 TAURI_SIGNING_PRIVATE_KEY_PASSWORD secret（私钥有密码时必须提供）。"
           }
 
       - name: Build signed bundle
