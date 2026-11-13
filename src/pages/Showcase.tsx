@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
 import { blueprintOrder, blueprints, getBlueprint } from '../logic/blueprints'
@@ -43,6 +43,16 @@ export default function Showcase() {
   // 本次会话的 90° 象限（蓝图 id → 0/1/2/3）与植被重排种子：都不落盘
   const [rotations, setRotations] = useState<Record<string, number>>({})
   const [ecoSeed, setEcoSeed] = useState(0)
+
+  // 拖拽落位校验需要看到「本次会话旋转」，但 action 的签名不能扩散到渲染层：
+  // 用 ref 承载最新 rotations，回调本身保持稳定（ShowcaseScene 的监听器不重绑）。
+  const rotationsRef = useRef(rotations)
+  rotationsRef.current = rotations
+  const handleUpdatePlacement = useCallback(
+    (blueprintId: string, gridX: number, gridY: number) =>
+      updateShowcasePlacement(blueprintId, gridX, gridY, rotationsRef.current),
+    [updateShowcasePlacement]
+  )
 
   useEffect(() => {
     if (guideTipVisible) markTipSeen('showcase')
@@ -227,7 +237,7 @@ export default function Showcase() {
         <ShowcaseScene
           placements={showcasePlacements}
           blueprintsMap={blueprints}
-          onUpdatePlacement={updateShowcasePlacement}
+          onUpdatePlacement={handleUpdatePlacement}
           onSelectModel={handleSelectModel}
           rotations={rotations}
           ecoSeed={ecoSeed}

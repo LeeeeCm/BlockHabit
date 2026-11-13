@@ -126,8 +126,17 @@ interface AppActions {
   /** 结算本月修复积木额度（幂等；启动与进入统计页时调用） */
   refreshRepairAllowance(): void
   useRepairBrick(habitId: string, date: string): { ok: boolean; reason?: string }
-  /** 展台沙盘位置调整（带 AABB 碰撞检测） */
-  updateShowcasePlacement(blueprintId: string, gridX: number, gridY: number): boolean
+  /**
+   * 展台沙盘位置调整（带 AABB 碰撞检测）。
+   * rotations：可选的「本次会话 90° 象限」表（蓝图 id → 0/1/2/3），
+   * 只参与碰撞/边界校验、不写进存档——装饰模式拖拽时用它复用与渲染一致的占地。
+   */
+  updateShowcasePlacement(
+    blueprintId: string,
+    gridX: number,
+    gridY: number,
+    rotations?: Record<string, number>
+  ): boolean
   chooseBlueprint(id: string): void
   updateSettings(patch: Partial<AppSettings>): void
   /** 跳过某习惯今天的到点提醒（持久化到 reminderLog，跨重启当天沉默） */
@@ -516,10 +525,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     return { ok: true }
   },
 
-  updateShowcasePlacement(blueprintId, gridX, gridY) {
+  updateShowcasePlacement(blueprintId, gridX, gridY, rotations) {
     const { showcasePlacements } = get()
     const placements = showcasePlacements ?? []
-    const ok = canPlaceModel({ blueprintId, gridX, gridY }, placements, blueprints)
+    const ok = canPlaceModel({ blueprintId, gridX, gridY }, placements, blueprints, undefined, rotations)
     if (!ok) return false
     const next = placements.some((p) => p.blueprintId === blueprintId)
       ? placements.map((p) => (p.blueprintId === blueprintId ? { blueprintId, gridX, gridY } : p))

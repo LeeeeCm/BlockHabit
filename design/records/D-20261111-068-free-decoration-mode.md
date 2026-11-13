@@ -52,3 +52,15 @@ D-20261110-063（approved）正文已写明「全落成后提供自由装饰模�
 - 2026-11-11 created (lead)：按用户本轮目标提出最小方案，status=proposed，等待人类确认；确认后按上述范围实现并补测试/四主题/移动端降级。
 - 2026-11-11 人类确认（LeeCM）：按用户「批准你的所有内容，继续完成」指示，status proposed → approved；本轮开始实现。
 - 2026-11-11 implemented (c1-decoration)：按 approved 范围落地——src/logic/showcase.ts 新增 isDecorationUnlocked / normalizeRotation / rotateBlockCoords / getRotatedFootprint / canRotatePlacement（canPlaceModel 增可选 rotations）；src/render/showcaseLayout.ts 新增 rotateBlocksForRender / buildRotatedFootprintMap，collectSortedCubes 与 buildOffsetBlocksMap 增可选 rotations，ShowcaseScene 的阴影/植被/命中检测/拖拽校验全部改用会话旋转派生；src/render/isoGround.ts 的 drawEcoProps 增可选 seed（默认 0 逐像素与旧实现一致，mulberry32 确定性重排）；src/pages/Showcase.tsx 增解锁开关（长度动态取自 blueprintOrder，不硬编码 18/23）、点击选中语义、旋转控件与「换一组植被」浮层（44px 触控、btn ghost/--ink/--line/--r-md、无新增颜色/依赖）。旋转/植被种子/选中均为本次会话 React state，不写存档、不改 settings/schema（浏览器 localStorage 与 exportData 操作前后相等已验证；退出装饰即复原，重开复原文案见 decorationHint）。测试：logic/showcase.test.ts 21 条 + render/showcaseLayout.test.ts 20 条 + 新增 src/pages/Showcase.test.tsx 6 条，全绿；npx tsc --noEmit 0 错；四主题 zh/en 与移动端 390 截图证据在 .tmp-c1/。
+
+## 履历补充：拖拽落位复用会话旋转（2026-11-14）
+
+- 本记录验收标准第 3 条写的是「旋转后与邻居碰撞时回退并提示」，但**初版落位校验没有吃到旋转**：
+  `updateShowcasePlacement` 只按 0° 占地判 AABB，于是装饰模式里会出现两类假冲突——
+  画面上不重叠却拖不过去、画面上重叠却能拖过去。这是本轮要收敛的最后一条已知限制。
+- 落地方案（不改持久化字段、不改 schema、不新增依赖）：`updateShowcasePlacement` 增加**可选** `rotations` 参数，
+  透传给既有纯函数 `canPlaceModel(..., rotations)`；`src/pages/Showcase.tsx` 用 ref 承载最新 `rotations` 并传给 `ShowcaseScene`，
+  回调本身保持稳定（不触发渲染层监听器重绑）。三个参数的旧调用点语义不变。
+- 测试：新增 `src/store/showcasePlacement.test.ts`（7 例）——邻居按当前旋转算 AABB、目标自身旋转参与边界、
+  三参数旧行为不变、store 与 `canPlaceModel` 判定逐位一致、旋转绝不写进存档、未知蓝图拒绝。
+- 至此本记录「已知限制」只剩**真机四主题 × zh/en 截图**一项（需桌面窗口），逻辑侧限制已清零。
