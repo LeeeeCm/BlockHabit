@@ -3,6 +3,86 @@
 本项目遵循「每次改动都能追到一条设计记录」的约定：每条变更下方的 `D-YYYYMMDD-NNN` 指向
 `design/records/` 里对应的记录（含背景、方案、取舍与验收证据）。
 
+## [0.2.1] — 2026-11-14（第十二轮：可发布状态 —— 记录审核 / 存档握手 / keyring / 发布链路）
+
+人类授权「批准一切必要请求与最佳方案、可新增依赖、可 push main、可生成签名密钥、可配置 secrets、
+可把仓库设为公开、可升 0.2.1 并创建 Release」后，本轮把 0.2.0 候选推进到**真正可发布**：
+发布链路从「骨架 + 待人类凭证」变成「已配置 + 已出签名包 + 已触发 workflow」。
+
+### 设计记录批量审核（D-20261110-001 … 058）
+
+- 58 条 proposed 记录 status → approved、reviewer → LeeCM，正文（背景/决定/取舍/影响面/验收）**一字未改**，
+  仅在文末追加「批量审核（2026-11-14）」履历说明授权来源；`design/RECORDS.md` 台账同步 58 行。
+- D-20261110-048 追加履历补充：其第 5 项「F6 暂不接 updater」已被 D-20261111-069 / C4 评估取代。
+- `npm run design:check` 记录数 71 → 73（新增 D-072 / D-073）。
+
+### on_before_exit 存档握手（D-20261110-019 approved）
+
+- 补上 D-019 记录里**此前没有真正落地**的实现：`lib.rs` 改为 `.build(...).run(|app, event| ...)`，
+  在 `RunEvent::ExitRequested` 且 `code == None` 时 `api.prevent_exit()` + 走同一套
+  emit → 前端 `forceFlush()` → `confirm_quit` → 退出（1.5s 超时兜底）。
+- 新增 `QuitHandshake(AtomicBool)` 用 `swap` 去重，关机/注销/关窗/托盘退出同时触发也只会握手一次；
+  `code == Some(_)`（托盘退出、updater 安装器走 `AppHandle::exit`）必须放行，否则进程永远退不出去。
+- 安装器路径在 Windows 上是「起安装器 → `std::process::exit(0)`」，Tauri 退出事件到不了前端：
+  `installUpdate()` 新增可选 `beforeInstall` 回调，在 `downloadAndInstall()` 之前 await `forceFlush`；
+  失败返回 `save-failed` 并**中止安装**（宁可不更新，也不在未落盘时覆盖安装）。
+- 诚实边界：tao 0.37.1 明确不处理 `WM_QUERYENDSESSION`，真·关机/注销不保证送达 `ExitRequested`；
+  兜底是既有「关键动作立即落盘」。已写进 D-019 履历与真机验收清单 T7。
+- 测试：`cargo test --lib` 3 例；`updater.test.ts` +2 例；`AboutPanel.test.tsx` 断言交付了 `forceFlush`。
+
+### WebDAV 密码进 OS 凭据管理器（D-20261114-072 approved，C4 §4 方案 B）
+
+- 新增 Rust 依赖 `keyring 3.6.3`（**仅 Windows 目标**，`default-features=false` + `windows-native`，
+  只多拉 `windows-sys`/`byteorder`；不用 4.x，其 `v1` 特性会带上 Apple/Linux 后端）。前端零新依赖。
+- 新增 `src-tauri/src/credentials.rs`：只暴露 `credential_available/set/get/delete` 四个命令；
+  `keyring::Error` 一律折平成稳定码，不透原文；service=`com.blockhabit.app`；账号键只允许
+  十六进制/连字符/下划线、非空有界（防止把用户名/URL 写进凭据管理器）。
+- 新增 `src/platform/credentials.ts`：探测缓存 + `sha256(endpoint + 换行 + username)` 账号派生 + 读写删；
+  非 Tauri 一律返回不可用，绝不谎报成功。
+- 迁移语义（隐私优先）：启动探测 → 明文搬进凭据管理器**成功后才**清本地明文并打 `credentialStore='os'`
+  → 重开回填；失败保持原样下次重试；关闭「记住密码」会同时删除凭据管理器条目；
+  存储不可用（浏览器预览/企业策略）时**完全退回旧行为**。`syncNow` 发现标记但无密码时先回填。
+- 文案：新增 `rememberPasswordHintOs`（zh/en），仅在 `credentialStore==='os'` 时替换说明行，原文案一字不改。
+- 测试：`cargo test --lib` 6 例；`webdavKeyring.test.ts` 10 例；`credentials.test.ts` 6 例。
+- **仍未做（需真机）**：C6 真机验收（检查 WebView 数据无明文、重启自动同步、凭据管理器条目可见、
+  删除条目后提示重输、卸载残留检查）。
+
+### 装饰模式拖拽落位复用会话旋转（D-20261111-068 履历补充）
+
+- `updateShowcasePlacement` 增加**可选** `rotations` 参数并透传给既有纯函数 `canPlaceModel`：
+  拖拽校验与渲染同口径，收敛 D-068「画面上不重叠却拖不过去 / 重叠却能拖过去」的已知限制。
+- 不新增持久化字段、不改 schemaVersion/contentVersion；三个参数的旧调用点语义不变。
+- 新增 `src/store/showcasePlacement.test.ts` 7 例（含「store 与 canPlaceModel 判定逐位一致」「旋转不写存档」）。
+
+### format:check 扩到全仓源码（D-20261114-073 approved）
+
+- D-050 当年的 19 文件白名单长期没跟上新增文件，仓库里并存两套风格。本次改为目录级范围：
+  `prettier --check "src/**/*.{ts,tsx,css}" "scripts/**/*.mjs" .prettierrc.json vite.config.ts index.html
+  package.json tsconfig.json tsconfig.node.json`；`.prettierignore` 不动（生成物/设计中枢/文档/临时目录继续排除）。
+- 一次性 `prettier --write` 对齐 188 个文件，**零逻辑改动**：对齐前后 `tsc` 均 0 错、`npm test` 均
+  108 文件 / 1124 用例全绿。格式规则（semi/singleQuote/printWidth）保持不变。
+- CI 新增 `Format check` 与 `Production build` 两步，格式与构建从此是机器门禁。
+
+### 发布链路（C4 / runbook）
+
+- 在仓库外生成 minisign 密钥对（私钥与密码只在本机与 GitHub Actions secrets，不进仓库、不打印）；
+  公钥写入 `plugins.updater.pubkey`，`endpoints` 指向
+  `https://github.com/LeeeeCm/BlockHabit/releases/latest/download/latest.json`。
+- `.gitignore` 增加 `*.key` / `*.key.pub` / `*.pem` / `*.pfx` / `*.p12` 兜底。
+- 配置 `TAURI_SIGNING_PRIVATE_KEY` 与 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 两个 Actions secrets。
+- 仓库转 **public**（Release 资产必须公开，updater 不带 token）；转公开前已对 447 个曾入库文件与全量
+  `git log -p` 做密钥/token/私钥/个人邮箱扫描，结论：无敏感信息。
+- 版本 0.2.0 → **0.2.1**（`package.json` / `tauri.conf.json` / `Cargo.toml` + `Cargo.lock` 同步）。
+
+### 验证
+
+- `npx tsc --noEmit` 0 错；`npm test` **108 文件 / 1124 用例全绿**；`design:check` **73 条**；
+  `format:check`、`check:versions`（0.2.1）通过；`cargo test --lib` 6 例通过。
+- `npm run tauri build -- --config src-tauri/tauri.release.conf.json`（`VITE_UPDATER_ENABLED=1` +
+  签名密钥）成功，产出带 `.sig` 的 NSIS/MSI 安装包（体积见发布报告）。
+- 仍未自动完成：T6（自动更新真机流程）与 T7（关键动作前强制结束进程验证）需真机人工执行，
+  清单与载荷见 `docs/release/real-device-acceptance.md`。
+
 ## [未发布] — 2026-11-12（第十一轮：P3 收尾 / 审核摘要 / 发布链路脚手架）
 
 人类确认「开始做」后，处理第十轮 verifier 的 P3 与发布准备项。**未新增运行时依赖、版本仍 0.2.0、无密钥入库。**

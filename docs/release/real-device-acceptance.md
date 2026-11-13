@@ -128,11 +128,24 @@
 
 ---
 
-## 6. T6 手动检查更新与签名（**条件**：发布链路配置完成后）
+## 6. T6 手动检查更新与签名（**0.2.1 起可执行**）
 
-> D-20261111-069 已按批准实现 updater 依赖/插件/前端入口与默认安全禁用态；**签名密钥、发布端点、latest.json、CI secrets、Windows 代码签名仍需人类提供**，提供前仅能验收禁用态与构建。C4 评估见 `docs/release/updater-and-keyring-assessment.md`。
+> 2026-11-14 起发布链路已配置：签名密钥在仓库外、公钥/endpoints 已写入 `plugins.updater`、
+> 两个 Actions secrets 已设置、仓库已转 public、0.2.1 已由 Release workflow 出签名包并上传 `latest.json`。
+> 因此 T6 从「条件项」变为**可执行项**。C4 评估见 `docs/release/updater-and-keyring-assessment.md`（文件名见下）。
 
-发布链路配置完成后：
+### 6.0 测试载荷（0.2.1 起新增，缺一不可）
+
+| 载荷 | 位置 | 用途 |
+| --- | --- | --- |
+| **旧版安装包（0.2.0 + updater 已启用）** | 本机 `.tmp-release/0.2.0-seed/` 下的 NSIS `BlockHabit_0.2.0_x64-setup.exe`（脚本见 §12） | 作为 T6 的起点：它带公钥与端点、`VITE_UPDATER_ENABLED=1`，能真的去查 0.2.1 |
+| **新版安装包（0.2.1，签名）** | GitHub Release `v0.2.1`：`BlockHabit_0.2.1_x64-setup.exe` / `.msi` / `.sig` / `latest.json` | 被 updater 下载安装的目标 |
+| **23 座全落成测试存档** | `docs/release/fixtures/all-blueprints-complete.json`（本仓库新增，**合成数据**：schemaVersion 2 / contentVersion 3 / 23 座 / 2485 块；展台仅能摆下 15 座，属几何限制不是缺陷） | T7 装饰模式与 T6「升级后数据不丢」的判定基准 |
+| 一键校验脚本 | `.tmp-release/verify-release.ps1`（由 Lead 生成，含 `gh release view` 与 `Invoke-WebRequest` 断言） | 发布后自检资产可公网访问 |
+
+> 关键：**不要用 0.2.0 的旧 tag/旧包**。0.2.0 时代的 install 包没有公钥与端点，点「检查更新」只会显示禁用态。
+
+发布链路已配置，按下列步骤执行：
 
 | 步骤 | 期望结果 |
 | --- | --- |
@@ -151,7 +164,8 @@
 
 ## 7. T7 自由装饰模式（D-20261111-068）
 
-前置：准备「全部蓝图已落成」的存档（当前 23 座；可用 .tmp 种子或临时导入）。
+前置：用仓库内的合成载荷 `docs/release/fixtures/all-blueprints-complete.json`（23 座全落成、2485 块）
+在 设置 → 数据 → 导入 中导入（**先导出一次现有存档做备份**）。载荷不含任何真实用户数据。
 
 | 步骤 | 期望结果 |
 | --- | --- |
@@ -167,12 +181,34 @@
 
 ---
 
+## 7.5 T8 OS 凭据管理器（keyring，D-20261114-072）
+
+前置：桌面端 0.2.1；一个可用的 WebDAV 账号（T3 已准备）。
+
+| 步骤 | 期望结果 |
+| --- | --- |
+| 1. 设置→同步填写 WebDAV（含密码）→ 保持「记住」 | 保存后不再等待 |
+| 2. 关闭应用 → 打开「控制面板 → 凭据管理器 → Windows 凭据」 | 找到 `com.blockhabit.app` 条目；用户名是 64 位十六进制（**不是**邮箱/URL） |
+| 3. 检查存档与配置 | WebView 数据里（`%APPDATA%\com.blockhabit.app\EBWebView`）**搜不到明文密码**；导出的档案包里也没有 |
+| 4. 重启应用 → 等待自动同步 | 不要求重输密码即可同步成功（密码从凭据管理器回填） |
+| 5. 手动删除该凭据条目 → 重启 | 同步失败时如实提示「需要重新输入密码」；**不崩溃、不阻塞启动、不清空其它配置** |
+| 6. 关闭「记住密码」→ 重启 | 本次运行可同步；凭据管理器里该条目被删除；重启后要求重输 |
+| 7. 卸载应用 | 记录凭据管理器条目是否残留（**已知：NSIS 卸载不清理**，作为已知限制登记，不判失败） |
+
+**自动化覆盖**：`cargo test --lib` 凭据模块 3 例（账号键校验）；`webdavKeyring.test.ts` 10 例
+（不可用退回旧行为 / 可用不落明文 / 迁移成功即删明文 / 迁移失败保持原样 / 回填 / 关闭记住即删除 / 探测失败不误删）；
+`credentials.test.ts` 6 例（不可用不谎报成功、账号键派生与换行防撞键）。
+**必须真机**：凭据管理器条目、WebView 数据无明文、重启回填、卸载残留。
+
+---
+
 ## 8. 全局壳检查（真机，建议同轮执行）
 
 | 项 | 步骤 | 期望 |
 | --- | --- | --- |
 | 单实例 | 启动应用后再双击一次快捷方式 | 不产生第二实例；聚焦已有主窗 |
-| 退出握手 | 有未落盘操作时托盘→退出 | 先 flush 存档再退出（≤1.5s 超时兜底）；不丢最近打卡 |
+| 退出握手（托盘/程序化） | 有未落盘操作时托盘→退出；以及安装器安装更新时 | 先 flush 存档再退出（≤1.5s 超时兜底）；不丢最近打卡 |
+| 退出握手（强制结束 / 关机） | 打卡后立刻用任务管理器「结束任务」；再重复一次「注销」 | **已知限制**：tao 0.37.1 不处理 `WM_QUERYENDSESSION`，关机/注销不保证送达 `ExitRequested`；期望「最后一次打卡仍可能丢失」，但**不得**出现存档损坏或空态覆盖（关键动作已立即落盘）。记录为已知限制，不判 P0 |
 | 开机自启 | 设置→开机自启开/关 → 重启系统 | 行为与开关一致 |
 | 数据目录 | 设置→打开数据目录 | 资源管理器定位到 `%APPDATA%/blockhabit*` |
 | 错误日志 | 触发一次错误（如损坏导入） | 有本地日志/错误提示；不上传、不联网 |
@@ -233,3 +269,46 @@
 - **浏览器预览与桌面端能力不同**：WebDAV 跨域、文件系统、系统通知、托盘都必须以桌面端为准。
 - **WebView2 后台节流**：T4 的 25 分钟通知可能受窗口隐藏影响，必须实测；若延迟明显，记录为风险而非直接判失败（状态/数据仍正确）。
 - **B5 性能数据**：100 块时间线的量化性能以 B5 报告为准（已就绪），本清单只列操作与期望。
+
+---
+
+## 12. 发布后自检脚本（复制到 PowerShell 直接跑）
+
+```powershell
+# 1) Release 是否存在、资产是否齐全
+gh release view v0.2.1 --repo LeeeeCm/BlockHabit
+
+# 2) latest.json 是否公网可访问且内容自洽（不需要登录）
+$r = Invoke-WebRequest -UseBasicParsing https://github.com/LeeeCm/BlockHabit/releases/latest/download/latest.json
+$j = $r.Content | ConvertFrom-Json
+$j.version
+$j.platforms.'windows-x86_64'.url
+$j.platforms.'windows-x86_64'.signature.Substring(0, 40) + '...'
+
+# 3) 安装包与 .sig 是否公开可下（只看响应头，不下载整包）
+(Invoke-WebRequest -UseBasicParsing -Method Head $j.platforms.'windows-x86_64'.url).StatusCode
+
+# 4) 下载安装包并核对 .sig 与 latest.json 的 signature 完全一致
+$tmp = Join-Path $env:TEMP 'bh-update-check'
+New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+Invoke-WebRequest -UseBasicParsing $j.platforms.'windows-x86_64'.url -OutFile (Join-Path $tmp 'setup.exe')
+Invoke-WebRequest -UseBasicParsing ($j.platforms.'windows-x86_64'.url + '.sig') -OutFile (Join-Path $tmp 'setup.exe.sig')
+$sig = (Get-Content -Raw (Join-Path $tmp 'setup.exe.sig')).Trim()
+if ($sig -eq $j.platforms.'windows-x86_64'.signature) { 'SIG-MATCH' } else { 'SIG-MISMATCH' }
+```
+
+### 12.1 重跑 0.2.0 起点包（T6 需要「带 updater 的旧安装包」）
+
+0.2.0 时代的安装包没有公钥/端点，**不能**用作 T6 起点。需要时用下面的命令在本机重出一个
+「0.2.0 版本号 + 0.2.1 的 updater 配置」的起点包（只改安装包版本号，不改仓库文件）：
+
+```powershell
+$env:VITE_UPDATER_ENABLED = '1'
+$env:TAURI_SIGNING_PRIVATE_KEY = Get-Content -Raw "$env:USERPROFILE\blockhabit-keys\blockhabit.key"
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = Get-Content -Raw "$env:USERPROFILE\blockhabit-keys\PASSWORD.txt"
+npm run tauri build -- --config src-tauri/tauri.release.conf.json --config '{"version":"0.2.0"}'
+# 产物：src-tauri/target/release/bundle/nsis/BlockHabit_0.2.0_x64-setup.exe
+```
+
+> 该包只用于本机 T6 起点，**不要**上传成 Release 资产（否则 `latest.json` 会指错版本）。
+> T7 的强制结束/关机项见 §8「退出握手（强制结束 / 关机）」的已知限制说明。

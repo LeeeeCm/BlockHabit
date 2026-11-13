@@ -123,3 +123,42 @@ npm run tauri build -- --no-bundle
 - **审核摘要**：REVIEW-QUEUE §12 给出 58 条 proposed 的分组摘要（6 功能 / 40 工程 / 12 文档决议），供人类批量审批。
 - **发布脚手架**：release workflow（手动触发）+ tauri.release.conf.json + latest.json 生成器（8 例测试）+ release-runbook；本机已验证配置合并与构建；**签名密钥/端点/secrets/on_before_exit 仍待人类**。
 - 台账 71 条（13 approved）；本轮提交后 push 至 origin/main，走 GitHub Actions CI 复核。
+
+## 9. 第十二轮（2026-11-14）：0.2.1 可发布状态
+
+- **授权**：人类本轮明确授权「批准一切必要请求与最佳方案；可新增依赖（keyring 等）、可修改并 push main、
+  可生成签名密钥（私钥只能放仓库外）、可配置 GitHub Actions secrets、可运行发布 workflow、
+  可在确认历史无敏感信息后把仓库设为公开、可升版本 0.2.1 并创建 Release/tag」。
+- **台账**：58 条 proposed → approved（reviewer=LeeCM，正文零改动，仅追加授权履历）；新增 approved
+  D-20261114-072（keyring）与 D-20261114-073（format:check 扩围）；D-048/D-050/D-068 追加式履历补充。
+  台账 **73 条 / 73 approved / 0 proposed**。
+- **代码**：
+  | 主题 | 记录 | 交付 |
+  | --- | --- | --- |
+  | on_before_exit 存档握手 | D-20261110-019 | Rust `ExitRequested` 拦截 + 握手去重 + `should_handshake` 纯函数（3 例）；`installUpdate({ beforeInstall })` 安装前 flush（+2 例）；AboutPanel 传 `forceFlush` |
+  | WebDAV 密码进 OS 凭据管理器 | D-20261114-072 | `keyring 3.6.3`（仅 Windows 目标）+ `credentials.rs` 4 命令（3 例）+ `platform/credentials.ts`（6 例）+ useSync 探测/迁移/回填（10 例）+ `rememberPasswordHintOs` zh/en |
+  | 装饰模式旋转落位校验 | D-20261111-068 履历 | `updateShowcasePlacement(..., rotations?)` + 7 例；不改持久化字段 |
+  | format:check 扩围 | D-20261114-073 | 目录级范围 + 188 文件一次对齐（零逻辑改动）+ CI 新增 Format check / Production build |
+- **发布链路**：
+  - 仓库外 `%USERPROFILE%\blockhabit-keys\blockhabit.key`（私钥 + 密码，绝不入库、不打印）。
+  - `plugins.updater.pubkey` 与 `endpoints` 已填；`TAURI_SIGNING_PRIVATE_KEY` /
+    `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 两个 Actions secrets 已设置。
+  - 仓库由 private 改为 **public**（Release 资产需公开，updater 不带 token）；转公开前的历史扫描结论见 §10。
+  - 版本 0.2.0 → **0.2.1**（三处构建入口 + `Cargo.lock`），`npm run check:versions` 通过。
+- **门禁（本轮实测）**：`npx tsc --noEmit` 0；`npm test` **108 文件 / 1124 用例**；
+  `design:check` **73 条**；`format:check` 通过；`check:versions` 0.2.1 通过；
+  `cargo test --lib` 6 例；`npm run build` 成功；`npm run tauri build -- --config
+  src-tauri/tauri.release.conf.json`（`VITE_UPDATER_ENABLED=1` + 签名密钥）成功并产出 `.sig`。
+- **仍须人工/真机**：T6 自动更新全流程、T7 强制结束进程后的存档一致性、C6 keyring 真机验收（凭据管理器条目、
+  卸载残留）。清单与测试载荷见 `docs/release/real-device-acceptance.md` §T6/§T7/§T8。
+
+## 10. 转公开前的历史敏感信息扫描（2026-11-14）
+
+| 检查项 | 方法 | 结论 |
+| --- | --- | --- |
+| 曾入库文件名 | `git log --all --diff-filter=A --name-only` → 447 个唯一路径 → 匹配 `*.key/*.pem/*.pfx/*.p12/*.env/id_rsa/secret/credential/token` | 只命中 `design/TOKENS.md`、D-018/D-026/D-072、`src/platform/credentials.*`、`src-tauri/src/credentials.rs` 等**源码与文档文件名**，无密钥文件 |
+| 全历史内容 | `git log --all -p` 搜索 `BEGIN … PRIVATE KEY`、`ghp_/gho_/github_pat_`、`sk-`、`AKIA`、`xox[baprs]-`、`AIza`、`TAURI_SIGNING_PRIVATE_KEY=`、`minisign encrypted secret key` | **0 命中** |
+| 硬编码密码 | `git grep -E 'password\s*[:=]\s*…'` 全历史 | 仅测试夹具（`'secret'` / `'password123'` / `'legacy-password'`）与字段名，无真实凭据 |
+| 个人身份 | 提交邮箱 `git log --all --pretty=%ae` | 仅 `leecm@blockhabit.local`（本地占位，非真实邮箱） |
+| 跟踪树隐私 | `git grep` 匹配 gmail/qq/163/outlook/手机号 | 仅学术论文 URL 与 Cargo.lock 校验和，无个人信息 |
+| 生成物 | 跟踪文件中最大的 8 个 | 最大为 `scripts/fixtures/demo-state.json`（184KB **合成**演示数据，habits/checkIns 为空） |

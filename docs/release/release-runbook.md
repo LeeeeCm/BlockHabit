@@ -1,19 +1,33 @@
 # 发布链路 Runbook（C4 / D-20261111-069）
 
-> 本文件是「手动检查更新 → 自动更新」真正可用前的人类操作手册。
-> 代码侧已就绪：updater/process 插件、设置页「版本与更新」入口、默认构建安全禁用、
-> `.github/workflows/release.yml` 骨架、`scripts/make-latest-json.mjs` 签名清单生成。
-> **未就绪的是发布凭证与托管**：签名私钥、公钥、发布端点、GitHub secrets、代码签名（可选）。
+> **状态：2026-11-14 起已配置完毕，可重复发布。** 一次性配置（§1）已全部完成，
+> 0.2.1 由 `.github/workflows/release.yml` 出签名包并上传 `latest.json`。
+> 本文件从「待人类配置的手册」转为「每次都照做的发布流程 + 故障排查」。
+>
+> 已完成的一次性配置（留档）：
+> - 密钥对在本机 `%USERPROFILE%\blockhabit-keys\`（`blockhabit.key` 私钥、`blockhabit.key.pub` 公钥、
+>   `PASSWORD.txt` 私钥密码）。**三者都只在仓库外，绝不入库、不打印**；请自行再做一次离线备份。
+> - 公钥已写入 `src-tauri/tauri.conf.json` 的 `plugins.updater.pubkey`（公开值，可提交）。
+> - `plugins.updater.endpoints` = `https://github.com/LeeeeCm/BlockHabit/releases/latest/download/latest.json`。
+> - Actions secrets：`TAURI_SIGNING_PRIVATE_KEY`（私钥**全文**）、`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`。
+> - 仓库已转 **public**（私有仓库的 Release 资产需要 token，updater 不带 token 会 404）。
+> - Windows Authenticode 代码签名仍为**可选未做**（见 §4）。
 
 ## 0. 前置检查（缺一不可）
 
-- [ ] 仓库可被 updater 无认证访问：**公开仓库**或把 `latest.json` 与安装包托管到公开静态站/CDN。
-      GitHub Release 资产在私有仓库需要 token，updater 不会带 token，私有仓库模式下会 404。
-- [ ] 已决定版本号（例如 0.2.0 → 0.2.1），并同步三处：`package.json`、`src-tauri/tauri.conf.json`、`src-tauri/Cargo.toml`；`npm run check:versions` 通过。
-- [ ] 安装 Rust/Tauri 构建环境（CI 用 `windows-latest` 即可）。
-- [ ] 已完成 `on_before_exit` 存档握手（C4 待实现项）：安装器退出应用前必须 flush 存档，避免丢最近打卡。
+- [x] 仓库可被 updater 无认证访问：**公开仓库**（2026-11-14 由 private 改为 public）。
+- [ ] 已决定版本号，并同步三处：`package.json`、`src-tauri/tauri.conf.json`、`src-tauri/Cargo.toml`
+      （+`Cargo.lock` 的 blockhabit 包版本）；`npm run check:versions` 通过。
+- [x] 安装 Rust/Tauri 构建环境（CI 用 `windows-latest`）。
+- [x] 已完成 `on_before_exit` 存档握手：Rust 侧拦截 `RunEvent::ExitRequested`（`code == None` 时），
+      前端 `forceFlush()` 后 `confirm_quit`；安装器路径由 `installUpdate({ beforeInstall })` 在
+      `downloadAndInstall()` 前 await `forceFlush`（D-20261110-019 履历、D-20261114-072）。
+      **已知限制**：tao 0.37.1 不处理 `WM_QUERYENDSESSION`，真·关机/注销不保证送达。
 
-## 1. 一次性配置（只做一次）
+## 1. 一次性配置（✅ 2026-11-14 已完成，留作重建参考）
+
+> 如果密钥丢失或需要轮换，照本节重做，并把新公钥重新填进 `plugins.updater.pubkey`、
+> 重新设置两个 secrets、然后**发一个更高版本**（旧安装不会自动接受新公钥，只能靠手动覆盖安装）。
 
 ### 1.1 生成签名密钥（仓库外，绝不提交）
 
@@ -46,6 +60,10 @@ npx tauri signer generate -w <仓库外路径>/blockhabit.key
 本地默认构建**不**生成 updater 产物（避免无密钥时开发者构建失败）；发布专用配置为
 `src-tauri/tauri.release.conf.json`（`bundle.createUpdaterArtifacts: true`），由 release workflow 通过
 `tauri build --config src-tauri/tauri.release.conf.json` 使用。
+
+> **实测坑（2026-11-14）**：本地复现时设 `TAURI_SIGNING_PRIVATE_KEY_PATH` 会报
+> 「A public key has been found, but no private key」——bundler 只认 `TAURI_SIGNING_PRIVATE_KEY`（内容）。
+> 本地复现请用 `$env:TAURI_SIGNING_PRIVATE_KEY = Get-Content -Raw <key>`。
 
 发布构建还必须设置 `VITE_UPDATER_ENABLED=1`（release workflow 已内置）：前端据此启用「检查更新」；
 未设置时即使填了密钥/端点，安装包里的按钮仍是安全禁用态。workflow 在构建前会校验
@@ -82,11 +100,15 @@ npx tauri signer generate -w <仓库外路径>/blockhabit.key
 - 私钥只存 GitHub Actions secrets 与离线备份，不进仓库、不写日志。
 - 发布端点仅用于下载签名清单与安装包，不携带账号/设备信息。
 
-## 5. 待人类完成项（与 C4 评估一致）
+## 5. 待人类完成项（2026-11-14 更新）
 
-1. 生成并保管签名密钥（§1.1）。
-2. 填 `plugins.updater.pubkey` 与 `endpoints`（§1.1/§1.2）。
-3. 配置 Actions secrets（§1.1）。
-4. （可选）Windows Authenticode 代码签名。
-5. 实现并验证 Rust `on_before_exit` 存档握手（安装器退出应用前 flush）。
-6. 决定是否允许启动自动检查（默认不建议；D-069 设计为手动）。
+| # | 项 | 状态 |
+| --- | --- | --- |
+| 1 | 生成并保管签名密钥 | ✅ 已完成（`%USERPROFILE%\blockhabit-keys\`，请自行离线备份） |
+| 2 | 填 `plugins.updater.pubkey` 与 `endpoints` | ✅ 已完成 |
+| 3 | 配置 Actions secrets | ✅ 已完成（两个 secret 均存在） |
+| 4 | Windows Authenticode 代码签名 | ⬜ **可选、未做**：需购买证书；不做的后果是安装时 SmartScreen 提示「未知发布者」 |
+| 5 | Rust `on_before_exit` 存档握手 | ✅ 代码已落地并有单测；**真机验证**见 T7 |
+| 6 | 是否允许启动自动检查 | ⬜ 维持 D-069 的手动检查（不做启动自动检查、不做后台轮询） |
+| 7 | T6 真机自动更新全流程 | ⬜ 需人工执行，载荷与步骤见 `real-device-acceptance.md` §6 / §12 |
+| 8 | T8 keyring 真机验收 | ⬜ 需人工执行，见 `real-device-acceptance.md` §7.5 |
