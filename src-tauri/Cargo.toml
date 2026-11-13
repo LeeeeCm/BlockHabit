@@ -35,3 +35,9 @@ tauri-plugin-process = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# C4 §4 方案 B：把 WebDAV 密码交给 Windows Credential Manager（见 src/credentials.rs）。
+# 只在 Windows 目标上编译，其它平台连依赖都不拉；
+# default-features = false + windows-native，只额外拉 windows-sys 与 byteorder，不引入 Linux/Apple 后端。
+[target.'cfg(windows)'.dependencies]
+keyring = { version = "3.6.3", default-features = false, features = ["windows-native"] }
+

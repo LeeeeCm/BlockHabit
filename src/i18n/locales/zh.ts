@@ -352,6 +352,7 @@ export const zh: TranslationSchema = {
       rememberPasswordOff: '不记住',
       rememberPasswordHintOn: '密码保存在本机（与存档分开），重开应用后仍可自动同步。',
       rememberPasswordHintOff: '密码只保留在本次运行内存中，重开应用后需要重新输入才能同步。',
+      rememberPasswordHintOs: '密码由 Windows 凭据管理器保管，存档与配置文件里都不含明文密码。',
       passwordStoredPlaceholder: '已保存；留空继续使用',
       passwordKeepHint: '已保存密码：留空表示继续使用，输入新密码可替换。',
     },

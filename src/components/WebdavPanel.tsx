@@ -366,9 +366,11 @@ export function WebdavPanel({ sync, onToast }: Props) {
                 </button>
               </div>
               <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3, lineHeight: 1.5 }}>
-                {syncConfig.rememberPassword !== false
-                  ? t.settings.webdav.rememberPasswordHintOn
-                  : t.settings.webdav.rememberPasswordHintOff}
+                {syncConfig.rememberPassword === false
+                  ? t.settings.webdav.rememberPasswordHintOff
+                  : syncConfig.credentialStore === 'os'
+                    ? t.settings.webdav.rememberPasswordHintOs
+                    : t.settings.webdav.rememberPasswordHintOn}
               </div>
             </div>
             {/* D-20261110-061：独立测试连接 + 分步结果（不触发同步合并） */}

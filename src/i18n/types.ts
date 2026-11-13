@@ -360,6 +360,8 @@ export interface TranslationSchema {
       rememberPasswordOff: string
       rememberPasswordHintOn: string
       rememberPasswordHintOff: string
+      /** C4 §4 方案 B：密码由 OS 凭据管理器保管 */
+      rememberPasswordHintOs: string
       passwordStoredPlaceholder: string
       passwordKeepHint: string
     }

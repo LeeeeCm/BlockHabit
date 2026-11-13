@@ -640,6 +640,24 @@
       "owner": "lead",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261112-071-p3-polish.md"
+    },
+    {
+      "id": "D-20261114-072",
+      "date": "2026-11-14",
+      "title": "WebDAV 密码交给 OS 凭据管理器（C4 §4 方案 B 落地：keyring 依赖 + 迁移/回退 + 文案）",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261114-072-keyring-os-credential-store.md"
+    },
+    {
+      "id": "D-20261114-073",
+      "date": "2026-11-14",
+      "title": "format:check 扩到全仓源码（src/** 与 scripts/**），一次性 Prettier 对齐 + 进 CI",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261114-073-prettier-full-scope.md"
     }
   ]
 }

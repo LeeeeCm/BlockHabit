@@ -369,6 +369,7 @@ export const en: TranslationSchema = {
       rememberPasswordOff: "Don't remember",
       rememberPasswordHintOn: 'The password is stored on this device (separate from your archive) so auto-sync keeps working after a restart.',
       rememberPasswordHintOff: 'The password is kept only in memory for this run; re-enter it after restarting to sync.',
+      rememberPasswordHintOs: 'Saved in Windows Credential Manager — neither the archive nor the config file contains your password.',
       passwordStoredPlaceholder: 'Saved — leave blank to keep using it',
       passwordKeepHint: 'A password is saved. Leave blank to keep it, or type a new one to replace it.',
     },
