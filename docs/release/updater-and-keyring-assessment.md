@@ -298,3 +298,29 @@
 - 未验证真实更新链路（需要打包 + 托管 + 旧版本安装），属于 C6 真机验收项（条件：C4 批准后）。
 - 并发改动（`rememberPassword`、诊断取消、AboutPanel）未提交，本评估不把它们当作已完成交付；落地时以 Lead 最终提交为准。
 > 2026-11-12 补充：本节所述发布链路脚手架已落地 —— `.github/workflows/release.yml`（手动触发、门禁/版本校验/签名构建/Release/latest.json）、`src-tauri/tauri.release.conf.json`（createUpdaterArtifacts）、`scripts/make-latest-json.mjs`（+8 例测试）与 `docs/release/release-runbook.md`（密钥/端点/secrets/验收/回滚/私有仓库限制）。仍未就绪：签名私钥、pubkey/endpoints 实际值、CI secrets、on_before_exit 存档握手、仓库公开或 CDN 托管。
+
+---
+
+## 8. 实施结果（2026-11-14 回填）
+
+| 项 | 评估结论 | 实际状态 |
+| --- | --- | --- |
+| §4.2 方案 A（不落盘开关） | 现在可做 | ✅ 已在 B1 落地，本轮无改动 |
+| §4.2 方案 B（Rust `keyring` + 自定义 command） | 推荐下一轮，需批准 | ✅ **已实施**：`keyring 3.6.3`（仅 Windows 目标，`windows-native`）+ `src-tauri/src/credentials.rs` 四命令 + `src/platform/credentials.ts` + useSync 探测/迁移/回填；记录 D-20261114-072 |
+| §4.2 方案 C（社区 tauri-plugin-keyring） | 备选，需批准 | ❌ 未采用（方案 B 的前端零新依赖优势更大） |
+| §4.2 方案 D（Stronghold） | 否决 | ❌ 维持否决 |
+| §4.4 阶段 0–3 | 批准后执行 | ✅ 已完成（service=`com.blockhabit.app`；account=`sha256(endpoint + '\n' + username)`；`credentialStore: 'os'` 标记随配置落盘，**不升 schemaVersion**） |
+| §4.4 阶段 4–5（文案 + 真机 C6） | 需真机 | ⚠️ 文案已加（`rememberPasswordHintOs` zh/en）；**真机验收未做**，清单见 `real-device-acceptance.md` §7.5（T8） |
+| §4.4 阶段 6（双读回退一个周期） | 建议 | ⚠️ 已实现「凭据管理器不可用即回退旧行为」；「旧客户端读已迁移存档」按 §4.4 的隐私优先方案处理：回滚需重输一次密码，数据不丢 |
+| §1 自动更新（发布端点/签名/latest.json） | 需人类提供 | ✅ **已配置**：公钥/endpoints 已写入、两个 Actions secrets 已设置、仓库转 public、0.2.1 已由 Release workflow 出签名包并上传 latest.json；Windows Authenticode 代码签名仍为可选未做 |
+| §1.4 `on_before_exit` 握手（C4 待实现项） | 需实现 | ✅ 已实现（Rust `RunEvent::ExitRequested` + 安装前 `beforeInstall` flush）；**真机验证**见 `real-device-acceptance.md` §8 |
+| §5 决策清单「启动自动检查」 | 待决定 | ⬜ 维持手动（D-069）；未做启动自动检查 |
+
+### 迁移/回滚的实际实现（与 §4.4 的差异）
+
+- `§4.4` 阶段 3 写的是「读取时 `credentialStore==='os'` 则从 keychain 取密码，取不到则提示重输」——
+  实现里把「取不到」做成了**密码留空**：同步会失败并给出既有错误码，设置页同步分组因此保持可见，用户重输即可；
+  没有新增错误码，也没有阻塞启动。
+- `§4.4` 阶段 3 还写「成功后把 localStorage 中 password 置空并写 `credentialStore: 'os'` 标记」——
+  实现一致；额外加了「`syncNow` 发现标记但无密码时先回填」的自愈，避免启动顺序问题导致空密码打服务器。
+- 只多了一个 `credentialStore?: 'os'` 可选字段，**没有**改 AppState / 存档 JSON / 同步合并口径。
