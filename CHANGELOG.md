@@ -112,6 +112,7 @@
 | `npm run build` | 通过（index 431.90 kB / gzip 132.36 kB，终局 HEAD 实测） |
 | `cargo test --lib` | **7 passed** |
 | 带发布配置的签名构建 | 通过（release workflow + 本机 `tauri build --config src-tauri/tauri.release.conf.json`） |
+| 独立 verifier | **PASS（P0 = 0）**：P2/P3 逐条处置并写进发布报告 §15.9 / §15.10；真机 T6/T7/T8 仍 blocked |
 
 ### 发布结果（2026-11-15 实测）
 

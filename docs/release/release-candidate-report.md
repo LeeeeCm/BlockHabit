@@ -458,7 +458,7 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
   一切正常（public / 资产 uploaded / CI 绿）。复核结束后立即复测：匿名 API / 页面 / latest.json / 控制组
   全部 200，`release:check --download` 再次 13/13；判定为 GitHub 对**匿名突发访问的临时限制/可见性异常**，
   非仓库或发布缺陷（详见 §15.10）。
-- 复核中提出的 P0/P1/P2/P3 处置见 §15.9；最终复核结论见 §15.10。
+- 复核中提出的 P0/P1/P2/P3 处置见 §15.9；**最终复核结论：PASS（P0 = 0）**，详见 §15.10。
 
 ### 15.7 发布侧踩坑与一次性修复
 
@@ -517,4 +517,10 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
 - **P0 定性**：GitHub 平台侧对匿名突发访问的临时限制/可见性异常（同一时刻认证侧 `private:false/disabled:false`、
   资产 uploaded、CI 绿；复核期间 verifier 自身做了大量匿名请求）；仓库与 Release **未做任何变更**即恢复。
   结论：不是交付缺陷，P0 不成立。
-- **verifier 复测确认**：**（待 verifier 对最终 HEAD 复测后回填最终 PASS/FAIL）**
+- **verifier 最终复测（同一子代理，只读）**：**PASS（P0 = 0）**。其独立重跑
+  `npm run release:check -- --version 0.2.2`（与 CI 同一份权威脚本）**12/12 通过**；P2 三处数字与 P3 五处
+  文档修正逐条「已核实」；确认 `cb67ce8..a535c79` 的代码目录 diff 为空（只改文档与设计记录），因此其此前在
+  `cb67ce8` 独立实跑的门禁数字对最终 HEAD 依然有效。
+- **残余风险（如实记录）**：verifier 所在 runtime 的匿名直连在该时段仍间歇 404，而同一时段 release:check 的
+  匿名请求 200 —— 属出入口/请求级的偶发异常，非仓库或资产状态问题；用户侧若偶发 404，重试或换网络即可。
+  继续观察 GitHub 平台状态，不需要再改仓库。
