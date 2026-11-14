@@ -97,5 +97,6 @@
 | D-20261115-077 | 2026-11-15 | 清理 verifier 遗留 P3：安装成功后释放 Update 句柄 / credential_set 空串删除旧条目 | approved | — | LeeCM |
 | D-20261115-078 | 2026-11-15 | 仓库门面与供应链：Actions 升版 / SECURITY / CONTRIBUTING / Issue 模板 / Dependabot / CodeQL / 仓库元数据 | approved | — | LeeCM |
 | D-20261115-079 | 2026-11-15 | CodeQL 首次扫描 3 条告警处置：README 表格转义补反斜杠 / WebDAV 服务商识别改为解析 host | approved | settings, build | LeeCM |
+| D-20261115-080 | 2026-11-15 | 还清单文件 800 行工程债：纯拆分剩余 6 个超长文件（ShowcaseScene / BuildScene / appStore / App / HabitRow / archive.test） | approved | — | LeeCM |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。
