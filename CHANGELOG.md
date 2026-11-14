@@ -24,7 +24,7 @@
 - 修掉 `Heatmap.test.tsx` 的日期相关 flake：13 周网格以本周结尾，**周日**运行时没有「未来日期」格子，
   aria-disabled 用例必然失败（CI 每周约 1/7 概率随机红）。已把系统时间固定到 2026-11-11（周三），断言不变。
 
-### 门禁（0.2.2 候选，发布前）
+### 门禁（发布前基线）
 
 - `npx tsc --noEmit` 0；`npm test` **110 文件 / 1137 用例**；`design:check` **74 条**；`format:check`；
   `build` index 428.91 kB / gzip 131.09；CI **success**（run 43617100269）。
@@ -45,6 +45,86 @@
 - **release:check 增强**：`scripts/check-release.mjs` 增加「`.sha256` 资产存在」与「`.sha256` 内容与
   GitHub 记录的 digest 一致」两项判定；`--download` 下的实测 sha256 比对保留。自检项 11 → 13（带下载）。
 - 单测 `scripts/check-release.test.mjs` 9 → 11 例（新增缺 .sha256 / 内容不一致两例）。
+
+### 工程债：4 个超 800 行文件纯拆分（D-20261115-076 approved）
+
+- **`Today.tsx` 977 → 460 行**：抽出 11 个展示/纯函数文件到 `src/pages/today/`（Header / FocusEntry /
+  CategoryFilter / FullDayCard / EchoCapsule / ReminderBanner / EmptyState / HabitSections /
+  ArchiveSection / Overlays / todayUtils），状态、副作用与 `useCallback` 全部留在页面组件。
+- **`MiniDeskToy.tsx` 931 → 251 行**：`useFocusNow` / `FocusRing` / `FocusPanel` / `MiniHeader` /
+  `MiniFooter` / `MiniStage` 移到 `src/components/minidesk/`。
+- **`SettingsDialog.tsx` 866 → 257 行**：`Group` 与五个设置分区展示组件移到 `src/components/settings/`。
+- **`en.ts` 808 → 42 行**：按文案域拆成 10 个文件（最大 142 行），`en.ts` 按原 29 个顶层 key 顺序组合；
+  以 git HEAD 旧文件为基线的顺序敏感快照（`Object.keys` 逐位 / 嵌套顺序 / 函数源码）完全一致。
+- 约束全满足：公共导出与 import 路径不变、零逻辑改动、未改任何测试断言；拆分前后 `npm test` 都是
+  **110 文件 / 1139 用例**；`npm run build` 产物 index 428.91 → 431.77 kB（gzip 131.09 → 132.31 kB，
+  纯模块边界开销，量级不回归）。
+- 剩余 6 个文件仍在 800 行附近（最大约 870），已记入 D-076「后续」，下一轮继续拆。
+
+### verifier 遗留 P3 清理（D-20261115-077 approved）
+
+- `installUpdate()` 在 `downloadAndInstall()` 成功后 `await update.close()`（失败路径保留句柄供重试，
+  语义不变）；`updater.test.ts` 成功路径新增「close 恰好一次」断言（12 例）。
+- `credential_set(account, "")` 改为删除该账号旧条目（幂等），判定抽成纯函数
+  `empty_secret_means_delete()` 并加 Rust 单测；前端零改动（清空仍走 `credential_delete`）。
+  `cargo test --lib` 6 → 7 例。
+
+### 仓库门面与供应链（D-20261115-078 approved）
+
+- **Actions 升版**：`actions/checkout@v4 → v5`、`actions/setup-node@v4 → v5`（CI / Release），
+  消除「Node.js 20 deprecated」告警；升版后 CI 实测 success。
+- **SECURITY.md**：GitHub Security Advisories 私密报送、支持范围 0.2.x、范围/不在范围、
+  本地优先 / 无账号 / 无遥测边界、密钥纪律。**CONTRIBUTING.md**：AGENTS.md 对外摘要 + 门禁命令 +
+  中文 conventional commit + PR 流程 + 文档归口 + 红线。
+- **Issue Forms**（bug / feature）与 **PR 模板**：必填信息（版本、Windows 版本与缩放、WebDAV 状态、
+  备份情况、隐私确认）与硬约束自查（视觉语言、zh/en、单文件 < 800 行、不提交密钥/产物）。
+- **Dependabot**：npm + cargo 每周、minor+patch 分组、open PR limit 5、**不自动合并**；Tauri 生态
+  （`@tauri-apps/*` / `tauri` / `tauri-build` / `tauri-plugin-*`）的 major 升级显式 ignore
+  （2.x 是手工 pin 的版本线，major 必须先评估）。
+- **CodeQL**：Advanced workflow（javascript-typescript，push main / PR / 每周 cron，`security-events: write`）。
+- **仓库元数据**：topics 补齐（tauri / react / typescript / habit-tracker / desktop-app / local-first /
+  productivity / windows / canvas-2d / rust），description 增加「本地优先、无账号、无遥测」。
+
+### 门禁（0.2.2 终局实测）
+
+| 门禁 | 结果 |
+| --- | --- |
+| `npx tsc --noEmit` | 0 错误 |
+| `npm test` | **110 文件 / 1139 用例全绿** |
+| `npm run design:check` | **78 条**（D-075/076/077/078） |
+| `npm run format:check` | 通过 |
+| `npm run check:versions` | 0.2.2 |
+| `npm run build` | 通过（index 431.77 kB / gzip 132.31 kB） |
+| `cargo test --lib` | **7 passed** |
+| 带发布配置的签名构建 | 通过（release workflow + 本机 `tauri build --config src-tauri/tauri.release.conf.json`） |
+
+### 发布结果（2026-11-15 实测）
+
+- **Release `v0.2.2` 已存在**：<https://github.com/LeeeeCm/BlockHabit/releases/tag/v0.2.2>（非 draft /
+  非 prerelease / 即 latest），发布 workflow run [43620508223](https://github.com/LeeeeCm/BlockHabit/actions/runs/43620508223)
+  **success**（8m39s），末尾新增的 `Verify release (release:check)` 步骤通过。
+- **tag 钉住触发提交**：`v0.2.2` → `da20cb6`，与 workflow run 的 `headSha` **完全相同**
+  （新增的 `gh release create --target "$GITHUB_SHA"` 生效，发布期间再 push 也不会漂）。
+- 资产（6 个）：`BlockHabit_0.2.2_x64-setup.exe`（9,304,643 B，sha256 `1b18d100…`）、
+  `.exe.sig`（420 B）、`.exe.sha256`（98 B）、`BlockHabit_0.2.2_x64_en-US.msi`（11,276,288 B）、
+  `.msi.sha256`、`latest.json`（1,107 B）。
+- `latest.json` 公网 200，version=0.2.2、url 指向 v0.2.2 安装包；`.sig` 与 signature **逐字节一致**（420 B == 420 B）；
+  解码比对 minisign keyid：公钥 `c38f798bd203ed59` == 签名 `c38f798bd203ed59`。
+- `npm run release:check -- --version 0.2.2 --download` **13/13 通过**（含 `.sha256` 资产内容与 GitHub digest 一致、
+  下载安装包实测 sha256 与 digest 一致）。
+- **发布侧踩坑并修复**：手动触发 workflow 时把多行中文 notes 用 PowerShell here-string 语法塞进
+  `gh workflow run -f notes=...`，导致 Release 正文与 latest.json 的 notes 混入 `@` 标记。
+  已用 `gh release edit --notes-file` 修正 Release 正文，并按同一签名/URL 重新生成、`--clobber` 上传
+  latest.json（CDN 约 5 分钟后返回干净内容，已实测）。教训：多行发布说明走文件/变量，不要命令行内联 here-string。
+- 本机签名构建：`VITE_UPDATER_ENABLED=1` + `tauri build --config src-tauri/tauri.release.conf.json`
+  产物与 Release 构建逻辑一致（见发布报告 §15）。
+
+### 仍未做（需真机，blocked）
+
+- **T6 自动更新闭环**（旧版 → 检查更新 → 下载 → 安装 → 重启）、**T7 强制结束/关机落盘**、
+  **T8 keyring 凭据管理器**：均需真实 Windows 桌面与安装包，无法在 CI/本地无头环境完成。
+  精确步骤见 `docs/release/real-device-acceptance.md` §6 / §7.5 / §8 / §12；本轮只保证
+  「发布侧 + 自动化」可证明的部分，不伪造真机结论。
 
 ## [0.2.1] — 2026-11-14（第十二轮：可发布状态 —— 记录审核 / 存档握手 / keyring / 发布链路）
 

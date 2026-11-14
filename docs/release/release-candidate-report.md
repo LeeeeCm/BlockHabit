@@ -294,33 +294,150 @@ P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」�
 
 ## 15. 0.2.2（2026-11-15 第十三轮）
 
-### 15.1 版本与候选提交
+### 15.1 版本与发布
 
 - 版本：`0.2.1` → **`0.2.2`**（`package.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` +
   `Cargo.lock` 的 blockhabit 包，`npm run check:versions` 通过）。
-- 0.2.1 之后、0.2.2 之前的候选内容：应用级自动同步修复（D-20261115-074）与 Heatmap 日期 flake 修复。
-- 0.2.2 发布候选新增：发布侧自检闭环（D-20261115-075）：
+- **Release `v0.2.2` 已发布**：<https://github.com/LeeeeCm/BlockHabit/releases/tag/v0.2.2>
+  （非 draft / 非 prerelease / 即 latest），发布 workflow run
+  [43620508223](https://github.com/LeeeeCm/BlockHabit/actions/runs/43620508223) **success**（8m39s），
+  tag `v0.2.2` → `da20cb6`（与 workflow run 的 headSha 完全相同，见 15.6 第 5 条）。
+- 本轮提交（`1f1b044..`，按时间顺序）：
 
-| 项 | 内容 |
+| 提交 | 主题 |
 | --- | --- |
-| tag 钉住提交 | `gh release create --target "$GITHUB_SHA"`，tag 与 workflow checkout 提交严格一致 |
-| 空 notes 兜底 | 发布说明写 `release-notes.md`，`--notes-file` 同时用于 Release 与 latest.json |
-| 校验资产 | Release 新增 `BlockHabit_<ver>_x64-setup.exe.sha256`（GNU 风格；MSI 同样一份） |
-| 流水线自检 | workflow 最后一步 `node scripts/check-release.mjs --version <ver> --download`（10×15s 重试），失败即红灯 |
-| 自检增强 | `release:check` 增加 .sha256 资产存在 + 内容与 GitHub digest 一致；带 `--download` 共 13 项 |
+| `4b7c473` | chore(release): 版本号 0.2.1 → 0.2.2（三处构建入口 + Cargo.lock） |
+| `b1b0076` | feat(release): 发布自检进流水线（tag 钉住触发提交 / 空 notes 兜底 / .sha256 资产） |
+| `da20cb6` | docs(release): CHANGELOG 0.2.2 与发布报告 §15（发布候选与自检闭环）← **v0.2.2 tag** |
+| `f144a9b` | docs(design): 登记 0.2.2 的工程债与仓库门面设计记录（D-076/077/078） |
+| `50fc662` | ci: GitHub Actions 升版（checkout@v5 / setup-node@v5），消除 Node.js 20 deprecated 告警 |
+| `343246c` | fix(updater,keyring): 安装成功后释放 Update 句柄；credential_set 空串删除旧条目（D-20261115-077） |
+| `0dd800d` | docs(governance): 新增 SECURITY / CONTRIBUTING / Issue+PR 模板 / Dependabot / CodeQL（D-20261115-078） |
+| `3c895ce` | refactor(today): 拆分 Today.tsx（977 → 460 行），零行为变化（D-20261115-076） |
+| `4ca153c` | refactor(minidesk): 拆分 MiniDeskToy.tsx（931 → 251 行），零行为变化（D-20261115-076） |
+| `ae2ba34` | refactor(settings): 拆分 SettingsDialog.tsx（866 → 257 行），零行为变化（D-20261115-076） |
+| `c17708a` | refactor(i18n): 拆分 en.ts（808 → 42 行）为按域文件，零行为变化（D-20261115-076） |
+| （本条文档提交） | docs(release): 0.2.2 发布结果、门禁数字与 blocked 清单 |
 
-### 15.2 门禁（发布候选，实测）
+> 说明：tag 落在 `da20cb6`（发布候选文档提交），之后的提交是设计记录、CI、P3 清理、治理文件与纯重构，
+> 均不改产品运行时行为（P3 清理的两处属资源/凭据语义，见 D-077）。tag 与二进制构建提交严格一致这一点由
+> 15.6 第 5 条的 `--target` 机制保证。
+
+### 15.2 交付项（对照 P0/P1/P2/P3）
+
+| 项 | 结果 |
+| --- | --- |
+| P0-1 版本升 0.2.2 | ✅ `4b7c473`，check:versions 通过 |
+| P0-2 CHANGELOG / 本报告 | ✅ 本文件 + `CHANGELOG.md` 的 [0.2.2] 段 |
+| P0-3 push → CI → Release | ✅ CI 在 `da20cb6`/后续提交 success；Release run 43620508223 success |
+| P0-4 release:check 0.2.2 | ✅ **13/13**（含 `.sha256` 与 digest 一致、下载实测 sha256 一致） |
+| P0-5 Release 状态与 tag | ✅ 非 draft / 非 prerelease / latest；tag → `da20cb6` |
+| P1-6 Actions 升版 | ✅ `50fc662`（checkout@v5 / setup-node@v5），升版后 CI success |
+| P1-7 治理文件 | ✅ `0dd800d`（SECURITY / CONTRIBUTING / Issue Forms / PR 模板） |
+| P1-8 Dependabot | ✅ `0dd800d`（npm+cargo weekly、minor+patch 分组、Tauri major ignore、不自动合并） |
+| P1-9 仓库元数据 | ✅ topics 10 个 + description 更新（homepage 无官网，保持为空，不造假） |
+| P1-10 CodeQL | ✅ `.github/workflows/codeql.yml` 首次扫描结果见 15.6 |
+| P2-11 拆分 4 个超 800 行文件 | ✅ 4 个提交（Today 977→460 / MiniDeskToy 931→251 / SettingsDialog 866→257 / en.ts 808→42） |
+| P2-12 发布侧增强 | ✅ `.sha256`（exe+msi）+ release:check 进 workflow 最后一步（失败即红灯） |
+| P2-13 verifier P3 清理 | ✅ `343246c`（update.close / credential_set 空串删除） |
+| P3-14 真机验收 | ⛔ **blocked**（需真实设备），精确步骤见 `real-device-acceptance.md` §6/§7.5/§8/§12 |
+
+### 15.3 门禁（终局实测）
 
 | 门禁 | 结果 |
 | --- | --- |
 | `npx tsc --noEmit` | 0 错误 |
-| `npm test` | **110 文件 / 1139 用例全绿**（check-release 单测 9 → 11 例） |
-| `npm run design:check` | **75 条**（新增 D-20261115-075） |
+| `npm test` | **110 文件 / 1139 用例全绿**（拆分前后一致；check-release 单测 9 → 11 例） |
+| `npm run design:check` | **78 条**（新增 D-075/076/077/078，全部 approved） |
 | `npm run format:check` | 通过 |
 | `npm run check:versions` | 0.2.2 |
-| `npm run build` | 见发布后复测 |
-| `cargo test --lib` | 见发布后复测 |
+| `npm run build` | 通过（index 431.77 kB / gzip 132.31 kB；拆分前 428.91 / 131.09，纯模块边界开销） |
+| `cargo test --lib` | **7 passed**（新增 empty_secret_means_delete 1 例） |
+| `npm run release:check -- --version 0.2.2 --download` | **13/13 通过** |
+| 带发布配置的签名构建 | ✅ release workflow（`VITE_UPDATER_ENABLED=1` + 签名密钥）与**本机复跑**均成功 |
+| CI / CodeQL | 见 15.6 |
 
-### 15.3 发布结果
+### 15.4 发布证据（2026-11-15 01:28 +08 实测）
 
-- 待 v0.2.2 Release workflow 成功后回填（资产、latest.json、release:check 输出、tag 指向）。
+| 资产 | 大小 | 校验 |
+| --- | --- | --- |
+| `BlockHabit_0.2.2_x64-setup.exe` | 9,304,643 B | 公网可下；sha256 `1b18d1003ce1301f31cebed6c68ca202786c2bab8f3161e906615420b91eb8c5`（与 GitHub digest、`.sha256` 资产三方一致） |
+| `BlockHabit_0.2.2_x64-setup.exe.sig` | 420 B | 与 latest.json 的 signature **逐字节相同** |
+| `BlockHabit_0.2.2_x64-setup.exe.sha256` | 98 B | 内容 `1b18d100…  BlockHabit_0.2.2_x64-setup.exe`，与 digest 一致 |
+| `BlockHabit_0.2.2_x64_en-US.msi` | 11,276,288 B | sha256 `7c55c1c6…` |
+| `BlockHabit_0.2.2_x64_en-US.msi.sha256` | 98 B | 内容与 MSI digest 一致 |
+| `latest.json` | 1,107 B | 公网 200（`releases/latest/download/latest.json`），version=0.2.2、url 指向 v0.2.2 安装包 |
+
+`latest.json` 关键字段：
+
+```json
+{
+  "version": "0.2.2",
+  "notes": "0.2.2：修复「不开设置页就永不同步」……本地优先不变：无账号、无遥测，更新仍由用户手动触发。",
+  "pub_date": "2026-11-14T17:28:23Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6…",
+      "url": "https://github.com/LeeeeCm/BlockHabit/releases/download/v0.2.2/BlockHabit_0.2.2_x64-setup.exe"
+    }
+  }
+}
+```
+
+签名与公钥配对（本机结构性校验）：
+
+```
+pub  untrusted comment: minisign public key: 59ED03D28B798FC3 | keyid: c38f798bd203ed59
+sig  untrusted comment: signature from tauri secret key       | keyid: c38f798bd203ed59
+KEYID MATCH: true
+```
+
+`release:check` 13 项全部 ✔（latest.json 200 / version / Release 存在 / 非 draft-prerelease /
+latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe HEAD 200 / .sha256 内容与 digest /
+下载实测 sha256 与 digest）。**注：v0.2.2 发布后修正过一次 Release 正文与 latest.json 的 notes**
+（见 15.7 第 4 条），exe/sig/sha256 与签名未做任何改动。
+
+### 15.5 仍 blocked 项与人类可执行步骤
+
+以下三项**无法**在 CI / 无头环境完成，本轮不伪造结论。真机执行时按
+[`docs/release/real-device-acceptance.md`](real-device-acceptance.md) 逐项记录。
+
+1. **T6 自动更新闭环（§6）**
+   ```powershell
+   # 1) 起点：安装已发布的 0.2.1（它自带 updater 公钥/端点）
+   gh release download v0.2.1 -p "BlockHabit_0.2.1_x64-setup.exe" -D .tmp-t6
+   # 2) 双击安装 .tmp-t6\BlockHabit_0.2.1_x64-setup.exe
+   # 3) 打开应用 → 设置 → 内容路线 → 版本与更新 → 检查更新 → 下载并安装 → 重启
+   # 4) 重启后：设置里显示 0.2.2；导出一份档案包与升级前比对（建筑/连击/WebDAV 配置不丢）
+   # 5) 负向：临时改 hosts/断网或篡改 latest.json → 必须诚实提示失败，不显示「已是最新」、不安装未验签包
+   # 6) 抓包：只含版本/平台/架构，无账号/设备标识
+   # 期望：发现 0.2.2 → 下载 → 安装 → 重启 → 数据不丢；退出前 forceFlush 生效
+   ```
+2. **T7 强制结束 / 关机落盘（§8）**：打卡后立刻用任务管理器「结束任务」，再重复一次「注销」。
+   期望：tao 0.37.1 不处理 `WM_QUERYENDSESSION`，最后一次非关键写入可能丢，但**不得**存档损坏/空态覆盖
+   （关键动作已立即落盘）。安装器路径（T6 安装时）应看到退出前 flush。
+3. **T8 keyring 凭据管理器（§7.5）**：设置→同步填 WebDAV 密码并勾「记住」→ 控制面板凭据管理器应出现
+   `com.blockhabit.app` 条目（账号键为 64 位十六进制，不是邮箱/URL）→ WebView 数据与导出档案包中
+   **搜不到明文密码** → 重启后不要求重输（0.2.2 起迁移/回填在启动时完成，不必先打开设置页）→
+   删除条目后重启应提示重输且不崩溃 → 关闭「记住密码」应删除条目 → 卸载残留属已知限制。
+
+### 15.6 独立 verifier 结论与处置
+
+- 结论：**（待 15.8 回填）**
+- CodeQL 首次扫描：（待回填）
+- 本地签名构建：（待回填）
+
+### 15.7 发布侧踩坑与一次性修复
+
+1. **tag 目标漂移**（0.2.1 遗留）：已改为 `gh release create --target "$GITHUB_SHA"`（D-075），
+   本轮 tag 与 workflow headSha 完全一致，机制修复生效。
+2. **空 notes 会炸**：发布说明统一走 `release-notes.md` + `--notes-file`（D-075），本轮实跑无异常。
+3. **release:check 进流水线**：workflow 最后一步 10×15s 重试后成功（D-075）。
+4. **手动 dispatch 的多行中文 notes 被 PowerShell here-string 语法污染**：本轮触发时把
+   `@'…'@` 写进了 `gh workflow run -f notes=…`，导致 Release 正文与 latest.json 的 notes 混入
+   `@` 标记。已用 `gh release edit --notes-file` 修正正文、按**同一签名/URL** 重新生成并
+   `--clobber` 上传 latest.json（CDN 约 5 分钟后生效，已实测干净）。教训：多行发布说明走文件/变量，
+   不要用命令行内联 here-string；这一条已写进 runbook。
+5. **CI/CodeQL 升版验证**：`checkout@v5` / `setup-node@v5` 在 `50fc662` 后的 CI 实测 success，
+   日志不再出现 Node.js 20 deprecated 警告。Dependabot 配置合并后已自动出现 `Dependabot Updates`
+   workflow run（说明配置被 GitHub 接受）。

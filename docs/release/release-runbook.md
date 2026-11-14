@@ -75,15 +75,36 @@ npx tauri signer generate -w <仓库外路径>/blockhabit.key
 2. 决定版本号并同步三处构建文件，提交。
 3. GitHub → Actions → **Release** → Run workflow，填写：
    - `version`：与构建文件一致的 x.y.z
-   - `notes`：发布说明（写入 Release 与 latest.json）
+   - `notes`：发布说明（写入 Release 与 latest.json；可空，workflow 用 `--notes-file` 兜底）
 4. Workflow 会：跑门禁 → 校验版本输入 → **校验 pubkey/endpoints/私钥** → 带 `VITE_UPDATER_ENABLED=1`
-   签名构建 NSIS/MSI → 创建 GitHub Release（`v<version>`）→ 生成并上传 `latest.json`。
+   签名构建 NSIS/MSI → 生成 exe/msi 的 `.sha256` → 创建 GitHub Release（`v<version>`，**tag 钉住触发提交**
+   `--target "$GITHUB_SHA"`）→ 生成并上传 `latest.json` → **最后跑 `release:check`（10×15s 重试，失败即红灯）**。
 5. 按 `docs/release/real-device-acceptance.md` 的 **T6** 验收：
    - 旧版本打开 设置 → 内容路线 → 版本与更新 → 检查更新
    - 发现新版本 → 下载并安装 → 重启后数据/设置/WebDAV 配置不丢
    - 篡改 latest.json 签名 → 拒绝并提示校验失败
    - 断网/404 → 诚实提示失败，不伪装「已是最新」
    - 抓包确认只含版本/平台/架构，无用户标识
+
+> **踩过的坑（2026-11-15）**：用 `gh workflow run -f notes=...` 传多行中文说明时，
+> 不要把 PowerShell here-string（`@'…'@`）写进参数——`@` 会被当成正文内容写进 Release 与 latest.json。
+> 正确做法见 §2.1（读文件到变量再传，或直接用网页端触发）。
+
+### 2.1 命令行触发（推荐，可复现）
+
+```powershell
+$ver = '0.2.2'
+$notes = Get-Content -Raw -Encoding UTF8 docs/release/notes-v0.2.2.md
+gh workflow run Release --ref main -f version=$ver -f "notes=$notes"
+# 等待并查看结果（也可以用网页）
+$runId = (gh run list --workflow Release -L 1 --json databaseId | ConvertFrom-Json)[0].databaseId
+gh run watch $runId --exit-status
+```
+
+- 发布说明建议先写成 `docs/release/notes-vX.Y.Z.md`（UTF-8）再读入，避免 shell 转义问题；
+  也可以在发布后 `gh release edit vX.Y.Z --notes-file <file>` 修正正文（不影响签名/资产）。
+- tag 由 workflow 钉在**触发时的提交**上，发布期间继续 push 不会造成 tag 漂移。
+- 发布后自检：`npm run release:check -- --version $ver --download`（13 项，含 .sha256 资产与 sha256 实测）。
 
 ## 3. 回滚与故障
 
@@ -112,3 +133,5 @@ npx tauri signer generate -w <仓库外路径>/blockhabit.key
 | 6 | 是否允许启动自动检查 | ⬜ 维持 D-069 的手动检查（不做启动自动检查、不做后台轮询） |
 | 7 | T6 真机自动更新全流程 | ⬜ 需人工执行，载荷与步骤见 `real-device-acceptance.md` §6 / §12 |
 | 8 | T8 keyring 真机验收 | ⬜ 需人工执行，见 `real-device-acceptance.md` §7.5 |
+| 9 | v0.2.2 发布（含 .sha256 + 流水线自检） | ✅ 2026-11-15 已发布；tag → `da20cb6`，release:check 13/13（见发布报告 §15） |
+| 10 | CodeQL / SECURITY.md / CONTRIBUTING.md / Dependabot | ✅ 2026-11-15 已落地（D-20261115-078），首次扫描见发布报告 §15 |
