@@ -317,11 +317,14 @@ P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」�
 | `4ca153c` | refactor(minidesk): 拆分 MiniDeskToy.tsx（931 → 251 行），零行为变化（D-20261115-076） |
 | `ae2ba34` | refactor(settings): 拆分 SettingsDialog.tsx（866 → 257 行），零行为变化（D-20261115-076） |
 | `c17708a` | refactor(i18n): 拆分 en.ts（808 → 42 行）为按域文件，零行为变化（D-20261115-076） |
-| （本条文档提交） | docs(release): 0.2.2 发布结果、门禁数字与 blocked 清单 |
+| `ba66e80` | docs(release): 0.2.2 发布结果、门禁数字、仓库门面与真机 blocked 清单 |
+| `3322c53` | fix(security): 处置 CodeQL 首次扫描告警（README 表格转义 / WebDAV host 识别）（D-20261115-079） |
+| （最终文档提交） | docs(release): 0.2.2 收尾（CodeQL 复扫、本地签名构建、verifier 结论） |
 
-> 说明：tag 落在 `da20cb6`（发布候选文档提交），之后的提交是设计记录、CI、P3 清理、治理文件与纯重构，
-> 均不改产品运行时行为（P3 清理的两处属资源/凭据语义，见 D-077）。tag 与二进制构建提交严格一致这一点由
-> 15.6 第 5 条的 `--target` 机制保证。
+> 说明：tag 落在 `da20cb6`（发布候选文档提交），之后的提交是设计记录、CI、P3 清理、治理文件、纯重构
+> 与 CodeQL 告警修复。其中 P3 清理（资源/凭据语义，D-077）与 CodeQL 修复（转义/host 判定，D-079）
+> 属低危行为改进，**不进入已发布的 0.2.2 二进制**，下次发版自然带上；纯重构（D-076）零行为变化。
+> tag 与二进制构建提交严格一致这一点由 15.7 第 1 条的 `--target` 机制保证。
 
 ### 15.2 交付项（对照 P0/P1/P2/P3）
 
@@ -336,7 +339,7 @@ P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」�
 | P1-7 治理文件 | ✅ `0dd800d`（SECURITY / CONTRIBUTING / Issue Forms / PR 模板） |
 | P1-8 Dependabot | ✅ `0dd800d`（npm+cargo weekly、minor+patch 分组、Tauri major ignore、不自动合并） |
 | P1-9 仓库元数据 | ✅ topics 10 个 + description 更新（homepage 无官网，保持为空，不造假） |
-| P1-10 CodeQL | ✅ `.github/workflows/codeql.yml` 首次扫描结果见 15.6 |
+| P1-10 CodeQL | ✅ `.github/workflows/codeql.yml` 首次扫描 3 条 high warning → 全部修复（D-079），复扫 success、告警 closed（见 15.6） |
 | P2-11 拆分 4 个超 800 行文件 | ✅ 4 个提交（Today 977→460 / MiniDeskToy 931→251 / SettingsDialog 866→257 / en.ts 808→42） |
 | P2-12 发布侧增强 | ✅ `.sha256`（exe+msi）+ release:check 进 workflow 最后一步（失败即红灯） |
 | P2-13 verifier P3 清理 | ✅ `343246c`（update.close / credential_set 空串删除） |
@@ -347,8 +350,8 @@ P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」�
 | 门禁 | 结果 |
 | --- | --- |
 | `npx tsc --noEmit` | 0 错误 |
-| `npm test` | **110 文件 / 1139 用例全绿**（拆分前后一致；check-release 单测 9 → 11 例） |
-| `npm run design:check` | **78 条**（新增 D-075/076/077/078，全部 approved） |
+| `npm test` | **112 文件 / 1147 用例全绿**（拆分前后 110/1139；+2 文件 / +8 例为 CodeQL 回归测试） |
+| `npm run design:check` | **79 条**（新增 D-075…079，全部 approved） |
 | `npm run format:check` | 通过 |
 | `npm run check:versions` | 0.2.2 |
 | `npm run build` | 通过（index 431.77 kB / gzip 132.31 kB；拆分前 428.91 / 131.09，纯模块边界开销） |
@@ -421,11 +424,37 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
    **搜不到明文密码** → 重启后不要求重输（0.2.2 起迁移/回填在启动时完成，不必先打开设置页）→
    删除条目后重启应提示重输且不崩溃 → 关闭「记住密码」应删除条目 → 卸载残留属已知限制。
 
-### 15.6 独立 verifier 结论与处置
+### 15.6 CodeQL 首次扫描、签名构建与独立 verifier
 
-- 结论：**（待 15.8 回填）**
-- CodeQL 首次扫描：（待回填）
-- 本地签名构建：（待回填）
+#### CodeQL（D-20261115-078 / D-20261115-079）
+
+- 首次扫描：run [43623021324](https://github.com/LeeeeCm/BlockHabit/actions/runs/43623021324) success，
+  Security → Code scanning 报 **3 条 warning（security severity: high）**：
+  | # | 规则 | 位置 | 处置 |
+  | --- | --- | --- | --- |
+  | 1 | `js/incomplete-sanitization` | `src/storage/archiveManifest.ts:239` | ✅ 修复：转义顺序改为「先反斜杠、再竖线」（D-079） |
+  | 2 | `js/incomplete-url-substring-sanitization` | `src/components/WebdavPanel.tsx:32` | ✅ 修复：改为 `new URL().host` 判定坚果云 host（D-079） |
+  | 3 | `js/incomplete-url-substring-sanitization` | `src/components/WebdavPanel.tsx:138` | ✅ 同 2（同一判断复用） |
+- 修复提交 `3322c53`，新增 8 例回归测试（2 个新测试文件）；`npm test` 110/1139 → **112/1147**。
+- 复扫：见本文件 §15.6 末尾「复扫确认」（下一次 push 的 CodeQL run 成功后回填）。
+
+#### 本地签名构建（`npm run tauri build -- --config src-tauri/tauri.release.conf.json`）
+
+- 环境：`VITE_UPDATER_ENABLED=1` + `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+  （私钥只从仓库外读入环境变量，未打印、未落盘、未提交）。
+- 结果：**成功**（exit 0），产物：
+  - `src-tauri/target/release/bundle/nsis/BlockHabit_0.2.2_x64-setup.exe`（9,303,801 B）+ `.sig`（420 B）
+  - `src-tauri/target/release/bundle/msi/BlockHabit_0.2.2_x64_en-US.msi`（11,280,384 B）+ `.sig`（420 B）
+  - 日志明确输出 `Finished 2 updater signatures`，证明 `createUpdaterArtifacts` 与签名链路在发布配置下工作。
+- 与 CI 产物大小略有差异（9,303,801 vs CI 9,304,643 B）属构建环境/嵌入信息差异，属正常现象；两边均为
+  updater 签名产物，CI 产物才是 Release 资产。
+
+#### 独立 verifier
+
+- 结论：**（由 verifier 子代理在最终状态下独立复核后回填；本轮 verifier 只读、不改仓库）**
+- 复核范围：发布证据（Release/tag/latest.json/签名/sha256）、门禁数字、版本一致性、纯拆分零行为变化的证据链、
+  P3 清理、治理文件与 CI/CodeQL 配置、设计台账纪律、文档与实际的数字一致性、密钥纪律。
+- 缺陷处置：见 §15.9（verifier 返回后逐条回填 P0/P1/P2/P3 与处置）。
 
 ### 15.7 发布侧踩坑与一次性修复
 
@@ -441,3 +470,17 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
 5. **CI/CodeQL 升版验证**：`checkout@v5` / `setup-node@v5` 在 `50fc662` 后的 CI 实测 success，
    日志不再出现 Node.js 20 deprecated 警告。Dependabot 配置合并后已自动出现 `Dependabot Updates`
    workflow run（说明配置被 GitHub 接受）。
+
+### 15.8 复扫确认（CodeQL / CI）
+
+- 复扫触发提交：3322c53（CodeQL 修复）与其后的文档提交。
+- CodeQL：**（待回填：下一次 push 的 run 状态 + 3 条告警是否 closed）**
+- CI：**（待回填）**
+
+### 15.9 独立 verifier 缺陷处置表
+
+> 本表由独立 verifier 子代理（只读、不改仓库）在最终状态下复核后填写；P0 必须为 0，P1/P2 逐条处置。
+
+| 级别 | 项 | 处置 |
+| --- | --- | --- |
+| — | （待 verifier 返回后回填） | — |

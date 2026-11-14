@@ -85,13 +85,27 @@
 - **仓库元数据**：topics 补齐（tauri / react / typescript / habit-tracker / desktop-app / local-first /
   productivity / windows / canvas-2d / rust），description 增加「本地优先、无账号、无遥测」。
 
+### 安全：CodeQL 首次扫描与告警处置（D-20261115-079 approved）
+
+- 启用 CodeQL（D-078）后首次扫描（run 43623021324）报 **3 条 warning（security severity: high）**，
+  全部落在既有代码上，逐条处置而非 dismiss：
+  1. `src/storage/archiveManifest.ts`：建筑年表 README 的 Markdown 表格转义只处理了 `|`、没处理反斜杠
+     （`js/incomplete-sanitization`）。改为**先转义反斜杠、再转义竖线**，含反斜杠的铭言不再可能拆开单元格；
+     不含反斜杠的铭言输出逐字节不变。
+  2. `src/components/WebdavPanel.tsx` ×2：服务商识别 / 预设切换用 `endpoint.includes('jianguoyun.com')`，
+     恶意 URL 在路径或查询串里塞该字符串会被误判（`js/incomplete-url-substring-sanitization`）。
+     改为 `new URL().host` 判断 host（等于 `jianguoyun.com` 或其子域），nextcloud/synology 的 path 标记判断不变。
+- 新增 `src/storage/archiveManifest.test.ts`（4 例）与 `src/components/webdavProvider.test.ts`（4 例），
+  含「反斜杠 + 竖线组合」「host 之外的 jianguoyun.com 不误判」两条回归。
+- 复扫结果与告警关闭状态见发布报告 §15.6。**修复不进入已发布的 0.2.2 二进制**（低危正确性改进，下次发版自然带上）。
+
 ### 门禁（0.2.2 终局实测）
 
 | 门禁 | 结果 |
 | --- | --- |
 | `npx tsc --noEmit` | 0 错误 |
-| `npm test` | **110 文件 / 1139 用例全绿** |
-| `npm run design:check` | **78 条**（D-075/076/077/078） |
+| `npm test` | **112 文件 / 1147 用例全绿**（拆分前后 110/1139；+2 文件 / +8 例为 CodeQL 回归测试） |
+| `npm run design:check` | **79 条**（D-075…079，全部 approved） |
 | `npm run format:check` | 通过 |
 | `npm run check:versions` | 0.2.2 |
 | `npm run build` | 通过（index 431.77 kB / gzip 132.31 kB） |
