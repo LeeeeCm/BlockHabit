@@ -46,7 +46,13 @@
 
 ### 发布结果
 
-- （发版后回填：Release、tag 指向、资产、latest.json、release:check、verifier）
+- **Release `v0.2.3` 已发布**：<https://github.com/LeeeeCm/BlockHabit/releases/tag/v0.2.3>（非 draft / 非 prerelease / 即 latest），
+  workflow run 43630839024 **success**，tag → `f374812`（与 run headSha 相同）。
+- 资产（6 个）：exe 9,304,897 B（sha256 `a480a2a5…`）/ `.sig` 420 B / `.sha256` / MSI 11,280,384 B / `.msi.sha256` /
+  `latest.json` 1,147 B；`release:check --version 0.2.3 --download` **13/13 通过**；minisign keyid 公钥与签名一致
+  （`c38f798bd203ed59`）。
+- 本机带发布配置签名构建成功（2 bundles + 2 updater signatures）。
+- 独立 verifier 结论见 `docs/release/release-candidate-report.md` §16.6。
 
 ## [0.2.2] — 2026-11-15（第十三轮：应用级自动同步 / 发布自检闭环 / 仓库门面与工程债）
 

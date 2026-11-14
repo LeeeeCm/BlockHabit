@@ -543,7 +543,7 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
 | `src/` 全量 < 800 行 | ✅ 实测剩余 >800 文件数 = 0 |
 | 0.2.2 后运行时修复随版发行 | ✅ D-077（updater close / credential_set 空串删除）+ D-079（README 表格转义 / WebDAV host 判定）均在 0.2.3 二进制内 |
 | 门禁 | ✅ 见 16.3 |
-| 发布 | 🔄 v0.2.3 Release 待触发（见 16.4） |
+| 发布 | ✅ v0.2.3 Release 已发布（tag → `f374812`，见 16.4） |
 
 ### 16.3 门禁（发布前实测）
 
@@ -558,9 +558,30 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
 | `cargo test --lib` | 7 passed |
 | `npm run release:check -- --version 0.2.3 --download` | 见 16.4（待发布后） |
 
-### 16.4 发布证据
+### 16.4 发布证据（2026-11-15 19:23 UTC 实测）
 
-- （待回填：Release 链接、tag 指向、6 个资产大小/digest、latest.json 内容、release:check 13 项）
+- **Release**：<https://github.com/LeeeeCm/BlockHabit/releases/tag/v0.2.3>（非 draft / 非 prerelease / 即 latest）；
+  workflow run [43630839024](https://github.com/LeeeeCm/BlockHabit/actions/runs/43630839024) **success**，
+  tag `v0.2.3` → **`f374812`**（与 run headSha 完全相同，`--target` 机制继续生效）。
+- 资产（6 个）：
+
+| 资产 | 大小 | digest / 校验 |
+| --- | --- | --- |
+| `BlockHabit_0.2.3_x64-setup.exe` | 9,304,897 B | sha256 `a480a2a58b89d091d80855e460af15c3bb079d3fb74085859dc823ceffad9aa9` |
+| `BlockHabit_0.2.3_x64-setup.exe.sig` | 420 B | 与 latest.json signature 逐字节相同 |
+| `BlockHabit_0.2.3_x64-setup.exe.sha256` | 98 B | 内容与 GitHub digest、实测 sha256 三方一致 |
+| `BlockHabit_0.2.3_x64_en-US.msi` | 11,280,384 B | sha256 `edf7ea41…` |
+| `BlockHabit_0.2.3_x64_en-US.msi.sha256` | 98 B | 与 MSI digest 一致 |
+| `latest.json` | 1,147 B | 公网 200，version=0.2.3、url 指向 v0.2.3 安装包 |
+
+- `npm run release:check -- --version 0.2.3 --download` **13/13 通过**；`.sig`/signature 420 B 逐字节一致；
+  解码比对 minisign keyid：公钥 `c38f798bd203ed59` == 签名 `c38f798bd203ed59`。
+- Release 正文与 latest.json 的 notes 均干净（无 0.2.2 时的 `@` 污染；本轮改用变量传多行 notes 的方式验证有效）。
+- 本机带发布配置的签名构建（0.2.3）：`VITE_UPDATER_ENABLED=1` + `tauri build --config src-tauri/tauri.release.conf.json`
+  **成功**（`Finished 2 bundles` / `Finished 2 updater signatures`，产物 `BlockHabit_0.2.3_x64-setup.exe` + `.sig`、
+  MSI + `.sig`；与 CI 产物大小差异属构建环境差异，CI 产物才是 Release 资产）。
+
+- CI / CodeQL：候选提交 `f374812` 的 CI `43630621497`、CodeQL `43630621494` 均 **success**。
 
 ### 16.5 仍 blocked 项
 

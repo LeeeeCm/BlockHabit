@@ -136,4 +136,4 @@ gh run watch $runId --exit-status
 | 8 | T8 keyring 真机验收 | ⬜ 需人工执行，见 `real-device-acceptance.md` §7.5 |
 | 9 | v0.2.2 发布（含 .sha256 + 流水线自检） | ✅ 2026-11-15 已发布；tag → `da20cb6`，release:check 13/13（见发布报告 §15） |
 | 10 | CodeQL / SECURITY.md / CONTRIBUTING.md / Dependabot | ✅ 2026-11-15 已落地（D-20261115-078），首次扫描见发布报告 §15 |
-| 11 | v0.2.3 发布（剩余 6 文件拆分 + 0.2.2 后运行时修复随版） | 🔄 见发布报告 §16 |
+| 11 | v0.2.3 发布（剩余 6 文件拆分 + 0.2.2 后运行时修复随版） | ✅ 2026-11-15 已发布；tag → `f374812`，release:check 13/13（见发布报告 §16） |
