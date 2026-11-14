@@ -311,11 +311,11 @@ latest.json 的 url 指向本 tag 的安装包、`.sig` 与 latest.json 的 sign
 | 9 | url 指向本 Release 的安装包 | ✔ |
 | 10 | .sig 与 signature 逐字节一致 | ✔ 420B == 420B |
 | 11 | 安装包 HEAD 200 | ✔ |
-| 12 | .sha256 资产内容与 GitHub digest 一致 | ✔ `1b18d100…` |
-| 13 | （--download）下载实测 sha256 与 digest | ✔ `1b18d100…` |
+| 12 | .sha256 资产内容与 GitHub digest 一致 | ✔ `a480a2a5…` |
+| 13 | （--download）下载实测 sha256 与 digest | ✔ `a480a2a5…` |
 
 > 完整性自查（人类可照做）：`Get-FileHash .\BlockHabit_0.2.3_x64-setup.exe -Algorithm SHA256` 与
-> Release 上的 `.sha256` 文件对比；minisign keyid `c38f798bd203ed59` 与 `tauri.conf.json` 公钥一致（发布报告 §15.4）。
+> Release 上的 `.sha256` 文件对比；minisign keyid `c38f798bd203ed59` 与 `tauri.conf.json` 公钥一致（发布报告 §16.4）。
 
 ### 12.1 旧版起点包（T6 需要「带 updater 的旧安装包」）
 

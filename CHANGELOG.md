@@ -5,9 +5,9 @@
 
 ## [0.2.3] — 2026-11-15（第十四轮：单文件 800 行债清零 / 0.2.2 后修复随版发行）
 
-### 工程债：剩余 6 个超 800 行文件纯拆分（D-20261115-080 approved）
+### 工程债：剩余 6 个超 800 行文件零行为变化重构（D-20261115-080 approved）
 
-- 承接 D-076「后续」，把 `src/` 下最后 6 个超过 800 行的文件全部纯拆分（行数口径 `git show` 换行计数）：
+- 承接 D-076「后续」，把 `src/` 下最后 6 个超过 800 行的文件全部拆分到 < 800 行（零行为变化重构；行数口径 `git show` 换行计数）：
   - `App.tsx` **802 → 537**：`src/app/`（TitleBar / TimerWatcher / TraySync / useFocusPhase / inTauri），
     App 内状态/副作用/布局零改动，仍 default export App。
   - `appStore.ts` **835 → 524**：`store/appStoreHelpers.ts`（纯 helper）/ `appStoreTypes.ts`（类型契约）/
@@ -16,9 +16,13 @@
   - `ShowcaseScene.tsx` **869 → 592**：`render/showcase/`（canvas / camera / drag / hitTest / touch / derived）。
   - `BuildScene.tsx` **823 → 497**：`render/buildscene/`（sceneDraw / cameraGesture / sceneTypes / SceneStage / ecoStage）。
   - `HabitRow.tsx` **801 → 471**：`components/habitrow/`（Header / Counter / Reflection / Focus / Footer / Dialogs / helpers），
-    子组件零 hook、零 store 订阅；旧新组件 21 个渲染/交互场景 innerHTML 逐字节相同。
+    子组件零 hook、零 store 订阅（拆分时用临时脚本做过 21 个渲染/交互场景 innerHTML 对比，脚本未入库；
+    行为由既有 HabitRow.* 测试守护）。
   - `archive.test.ts` **836 → 500 + 184**：后半段 3 个 describe 拆到 `archiveExport.test.ts`，共享夹具移到
     `archiveTestUtils.ts`（非 .test，不被收集）；it 37→37、expect 153→153 且按序逐字节不变。
+- 口径说明：6 个文件中部分含少量**等价 glue**（去重 / 闭包纯化 / JSX 内联 handler 具名化 / store 注入），
+  不是字面上的「只移动代码」；行为等价由 `tsc` + 1147 用例全绿与逐块比对支撑（独立 verifier P2-1 指出措辞，已按
+  「零行为变化重构」口径更正，详见 D-080 履历）。
 - 约束：公共导出/Props/import 路径全部不变、未新增 hook、测试断言零改动；拆分前后用例数一致
   （112 文件 / 1147 用例 → 113 文件 / 1147 用例，文件数 +1 仅来自 archive.test 拆分）。
 - **仓库 `src/` 下已无 > 800 行文件**；`npm run build` index 431.90 → 434.75 kB（gzip 132.36 → 133.66，

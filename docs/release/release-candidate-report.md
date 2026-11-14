@@ -533,13 +533,14 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
   `Cargo.lock`，`npm run check:versions` 通过）。
 - 目的：① 把 0.2.2 发布后合入的运行时修复（D-077 updater/keyring、D-079 CodeQL 加固）第一次带给用户；
   ② 清偿 `src/` 下最后 6 个超过 800 行的文件（D-080），工程债归零。
-- 本轮新增提交（接 §15.1 的 17 条）：D-080 设计记录、6 条纯拆分、0.2.3 版本号、文档提交。
+- 本轮新增提交（接 §15.1 的 17 条）：D-080 设计记录、6 条零行为变化重构（含少量等价 glue，见 §16.6 P2-1）、
+  0.2.3 版本号、文档提交。
 
 ### 16.2 交付项
 
 | 项 | 结果 |
 | --- | --- |
-| 剩余 6 个超 800 行文件拆分 | ✅ 一文件一提交：App 802→537 / appStore 835→524 / ShowcaseScene 869→592 / BuildScene 823→497 / HabitRow 801→471 / archive.test 836→500+184（断言零改动） |
+| 剩余 6 个超 800 行文件拆分 | ✅ 一文件一提交（零行为变化重构）：App 802→537 / appStore 835→524 / ShowcaseScene 869→592 / BuildScene 823→497 / HabitRow 801→471 / archive.test 836→500+184（断言零改动） |
 | `src/` 全量 < 800 行 | ✅ 实测剩余 >800 文件数 = 0 |
 | 0.2.2 后运行时修复随版发行 | ✅ D-077（updater close / credential_set 空串删除）+ D-079（README 表格转义 / WebDAV host 判定）均在 0.2.3 二进制内 |
 | 门禁 | ✅ 见 16.3 |
@@ -577,7 +578,8 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
 - `npm run release:check -- --version 0.2.3 --download` **13/13 通过**；`.sig`/signature 420 B 逐字节一致；
   解码比对 minisign keyid：公钥 `c38f798bd203ed59` == 签名 `c38f798bd203ed59`。
 - Release 正文与 latest.json 的 notes 均干净（无 0.2.2 时的 `@` 污染；本轮改用变量传多行 notes 的方式验证有效）。
-- 本机带发布配置的签名构建（0.2.3）：`VITE_UPDATER_ENABLED=1` + `tauri build --config src-tauri/tauri.release.conf.json`
+- 本机带发布配置的签名构建（0.2.3）：重跑并留存环境证据（`.tmp-build-023-env.log` 记录 `VITE_UPDATER_ENABLED=1`、
+  两个密钥均已加载；构建 exit 0）；`tauri build --config src-tauri/tauri.release.conf.json`
   **成功**（`Finished 2 bundles` / `Finished 2 updater signatures`，产物 `BlockHabit_0.2.3_x64-setup.exe` + `.sig`、
   MSI + `.sig`；与 CI 产物大小差异属构建环境差异，CI 产物才是 Release 资产）。
 
@@ -590,4 +592,18 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
 
 ### 16.6 独立 verifier
 
-- （待 verifier 在最终状态复核后回填结论与缺陷处置）
+- 结论：**PASS**（P0 = 0，P1 = 0，P2 = 1，P3 = 3）。verifier 自己实跑了 release:check（13/13）、门禁
+  （tsc 0 / npm test 113 文件 1147 用例 / design 80 / format / versions / build 434.75 kB / cargo 7）、
+  发布资产与签名（含下载 exe 核对 PE VersionInfo=0.2.3、minisign keyid 配对）、6 个拆分文件的行数/导出面/测试断言
+  等价性、D-077/D-079 是 v0.2.3 祖先、设计台账、密钥扫描与仓库状态；并确认 `400fc73..HEAD` 无夹带逻辑改动。
+- 缺陷处置：
+
+| 级别 | 发现 | 处置 |
+| --- | --- | --- |
+| P2-1 | 「纯拆分 / 只移动代码」措辞夸大：5 个文件实际含等价 glue（去重/闭包纯化/具名 handler/store 注入），字面「只移动」被 diff 证伪 | ✅ 已更正口径：CHANGELOG / 报告 §16.1/§16.2 改为「零行为变化重构（含少量等价 glue）」；D-080 履历**追加**更正说明（正文不改，追加式合规）。行为等价由 tsc + 1147 用例全绿与逐块比对支撑 |
+| P3-1 | CHANGELOG 称「21 个渲染/交互场景 innerHTML 逐字节相同」但脚本未入库、无可复核证据 | ✅ 已改为「拆分时用临时脚本对比（脚本未入库）；行为由既有 HabitRow.* 测试守护」 |
+| P3-2 | 复核简报里「0.2.2 后提交只有纯重构/文档…」字面不成立（含 D-077/D-079/CI/治理提交） | ✅ 该句在 verifier 简报中；仓库文档无此表述。已在简报口径上更正为「本轮 `400fc73..HEAD` 仅设计记录/重构/版本号/文档」 |
+| P3-3 | 本地签名构建日志无法证明 `VITE_UPDATER_ENABLED=1` 被设置 | ✅ 已重跑本地签名构建并把 `VITE_UPDATER_ENABLED=1` 与密钥加载状态写入 `.tmp-build-023-env.log`（构建 exit 0、2 bundles + 2 updater signatures） |
+
+- verifier 未覆盖项（如实声明）：T6/T7/T8 真机验收（blocked，未伪造）；旧 commit 未实跑 vitest（只读约束，以静态口径推导 1147 用例不变）；
+  未解包 NSIS 做字节级验证（以构建溯源：tag commit ⊃ 修复提交 + exe VersionInfo=0.2.3）；未解释本地/CI 产物 2,724 B 差异。
