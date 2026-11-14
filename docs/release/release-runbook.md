@@ -94,7 +94,8 @@ npx tauri signer generate -w <仓库外路径>/blockhabit.key
 
 ```powershell
 $ver = '0.2.2'
-$notes = Get-Content -Raw -Encoding UTF8 docs/release/notes-v0.2.2.md
+# 先把多行发布说明写成 UTF-8 文本文件（路径随意，用临时文件即可），再读入变量
+$notes = Get-Content -Raw -Encoding UTF8 .tmp-notes-vX.Y.Z.md
 gh workflow run Release --ref main -f version=$ver -f "notes=$notes"
 # 等待并查看结果（也可以用网页）
 $runId = (gh run list --workflow Release -L 1 --json databaseId | ConvertFrom-Json)[0].databaseId
@@ -129,7 +130,7 @@ gh run watch $runId --exit-status
 | 2 | 填 `plugins.updater.pubkey` 与 `endpoints` | ✅ 已完成 |
 | 3 | 配置 Actions secrets | ✅ 已完成（两个 secret 均存在） |
 | 4 | Windows Authenticode 代码签名 | ⬜ **可选、未做**：需购买证书；不做的后果是安装时 SmartScreen 提示「未知发布者」 |
-| 5 | Rust `on_before_exit` 存档握手 | ✅ 代码已落地并有单测；**真机验证**见 T7 |
+| 5 | Rust `on_before_exit` 存档握手 | ✅ 代码已落地并有单测；**真机验证**见 `real-device-acceptance.md` §8 全局壳检查（退出握手），不是 T7（T7 是自由装饰） |
 | 6 | 是否允许启动自动检查 | ⬜ 维持 D-069 的手动检查（不做启动自动检查、不做后台轮询） |
 | 7 | T6 真机自动更新全流程 | ⬜ 需人工执行，载荷与步骤见 `real-device-acceptance.md` §6 / §12 |
 | 8 | T8 keyring 真机验收 | ⬜ 需人工执行，见 `real-device-acceptance.md` §7.5 |

@@ -301,7 +301,7 @@ P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」�
 - **Release `v0.2.2` 已发布**：<https://github.com/LeeeeCm/BlockHabit/releases/tag/v0.2.2>
   （非 draft / 非 prerelease / 即 latest），发布 workflow run
   [43620508223](https://github.com/LeeeeCm/BlockHabit/actions/runs/43620508223) **success**（8m39s），
-  tag `v0.2.2` → `da20cb6`（与 workflow run 的 headSha 完全相同，见 15.6 第 5 条）。
+  tag `v0.2.2` → `da20cb6`（与 workflow run 的 headSha 完全相同，机制见 §15.7 第 1 条的 `--target`）。
 - 本轮提交（`1f1b044..`，按时间顺序）：
 
 | 提交 | 主题 |
@@ -313,13 +313,13 @@ P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」�
 | `50fc662` | ci: GitHub Actions 升版（checkout@v5 / setup-node@v5），消除 Node.js 20 deprecated 告警 |
 | `343246c` | fix(updater,keyring): 安装成功后释放 Update 句柄；credential_set 空串删除旧条目（D-20261115-077） |
 | `0dd800d` | docs(governance): 新增 SECURITY / CONTRIBUTING / Issue+PR 模板 / Dependabot / CodeQL（D-20261115-078） |
-| `3c895ce` | refactor(today): 拆分 Today.tsx（977 → 460 行），零行为变化（D-20261115-076） |
-| `4ca153c` | refactor(minidesk): 拆分 MiniDeskToy.tsx（931 → 251 行），零行为变化（D-20261115-076） |
-| `ae2ba34` | refactor(settings): 拆分 SettingsDialog.tsx（866 → 257 行），零行为变化（D-20261115-076） |
+| `3c895ce` | refactor(today): 拆分 Today.tsx（986 → 460 行），零行为变化（D-20261115-076） |
+| `4ca153c` | refactor(minidesk): 拆分 MiniDeskToy.tsx（938 → 258 行），零行为变化（D-20261115-076） |
+| `ae2ba34` | refactor(settings): 拆分 SettingsDialog.tsx（871 → 257 行），零行为变化（D-20261115-076） |
 | `c17708a` | refactor(i18n): 拆分 en.ts（808 → 42 行）为按域文件，零行为变化（D-20261115-076） |
 | `ba66e80` | docs(release): 0.2.2 发布结果、门禁数字、仓库门面与真机 blocked 清单 |
 | `3322c53` | fix(security): 处置 CodeQL 首次扫描告警（README 表格转义 / WebDAV host 识别）（D-20261115-079） |
-| （最终文档提交） | docs(release): 0.2.2 收尾（CodeQL 复扫、本地签名构建、verifier 结论） |
+| （收尾文档提交，见 `git log`） | docs(release): 0.2.2 收尾（CodeQL 复扫、签名构建、verifier 结论与 P2/P3 回填） |
 
 > 说明：tag 落在 `da20cb6`（发布候选文档提交），之后的提交是设计记录、CI、P3 清理、治理文件、纯重构
 > 与 CodeQL 告警修复。其中 P3 清理（资源/凭据语义，D-077）与 CodeQL 修复（转义/host 判定，D-079）
@@ -340,7 +340,7 @@ P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」�
 | P1-8 Dependabot | ✅ `0dd800d`（npm+cargo weekly、minor+patch 分组、Tauri major ignore、不自动合并） |
 | P1-9 仓库元数据 | ✅ topics 10 个 + description 更新（homepage 无官网，保持为空，不造假） |
 | P1-10 CodeQL | ✅ `.github/workflows/codeql.yml` 首次扫描 3 条 high warning → 全部修复（D-079），复扫 success、告警 closed（见 15.6） |
-| P2-11 拆分 4 个超 800 行文件 | ✅ 4 个提交（Today 977→460 / MiniDeskToy 931→251 / SettingsDialog 866→257 / en.ts 808→42） |
+| P2-11 拆分 4 个超 800 行文件 | ✅ 4 个提交（Today 986→460 / MiniDeskToy 938→258 / SettingsDialog 871→257 / en.ts 808→42；行数口径 `git show` 换行计数） |
 | P2-12 发布侧增强 | ✅ `.sha256`（exe+msi）+ release:check 进 workflow 最后一步（失败即红灯） |
 | P2-13 verifier P3 清理 | ✅ `343246c`（update.close / credential_set 空串删除） |
 | P3-14 真机验收 | ⛔ **blocked**（需真实设备），精确步骤见 `real-device-acceptance.md` §6/§7.5/§8/§12 |
@@ -354,7 +354,7 @@ P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」�
 | `npm run design:check` | **79 条**（新增 D-075…079，全部 approved） |
 | `npm run format:check` | 通过 |
 | `npm run check:versions` | 0.2.2 |
-| `npm run build` | 通过（index 431.77 kB / gzip 132.31 kB；拆分前 428.91 / 131.09，纯模块边界开销） |
+| `npm run build` | 通过（终局 HEAD 实测 index 431.90 kB / gzip 132.36 kB；拆分前 428.91 / 131.09，纯模块边界开销） |
 | `cargo test --lib` | **7 passed**（新增 empty_secret_means_delete 1 例） |
 | `npm run release:check -- --version 0.2.2 --download` | **13/13 通过** |
 | 带发布配置的签名构建 | ✅ release workflow（`VITE_UPDATER_ENABLED=1` + 签名密钥）与**本机复跑**均成功 |
@@ -436,7 +436,7 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
   | 2 | `js/incomplete-url-substring-sanitization` | `src/components/WebdavPanel.tsx:32` | ✅ 修复：改为 `new URL().host` 判定坚果云 host（D-079） |
   | 3 | `js/incomplete-url-substring-sanitization` | `src/components/WebdavPanel.tsx:138` | ✅ 同 2（同一判断复用） |
 - 修复提交 `3322c53`，新增 8 例回归测试（2 个新测试文件）；`npm test` 110/1139 → **112/1147**。
-- 复扫：见本文件 §15.6 末尾「复扫确认」（下一次 push 的 CodeQL run 成功后回填）。
+- 复扫确认见 §15.8（open=0 / fixed=3）。
 
 #### 本地签名构建（`npm run tauri build -- --config src-tauri/tauri.release.conf.json`）
 
@@ -451,10 +451,14 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
 
 #### 独立 verifier
 
-- 结论：**（由 verifier 子代理在最终状态下独立复核后回填；本轮 verifier 只读、不改仓库）**
-- 复核范围：发布证据（Release/tag/latest.json/签名/sha256）、门禁数字、版本一致性、纯拆分零行为变化的证据链、
-  P3 清理、治理文件与 CI/CodeQL 配置、设计台账纪律、文档与实际的数字一致性、密钥纪律。
-- 缺陷处置：见 §15.9（verifier 返回后逐条回填 P0/P1/P2/P3 与处置）。
+- 复核方式：独立子代理（只读、不参与本轮开发），自己实跑门禁/发布自检/版本/拆分证据链/设计台账/密钥扫描，
+  而不是引用本报告。
+- 首次复核结论：FAIL（P0=1）——但该 P0 是**平台侧瞬时现象**：verifier 在其约 25 分钟复核的末尾观测到
+  `api.github.com/repos/LeeeeCm/BlockHabit`、GitHub 页面与 Release 资产匿名访问全部 404，而同一时刻认证侧
+  一切正常（public / 资产 uploaded / CI 绿）。复核结束后立即复测：匿名 API / 页面 / latest.json / 控制组
+  全部 200，`release:check --download` 再次 13/13；判定为 GitHub 对**匿名突发访问的临时限制/可见性异常**，
+  非仓库或发布缺陷（详见 §15.10）。
+- 复核中提出的 P0/P1/P2/P3 处置见 §15.9；最终复核结论见 §15.10。
 
 ### 15.7 发布侧踩坑与一次性修复
 
@@ -478,7 +482,10 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
   告警状态实测：**open = 0，fixed = 3**（#1 `archiveManifest.ts:239`、#2 `WebdavPanel.tsx:32`、
   #3 `WebdavPanel.tsx:138`，均 fixed_at 2026-11-14T17:54:53Z）。
 - CI：run [43623671676](https://github.com/LeeeeCm/BlockHabit/actions/runs/43623671676) **success**；
-  本轮 main 上 CI（`da20cb6` / `50fc662` / `ba66e80` / `3322c53` / `07daca1`）与 CodeQL 均为 success。
+  本轮 main 的**最终 run** 均 success。口径说明：`50fc662`（Actions 升版）与 `f144a9b`/`343246c` 在同一次
+  push 中，CI run 的 headSha 取该 push 的最终提交 `343246c`（`50fc662` 自身无独立 run）；`3322c53`
+  推送后紧接 `07daca1`，其间 run 被 `concurrency.cancel-in-progress` 取消（正常行为），以其后 run 为准。
+  `checkout@v5` / `setup-node@v5` 的验证以包含该改动的 run success 为准（日志无 Node.js 20 告警）。
 - 说明：CodeQL 的 3 条告警是**首次启用扫描**发现的既有代码问题（不是本轮新引入），修复提交未进入已发布的
   0.2.2 二进制，已在 15.1 与 CHANGELOG 如实标注。
 
@@ -486,6 +493,28 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
 
 > 本表由独立 verifier 子代理（只读、不改仓库）在最终状态下复核后填写；P0 必须为 0，P1/P2 逐条处置。
 
-| 级别 | 项 | 处置 |
+| 级别 | 项（verifier 原始发现） | 处置 |
 | --- | --- | --- |
-| — | （待 verifier 返回后回填） | — |
+| P0 | 复核末尾观测到匿名访问仓库 / Release / assets 全部 404（同一时刻认证侧正常） | ✅ **复测已解除**：匿名 API / 页面 / latest.json / web_fetch 全部 200，`release:check --download` 再次 13/13；判定为 GitHub 对匿名突发访问的临时限制/可见性异常，非仓库与发布缺陷（见 §15.10） |
+| P2 | 拆分行数与声称不符（声称 977/931/866；实测口径为 986/938/871，Mini after 251 vs 258） | ✅ 已按 `git show` 换行计数统一更正 CHANGELOG / 报告 §15.1/§15.2，并在 D-076 履历**追加**口径更正（记录正文不改）；「4 文件全部从 >800 降到 <800」的结论不变 |
+| P2 | 报告 §15.3 build 数字过期（431.77 / 132.31 是 CodeQL 修复前 c17708a 的数字） | ✅ 已回填终局 HEAD 实测 **431.90 kB / gzip 132.36 kB**，并注明原数字的时点 |
+| P2 | §15.8「各提交 CI 均 success」不准确（50fc662 无独立 run；3322c53 的 run 被取消） | ✅ 已改写为按 push / 最终 run 口径说明（见 §15.8） |
+| P3 | 本地 clone 无 git tag（fetch refspec 未含 tags） | ✅ 已执行 `git fetch --tags`，`git rev-parse v0.2.2` = `da20cb6` 可复核 |
+| P3 | real-device §7.5 T8 第 4 步仍写「迁移/回填发生在首次打开设置页」，与 0.2.2 启动时回填矛盾 | ✅ 已改为「0.2.2 起迁移/回填在应用启动时完成」 |
+| P3 | 报告 §15.1 占位行、§15.6 交叉引用、§15.8 占位 | ✅ 已清理并回填 |
+| P3 | runbook §5 第 5 项指向 T7（应为 real-device §8）；§2.1 示例引用不存在的 notes 文件 | ✅ 已改为「见 real-device §8」与「先写成临时 UTF-8 文件」示例 |
+| P3 | 工作区 `.tmp-*` 本地产物（签名 / 安装包 / 构建日志） | ✅ 保持现状（均被 .gitignore 忽略、未入库、无私钥；密钥扫描 0 处） |
+
+### 15.10 独立 verifier 复核记录（P0 复测与最终结论）
+
+- **首次复核（verifier 子代理）**：仓库内容侧全部声称（发布资产/签名/版本/门禁/拆分/ P3 清理/治理/CI/CodeQL/台账/密钥）
+  均通过其独立实跑；唯一 P0 是复核末尾观测到的匿名访问 404（见 §15.9）。
+- **复核结束后立即复测（lead 独立执行，2026-11-15T02:32 +08）**：
+  - `node fetch`：`api.github.com/repos/LeeeeCm/BlockHabit` → **200**、`github.com/LeeeeCm/BlockHabit` → **200**、
+    `releases/latest/download/latest.json` → **200（version=0.2.2）**、控制组 `api.github.com/repos/cli/cli` → 200；
+  - `web_fetch`：仓库页 → 200、Release 页 → 200；
+  - `npm run release:check -- --version 0.2.2 --download` → **13/13 通过**（含下载实测 sha256 与 digest 一致）。
+- **P0 定性**：GitHub 平台侧对匿名突发访问的临时限制/可见性异常（同一时刻认证侧 `private:false/disabled:false`、
+  资产 uploaded、CI 绿；复核期间 verifier 自身做了大量匿名请求）；仓库与 Release **未做任何变更**即恢复。
+  结论：不是交付缺陷，P0 不成立。
+- **verifier 复测确认**：**（待 verifier 对最终 HEAD 复测后回填最终 PASS/FAIL）**

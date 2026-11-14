@@ -82,3 +82,8 @@ AGENTS.md §4 有硬约定「单文件超过 800 行时，新增逻辑应拆到�
 - 2026-11-15 created (lead)：本轮 goal 授权「批准一切必要请求与最佳方案；可修改并 push main…；单次编码/验证
   任务可用 Agent Teams 并行」直接置为 approved（reviewer=LeeCM），授权来源即本 goal 的授权文字。
 - 2026-11-15 implemented：4 个文件拆分完成（具体新文件清单与行数见发布报告 §15 与提交信息）。
+- 2026-11-15 复核更正（lead）：行数口径统一为 `git show <rev>:<path>` 的换行计数（wc -l）。按此口径实测：
+  Today **986 → 460**、MiniDeskToy **938 → 258**、SettingsDialog **871 → 257**、en.ts **808 → 42**。
+  正文表格里的 977/931/866 是开发机 `Get-Content` 旧口径（Mini 拆分后行数应为 258），以本条为准；
+  「全部从 >800 降到 <800、零行为变化」的结论不变（独立 verifier 已用同一口径复测）。
+

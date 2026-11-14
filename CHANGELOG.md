@@ -48,18 +48,19 @@
 
 ### 工程债：4 个超 800 行文件纯拆分（D-20261115-076 approved）
 
-- **`Today.tsx` 977 → 460 行**：抽出 11 个展示/纯函数文件到 `src/pages/today/`（Header / FocusEntry /
+- **`Today.tsx` 986 → 460 行**：抽出 11 个展示/纯函数文件到 `src/pages/today/`（Header / FocusEntry /
   CategoryFilter / FullDayCard / EchoCapsule / ReminderBanner / EmptyState / HabitSections /
   ArchiveSection / Overlays / todayUtils），状态、副作用与 `useCallback` 全部留在页面组件。
-- **`MiniDeskToy.tsx` 931 → 251 行**：`useFocusNow` / `FocusRing` / `FocusPanel` / `MiniHeader` /
+- **`MiniDeskToy.tsx` 938 → 258 行**：`useFocusNow` / `FocusRing` / `FocusPanel` / `MiniHeader` /
   `MiniFooter` / `MiniStage` 移到 `src/components/minidesk/`。
-- **`SettingsDialog.tsx` 866 → 257 行**：`Group` 与五个设置分区展示组件移到 `src/components/settings/`。
+- **`SettingsDialog.tsx` 871 → 257 行**：`Group` 与五个设置分区展示组件移到 `src/components/settings/`。
 - **`en.ts` 808 → 42 行**：按文案域拆成 10 个文件（最大 142 行），`en.ts` 按原 29 个顶层 key 顺序组合；
   以 git HEAD 旧文件为基线的顺序敏感快照（`Object.keys` 逐位 / 嵌套顺序 / 函数源码）完全一致。
 - 约束全满足：公共导出与 import 路径不变、零逻辑改动、未改任何测试断言；拆分前后 `npm test` 都是
-  **110 文件 / 1139 用例**；`npm run build` 产物 index 428.91 → 431.77 kB（gzip 131.09 → 132.31 kB，
+  **110 文件 / 1139 用例**；`npm run build` 产物 index 428.91 → 431.90 kB（gzip 131.09 → 132.36 kB，
   纯模块边界开销，量级不回归）。
-- 剩余 6 个文件仍在 800 行附近（最大约 870），已记入 D-076「后续」，下一轮继续拆。
+- 行数口径：`git show <rev>:<path>` 的换行计数（wc -l）；剩余仍有 6 个文件 > 800：`ShowcaseScene` 869、
+  `archive.test` 836、`appStore` 835、`BuildScene` 823、`App.tsx` 802、`HabitRow` 801，已记入 D-076「后续」。
 
 ### verifier 遗留 P3 清理（D-20261115-077 approved）
 
@@ -108,7 +109,7 @@
 | `npm run design:check` | **79 条**（D-075…079，全部 approved） |
 | `npm run format:check` | 通过 |
 | `npm run check:versions` | 0.2.2 |
-| `npm run build` | 通过（index 431.77 kB / gzip 132.31 kB） |
+| `npm run build` | 通过（index 431.90 kB / gzip 132.36 kB，终局 HEAD 实测） |
 | `cargo test --lib` | **7 passed** |
 | 带发布配置的签名构建 | 通过（release workflow + 本机 `tauri build --config src-tauri/tauri.release.conf.json`） |
 
