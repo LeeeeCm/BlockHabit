@@ -1,6 +1,10 @@
 import { clearCubeSpriteCache } from './render/isoCube'
 import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react'
 import { useTransient } from './platform/useTransient'
+import { inTauri } from './app/inTauri'
+import { TimerWatcher } from './app/TimerWatcher'
+import { TitleBar } from './app/TitleBar'
+import { TraySync } from './app/TraySync'
 import {
   currentMonitor,
   getCurrentWindow,
@@ -20,15 +24,7 @@ import { cacheAppearance } from './platform/appearance'
 import { pickAdapter } from './storage'
 import { setSoundMuted, setVolume } from './audio/sound'
 import { getBlueprint } from './logic/blueprints'
-import { useTimerStore } from './store/timerStore'
-import {
-  planFocusNotifications,
-  trayPhaseFor,
-  trayStatusFor,
-  type TrayFocusPhase
-} from './logic/focusSession'
-import { useReminderStore } from './store/reminderStore'
-import { getBlueprintName, useI18n } from './i18n'
+import { useI18n } from './i18n'
 import Today from './pages/Today'
 import Build from './pages/Build'
 import Showcase from './pages/Showcase'
@@ -43,22 +39,9 @@ const MiniDeskToy = lazy(() =>
 import { SettingsDialog } from './components/SettingsDialog'
 import { ReminderWatcher } from './components/ReminderWatcher'
 import { ReminderDialog } from './components/ReminderDialog'
-import {
-  IconCheck,
-  IconBuild,
-  IconMiniWidget,
-  IconSettings,
-  IconShowcase,
-  IconStats,
-  IconToday,
-  IconWinClose,
-  IconWinMax,
-  IconWinMin,
-  IconWinRestore
-} from './components/Icons'
+import { IconBuild, IconSettings, IconShowcase, IconStats, IconToday } from './components/Icons'
 import logoUrl from './assets/logo-mark.svg'
 import { usePlatform } from './platform'
-import { notify } from './platform/notify'
 import { BottomTabBar, type MobileTab } from './components/BottomTabBar'
 import { habitMetOnDay } from './logic/checkin'
 import { useTodayKey } from './logic/useTodayKey'
@@ -72,254 +55,6 @@ import {
 } from './platform/miniWindow'
 
 type Tab = MobileTab
-
-const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-/**
- * 专注相位（摆件 / 托盘共用）：只有存在会话时才按 1s 心跳；
- * 相位判定抽到纯函数 trayPhaseFor（ready 优先于 focusing），
- * 返回值只在相位变化时改变，调用方可以把它放进 effect 依赖而不触发每秒副作用。
- */
-function useFocusPhase(): TrayFocusPhase {
-  const sessions = useTimerStore((s) => s.sessions)
-  const hasSession = Object.keys(sessions).length > 0
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    if (!hasSession) return
-    const timer = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(timer)
-  }, [hasSession])
-  if (!hasSession) return null
-  return trayPhaseFor(sessions, now)
-}
-
-/**
- * 专注到点提醒（B2 / D-20261110-064）：
- * - 绝对时间判定（应用隐藏/最小化/退出都不暂停）；
- * - 到点只提醒一次，并且 **先把 notifiedAt 落盘再弹**：重启后不重复通知；
- * - 顺带 prune：已删除/已归档习惯的会话、超过 TTL 的过期会话都清掉；
- * - 不自动打卡（数据诚实），确认落块在摆件/今日页由用户完成。
- */
-function TimerWatcher() {
-  const { t } = useI18n()
-  const habits = useAppStore((s) => s.habits)
-  const [toast, showToast] = useTransient<string>(5200)
-  // 长生命周期 interval 里读最新引用：语言/习惯变化不需要重建定时器
-  const toastRef = useRef(showToast)
-  toastRef.current = showToast
-  const tRef = useRef(t)
-  tRef.current = t
-  const habitsRef = useRef(habits)
-  habitsRef.current = habits
-
-  useEffect(() => {
-    const scan = () => {
-      const now = Date.now()
-      const currentHabits = habitsRef.current
-      const activeIds = new Set(currentHabits.filter((h) => !h.archivedAt).map((h) => h.id))
-      useTimerStore.getState().prune(activeIds, now)
-      // 通知计划是纯函数（logic/focusSession）：只有 ready 且未提醒的会话才进计划，
-      // 这里只负责「先落盘 → 再弹」的副作用顺序。
-      const plans = planFocusNotifications(useTimerStore.getState().sessions, now, activeIds)
-      for (const plan of plans) {
-        const habit = currentHabits.find((h) => h.id === plan.habitId)
-        if (!habit) continue
-        // 先落盘再去弹：即使进程立刻被杀，重开也不会重复通知
-        useTimerStore.getState().markNotified(plan.habitId, plan.notifiedAt)
-        const msg = tRef.current.focusCompanion.notificationBody(habit.name)
-        toastRef.current(msg, 5200)
-        void notify('BlockHabit', msg)
-      }
-    }
-    scan()
-    const timer = window.setInterval(scan, 1000)
-    return () => window.clearInterval(timer)
-  }, [])
-
-  if (!toast) return null
-  return (
-    <div
-      className="toast"
-      style={{
-        bottom: 150,
-        maxWidth: '80vw',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis'
-      }}
-    >
-      <span
-        className="accent"
-        style={{
-          color: 'var(--progress-green)',
-          display: 'inline-flex',
-          alignItems: 'center',
-          verticalAlign: 'middle',
-          marginRight: 5
-        }}
-      >
-        <IconCheck size={14} />
-      </span>
-      {toast}
-    </div>
-  )
-}
-
-/** 托盘状态同步：tooltip 显示今日进度，当日打卡完成后托盘图标整体变绿 */
-function TraySync() {
-  const { lang, t } = useI18n()
-  const habits = useAppStore((s) => s.habits)
-  const checkIns = useAppStore((s) => s.checkIns)
-  const dayClaims = useAppStore((s) => s.dayClaims)
-  const builds = useAppStore((s) => s.builds)
-  const activeBlueprintId = useAppStore((s) => s.activeBlueprintId)
-  const pendingReminders = useReminderStore((s) => s.pending.length)
-  // 专注相位只随相位变化进 effect 依赖 → tooltip 只在 focusing/ready 切换时 update_tray，
-  // 不做每秒倒计时 IPC（每秒 invoke 会变成高频跨进程调用）
-  const focusPhase = useFocusPhase()
-
-  const day = useTodayKey()
-
-  useEffect(() => {
-    if (!inTauri) return
-    const active = habits.filter((h) => !h.archivedAt)
-    // 与 Today 页同一判定口径（周频/计数习惯达标即算完成）
-    const done = active.filter((h) => habitMetOnDay(h, checkIns, day)).length
-    const claimed = dayClaims.some((c) => c.date === day)
-    const bp = getBlueprint(activeBlueprintId)
-    const placed = builds.filter((b) => b.blueprintId === activeBlueprintId).length
-    const bpName = getBlueprintName(activeBlueprintId, lang)
-    let status = claimed
-      ? t.tray.tooltipDone
-      : `${t.tray.tooltipProgress(done, active.length)} · ${bpName} ${placed}/${bp.blocks.length}`
-    // 有到点提醒待处理时追加提示（回窗即可看到积木风弹窗）
-    if (pendingReminders > 0) {
-      status += ` · ${t.reminder.bannerTitle(pendingReminders)}`
-    }
-    // 专注相位后缀由纯函数拼接（ready 优先于 focusing），便于单测覆盖最终 tooltip 字符串
-    status = trayStatusFor(status, focusPhase, {
-      focusing: t.focusCompanion.focusing,
-      ready: t.focusCompanion.ready
-    })
-    void (async () => {
-      const { invoke } = await import('@tauri-apps/api/core')
-      await invoke('update_tray', { status })
-    })()
-  }, [
-    habits,
-    checkIns,
-    dayClaims,
-    builds,
-    activeBlueprintId,
-    lang,
-    t,
-    day,
-    pendingReminders,
-    focusPhase
-  ])
-
-  return null
-}
-
-/** 自定义窗口标题栏：拖拽区 + 设置 + 最小化/最大化/关闭（仅 Tauri 环境显示窗口按钮） */
-function TitleBar({
-  onSettings,
-  onToggleMini,
-  onRequestClose
-}: {
-  onSettings: () => void
-  onToggleMini: () => void
-  /** 关闭请求（Alt+F4 / 系统关闭 / 标题栏关闭）：由 App 决定是否先退出迷你模式 */
-  onRequestClose: () => void
-}) {
-  const { t } = useI18n()
-  const [maximized, setMaximized] = useState(false)
-  const onRequestCloseRef = useRef(onRequestClose)
-  onRequestCloseRef.current = onRequestClose
-  useEffect(() => {
-    if (!inTauri) return
-    let disposed = false
-    let cleanup: (() => void) | undefined
-    void (async () => {
-      const win = getCurrentWindow()
-      setMaximized(await win.isMaximized())
-      const unlistenResize = await listen('tauri://resize', async () => {
-        setMaximized(await win.isMaximized())
-      })
-      // Alt+F4 / 系统关闭请求 → 收进托盘而不是退出（迷你模式下先退出迷你尺寸）
-      const unClose = await win.onCloseRequested(async (event) => {
-        event.preventDefault()
-        onRequestCloseRef.current()
-      })
-      if (disposed) {
-        unlistenResize()
-        unClose()
-        return
-      }
-      cleanup = () => {
-        unlistenResize()
-        unClose()
-      }
-    })()
-    return () => {
-      disposed = true
-      cleanup?.()
-    }
-  }, [])
-
-  async function winAction(action: 'min' | 'max' | 'close') {
-    if (!inTauri) return
-    const win = getCurrentWindow()
-    // 最小化 → 收到任务栏；关闭 → 收进托盘（退出只走托盘菜单）
-    if (action === 'close') onRequestClose()
-    else if (action === 'min') await win.minimize()
-    else await win.toggleMaximize()
-  }
-
-  return (
-    <header className="titlebar" data-tauri-drag-region>
-      <div className="brand" data-tauri-drag-region>
-        <img src={logoUrl} alt="" width={24} height={24} data-tauri-drag-region />
-        <span data-tauri-drag-region style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 700 }}>
-          BlockHabit
-        </span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <button className="icon-btn" title={t.titlebar.miniMode} onClick={onToggleMini}>
-          <IconMiniWidget size={18} />
-        </button>
-        <button className="icon-btn" title={t.titlebar.settings} onClick={onSettings}>
-          <IconSettings size={20} />
-        </button>
-        {inTauri && (
-          <>
-            <button
-              className="win-btn"
-              title={t.titlebar.minimize}
-              onClick={() => void winAction('min')}
-            >
-              <IconWinMin size={16} />
-            </button>
-            <button
-              className="win-btn"
-              title={maximized ? t.titlebar.restore : t.titlebar.maximize}
-              onClick={() => void winAction('max')}
-            >
-              {maximized ? <IconWinRestore size={16} /> : <IconWinMax size={16} />}
-            </button>
-            <button
-              className="win-btn close"
-              title={t.titlebar.close}
-              onClick={() => void winAction('close')}
-            >
-              <IconWinClose size={16} />
-            </button>
-          </>
-        )}
-      </div>
-    </header>
-  )
-}
 
 export default function App() {
   const { t } = useI18n()
