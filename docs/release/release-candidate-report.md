@@ -473,9 +473,14 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
 
 ### 15.8 复扫确认（CodeQL / CI）
 
-- 复扫触发提交：3322c53（CodeQL 修复）与其后的文档提交。
-- CodeQL：**（待回填：下一次 push 的 run 状态 + 3 条告警是否 closed）**
-- CI：**（待回填）**
+- 复扫触发提交：`3322c53`（CodeQL 修复）与 `07daca1`（文档）。
+- CodeQL：run [43623671699](https://github.com/LeeeeCm/BlockHabit/actions/runs/43623671699) **success**；
+  告警状态实测：**open = 0，fixed = 3**（#1 `archiveManifest.ts:239`、#2 `WebdavPanel.tsx:32`、
+  #3 `WebdavPanel.tsx:138`，均 fixed_at 2026-11-14T17:54:53Z）。
+- CI：run [43623671676](https://github.com/LeeeeCm/BlockHabit/actions/runs/43623671676) **success**；
+  本轮 main 上 CI（`da20cb6` / `50fc662` / `ba66e80` / `3322c53` / `07daca1`）与 CodeQL 均为 success。
+- 说明：CodeQL 的 3 条告警是**首次启用扫描**发现的既有代码问题（不是本轮新引入），修复提交未进入已发布的
+  0.2.2 二进制，已在 15.1 与 CHANGELOG 如实标注。
 
 ### 15.9 独立 verifier 缺陷处置表
 
