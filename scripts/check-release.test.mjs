@@ -29,7 +29,8 @@ const goodRelease = {
   assets: [
     { name: 'latest.json' },
     { name: 'BlockHabit_0.2.1_x64-setup.exe' },
-    { name: 'BlockHabit_0.2.1_x64-setup.exe.sig' }
+    { name: 'BlockHabit_0.2.1_x64-setup.exe.sig' },
+    { name: 'BlockHabit_0.2.1_x64-setup.exe.sha256' }
   ]
 }
 
@@ -41,6 +42,8 @@ function baseArgs(overrides = {}) {
     release: goodRelease,
     assets: goodRelease.assets,
     sigText: 'SIG-CONTENT\n',
+    sha256Text: 'dee8a0d  BlockHabit_0.2.1_x64-setup.exe\n',
+    expectedSha256: 'dee8a0d',
     exeHeadStatus: 200,
     ...overrides
   }
@@ -61,6 +64,7 @@ describe('check-release：地址与资产清单', () => {
     expect(requiredAssetSuffixes()).toContain('latest.json')
     expect(requiredAssetSuffixes().some((s) => s.endsWith('x64-setup.exe'))).toBe(true)
     expect(requiredAssetSuffixes().some((s) => s.endsWith('.exe.sig'))).toBe(true)
+    expect(requiredAssetSuffixes().some((s) => s.endsWith('.exe.sha256'))).toBe(true)
   })
 })
 
@@ -114,5 +118,19 @@ describe('check-release：判定', () => {
   it('给了期望 sha256 时不一致会失败（--download 路径）', () => {
     const checks = buildChecks(baseArgs({ exeSha256: 'aaa', expectedSha256: 'bbb' }))
     expect(failedNames(checks)).toContain('安装包 sha256 与 GitHub 记录的 digest 一致')
+  })
+
+  it('缺 .sha256 资产会失败（发布必须带校验文件）', () => {
+    const checks = buildChecks(
+      baseArgs({ assets: goodRelease.assets.filter((a) => !a.name.endsWith('.sha256')) })
+    )
+    expect(failedNames(checks).some((n) => n.includes('.sha256'))).toBe(true)
+  })
+
+  it('.sha256 内容与 GitHub digest 不一致会失败', () => {
+    const checks = buildChecks(
+      baseArgs({ sha256Text: '0000000  BlockHabit_0.2.1_x64-setup.exe\n' })
+    )
+    expect(failedNames(checks)).toContain('.sha256 资产的 hash 与 GitHub 记录的 digest 一致')
   })
 })

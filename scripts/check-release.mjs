@@ -21,7 +21,12 @@ import crypto from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 
 export const DEFAULT_REPO = 'LeeeeCm/BlockHabit'
-export const REQUIRED_ASSETS = ['latest.json', 'x64-setup.exe', 'x64-setup.exe.sig']
+export const REQUIRED_ASSETS = [
+  'latest.json',
+  'x64-setup.exe',
+  'x64-setup.exe.sig',
+  'x64-setup.exe.sha256'
+]
 
 /** 从仓库名与版本拼出 latest.json 的公开地址（updater 用的就是这个 URL） */
 export function latestJsonUrl(repo, version) {
@@ -45,6 +50,7 @@ export function buildChecks({
   release,
   assets,
   sigText,
+  sha256Text,
   exeHeadStatus,
   exeSha256,
   expectedSha256
@@ -101,7 +107,17 @@ export function buildChecks({
 
   push('安装包公开可下（HEAD 200）', exeHeadStatus === 200, `HTTP ${exeHeadStatus}`)
 
-  if (expectedSha256) {
+  const recordedSha256 =
+    typeof sha256Text === 'string' ? (sha256Text.trim().split(/\s+/)[0] ?? '').toLowerCase() : ''
+  push(
+    '.sha256 资产的 hash 与 GitHub 记录的 digest 一致',
+    Boolean(recordedSha256) && Boolean(expectedSha256) && recordedSha256 === expectedSha256,
+    recordedSha256
+      ? `${recordedSha256} vs ${expectedSha256 || '(GitHub 未返回 digest)'}`
+      : '未取到 .sha256'
+  )
+
+  if (exeSha256 && expectedSha256) {
     push(
       '安装包 sha256 与 GitHub 记录的 digest 一致',
       exeSha256 === expectedSha256,
@@ -188,22 +204,28 @@ async function runCli(argv) {
   const platform = latest?.platforms?.['windows-x86_64']
   const exeUrl = platform?.url ?? ''
   let sigText = ''
+  let sha256Text = ''
   if (exeUrl) {
     const sigRes = await fetch(exeUrl + '.sig', { redirect: 'follow' })
     if (sigRes.status === 200) sigText = await sigRes.text()
+    const shaRes = await fetch(exeUrl + '.sha256', { redirect: 'follow' })
+    if (shaRes.status === 200) sha256Text = await shaRes.text()
   }
 
   const release = ghRelease(args.repo, args.version)
   const exeHeadStatus = exeUrl ? await httpStatus(exeUrl, 'HEAD') : 0
 
+  // GitHub 资产 API 的 digest 与 .sha256 资产无关，随时可取；用于核对 .sha256 内容
+  const exeAsset = (release?.assets ?? []).find((a) => exeUrl.endsWith(a.name))
+  const expectedSha256 = String(exeAsset?.digest ?? '')
+    .replace(/^sha256:/, '')
+    .toLowerCase()
+
   let exeSha256 = ''
-  let expectedSha256 = ''
   if (args.download && exeUrl) {
     const res = await fetch(exeUrl, { redirect: 'follow' })
     const buf = Buffer.from(await res.arrayBuffer())
     exeSha256 = crypto.createHash('sha256').update(buf).digest('hex')
-    const asset = (release?.assets ?? []).find((a) => exeUrl.endsWith(a.name))
-    expectedSha256 = String(asset?.digest ?? '').replace(/^sha256:/, '')
   }
 
   const checks = buildChecks({
@@ -213,6 +235,7 @@ async function runCli(argv) {
     release,
     assets: release?.assets,
     sigText,
+    sha256Text,
     exeHeadStatus,
     exeSha256,
     expectedSha256

@@ -2,6 +2,7 @@ name: Release
 
 # C4 发布链路脚手架（D-20261111-069 / D-20261112-071）：手动触发，标签/签名密钥/端点就绪前不会自动运行。
 # 前置条件与验收步骤见 docs/release/release-runbook.md；私钥只进 Actions secrets，绝不提交。
+# 发布后自检（D-20261115-075）：tag 钉住触发提交 / 空 notes 走文件 / 上传 .sha256 / release:check 收尾。
 on:
   workflow_dispatch:
     inputs:
@@ -89,27 +90,58 @@ jobs:
           $sig = Get-Item "$($exe.FullName).sig" -ErrorAction SilentlyContinue
           if (-not $sig) { throw "未找到签名文件 .sig；确认 createUpdaterArtifacts 与签名密钥已配置" }
           $msi = Get-ChildItem "src-tauri/target/release/bundle/msi/*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
+          # 标准 sha256 校验文件（GNU 风格：<hash>  <文件名>），供用户/企业离线核对完整性
+          function Write-Sha256File([string]$file) {
+            $hash = (Get-FileHash -Algorithm SHA256 -Path $file).Hash.ToLower()
+            $out = "$file.sha256"
+            "$hash  $(Split-Path -Leaf $file)" | Set-Content -Path $out -Encoding ASCII
+            return $out
+          }
+          $sha = Write-Sha256File $exe.FullName
           "exe=$($exe.FullName)" >> $env:GITHUB_OUTPUT
           "exeName=$($exe.Name)" >> $env:GITHUB_OUTPUT
           "sig=$($sig.FullName)" >> $env:GITHUB_OUTPUT
-          if ($msi) { "msi=$($msi.FullName)" >> $env:GITHUB_OUTPUT }
+          "sha256=$sha" >> $env:GITHUB_OUTPUT
+          if ($msi) {
+            "msi=$($msi.FullName)" >> $env:GITHUB_OUTPUT
+            "msiSha256=$(Write-Sha256File $msi.FullName)" >> $env:GITHUB_OUTPUT
+          }
 
       - name: Create GitHub Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $assets = @("${{ steps.artifacts.outputs.exe }}", "${{ steps.artifacts.outputs.sig }}")
+          # notes 可能为空：统一写成文件，避免 PowerShell 吞掉空字符串参数
+          Set-Content -Path release-notes.md -Value $env:RELEASE_NOTES -Encoding UTF8
+          $assets = @("${{ steps.artifacts.outputs.exe }}", "${{ steps.artifacts.outputs.sig }}", "${{ steps.artifacts.outputs.sha256 }}")
           if ("${{ steps.artifacts.outputs.msi }}") { $assets += "${{ steps.artifacts.outputs.msi }}" }
-          gh release create "$env:RELEASE_TAG" $assets --title "BlockHabit ${{ inputs.version }}" --notes "$env:RELEASE_NOTES"
+          if ("${{ steps.artifacts.outputs.msiSha256 }}") { $assets += "${{ steps.artifacts.outputs.msiSha256 }}" }
+          # --target：tag 永远指向本次 workflow 的提交，发布期间再 push 也不会漂
+          gh release create "$env:RELEASE_TAG" $assets --target "$env:GITHUB_SHA" --title "BlockHabit ${{ inputs.version }}" --notes-file release-notes.md
 
       - name: Generate latest.json
         shell: pwsh
         run: |
-          node scripts/make-latest-json.mjs --version "${{ inputs.version }}" --signature-file "${{ steps.artifacts.outputs.sig }}" --url "https://github.com/${{ github.repository }}/releases/download/$env:RELEASE_TAG/${{ steps.artifacts.outputs.exeName }}" --notes "$env:RELEASE_NOTES" --out latest.json
+          node scripts/make-latest-json.mjs --version "${{ inputs.version }}" --signature-file "${{ steps.artifacts.outputs.sig }}" --url "https://github.com/${{ github.repository }}/releases/download/$env:RELEASE_TAG/${{ steps.artifacts.outputs.exeName }}" --notes-file release-notes.md --out latest.json
 
       - name: Upload latest.json
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$env:RELEASE_TAG" latest.json --clobber
+
+      - name: Verify release (release:check)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 发布后自检进流水线：失败即红灯。CDN 传播 / Release 索引有秒级延迟，最多重试 10 次。
+          $ok = $false
+          for ($i = 1; $i -le 10; $i++) {
+            node scripts/check-release.mjs --version "${{ inputs.version }}" --download
+            if ($LASTEXITCODE -eq 0) { $ok = $true; break }
+            Write-Host "第 $i 次自检未通过，15 秒后重试（CDN 传播 / Release 索引延迟）"
+            Start-Sleep -Seconds 15
+          }
+          if (-not $ok) { throw "发布后自检失败：npm run release:check -- --version ${{ inputs.version }} --download" }
