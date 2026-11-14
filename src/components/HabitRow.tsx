@@ -8,19 +8,14 @@ import { effectiveTargetMs } from '../logic/focusSession'
 import { selectHabitCheckInSlice } from '../store/habitSelectors'
 import { playComboChime, playSnapSound } from '../audio/sound'
 import { useI18n } from '../i18n'
-import { ConfirmDialog } from './ConfirmDialog'
-import {
-  IconDone,
-  IconEdit,
-  IconInProgress,
-  IconMissed,
-  IconMood,
-  IconNote,
-  IconPin,
-  IconStar,
-  IconTodo,
-  IconTrash
-} from './Icons'
+import { HabitRowHeader } from './habitrow/HabitRowHeader'
+import { HabitCounterSection } from './habitrow/HabitCounterSection'
+import { HabitReflectionSection } from './habitrow/HabitReflectionSection'
+import { HabitFocusSection } from './habitrow/HabitFocusSection'
+import { HabitRowFooter } from './habitrow/HabitRowFooter'
+import { HabitRowDialogs } from './habitrow/HabitRowDialogs'
+import { weekMissed } from './habitrow/helpers'
+
 interface Props {
   habit: Habit
   done: boolean
@@ -35,22 +30,6 @@ interface Props {
   resilienceProtected?: boolean
   /** DOM 锚点 id（提醒「开始打卡」跳转后滚动+高亮定位用） */
   domId?: string
-}
-
-/** 周频习惯本周是否已无法达标（剩余天数 < 还需次数） */
-function weekMissed(habit: Habit, weekCount: number, day: string): boolean {
-  if (habit.frequency.type !== 'weekly') return false
-  const need = habit.frequency.times - weekCount
-  if (need <= 0) return false
-  const d = new Date(day + 'T00:00:00')
-  const daysLeft = 7 - ((d.getDay() + 6) % 7)
-  return need > daysLeft
-}
-
-function fmtRemaining(ms: number): string {
-  const s = Math.max(0, Math.ceil(ms / 1000))
-  const m = Math.floor(s / 60)
-  return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
 /**
@@ -243,11 +222,104 @@ export const HabitRow = memo(function HabitRow({
     }
     performCheckIn()
   }
+
+  function stopCardClick(e: React.MouseEvent) {
+    e.stopPropagation()
+  }
+  function handleStatusBtnClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    handleStatusClick()
+  }
+  function handleTogglePin(e: React.MouseEvent) {
+    e.stopPropagation()
+    triggerHaptic('selection')
+    togglePinHabit(habit.id)
+  }
+  function handleEditClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    triggerHaptic('light')
+    onEdit?.(habit)
+  }
+  function handleDeleteClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    triggerHaptic('warning')
+    setConfirmDelete(true)
+  }
+  function handleStepDown(e: React.MouseEvent) {
+    handleStepCounter(e, -stepVal)
+  }
+  function handleStepUp(e: React.MouseEvent) {
+    handleStepCounter(e, stepVal)
+  }
+  function handleToggleMood(m: MicroMood) {
+    triggerHaptic('selection')
+    setMoodVal((prev) => (prev === m ? undefined : m))
+  }
+  function handleToggleStar() {
+    triggerHaptic('selection')
+    setStarVal((prev) => !prev)
+  }
+  function handleNoteChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setNoteVal(e.target.value)
+  }
+  function handleNoteKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      commitNote()
+    } else if (e.key === 'Escape') {
+      cancelNoteEdit()
+    }
+  }
+  function handleStartEditNote() {
+    setEditingNote(true)
+  }
+  function handleCompleteEarly(e: React.MouseEvent) {
+    e.stopPropagation()
+    performCheckIn(actualMinutes)
+  }
+  function handleToggleEarlyConfirm(e: React.MouseEvent) {
+    e.stopPropagation()
+    setShowEarlyConfirm((v) => !v)
+  }
+  function handleCancelTimer(e: React.MouseEvent) {
+    e.stopPropagation()
+    setShowEarlyConfirm(false)
+    cancelTimer(habit.id)
+  }
+  function handleConfirmEarly() {
+    performCheckIn(actualMinutes)
+  }
+  function handleCancelEarlyConfirm() {
+    setShowEarlyConfirm(false)
+  }
+  function handleEndedComplete(e: React.MouseEvent) {
+    e.stopPropagation()
+    performCheckIn()
+  }
+  function handleStartFocusClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    handleStartFocus()
+  }
+  function handleFooterPillClick(e: React.MouseEvent) {
+    if (done) {
+      e.stopPropagation()
+      setShowUndoConfirm(true)
+    }
+  }
+  function handleConfirmDelete() {
+    cancelTimer(habit.id)
+    deleteHabit(habit.id)
+    setConfirmDelete(false)
+  }
+  function handleConfirmUndo() {
+    uncheckIn(habit.id, day)
+    setShowUndoConfirm(false)
+  }
   const statusColor = done
     ? 'var(--progress-green)'
     : running || ended
       ? 'var(--progress-blue)'
       : 'var(--ink-2)'
+  const remainingMs = session ? session.startedAt + sessionTargetMs - now : 0
 
   return (
     <div
@@ -272,96 +344,23 @@ export const HabitRow = memo(function HabitRow({
         handleCardClick()
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <button
-          className="status-btn"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleStatusClick()
-          }}
-          title={
-            done
-              ? t.today.undoTooltip
-              : isRestDay
-                ? t.today.restDay
-                : missed
-                  ? t.today.weekMissed
-                  : running
-                    ? t.today.timingTooltip
-                    : ended
-                      ? t.today.checkInTooltip
-                      : isFocus
-                        ? t.today.focus
-                        : t.today.checkInTooltip
-          }
-          style={{
-            width: isMobile ? 44 : 40,
-            height: isMobile ? 44 : 40,
-            minWidth: isMobile ? 44 : undefined,
-            minHeight: isMobile ? 44 : undefined,
-            color: statusColor,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'transform var(--dur-lg) var(--ease-bounce)',
-            transform: pulse ? 'scale(1.25) rotate(90deg)' : 'scale(1) rotate(0deg)'
-          }}
-        >
-          {done ? (
-            <IconDone size={36} />
-          ) : running || ended ? (
-            <IconInProgress size={36} />
-          ) : missed ? (
-            <IconMissed size={36} />
-          ) : (
-            <IconTodo size={36} />
-          )}
-        </button>
-        <div className="card-actions-group" style={{ display: 'flex', gap: isMobile ? 4 : 1 }}>
-          <button
-            className={`card-action${habit.pinned ? ' active' : ''}`}
-            style={{
-              ...(habit.pinned ? { color: 'var(--accent)' } : undefined),
-              ...(isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined)
-            }}
-            title={habit.pinned ? t.today.unpinHabit : t.today.pinHabit}
-            aria-label={habit.pinned ? t.today.unpinHabit : t.today.pinHabit}
-            onClick={(e) => {
-              e.stopPropagation()
-              triggerHaptic('selection')
-              togglePinHabit(habit.id)
-            }}
-          >
-            <IconPin size={17} pinned={habit.pinned} />
-          </button>
-          <button
-            className="card-action"
-            style={isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined}
-            title={t.common.edit}
-            aria-label={t.common.edit}
-            onClick={(e) => {
-              e.stopPropagation()
-              triggerHaptic('light')
-              onEdit?.(habit)
-            }}
-          >
-            <IconEdit size={17} />
-          </button>
-          <button
-            className="card-action danger"
-            style={isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined}
-            title={t.common.delete}
-            aria-label={t.common.delete}
-            onClick={(e) => {
-              e.stopPropagation()
-              triggerHaptic('warning')
-              setConfirmDelete(true)
-            }}
-          >
-            <IconTrash size={17} />
-          </button>
-        </div>
-      </div>
+      <HabitRowHeader
+        t={t}
+        isMobile={isMobile}
+        done={done}
+        running={running}
+        ended={ended}
+        missed={missed}
+        isRestDay={isRestDay}
+        isFocus={isFocus}
+        pulse={pulse}
+        pinned={Boolean(habit.pinned)}
+        statusColor={statusColor}
+        onStatusClick={handleStatusBtnClick}
+        onTogglePin={handleTogglePin}
+        onEditClick={handleEditClick}
+        onDeleteClick={handleDeleteClick}
+      />
 
       <div
         style={{
@@ -394,408 +393,79 @@ export const HabitRow = memo(function HabitRow({
       {floatingPill && <div className="checkin-float-pill">{floatingPill}</div>}
 
       {isCounter && (
-        <div style={{ marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              fontSize: 'var(--fs-small)'
-            }}
-          >
-            <span style={{ fontWeight: 600, color: done ? 'var(--progress-green)' : 'var(--ink)' }}>
-              {counterVal} / {targetVal} {habit.unit ?? ''}
-            </span>
-            <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-caption)' }}>
-              {Math.round(counterRatio * 100)}%
-            </span>
-          </div>
-          <div className="counter-track">
-            <div
-              className={`counter-fill${done ? ' done' : ''}`}
-              style={{ width: `${Math.round(counterRatio * 100)}%` }}
-            />
-          </div>
-          {!done && (
-            <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-              <button
-                className="pill-action"
-                disabled={counterVal <= 0}
-                onClick={(e) => handleStepCounter(e, -stepVal)}
-                title={`-${stepVal} ${habit.unit ?? ''}`}
-                aria-label={`-${stepVal} ${habit.unit ?? ''}`}
-                style={{
-                  ...(isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : {}),
-                  opacity: counterVal <= 0 ? 0.4 : 1,
-                  cursor: counterVal <= 0 ? 'not-allowed' : 'pointer'
-                }}
-              >
-                -{stepVal} {habit.unit ?? ''}
-              </button>
-              <button
-                className="pill-action success"
-                onClick={(e) => handleStepCounter(e, stepVal)}
-                title={`+${stepVal} ${habit.unit ?? ''}`}
-                aria-label={`+${stepVal} ${habit.unit ?? ''}`}
-                style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
-              >
-                +{stepVal} {habit.unit ?? ''}
-              </button>
-            </div>
-          )}
-        </div>
+        <HabitCounterSection
+          counterVal={counterVal}
+          targetVal={targetVal}
+          counterRatio={counterRatio}
+          done={done}
+          stepVal={stepVal}
+          unit={habit.unit}
+          isMobile={isMobile}
+          onStepDown={handleStepDown}
+          onStepUp={handleStepUp}
+          onStopCardClick={stopCardClick}
+        />
       )}
 
       {done && (
-        <div style={{ marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
-          {editingNote ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
-              <div
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-              >
-                <div className="micro-mood-group">
-                  {(['energetic', 'hard', 'spark', 'calm'] as MicroMood[]).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      className={`micro-mood-chip${moodVal === m ? ' active' : ''}`}
-                      onClick={() => {
-                        triggerHaptic('selection')
-                        setMoodVal((prev) => (prev === m ? undefined : m))
-                      }}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                    >
-                      <IconMood mood={m} size={12} style={{ flexShrink: 0 }} />
-                      <span>{t.microMood[m]}</span>
-                    </button>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  className={`star-toggle-btn${starVal ? ' starred' : ''}`}
-                  style={{ padding: '3px 8px' }}
-                  onClick={() => {
-                    triggerHaptic('selection')
-                    setStarVal((prev) => !prev)
-                  }}
-                  title={starVal ? t.reflections.unstarTooltip : t.reflections.starTooltip}
-                >
-                  <IconStar size={13} filled={starVal} />
-                </button>
-              </div>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <input
-                  type="text"
-                  autoFocus
-                  className="micro-note-input"
-                  value={noteVal}
-                  placeholder={t.reflections.engravePlaceholder}
-                  onChange={(e) => setNoteVal(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      commitNote()
-                    } else if (e.key === 'Escape') {
-                      cancelNoteEdit()
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  className="pill-action"
-                  onClick={commitNote}
-                  style={{ padding: '4px 10px', fontSize: 'var(--fs-caption)' }}
-                >
-                  {t.common.complete}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div
-              onClick={() => setEditingNote(true)}
-              style={{
-                fontSize: 'var(--fs-small)',
-                color: todayCheckIn?.note || todayCheckIn?.mood ? 'var(--ink)' : 'var(--ink-2)',
-                opacity: todayCheckIn?.note || todayCheckIn?.mood ? 0.95 : 0.6,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '3px 6px',
-                borderRadius: 'var(--r-sm)',
-                background:
-                  todayCheckIn?.note || todayCheckIn?.mood
-                    ? 'color-mix(in srgb, var(--ink) 3%, transparent)'
-                    : 'transparent'
-              }}
-              title={t.reflections.brickInspectEditHint}
-            >
-              {todayCheckIn?.starred && (
-                <IconStar size={12} filled style={{ color: 'var(--accent)', flexShrink: 0 }} />
-              )}
-              {todayCheckIn?.mood && (
-                <span
-                  style={{
-                    fontSize: 'var(--fs-caption)',
-                    padding: '2px 7px',
-                    borderRadius: 999,
-                    background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
-                    color: 'var(--ink)',
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4
-                  }}
-                >
-                  <IconMood
-                    mood={todayCheckIn.mood as MicroMood}
-                    size={11}
-                    style={{ flexShrink: 0 }}
-                  />
-                  <span>{t.microMood[todayCheckIn.mood as MicroMood]}</span>
-                </span>
-              )}
-              <IconNote size={13} style={{ color: 'var(--ink-2)', flexShrink: 0 }} />
-              <span style={{ fontStyle: todayCheckIn?.note ? 'normal' : 'italic' }}>
-                {todayCheckIn?.note || t.today.addReflectionPlaceholder}
-              </span>
-            </div>
-          )}
-        </div>
+        <HabitReflectionSection
+          t={t}
+          todayCheckIn={todayCheckIn}
+          editingNote={editingNote}
+          noteVal={noteVal}
+          moodVal={moodVal}
+          starVal={starVal}
+          onStartEdit={handleStartEditNote}
+          onToggleMood={handleToggleMood}
+          onToggleStar={handleToggleStar}
+          onNoteChange={handleNoteChange}
+          onNoteKeyDown={handleNoteKeyDown}
+          onCommit={commitNote}
+          onStopCardClick={stopCardClick}
+        />
       )}
 
-      {running && (
-        <div style={{ marginTop: 10 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span
-                className="big-num"
-                style={{
-                  fontSize: 'var(--fs-display)',
-                  color: 'var(--progress-blue)',
-                  lineHeight: 1
-                }}
-              >
-                {fmtRemaining(session ? session.startedAt + sessionTargetMs - now : 0)}
-              </span>
-              <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>
-                {t.today.focusedMinutes(actualMinutes)}
-              </span>
-            </div>
+      <HabitFocusSection
+        t={t}
+        isMobile={isMobile}
+        running={running}
+        ended={ended}
+        showFocusStart={!session && !running && !ended && isFocus && !done}
+        showEarlyConfirm={showEarlyConfirm}
+        remainingMs={remainingMs}
+        actualMinutes={actualMinutes}
+        progressRatio={progressRatio}
+        targetMinutes={habit.targetMinutes ?? 25}
+        onCompleteEarly={handleCompleteEarly}
+        onToggleEarlyConfirm={handleToggleEarlyConfirm}
+        onCancelTimer={handleCancelTimer}
+        onConfirmEarly={handleConfirmEarly}
+        onCancelEarlyConfirm={handleCancelEarlyConfirm}
+        onEndedComplete={handleEndedComplete}
+        onStartFocus={handleStartFocusClick}
+        onStopCardClick={stopCardClick}
+      />
 
-            <div style={{ display: 'flex', gap: 6 }}>
-              {progressRatio >= 0.8 ? (
-                <button
-                  className="pill-action success"
-                  style={
-                    isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined
-                  }
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    performCheckIn(actualMinutes)
-                  }}
-                  title={t.today.readyToFinish}
-                >
-                  {t.common.complete}
-                </button>
-              ) : progressRatio >= 0.2 ? (
-                <button
-                  className="pill-action"
-                  style={
-                    isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined
-                  }
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setShowEarlyConfirm((v) => !v)
-                  }}
-                  title={t.today.earlyFinish}
-                >
-                  {t.today.earlyFinish}
-                </button>
-              ) : null}
-
-              <button
-                className="pill-action danger"
-                style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
-                title={t.today.cancelTimer}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowEarlyConfirm(false)
-                  cancelTimer(habit.id)
-                }}
-              >
-                {t.today.cancelTimer}
-              </button>
-            </div>
-          </div>
-
-          {showEarlyConfirm && (
-            <div
-              style={{
-                marginTop: 8,
-                padding: '8px 12px',
-                background: 'color-mix(in srgb, var(--ink) 5%, transparent)',
-                borderRadius: 'var(--r-md)',
-                fontSize: 'var(--fs-small)',
-                animation: 'pop-in var(--dur-xs) var(--ease-out)'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={{ color: 'var(--ink)', marginBottom: 6 }}>
-                {t.today.earlyConfirmMsg(actualMinutes)}
-              </div>
-              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                <button
-                  className="pill-action"
-                  style={{
-                    fontSize: 'var(--fs-caption)',
-                    padding: isMobile ? '10px 14px' : '3px 10px',
-                    ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined)
-                  }}
-                  onClick={() => setShowEarlyConfirm(false)}
-                >
-                  {t.common.cancel}
-                </button>
-                <button
-                  className="pill-action success"
-                  style={{
-                    fontSize: 'var(--fs-caption)',
-                    padding: isMobile ? '10px 14px' : '3px 10px',
-                    ...(isMobile ? { minWidth: 44, minHeight: 44 } : undefined)
-                  }}
-                  onClick={() => performCheckIn(actualMinutes)}
-                >
-                  {t.today.earlyFinish}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-      {ended && (
-        <div
-          style={{
-            marginTop: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8
-          }}
-        >
-          <span
-            style={{ fontSize: 'var(--fs-body)', color: 'var(--progress-blue)', fontWeight: 600 }}
-          >
-            {t.today.timingTooltip}
-          </span>
-          <button
-            className="pill-action success"
-            onClick={(e) => {
-              e.stopPropagation()
-              performCheckIn()
-            }}
-            style={{
-              background: 'var(--progress-green)',
-              color: 'var(--surface)',
-              ...(isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined)
-            }}
-          >
-            {t.common.complete}
-          </button>
-        </div>
-      )}
-      {!session && !running && !ended && isFocus && !done && (
-        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            className="pill-action"
-            style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleStartFocus()
-            }}
-          >
-            {t.today.focus} ({t.today.targetMinutes(habit.targetMinutes ?? 25)})
-          </button>
-        </div>
-      )}
       {!running && !ended && (
-        <div
-          style={{
-            marginTop: 'auto',
-            paddingTop: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8
-          }}
-        >
-          <span
-            style={{
-              fontSize: 'var(--fs-small)',
-              borderRadius: 999,
-              padding: '3px 11px',
-              color: done ? 'var(--accent-ink)' : 'var(--ink-2)',
-              background: done
-                ? 'var(--progress-green)'
-                : isRestDay
-                  ? 'color-mix(in srgb, var(--ink) 4%, transparent)'
-                  : 'var(--bg)',
-              border: done ? 'none' : '1px solid var(--line)',
-              cursor: done ? 'pointer' : 'default'
-            }}
-            onClick={(e) => {
-              if (done) {
-                e.stopPropagation()
-                setShowUndoConfirm(true)
-              }
-            }}
-            title={done ? t.today.undoTooltip : isRestDay ? t.today.restDay : undefined}
-          >
-            {done ? t.today.completedPill : isRestDay ? t.today.restDay : t.today.checkInTooltip}
-          </span>
-          {streak > 0 && (
-            <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
-              {t.stats.currentStreak(streak)}
-            </span>
-          )}
-        </div>
-      )}
-
-      {confirmDelete && (
-        <ConfirmDialog
-          title={t.today.deleteConfirmTitle}
-          message={t.today.deleteConfirmMsg(habit.name)}
-          confirmLabel={t.common.delete}
-          cancelLabel={t.common.cancel}
-          danger
-          onCancel={() => setConfirmDelete(false)}
-          onConfirm={() => {
-            cancelTimer(habit.id)
-            deleteHabit(habit.id)
-            setConfirmDelete(false)
-          }}
+        <HabitRowFooter
+          t={t}
+          done={done}
+          isRestDay={isRestDay}
+          streak={streak}
+          onPillClick={handleFooterPillClick}
         />
       )}
 
-      {showUndoConfirm && (
-        <ConfirmDialog
-          title={t.today.undoConfirmTitle}
-          message={t.today.undoConfirmBody}
-          confirmLabel={t.today.undoConfirmAction}
-          cancelLabel={t.common.cancel}
-          danger={false}
-          onCancel={() => setShowUndoConfirm(false)}
-          onConfirm={() => {
-            uncheckIn(habit.id, day)
-            setShowUndoConfirm(false)
-          }}
-        />
-      )}
+      <HabitRowDialogs
+        t={t}
+        habitName={habit.name}
+        confirmDelete={confirmDelete}
+        showUndoConfirm={showUndoConfirm}
+        onCancelDelete={() => setConfirmDelete(false)}
+        onConfirmDelete={handleConfirmDelete}
+        onCancelUndo={() => setShowUndoConfirm(false)}
+        onConfirmUndo={handleConfirmUndo}
+      />
     </div>
   )
 })
