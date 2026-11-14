@@ -15,23 +15,17 @@ import {
   type DiagnoseStage
 } from '../sync/diagnose'
 import { httpFetch, isTauriRuntime } from '../platform/http'
-import type { SyncStatus, WebDavConfig } from '../sync/types'
-import type { SyncErrorCode } from '../sync/useSync'
 
 /**
- * SettingsDialog 中 useSync() 的返回值。
- * hook 常驻在设置对话框（不随 WebDAV 组折叠卸载），自动同步的定时器行为与拆分前一致。
+ * 同步控制器的形状定义已上移到 `src/sync/types.ts`（D-20261115-074：
+ * 同步层不该反向依赖组件文件），这里 re-export 保持既有导入与测试可用。
+ *
+ * 历史：本接口原本描述「SettingsDialog 里 useSync() 的返回值」；现在控制器由
+ * `<SyncProvider>` 在应用级持有，设置页只是消费者，语义比原来更强。
  */
-export interface SyncController {
-  config: WebDavConfig
-  updateConfig: (patch: Partial<WebDavConfig>) => void
-  isSyncing: boolean
-  status: SyncStatus
-  error: SyncErrorCode | null
-  lastSyncAt: string | null
-  syncNow: () => Promise<boolean>
-  getLastError: () => SyncErrorCode | null
-}
+import type { SyncController } from '../sync/types'
+
+export type { SyncController }
 
 /** 从已有 endpoint 推断服务商（仅用于设置页首次展开时的预设高亮） */
 function detectProvider(endpoint: string): ProviderId {

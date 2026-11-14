@@ -6,6 +6,7 @@ import * as platform from '../platform'
 import * as detectModule from '../platform/detect'
 import { HabitDialog } from './HabitDialog'
 import { SettingsDialog } from './SettingsDialog'
+import { SyncProvider } from '../sync/SyncProvider'
 import { ConfirmDialog } from './ConfirmDialog'
 function render(ui: React.ReactElement) {
   const container = document.createElement('div')
@@ -214,13 +215,20 @@ describe('BottomSheet component', () => {
 
   it('renders SettingsDialog in BottomSheet when isMobile is true and in dialog when desktop', () => {
     const detectSpy = vi.spyOn(detectModule, 'detectPlatform').mockReturnValue('mobile')
-    const { queryByTestId, unmount } = render(<SettingsDialog onClose={vi.fn()} />)
+    // D-20261115-074：SettingsDialog 现在从应用级 <SyncProvider> 取同步控制器
+    const { queryByTestId, unmount } = render(
+      <SyncProvider>
+        <SettingsDialog onClose={vi.fn()} />
+      </SyncProvider>
+    )
     expect(queryByTestId('bottom-sheet-handle')).not.toBeNull()
     unmount()
 
     detectSpy.mockReturnValue('desktop')
     const { queryByTestId: queryDesktop, unmount: unmountDesktop } = render(
-      <SettingsDialog onClose={vi.fn()} />
+      <SyncProvider>
+        <SettingsDialog onClose={vi.fn()} />
+      </SyncProvider>
     )
     expect(queryDesktop('bottom-sheet-handle')).toBeNull()
     unmountDesktop()

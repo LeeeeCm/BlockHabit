@@ -13,7 +13,7 @@ import { triggerHaptic, usePlatform } from '../platform'
 import { BottomSheet } from './BottomSheet'
 import { ConfirmDialog } from './ConfirmDialog'
 import { useDialogA11y } from './useDialogA11y'
-import { useSync } from '../sync/useSync'
+import { useSyncController } from '../sync/SyncProvider'
 import { WebdavPanel } from './WebdavPanel'
 import { ArchiveBackupsPanel, ArchiveDataPanel, DiagnosticsExportPanel } from './ArchiveDataPanel'
 import { AboutPanel } from './AboutPanel'
@@ -116,7 +116,8 @@ export function SettingsDialog({ onClose }: Props) {
       setAutostart(await isEnabled())
     })()
   }, [])
-  const sync = useSync()
+  // D-20261115-074：同步控制器由应用级 <SyncProvider> 持有（启动/定时同步不再依赖本弹窗挂载）
+  const sync = useSyncController()
   // 嵌套的导入确认弹窗打开时抑制本弹窗的 Esc/焦点管理
   const { ref: dialogRef } = useDialogA11y({ open: true, onClose, enabled: !importCandidate })
 

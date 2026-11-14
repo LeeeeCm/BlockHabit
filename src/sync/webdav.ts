@@ -1,12 +1,12 @@
 import { httpFetch } from '../platform/http'
-import type { WebDavConfig } from './types'
+import type { WebDavConfig, WebDavErrorCode } from './types'
 
 export const GET_TIMEOUT_MS = 15000
 export const PUT_TIMEOUT_MS = 30000
 export const SYNC_FILE_NAME = 'blockhabit-data.json'
 
-/** 同步层错误码：UI 侧按 code 映射 i18n 文案 */
-export type WebDavErrorCode = 'auth' | 'network' | 'conflict' | 'no-collection' | 'http' | 'cors'
+/** 同步层错误码定义已上移到 ./types（D-20261115-074），这里 re-export 保持既有导入可用 */
+export type { WebDavErrorCode }
 
 /**
  * fetch 抛出 TypeError（Failed to fetch / Load failed）时，最常见的原因是**跨域被拦**：

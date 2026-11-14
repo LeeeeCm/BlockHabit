@@ -5,6 +5,7 @@ import { TrayMenu } from './components/TrayMenu'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { initSmoothScroll } from './platform/smoothScroll'
+import { SyncProvider } from './sync/SyncProvider'
 import { applyCachedAppearance } from './platform/appearance'
 import { installGlobalErrorHandlers } from './platform/errorLog'
 import { applyDemoCastleState, markDemoMode, useAppStore } from './store/appStore'
@@ -56,6 +57,16 @@ if (import.meta.env.DEV) {
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <ErrorBoundary variant={isTrayMenu ? 'tray' : 'full'}>
-    <React.StrictMode>{isTrayMenu ? <TrayMenu /> : <App />}</React.StrictMode>
+    <React.StrictMode>
+      {/* D-20261115-074：同步控制器挂在应用级，启动/定时同步不再依赖设置页是否打开。
+          托盘菜单窗口（tray-menu）不挂：两个窗口同时自动同步会并发写同一份远端。 */}
+      {isTrayMenu ? (
+        <TrayMenu />
+      ) : (
+        <SyncProvider>
+          <App />
+        </SyncProvider>
+      )}
+    </React.StrictMode>
   </ErrorBoundary>
 )

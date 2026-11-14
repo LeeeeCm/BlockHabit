@@ -2,7 +2,12 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { persistenceReady, useAppStore } from '../store/appStore'
 import { prepareImport } from '../storage/adapter'
 import type { AppState } from '../types'
-import { DEFAULT_WEBDAV_CONFIG, type SyncStatus, type WebDavConfig } from './types'
+import {
+  DEFAULT_WEBDAV_CONFIG,
+  type SyncErrorCode,
+  type SyncStatus,
+  type WebDavConfig
+} from './types'
 import { fetchRemoteState, pushRemoteState, WebDavError } from './webdav'
 import { mergeAppState } from './merge'
 import { serializeState } from '../store/serializeState'
@@ -17,7 +22,8 @@ import {
 
 const CONFIG_STORAGE_KEY = 'blockhabit_webdav_config'
 
-export type SyncErrorCode = WebDavError['code'] | 'no-endpoint' | 'parse' | 'incompatible'
+/** 错误码定义在 ./types（D-20261115-074），这里 re-export 保持既有导入可用 */
+export type { SyncErrorCode }
 
 /** 同步流程内部错误（非 HTTP 层） */
 class SyncFlowError extends Error {
@@ -34,11 +40,6 @@ function toErrorCode(err: unknown): SyncErrorCode {
   return 'network'
 }
 
-/**
- * B1：实际落盘的配置。
- * rememberPassword=false 时绝不把密码写进 localStorage（密码只留在内存），
- * 避免"关了开关但密码还在磁盘上"的假安全。
- */
 /**
  * B1：实际落盘的配置。
  * rememberPassword=false 时绝不把密码写进 localStorage（密码只留在内存），

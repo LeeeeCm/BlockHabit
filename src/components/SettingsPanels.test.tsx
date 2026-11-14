@@ -8,6 +8,7 @@ import type { SyncErrorCode } from '../sync/useSync'
 import { WebdavPanel, type SyncController } from './WebdavPanel'
 import { ArchiveBackupsPanel, ArchiveDataPanel, DiagnosticsExportPanel } from './ArchiveDataPanel'
 import { SettingsDialog } from './SettingsDialog'
+import { SyncProvider } from '../sync/SyncProvider'
 import { createBackup, listBackups, openDataDir } from '../storage/backups'
 import { exportDiagnosticsPackage } from '../platform/diagnostics'
 
@@ -335,7 +336,12 @@ describe('ArchiveBackupsPanel（备份与恢复）', () => {
 
 describe('SettingsDialog 组合引用', () => {
   it('WebDAV 组默认展开；数据安全组默认折叠，展开后挂载 ArchiveDataPanel', async () => {
-    const { container, unmount } = render(<SettingsDialog onClose={vi.fn()} />)
+    // D-20261115-074：SettingsDialog 现在从应用级 <SyncProvider> 取同步控制器
+    const { container, unmount } = render(
+      <SyncProvider>
+        <SettingsDialog onClose={vi.fn()} />
+      </SyncProvider>
+    )
     expect(container.textContent).toContain('WebDAV 数据同步')
     expect(container.textContent).toContain('服务商')
     expect(container.textContent).not.toContain('导出备份')

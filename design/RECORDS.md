@@ -91,5 +91,6 @@
 | D-20261112-071 | 2026-11-12 | P3 收尾：移动端触控目标 44px、图鉴未开始容量口径、装饰会话态说明 | approved | showcase, gallery, settings | LeeCM |
 | D-20261114-072 | 2026-11-14 | WebDAV 密码交给 OS 凭据管理器（C4 §4 方案 B：keyring + 迁移/回退 + 文案） | approved | settings | LeeCM |
 | D-20261114-073 | 2026-11-14 | format:check 扩到全仓源码（src/** + scripts/**），一次性 Prettier 对齐并纳入 CI | approved | 全局 | LeeCM |
+| D-20261115-074 | 2026-11-15 | 自动同步与 keyring 迁移提到应用级（修「不开设置页就永不同步」） | approved | settings | LeeCM |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。
