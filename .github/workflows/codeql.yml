@@ -1,0 +1,39 @@
+name: CodeQL
+
+# GitHub Advanced Security 静态扫描（Advanced setup）。
+# JavaScript / TypeScript 由 CodeQL 直接分析源码，不需要构建，
+# 因此这里不添加 autobuild 步骤；在 ubuntu-latest 上跑即可（与桌面端的 Windows 构建无关）。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 每周一 02:00 UTC 全量扫描，发现依赖与代码变更引入的新告警
+    - cron: '0 2 * * 1'
+
+permissions:
+  security-events: write
+  contents: read
+  actions: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3

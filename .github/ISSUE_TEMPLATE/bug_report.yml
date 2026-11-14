@@ -1,0 +1,110 @@
+name: 缺陷报告
+description: 报告可复现的 Bug（请勿粘贴 WebDAV 密码、密钥或个人数据）
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。提交前请先确认：
+
+        - 已查看 [README（含「已知限制」）](https://github.com/LeeeeCm/BlockHabit/blob/main/README.md) 与 [Issues](https://github.com/LeeeeCm/BlockHabit/issues) 中是否已有同样问题；
+        - **不要在 issue 中粘贴 WebDAV 密码 / 密钥 / 令牌，也不要粘贴可识别个人的打卡记录或账号信息**；截图与日志请先打码。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 发生了什么？在哪个页面 / 操作下出现？
+      placeholder: 例如：在「今日」页勾选一个每周 3 次的习惯后，进度显示没有更新。
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 尽量给出最小、可稳定复现的步骤。涉及日期时写清「今天 / 昨天」等相对时间，不要靠改系统时间来复现。
+      placeholder: |
+        1. 打开 设置 → ……
+        2. ……
+        3. 看到 ……
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      placeholder: 你预期应该发生什么？
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      description: 若有报错文案或崩溃，请贴出错误详情（先打码）。
+      placeholder: 实际发生了什么？有无报错、卡死、数据异常？
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: BlockHabit 版本
+      description: 设置 → 内容路线（关于）里的当前版本，或安装包文件名。
+      placeholder: 例如 0.2.2
+    validations:
+      required: true
+
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows 版本与显示缩放
+      description: 版本号可在「设置 → 系统 → 系统信息」查看；显示缩放在「设置 → 系统 → 显示」查看。
+      placeholder: 例如 Windows 11 23H2（22631.xxxx），缩放 150%
+    validations:
+      required: true
+
+  - type: dropdown
+    id: webdav-sync
+    attributes:
+      label: 是否启用 WebDAV 同步
+      description: 不阻塞初步排查，但同步相关的问题需要这个信息。请勿填写服务器地址或账号。
+      options:
+        - 未启用
+        - 已启用（自动同步）
+        - 已启用（仅手动同步）
+        - 不确定
+    validations:
+      required: true
+
+  - type: dropdown
+    id: backup
+    attributes:
+      label: 数据备份情况
+      description: 若疑似数据丢失 / 损坏，请先不要继续写入，并说明是否有可用备份。
+      options:
+        - 已有导出备份（设置 → 数据安全）
+        - 没有备份
+        - 不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 截图 / 日志
+      description: 可选。请先打码：WebDAV 地址与账号、个人打卡内容、路径中的用户名。
+      placeholder: 直接拖入图片，或粘贴应用内错误详情 / 开发者工具 Console 中的日志。
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: privacy-confirmation
+    attributes:
+      label: 隐私确认
+      options:
+        - label: 我已确认本 issue 不包含 WebDAV 密码 / 密钥，也未包含未打码的个人数据或他人信息。
+          required: true

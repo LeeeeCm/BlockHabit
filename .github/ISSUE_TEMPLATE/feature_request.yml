@@ -1,0 +1,81 @@
+name: 功能建议
+description: 建议新功能或体验改进（请先了解本项目的设计流程与「本地优先」约束）
+title: '[Feature]: '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢建议。提交前请先：
+
+        - 查看 [`design/RECORDS.md`](https://github.com/LeeeeCm/BlockHabit/blob/main/design/RECORDS.md)，确认这个想法没有被讨论 / 否决过；
+        - 记住本项目的底线：**本地优先、无账号、无遥测上传**；视觉类改动必须先有 `design/records/` 记录并人工批准（记录先于代码）。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题 / 场景
+      description: 你遇到的具体困扰是什么？在什么使用场景下出现？
+      placeholder: 例如：当 …… 时，我不得不 ……，很麻烦。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+      description: 你希望它如何工作？尽量具体到页面、操作与结果。
+      placeholder: 描述期望的交互与效果。
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 替代方案
+      description: 可选。你考虑过哪些其他做法？为什么更倾向上面的方案？
+    validations:
+      required: false
+
+  - type: dropdown
+    id: local-first
+    attributes:
+      label: 是否符合「本地优先 / 无账号 / 无遥测」
+      description: 若涉及联网，请说明主路径能否离线使用。
+      options:
+        - 符合：完全本地，无需联网
+        - 涉及联网：可作为可选功能，离线时主路径仍可用
+        - 需要讨论：可能引入联网主路径
+    validations:
+      required: true
+
+  - type: dropdown
+    id: i18n
+    attributes:
+      label: 是否需要新增 zh / en 文案
+      options:
+        - 需要新增用户可见文案（zh + en）
+        - 沿用现有文案
+        - 不确定
+    validations:
+      required: true
+
+  - type: dropdown
+    id: visual-language
+    attributes:
+      label: 是否涉及视觉语言变化
+      description: 颜色、字体、圆角、间距、图标、布局、动效、建筑数据、品牌资产都算。
+      options:
+        - 涉及：需要先走 design 记录 + 人工批准
+        - 不涉及（纯逻辑 / 数据 / 构建）
+        - 不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息
+      description: 可选。参考截图（请先打码）、相关 issue / 设计记录 id 等。
+    validations:
+      required: false

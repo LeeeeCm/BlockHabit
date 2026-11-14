@@ -1,0 +1,41 @@
+# Dependabot：每周检查 npm 与 cargo 依赖，只开 PR，不自动合并。
+# 合入前仍须过 CI 与人工 review；依赖升级不做 automerge。
+# Tauri 生态（npm 的 @tauri-apps/* 与 Rust 的 tauri / tauri-build / tauri-plugin-*）的 major 升级被显式忽略：
+# 本仓库 tauri 2.x 是手工 pin 的版本线（Cargo.toml 中写 "2"），
+# major 升级必须评估 API、插件兼容性与打包/更新链路后再手动进行。
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # minor + patch 合成一个 PR，减少噪音
+      minor-and-patch:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+    ignore:
+      - dependency-name: '@tauri-apps/*'
+        update-types: ['version-update:semver-major']
+      # @tauri-apps/cli 已被上面的 scope 通配覆盖；显式保留，避免将来调整分组时漏掉
+      - dependency-name: '@tauri-apps/cli'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: cargo
+    directory: '/src-tauri'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+    ignore:
+      - dependency-name: tauri
+        update-types: ['version-update:semver-major']
+      - dependency-name: tauri-build
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'tauri-plugin-*'
+        update-types: ['version-update:semver-major']
