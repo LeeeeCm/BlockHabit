@@ -3,6 +3,51 @@
 本项目遵循「每次改动都能追到一条设计记录」的约定：每条变更下方的 `D-YYYYMMDD-NNN` 指向
 `design/records/` 里对应的记录（含背景、方案、取舍与验收证据）。
 
+## [0.2.3] — 2026-11-15（第十四轮：单文件 800 行债清零 / 0.2.2 后修复随版发行）
+
+### 工程债：剩余 6 个超 800 行文件纯拆分（D-20261115-080 approved）
+
+- 承接 D-076「后续」，把 `src/` 下最后 6 个超过 800 行的文件全部纯拆分（行数口径 `git show` 换行计数）：
+  - `App.tsx` **802 → 537**：`src/app/`（TitleBar / TimerWatcher / TraySync / useFocusPhase / inTauri），
+    App 内状态/副作用/布局零改动，仍 default export App。
+  - `appStore.ts` **835 → 524**：`store/appStoreHelpers.ts`（纯 helper）/ `appStoreTypes.ts`（类型契约）/
+    `persistence.ts`（防抖写盘/队列/启动读档/演示模式，StoreApi 注入避免循环依赖）；appStore.ts 保留
+    原 `useAppStore` action 实现（逐字节未动）并 re-export 全部既有公开符号，调用点零改动。
+  - `ShowcaseScene.tsx` **869 → 592**：`render/showcase/`（canvas / camera / drag / hitTest / touch / derived）。
+  - `BuildScene.tsx` **823 → 497**：`render/buildscene/`（sceneDraw / cameraGesture / sceneTypes / SceneStage / ecoStage）。
+  - `HabitRow.tsx` **801 → 471**：`components/habitrow/`（Header / Counter / Reflection / Focus / Footer / Dialogs / helpers），
+    子组件零 hook、零 store 订阅；旧新组件 21 个渲染/交互场景 innerHTML 逐字节相同。
+  - `archive.test.ts` **836 → 500 + 184**：后半段 3 个 describe 拆到 `archiveExport.test.ts`，共享夹具移到
+    `archiveTestUtils.ts`（非 .test，不被收集）；it 37→37、expect 153→153 且按序逐字节不变。
+- 约束：公共导出/Props/import 路径全部不变、未新增 hook、测试断言零改动；拆分前后用例数一致
+  （112 文件 / 1147 用例 → 113 文件 / 1147 用例，文件数 +1 仅来自 archive.test 拆分）。
+- **仓库 `src/` 下已无 > 800 行文件**；`npm run build` index 431.90 → 434.75 kB（gzip 132.36 → 133.66，
+  纯模块边界开销，量级不回归）。
+
+### 0.2.2 之后的运行时修复随 0.2.3 发行
+
+- **updater**：安装成功后 `await update.close()` 释放插件句柄（失败路径仍保留句柄供重试）——D-20261115-077。
+- **keyring**：`credential_set(account, "")` 现在删除该账号旧条目（幂等），不再静默保留旧密码——D-20261115-077。
+- **安全加固**（D-20261115-079，CodeQL 首次扫描 3 条 high warning 的修复）：建筑年表 README 的 Markdown
+  表格转义先处理反斜杠；WebDAV 服务商识别改用 `new URL().host`，host 之外的 `jianguoyun.com` 子串不再误判。
+- 以上均已在 0.2.2 发布后合入 main，本次 0.2.3 是它们**第一次进入安装包**（0.2.2 二进制不含这些修复）。
+
+### 门禁（0.2.3 发布前）
+
+| 门禁 | 结果 |
+| --- | --- |
+| `npx tsc --noEmit` | 0 错误 |
+| `npm test` | **113 文件 / 1147 用例全绿**（拆分前后用例数一致） |
+| `npm run design:check` | **80 条**（新增 D-080） |
+| `npm run format:check` | 通过 |
+| `npm run check:versions` | 0.2.3 |
+| `npm run build` | 通过（index 434.75 kB / gzip 133.66 kB） |
+| `cargo test --lib` | 7 passed |
+
+### 发布结果
+
+- （发版后回填：Release、tag 指向、资产、latest.json、release:check、verifier）
+
 ## [0.2.2] — 2026-11-15（第十三轮：应用级自动同步 / 发布自检闭环 / 仓库门面与工程债）
 
 ### 修复：不开设置页就永不同步（D-20261115-074 approved）

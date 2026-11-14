@@ -524,3 +524,49 @@ latest.json+exe+sig+sha256 资产齐 / url 指向本 tag / sig 逐字节 / exe H
 - **残余风险（如实记录）**：verifier 所在 runtime 的匿名直连在该时段仍间歇 404，而同一时段 release:check 的
   匿名请求 200 —— 属出入口/请求级的偶发异常，非仓库或资产状态问题；用户侧若偶发 404，重试或换网络即可。
   继续观察 GitHub 平台状态，不需要再改仓库。
+
+## 16. 0.2.3（2026-11-15 第十四轮）
+
+### 16.1 版本与目标
+
+- 版本：`0.2.2` → **`0.2.3`**（`package.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` +
+  `Cargo.lock`，`npm run check:versions` 通过）。
+- 目的：① 把 0.2.2 发布后合入的运行时修复（D-077 updater/keyring、D-079 CodeQL 加固）第一次带给用户；
+  ② 清偿 `src/` 下最后 6 个超过 800 行的文件（D-080），工程债归零。
+- 本轮新增提交（接 §15.1 的 17 条）：D-080 设计记录、6 条纯拆分、0.2.3 版本号、文档提交。
+
+### 16.2 交付项
+
+| 项 | 结果 |
+| --- | --- |
+| 剩余 6 个超 800 行文件拆分 | ✅ 一文件一提交：App 802→537 / appStore 835→524 / ShowcaseScene 869→592 / BuildScene 823→497 / HabitRow 801→471 / archive.test 836→500+184（断言零改动） |
+| `src/` 全量 < 800 行 | ✅ 实测剩余 >800 文件数 = 0 |
+| 0.2.2 后运行时修复随版发行 | ✅ D-077（updater close / credential_set 空串删除）+ D-079（README 表格转义 / WebDAV host 判定）均在 0.2.3 二进制内 |
+| 门禁 | ✅ 见 16.3 |
+| 发布 | 🔄 v0.2.3 Release 待触发（见 16.4） |
+
+### 16.3 门禁（发布前实测）
+
+| 门禁 | 结果 |
+| --- | --- |
+| `npx tsc --noEmit` | 0 错误 |
+| `npm test` | **113 文件 / 1147 用例全绿**（用例数与拆分前一致；文件数 +1 来自 archive.test 拆分） |
+| `npm run design:check` | **80 条**（新增 D-080，全部 approved） |
+| `npm run format:check` | 通过 |
+| `npm run check:versions` | 0.2.3 |
+| `npm run build` | 通过（index 434.75 kB / gzip 133.66 kB；上一版 431.90 / 132.36，纯模块边界开销） |
+| `cargo test --lib` | 7 passed |
+| `npm run release:check -- --version 0.2.3 --download` | 见 16.4（待发布后） |
+
+### 16.4 发布证据
+
+- （待回填：Release 链接、tag 指向、6 个资产大小/digest、latest.json 内容、release:check 13 项）
+
+### 16.5 仍 blocked 项
+
+- T6 / T7 / T8 真机验收状态与精确步骤同 §15.5；T6 起点仍是已发布的 **v0.2.1**，目标版本变为 **0.2.3**。
+  本轮同样未伪造任何真机结论。
+
+### 16.6 独立 verifier
+
+- （待 verifier 在最终状态复核后回填结论与缺陷处置）

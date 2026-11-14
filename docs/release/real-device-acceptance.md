@@ -1,7 +1,7 @@
 # C6 真机验收清单（Windows 桌面端）
 
-- 日期：2026-11-11（初版）；最近更新：2026-11-15（0.2.2 发布：载荷版本、`.sha256`、T6 起点改为已发布 v0.2.1）
-- 评估者：b6-release-docs（task-5）；0.2.1 / 0.2.2 更新：lead
+- 日期：2026-11-11（初版）；最近更新：2026-11-15（0.2.3 发布：载荷版本、`.sha256`、T6 起点改为已发布 v0.2.1）
+- 评估者：b6-release-docs（task-5）；0.2.1 / 0.2.2 / 0.2.3 更新：lead
 - 用途：**发布前在真实 Windows 机器上逐项执行**。每项写明「操作步骤 / 期望结果 / 本机可自动化结果与证据」；已由自动化覆盖的项也保留真机复核（自动化不能证明 OS 窗口、系统通知、真实服务器、真实落盘）。
 - 前提：使用 **release 构建的安装包**（`npm run tauri build` 产物），不是浏览器预览；验收前备份 `%APPDATA%/blockhabit*` 数据。
 - 证据保存：截图/录屏/日志放到 `.tmp-b6/real-device/`（已被 `.gitignore` 忽略，不提交）；每项在 §7 记录表填结果。
@@ -128,12 +128,12 @@
 
 ---
 
-## 6. T6 手动检查更新与签名（**0.2.1 起可执行；0.2.2 为当前验证目标**）
+## 6. T6 手动检查更新与签名（**0.2.1 起可执行；0.2.3 为当前验证目标**）
 
 > 2026-11-14 起发布链路已配置：签名密钥在仓库外、公钥/endpoints 已写入 `plugins.updater`、
-> 两个 Actions secrets 已设置、仓库已转 public，0.2.1 / **0.2.2** 均已由 Release workflow 出签名包并上传 `latest.json`。
-> 因此 T6 从「条件项」变为**可执行项**：先安装 0.2.1，再让应用自己升级到 **0.2.2**（当前 latest）。
-> 0.2.2 的 Release 资产除 exe/sig/msi/latest.json 外还带 **`.sha256`** 校验文件，tag 由 workflow 钉在触发提交上
+> 两个 Actions secrets 已设置、仓库已转 public，0.2.1 / 0.2.2 / **0.2.3** 均已由 Release workflow 出签名包并上传 `latest.json`。
+> 因此 T6 从「条件项」变为**可执行项**：先安装 0.2.1，再让应用自己升级到 **0.2.3**（当前 latest）。
+> 0.2.2 起 Release 资产除 exe/sig/msi/latest.json 外还带 **`.sha256`** 校验文件，tag 由 workflow 钉在触发提交上
 > （见发布报告 §15）。C4 评估见 `docs/release/updater-and-keyring-assessment.md`。
 
 ### 6.0 测试载荷（0.2.1 起新增，缺一不可）
@@ -141,7 +141,7 @@
 | 载荷 | 位置 | 用途 |
 | --- | --- | --- |
 | **旧版安装包（0.2.1 已发布版，updater 已启用）** | GitHub Release `v0.2.1`：`BlockHabit_0.2.1_x64-setup.exe`（直接安装即可；它带公钥与端点、`VITE_UPDATER_ENABLED=1`，会真的去查 latest.json） | 作为 T6 的起点（安装在 0.2.1，再升级到 0.2.2） |
-| **新版安装包（0.2.2，签名）** | GitHub Release `v0.2.2`：`BlockHabit_0.2.2_x64-setup.exe` / `.sig` / `.sha256` / `latest.json`（MSI 可选） | 被 updater 下载安装的目标 |
+| **新版安装包（0.2.3，签名）** | GitHub Release `v0.2.3`：`BlockHabit_0.2.3_x64-setup.exe` / `.sig` / `.sha256` / `latest.json`（MSI 可选） | 被 updater 下载安装的目标 |
 | **升级后数据判定基准** | 升级前先导出一份档案包并记录建筑数/连击数；升级后再导出比对 | 判定「升级不丢数据」 |
 | **23 座全落成测试存档** | `docs/release/fixtures/all-blueprints-complete.json`（本仓库新增，**合成数据**：schemaVersion 2 / contentVersion 3 / 23 座 / 2485 块；展台仅能摆下 15 座，属几何限制不是缺陷） | T7 装饰模式与 T6「升级后数据不丢」的判定基准 |
 | 一键校验脚本 | `.tmp-release/verify-release.ps1`（由 Lead 生成，含 `gh release view` 与 `Invoke-WebRequest` 断言） | 发布后自检资产可公网访问 |
@@ -188,7 +188,7 @@
 
 ## 7.5 T8 OS 凭据管理器（keyring，D-20261114-072）
 
-前置：桌面端 0.2.2（0.2.1 起具备 keyring 能力）；一个可用的 WebDAV 账号（T3 已准备）。
+前置：桌面端 0.2.3（0.2.1 起具备 keyring 能力）；一个可用的 WebDAV 账号（T3 已准备）。
 
 | 步骤 | 期望结果 |
 | --- | --- |
@@ -283,8 +283,8 @@
 发布后/回归时跑：
 
 ```bash
-npm run release:check -- --version 0.2.2            # 12 项检查，只走公开 HTTP + gh CLI
-npm run release:check -- --version 0.2.2 --download # 13 项：额外下载安装包核对实测 sha256，并核对 .sha256 资产
+npm run release:check -- --version 0.2.3            # 12 项检查，只走公开 HTTP + gh CLI
+npm run release:check -- --version 0.2.3 --download # 13 项：额外下载安装包核对实测 sha256，并核对 .sha256 资产
 ```
 
 它会依次核对：latest.json 公网 200、version 与期望一致、GitHub Release 存在且非 draft/prerelease、
@@ -299,13 +299,13 @@ latest.json 的 url 指向本 tag 的安装包、`.sig` 与 latest.json 的 sign
 >
 > 仓库 owner 是 **`LeeeeCm`**（四个 e），手工拼 URL 时注意别少写一个。
 
-最新一次实测（2026-11-15 发布 v0.2.2 后，`npm run release:check -- --version 0.2.2 --download`）：
+最新一次实测（2026-11-15 发布 v0.2.3 后，`npm run release:check -- --version 0.2.3 --download`）：
 
 | # | 检查 | 结果 |
 | --- | --- | --- |
 | 1 | latest.json 公网可读 | ✔ HTTP 200 |
-| 2 | latest.json version | ✔ 0.2.2 |
-| 3 | GitHub Release 存在 | ✔ v0.2.2 |
+| 2 | latest.json version | ✔ 0.2.3 |
+| 3 | GitHub Release 存在 | ✔ v0.2.3 |
 | 4 | 非 draft / 非 prerelease | ✔ |
 | 5–8 | 资产含 latest.json / exe / .sig / .sha256 | ✔ 6 个资产齐全（exe+msi 各一份 .sha256） |
 | 9 | url 指向本 Release 的安装包 | ✔ |
@@ -314,13 +314,13 @@ latest.json 的 url 指向本 tag 的安装包、`.sig` 与 latest.json 的 sign
 | 12 | .sha256 资产内容与 GitHub digest 一致 | ✔ `1b18d100…` |
 | 13 | （--download）下载实测 sha256 与 digest | ✔ `1b18d100…` |
 
-> 完整性自查（人类可照做）：`Get-FileHash .\BlockHabit_0.2.2_x64-setup.exe -Algorithm SHA256` 与
+> 完整性自查（人类可照做）：`Get-FileHash .\BlockHabit_0.2.3_x64-setup.exe -Algorithm SHA256` 与
 > Release 上的 `.sha256` 文件对比；minisign keyid `c38f798bd203ed59` 与 `tauri.conf.json` 公钥一致（发布报告 §15.4）。
 
 ### 12.1 旧版起点包（T6 需要「带 updater 的旧安装包」）
 
 **优先做法**：直接安装已发布的 `v0.2.1` 安装包（`gh release download v0.2.1 -p "*-setup.exe"`）。
-0.2.1 起发布包已内置 updater 公钥/端点，会去查 latest.json（当前 latest = 0.2.2），是天然起点。
+0.2.1 起发布包已内置 updater 公钥/端点，会去查 latest.json（当前 latest = 0.2.3），是天然起点。
 
 **兜底做法**：如果本机没有 v0.2.1 安装包，用下面的命令重出一个「0.2.1 版本号 + 当前 updater 配置」的
 起点包（只覆盖安装包版本号，不改仓库文件）：
