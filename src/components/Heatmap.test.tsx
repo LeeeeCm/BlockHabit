@@ -22,6 +22,11 @@ describe('Heatmap 键盘可达（C5）', () => {
   let root: ReturnType<typeof createRoot> | null = null
 
   beforeEach(() => {
+    // 热图网格以「本周」结尾（13 周 × 7 天）。若测试恰好在周日跑，本周 7 天全是今天或过去，
+    // 网格里一个「未来日期」都没有 → 下面的 aria-disabled 用例会找不到禁用格（历史随机 flake）。
+    // 固定到周三（2026-11-11），本周仍有 4 个未来日，断言与产品行为都不变。
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-11T10:00:00'))
     useAppStore.setState({ settings: { theme: 'light', language: 'zh' } })
     container = document.createElement('div')
     document.body.appendChild(container)
@@ -32,6 +37,7 @@ describe('Heatmap 键盘可达（C5）', () => {
     act(() => root?.unmount())
     document.body.removeChild(container)
     root = null
+    vi.useRealTimers()
   })
 
   function render(onDayClick = vi.fn()) {
