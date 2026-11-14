@@ -676,6 +676,33 @@
       "owner": "lead",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261115-075-release-self-check-loop.md"
+    },
+    {
+      "id": "D-20261115-076",
+      "date": "2026-11-15",
+      "title": "纯拆分 4 个超过 800 行的文件（Today / MiniDeskToy / SettingsDialog / en.ts），零行为变化",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261115-076-split-oversized-files.md"
+    },
+    {
+      "id": "D-20261115-077",
+      "date": "2026-11-15",
+      "title": "清理 verifier 遗留 P3：安装成功后释放 Update 句柄 / credential_set 空串删除旧条目",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261115-077-p3-cleanup-updater-credentials.md"
+    },
+    {
+      "id": "D-20261115-078",
+      "date": "2026-11-15",
+      "title": "仓库门面与供应链：Actions 升版 / SECURITY / CONTRIBUTING / Issue 模板 / Dependabot / CodeQL / 仓库元数据",
+      "status": "approved",
+      "owner": "lead",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261115-078-repo-governance-supply-chain.md"
     }
   ]
 }
