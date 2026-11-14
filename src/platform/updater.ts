@@ -183,6 +183,13 @@ export async function installUpdate(
       }
       emit({ downloadedBytes: contentLength ?? downloadedBytes, contentLength })
     })
+    // 安装成功后释放插件侧句柄（Windows 进程即将由安装器接管，其余平台随后 relaunch）；
+    // 释放失败不篡改「安装成功」的事实。
+    try {
+      await update.close()
+    } catch {
+      // 资源回收失败不影响安装结果
+    }
     pendingUpdate = null
     // Windows 上安装器会退出当前进程（默认自动重启）；其余平台显式重启。
     try {

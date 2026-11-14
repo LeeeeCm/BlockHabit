@@ -133,6 +133,7 @@ describe('updater：启用后（VITE_UPDATER_ENABLED=1 且 Tauri 运行时）', 
     expect(progress).toHaveBeenCalled()
     const lastProgress = progress.mock.calls[progress.mock.calls.length - 1]?.[0]
     expect(lastProgress).toEqual({ downloadedBytes: 12, contentLength: 12 })
+    expect(update.close).toHaveBeenCalledTimes(1)
     expect(processPlugin.relaunch).toHaveBeenCalledTimes(1)
   })
 

@@ -24,6 +24,13 @@ pub(crate) const ERR_INVALID_ACCOUNT: &str = "invalid-account";
 #[cfg(not(windows))]
 pub(crate) const ERR_UNSUPPORTED: &str = "unsupported";
 
+/// 空密码的语义：视为「不保存」，并删除该账号的旧条目（幂等）。
+/// 前端目前只在密码非空时调用 set、清空走 delete；这里补齐后端语义，
+/// 避免将来某个调用点传空串时在凭据管理器里留下一条旧密码。
+fn empty_secret_means_delete(secret: &str) -> bool {
+    secret.is_empty()
+}
+
 /// 账号键只用于拼接 Credential Manager 的 target 后缀：
 /// 必须非空、有界、只含十六进制/连字符/下划线，避免把用户名、URL 或任意文本写进系统。
 /// 空串会被 keyring 当成合法条目，因此必须在这里拒掉。
@@ -42,7 +49,7 @@ pub(crate) fn validate_account(account: &str) -> Result<(), &'static str> {
 
 #[cfg(windows)]
 mod backend {
-    use super::{validate_account, PROBE_ACCOUNT, SERVICE};
+    use super::{empty_secret_means_delete, validate_account, PROBE_ACCOUNT, SERVICE};
 
     const ERR_NO_ENTRY: &str = "no-entry";
     const ERR_PLATFORM: &str = "platform-failure";
@@ -84,11 +91,16 @@ mod backend {
     }
 
     pub fn set(account: &str, secret: &str) -> Result<(), String> {
-        // 空密码不建条目（等于没有密码），避免在凭据管理器里留下一条空记录
-        if secret.is_empty() {
-            return Ok(())
+        let entry = open(account)?;
+        // 空密码：不写空条目，并删除该账号的旧条目（幂等），避免旧密码残留
+        if empty_secret_means_delete(secret) {
+            return match entry.delete_credential() {
+                Ok(()) => Ok(()),
+                Err(keyring::Error::NoEntry) => Ok(()),
+                Err(e) => Err(code_of(&e).to_string()),
+            };
         }
-        open(account)?
+        entry
             .set_password(secret)
             .map_err(|e| code_of(&e).to_string())
     }
@@ -137,7 +149,7 @@ pub fn credential_available() -> bool {
     backend::available()
 }
 
-/// 写入/覆盖密码；空字符串视为「不保存」。不返回也不记录密码本身。
+/// 写入/覆盖密码；空字符串视为「不保存」并删除旧条目。不返回也不记录密码本身。
 #[tauri::command]
 pub fn credential_set(account: String, secret: String) -> Result<(), String> {
     backend::set(&account, &secret)
@@ -157,7 +169,14 @@ pub fn credential_delete(account: String) -> Result<bool, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::validate_account;
+    use super::{empty_secret_means_delete, validate_account};
+
+    #[test]
+    fn empty_secret_means_delete_old_entry() {
+        assert!(empty_secret_means_delete(""));
+        assert!(!empty_secret_means_delete("secret"));
+        assert!(!empty_secret_means_delete(" "));
+    }
 
     #[test]
     fn accepts_sha256_hex_accounts() {
