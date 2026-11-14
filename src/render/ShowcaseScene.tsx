@@ -1,43 +1,41 @@
 import { useCallback, useEffect, useRef, useMemo } from 'react'
 import type { Blueprint, ShowcasePlacement } from '../types'
-import {
-  DEFAULT_ISO_CONFIG,
-  drawCube,
-  paletteFromDocument,
-  traceIsoGroundPath,
-  worldToScreen,
-  type IsoCornerRadii,
-  type IsoPalette
-} from './iso'
-import {
-  canPlaceModel,
-  getRotatedFootprint,
-  screenToGroundIso,
-  SHOWCASE_GRID_SIZE
-} from '../logic/showcase'
-import { drawEcoProps, drawGroundShadow, withAlpha } from './iso'
+import { DEFAULT_ISO_CONFIG, paletteFromDocument, type IsoPalette } from './iso'
+import { canPlaceModel, screenToGroundIso, SHOWCASE_GRID_SIZE } from '../logic/showcase'
 import {
   buildBaseGeometry,
   buildFootprintMap,
   buildOffsetBlocksMap,
   buildRotatedFootprintMap,
   collectSortedCubes,
-  compareCubes,
-  rotateBlocksForRender,
   type RenderCube
 } from './showcaseLayout'
-import { ecoStageFor } from '../logic/eco'
-import { currentStreakWithResilience } from '../logic/streak'
 import { playSnapSound } from '../audio/sound'
 import {
   calculatePinchDistance,
   calculateTouchCenter,
-  clampZoom,
   isQuickTap,
   type TouchGestureState
 } from './touchGesture'
 import { triggerHaptic } from '../platform'
 import { useAppStore } from '../store/appStore'
+import { applyPinchZoom, applyWheelZoom, fitShowcaseView } from './showcase/camera'
+import {
+  drawDragFootprint,
+  drawShowcaseCubes,
+  drawShowcaseEco,
+  drawShowcaseShadows,
+  renderShowcaseBase
+} from './showcase/canvas'
+import { buildBonusByBlueprint, computeEcoStage } from './showcase/derived'
+import { buildDragCubes, mergeDragCubes, snapDragTarget, type DragState } from './showcase/drag'
+import { clientToWorldPoint, findModelAtWorldPoint, resolveFootprint } from './showcase/hitTest'
+import {
+  beginMultiTouch,
+  beginSingleTouch,
+  endTouchGesture,
+  trackSingleTouchPan
+} from './showcase/touch'
 
 interface Props {
   placements: ShowcasePlacement[]
@@ -54,18 +52,6 @@ interface Props {
 
 /** 稳定空表：默认旋转不开时保持引用不变，静态派生 memo 不会因每次渲染新建对象而失效 */
 const EMPTY_ROTATIONS: Record<string, number> = {}
-
-interface DragState {
-  blueprintId: string
-  startGx: number
-  startGy: number
-  currentGx: number
-  currentGy: number
-  isValid: boolean
-  hasMoved: boolean
-  downPx: number
-  downPy: number
-}
 
 /**
  * 展台沙盘（Showcase Island）：
@@ -93,31 +79,14 @@ export function ShowcaseScene({
   const builds = useAppStore((s) => s.builds)
 
   // B1/B5：蓝图 → 序位 → 奖励等级（streak / attendance）。用 ref 承载，避免进入 draw 的依赖数组导致重绑监听
-  const bonusByBlueprint = useMemo(() => {
-    const map = new Map<string, Array<'streak' | 'attendance' | undefined>>()
-    for (const b of builds) {
-      let list = map.get(b.blueprintId)
-      if (!list) {
-        list = []
-        map.set(b.blueprintId, list)
-      }
-      list[b.index] = b.bonus ? (b.fromHabitId === '__day__' ? 'attendance' : 'streak') : undefined
-    }
-    return map
-  }, [builds])
+  const bonusByBlueprint = useMemo(() => buildBonusByBlueprint(builds), [builds])
   const bonusRef = useRef(bonusByBlueprint)
   bonusRef.current = bonusByBlueprint
   // 微生态彩蛋阶段：所有在册习惯的最大连胜（与建造页同一口径）
-  const ecoStage = useMemo(() => {
-    if (!enableEcoProps) return 0
-    const today = new Date()
-    let maxStreak = 0
-    for (const h of habits) {
-      if (h.archivedAt) continue
-      maxStreak = Math.max(maxStreak, currentStreakWithResilience(h, checkIns, today, true).streak)
-    }
-    return ecoStageFor(maxStreak)
-  }, [habits, checkIns, enableEcoProps])
+  const ecoStage = useMemo(
+    () => computeEcoStage(habits, checkIns, enableEcoProps),
+    [habits, checkIns, enableEcoProps]
+  )
   const ecoStageRef = useRef(ecoStage)
   ecoStageRef.current = ecoStage
   const gyroOffsetRef = useRef({ x: 0, y: 0 })
@@ -175,64 +144,7 @@ export function ShowcaseScene({
 
   const renderBase = useCallback(
     (bctx: CanvasRenderingContext2D, palette: IsoPalette) => {
-      const { topPts, botPts, skirtPts } = baseGeometry
-      // 底层环境光柔和阴影
-      bctx.save()
-      bctx.beginPath()
-      botPts.forEach((pt, i) =>
-        i === 0 ? bctx.moveTo(pt.sx, pt.sy + 6) : bctx.lineTo(pt.sx, pt.sy + 6)
-      )
-      bctx.closePath()
-      bctx.fillStyle = withAlpha(palette.ink, 0.06)
-      bctx.fill()
-      bctx.restore()
-
-      // 朝向观众的 3D 侧面厚度（光滑连续曲面，绝无任何外溢线条）：取块体左脸色调做暗面
-      if (skirtPts.length > 0) {
-        bctx.save()
-        bctx.beginPath()
-        skirtPts.forEach((pt, i) =>
-          i === 0 ? bctx.moveTo(pt.sx, pt.sy) : bctx.lineTo(pt.sx, pt.sy)
-        )
-        bctx.closePath()
-        bctx.fillStyle = palette.left
-        bctx.fill()
-        bctx.strokeStyle = palette.ink
-        bctx.lineWidth = 1.5
-        bctx.lineJoin = 'round'
-        bctx.stroke()
-        bctx.restore()
-      }
-
-      // 展台顶面（主题块体顶面色 + 墨色外轮廓线）与顶面内部对齐网格
-      bctx.save()
-      bctx.beginPath()
-      topPts.forEach((pt, i) => (i === 0 ? bctx.moveTo(pt.sx, pt.sy) : bctx.lineTo(pt.sx, pt.sy)))
-      bctx.closePath()
-      bctx.fillStyle = palette.top
-      bctx.fill()
-      bctx.strokeStyle = palette.ink
-      bctx.lineWidth = 1.5
-      bctx.lineJoin = 'round'
-      bctx.stroke()
-
-      bctx.clip()
-      bctx.beginPath()
-      for (let i = 1; i < G; i++) {
-        const a = worldToScreen(i, 0, 0, cfg)
-        const b = worldToScreen(i, G, 0, cfg)
-        bctx.moveTo(a.sx, a.sy + cfg.tileH / 2)
-        bctx.lineTo(b.sx, b.sy + cfg.tileH / 2)
-
-        const c = worldToScreen(0, i, 0, cfg)
-        const d = worldToScreen(G, i, 0, cfg)
-        bctx.moveTo(c.sx, c.sy + cfg.tileH / 2)
-        bctx.lineTo(d.sx, d.sy + cfg.tileH / 2)
-      }
-      bctx.strokeStyle = withAlpha(palette.ink, 0.08)
-      bctx.lineWidth = 0.8
-      bctx.stroke()
-      bctx.restore()
+      renderShowcaseBase(bctx, palette, baseGeometry, cfg, G)
     },
     [baseGeometry, cfg, G]
   )
@@ -286,82 +198,31 @@ export function ShowcaseScene({
     ctx.scale(view.scale, view.scale)
 
     // 2.4 每个落位模型的地面接触阴影（积木与植被之前绘制）
-    for (const p of placementsRef.current) {
-      const offsetBlocks = offsetBlocksRef.current.get(p.blueprintId)
-      if (!offsetBlocks) continue
-      drawGroundShadow(ctx, offsetBlocks, cfg, palette)
-    }
+    drawShowcaseShadows(ctx, placementsRef.current, offsetBlocksRef.current, cfg, palette)
 
     // 2.5 微生态植被：每个落位模型的 margin 环带内（积木之前绘制，正确深度）
-    if (ecoStageRef.current >= 1) {
-      for (const p of placementsRef.current) {
-        const offsetBlocks = offsetBlocksRef.current.get(p.blueprintId)
-        if (!offsetBlocks) continue
-        drawEcoProps(
-          ctx,
-          offsetBlocks,
-          cfg,
-          palette,
-          0,
-          0,
-          0,
-          ecoStageRef.current,
-          'back',
-          ecoSeedRef.current
-        )
-        drawEcoProps(
-          ctx,
-          offsetBlocks,
-          cfg,
-          palette,
-          0,
-          0,
-          0,
-          ecoStageRef.current,
-          'front',
-          ecoSeedRef.current
-        )
-      }
-    }
+    drawShowcaseEco(
+      ctx,
+      placementsRef.current,
+      offsetBlocksRef.current,
+      cfg,
+      palette,
+      ecoStageRef.current,
+      ecoSeedRef.current
+    )
 
     // 3. 拖拽时地基磁吸 / 碰撞警告脚印
     const drag = dragRef.current
     if (drag) {
       const bp = blueprintsMap[drag.blueprintId]
       if (bp) {
-        const fp =
-          footprintRef.current.get(bp.id) ??
-          getRotatedFootprint(bp.blocks, rotationsRef.current[drag.blueprintId] ?? 0)
-        const gx0 = drag.currentGx
-        const gy0 = drag.currentGy
-        const gx1 = gx0 + fp.width
-        const gy1 = gy0 + fp.depth
-
-        const dragRadii: IsoCornerRadii = {
-          bottom: 0.9,
-          side: 0.6,
-          top: 0.35
-        }
-
-        ctx.save()
-        traceIsoGroundPath(ctx, gx0, gx1, gy0, gy1, cfg, dragRadii, cfg.tileH / 2)
-        if (drag.isValid) {
-          // 允许落位：柔和青绿吸附高光
-          ctx.fillStyle = 'rgba(34, 197, 94, 0.22)'
-          ctx.fill()
-          ctx.strokeStyle = '#22c55e'
-          ctx.lineWidth = 2
-          ctx.stroke()
-        } else {
-          // 碰撞重叠或出界：柔和警示红
-          ctx.fillStyle = 'rgba(239, 68, 68, 0.22)'
-          ctx.fill()
-          ctx.strokeStyle = '#ef4444'
-          ctx.lineWidth = 2
-          ctx.setLineDash([6, 4])
-          ctx.stroke()
-        }
-        ctx.restore()
+        const fp = resolveFootprint(
+          bp,
+          footprintRef.current,
+          rotationsRef.current,
+          drag.blueprintId
+        )
+        drawDragFootprint(ctx, drag.currentGx, drag.currentGy, fp, drag.isValid, cfg)
       }
     }
 
@@ -374,66 +235,24 @@ export function ShowcaseScene({
     } else {
       const bp = blueprintsMap[drag.blueprintId]
       const dragRotation = rotationsRef.current[drag.blueprintId] ?? 0
-      const dragBlocks = bp ? rotateBlocksForRender(bp.blocks, dragRotation) : null
       const fp = bp
-        ? (footprintRef.current.get(bp.id) ?? getRotatedFootprint(bp.blocks, dragRotation))
+        ? resolveFootprint(bp, footprintRef.current, rotationsRef.current, drag.blueprintId)
         : null
-      const dragCubes: RenderCube[] = []
-      if (bp && fp && dragBlocks) {
-        for (const b of dragBlocks) {
-          dragCubes.push({
-            worldX: drag.currentGx + (b.x - fp.minX),
-            worldY: drag.currentGy + (b.y - fp.minY),
-            worldZ: b.z,
-            block: b,
-            blueprintId: drag.blueprintId,
-            isDragging: true
-          })
-        }
-        dragCubes.sort(compareCubes)
-      }
-      const merged: RenderCube[] = []
-      let i = 0
-      let j = 0
-      while (i < staticCubes.length && j < dragCubes.length) {
-        const s = staticCubes[i]
-        if (s.blueprintId === drag.blueprintId) {
-          i++
-          continue
-        }
-        const d = dragCubes[j]
-        if (compareCubes(s, d) <= 0) {
-          merged.push(s)
-          i++
-        } else {
-          merged.push(d)
-          j++
-        }
-      }
-      while (i < staticCubes.length) {
-        const s = staticCubes[i++]
-        if (s.blueprintId !== drag.blueprintId) merged.push(s)
-      }
-      while (j < dragCubes.length) merged.push(dragCubes[j++])
-      drawList = merged
+      const dragCubes = bp && fp ? buildDragCubes(bp, fp, dragRotation, drag) : []
+      drawList = mergeDragCubes(staticCubes, dragCubes, drag.blueprintId)
     }
 
     // 绘制所有积木
-    for (const { worldX, worldY, worldZ, block, blueprintId, isDragging, index } of drawList) {
-      const { sx: px, sy: py } = worldToScreen(worldX, worldY, worldZ, cfg)
-      const isHovered =
-        (hoveredIdRef.current === blueprintId || selectedIdRef.current === blueprintId) && !drag
-      const bonusTier = index !== undefined ? bonusRef.current.get(blueprintId)?.[index] : undefined
-      const isBonus = bonusTier !== undefined
-      drawCube(ctx, px, py + cfg.tileH / 2, cfg, palette, {
-        type: block.type,
-        color: block.color,
-        highlight: isHovered,
-        ghost: isDragging && !drag?.isValid,
-        bonus: isBonus,
-        bonusTier
-      })
-    }
+    drawShowcaseCubes(
+      ctx,
+      drawList,
+      cfg,
+      palette,
+      hoveredIdRef.current,
+      selectedIdRef.current,
+      drag,
+      bonusRef.current
+    )
   }, [blueprintsMap, cfg, G, footprintMap, renderBase])
 
   // 当外部 placements 数据变更时（例如自动排列或 store 同步），触发即时画布重绘
@@ -457,17 +276,7 @@ export function ShowcaseScene({
       canvas.height = h * dpr
 
       if (!viewRef.current.fitted) {
-        const p0 = worldToScreen(0, 0, 0, cfg)
-        const pXY = worldToScreen(G, G, 0, cfg)
-        const sceneW = G * cfg.tileW
-        const sceneH = G * cfg.tileH + 120
-        const scale = Math.min((w - 48) / sceneW, (h - 48) / sceneH, 1.2)
-        viewRef.current = {
-          scale,
-          panX: w / 2 - ((p0.sx + pXY.sx) / 2) * scale,
-          panY: h / 2 - ((p0.sy + pXY.sy) / 2) * scale - 20,
-          fitted: true
-        }
+        viewRef.current = fitShowcaseView(w, h, cfg, G)
       }
       draw()
     }
@@ -494,33 +303,23 @@ export function ShowcaseScene({
     (clientX: number, clientY: number): string | null => {
       const canvas = canvasRef.current
       if (!canvas) return null
-      const rect = canvas.getBoundingClientRect()
-      const mx = clientX - rect.left
-      const my = clientY - rect.top
-      const view = viewRef.current
-      const worldPx = (mx - view.panX) / view.scale
-      const worldPy = (my - view.panY) / view.scale - cfg.tileH / 2
-
-      const curPlacements = placementsRef.current
-      for (let i = curPlacements.length - 1; i >= 0; i--) {
-        const p = curPlacements[i]
-        const bp = blueprintsMap[p.blueprintId]
-        if (!bp) continue
-        // 命中检测每次 pointermove 都会跑；footprint 是纯派生值，用 memo 缓存而非重算
-        const fp =
-          footprintRef.current.get(bp.id) ??
-          getRotatedFootprint(bp.blocks, rotationsRef.current[p.blueprintId] ?? 0)
-        const { gx, gy } = screenToGroundIso(worldPx, worldPy, cfg.tileW, cfg.tileH)
-        if (
-          gx >= p.gridX - 0.4 &&
-          gx <= p.gridX + fp.width + 0.4 &&
-          gy >= p.gridY - 0.4 &&
-          gy <= p.gridY + fp.depth + 0.4
-        ) {
-          return p.blueprintId
-        }
-      }
-      return null
+      const { worldPx, worldPy } = clientToWorldPoint(
+        clientX,
+        clientY,
+        canvas.getBoundingClientRect(),
+        viewRef.current,
+        cfg.tileH
+      )
+      return findModelAtWorldPoint(
+        worldPx,
+        worldPy,
+        placementsRef.current,
+        blueprintsMap,
+        footprintRef.current,
+        rotationsRef.current,
+        cfg.tileW,
+        cfg.tileH
+      )
     },
     [blueprintsMap, cfg.tileH, cfg.tileW]
   )
@@ -529,41 +328,9 @@ export function ShowcaseScene({
 
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
     if (e.touches.length === 1) {
-      const t = e.touches[0]
-      touchStateRef.current = {
-        startTime: performance.now(),
-        startX: t.clientX,
-        startY: t.clientY,
-        lastX: t.clientX,
-        lastY: t.clientY,
-        maxDisplacement: 0,
-        isMultiTouch: false,
-        lastPinchDist: 0,
-        lastPinchCenter: { x: t.clientX, y: t.clientY }
-      }
+      touchStateRef.current = beginSingleTouch(e.touches[0])
     } else if (e.touches.length >= 2) {
-      const p1 = e.touches[0]
-      const p2 = e.touches[1]
-      const dist = calculatePinchDistance(p1, p2)
-      const center = calculateTouchCenter(p1, p2)
-      if (touchStateRef.current) {
-        touchStateRef.current.isMultiTouch = true
-        touchStateRef.current.lastPinchDist = dist
-        touchStateRef.current.lastPinchCenter = center
-        touchStateRef.current.maxDisplacement = 999
-      } else {
-        touchStateRef.current = {
-          startTime: performance.now(),
-          startX: center.x,
-          startY: center.y,
-          lastX: center.x,
-          lastY: center.y,
-          maxDisplacement: 999,
-          isMultiTouch: true,
-          lastPinchDist: dist,
-          lastPinchCenter: center
-        }
-      }
+      touchStateRef.current = beginMultiTouch(touchStateRef.current, e.touches[0], e.touches[1])
     }
   }, [])
 
@@ -574,15 +341,7 @@ export function ShowcaseScene({
       if (!canvas || !state) return
 
       if (e.touches.length === 1 && !state.isMultiTouch) {
-        const t = e.touches[0]
-        const dx = t.clientX - state.lastX
-        const dy = t.clientY - state.lastY
-        state.lastX = t.clientX
-        state.lastY = t.clientY
-        const disp = Math.hypot(t.clientX - state.startX, t.clientY - state.startY)
-        if (disp > state.maxDisplacement) {
-          state.maxDisplacement = disp
-        }
+        const { dx, dy } = trackSingleTouchPan(state, e.touches[0])
 
         const view = viewRef.current
         view.panX += dx
@@ -597,20 +356,13 @@ export function ShowcaseScene({
         const center = calculateTouchCenter(p1, p2)
 
         if (state.lastPinchDist > 0) {
-          const factor = dist / state.lastPinchDist
-          const view = viewRef.current
-          const nextScale = clampZoom(view.scale * factor, 0.4, 2.5)
-
-          const rect = canvas.getBoundingClientRect()
-          const mx = center.x - rect.left
-          const my = center.y - rect.top
-          const panDx = center.x - state.lastPinchCenter.x
-          const panDy = center.y - state.lastPinchCenter.y
-
-          view.panX = mx - ((mx - view.panX) / view.scale) * nextScale + panDx
-          view.panY = my - ((my - view.panY) / view.scale) * nextScale + panDy
-          view.scale = nextScale
-
+          applyPinchZoom(
+            viewRef.current,
+            canvas.getBoundingClientRect(),
+            state.lastPinchCenter,
+            center,
+            dist / state.lastPinchDist
+          )
           draw()
         }
 
@@ -626,28 +378,16 @@ export function ShowcaseScene({
       const state = touchStateRef.current
       if (!state) return
 
-      if (e.touches.length === 0) {
-        const duration = performance.now() - state.startTime
-        if (isQuickTap(duration, state.maxDisplacement)) {
-          const hitId = findModelAtScreenPoint(state.startX, state.startY)
-          if (hitId) {
-            triggerHaptic('light')
-            onSelectModel?.(hitId)
-          }
+      if (!endTouchGesture(state, e.touches)) return
+      const duration = performance.now() - state.startTime
+      if (isQuickTap(duration, state.maxDisplacement)) {
+        const hitId = findModelAtScreenPoint(state.startX, state.startY)
+        if (hitId) {
+          triggerHaptic('light')
+          onSelectModel?.(hitId)
         }
-        touchStateRef.current = null
-      } else if (e.touches.length === 1) {
-        const t = e.touches[0]
-        state.isMultiTouch = false
-        state.lastX = t.clientX
-        state.lastY = t.clientY
-        state.lastPinchDist = 0
-        state.maxDisplacement = 999
-      } else if (e.touches.length >= 2) {
-        state.lastPinchDist = calculatePinchDistance(e.touches[0], e.touches[1])
-        state.lastPinchCenter = calculateTouchCenter(e.touches[0], e.touches[1])
-        state.maxDisplacement = 999
       }
+      touchStateRef.current = null
     },
     [findModelAtScreenPoint, onSelectModel]
   )
@@ -667,35 +407,27 @@ export function ShowcaseScene({
 
     function getScreenPoint(e: PointerEvent) {
       const rect = canvas!.getBoundingClientRect()
-      const mx = e.clientX - rect.left
-      const my = e.clientY - rect.top
-      const view = viewRef.current
-      const worldPx = (mx - view.panX) / view.scale
-      const worldPy = (my - view.panY) / view.scale - cfg.tileH / 2
-      return { mx, my, worldPx, worldPy }
+      const { worldPx, worldPy } = clientToWorldPoint(
+        e.clientX,
+        e.clientY,
+        rect,
+        viewRef.current,
+        cfg.tileH
+      )
+      return { mx: e.clientX - rect.left, my: e.clientY - rect.top, worldPx, worldPy }
     }
 
     function findModelUnderPointer(worldPx: number, worldPy: number): string | null {
-      const curPlacements = placementsRef.current
-      // 从后往前检测模型
-      for (let i = curPlacements.length - 1; i >= 0; i--) {
-        const p = curPlacements[i]
-        const bp = blueprintsMap[p.blueprintId]
-        if (!bp) continue
-        const fp =
-          footprintRef.current.get(bp.id) ??
-          getRotatedFootprint(bp.blocks, rotationsRef.current[p.blueprintId] ?? 0)
-        const { gx, gy } = screenToGroundIso(worldPx, worldPy, cfg.tileW, cfg.tileH)
-        if (
-          gx >= p.gridX - 0.4 &&
-          gx <= p.gridX + fp.width + 0.4 &&
-          gy >= p.gridY - 0.4 &&
-          gy <= p.gridY + fp.depth + 0.4
-        ) {
-          return p.blueprintId
-        }
-      }
-      return null
+      return findModelAtWorldPoint(
+        worldPx,
+        worldPy,
+        placementsRef.current,
+        blueprintsMap,
+        footprintRef.current,
+        rotationsRef.current,
+        cfg.tileW,
+        cfg.tileH
+      )
     }
 
     const onPointerDown = (e: PointerEvent) => {
@@ -738,14 +470,12 @@ export function ShowcaseScene({
         }
         const { gx, gy } = screenToGroundIso(worldPx, worldPy, cfg.tileW, cfg.tileH)
         const bp = blueprintsMap[drag.blueprintId]
-        const dragRotation = rotationsRef.current[drag.blueprintId] ?? 0
         const fp = bp
-          ? (footprintRef.current.get(bp.id) ?? getRotatedFootprint(bp.blocks, dragRotation))
+          ? resolveFootprint(bp, footprintRef.current, rotationsRef.current, drag.blueprintId)
           : { width: 1, depth: 1 }
 
         // 磁吸对齐至整数网格坐标
-        const targetGx = Math.max(0, Math.min(G - fp.width, Math.round(gx - fp.width / 2)))
-        const targetGy = Math.max(0, Math.min(G - fp.depth, Math.round(gy - fp.depth / 2)))
+        const { targetGx, targetGy } = snapDragTarget(gx, gy, fp, G)
 
         drag.currentGx = targetGx
         drag.currentGy = targetGy
@@ -807,14 +537,7 @@ export function ShowcaseScene({
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
       const rect = canvas.getBoundingClientRect()
-      const mx = e.clientX - rect.left
-      const my = e.clientY - rect.top
-      const view = viewRef.current
-      const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1
-      const next = Math.min(2.5, Math.max(0.4, view.scale * factor))
-      view.panX = mx - ((mx - view.panX) / view.scale) * next
-      view.panY = my - ((my - view.panY) / view.scale) * next
-      view.scale = next
+      applyWheelZoom(viewRef.current, e.clientX - rect.left, e.clientY - rect.top, e.deltaY)
       draw()
     }
 
