@@ -245,7 +245,7 @@ KEYID MATCH: true
 | P3 | `update.close()` 在安装成功后未调用 | ⚠️ 接受：安装成功即进程被安装器接管退出，句柄随进程回收；保持与已发布二进制一致，不在发布后改逻辑 |
 | P3 | `credential_set("")` 不会删除旧条目 | ⚠️ 接受：前端只在密码非空时调用 set、清空走 `credential_delete`；保持与已发布二进制一致 |
 | P3 | `QuitGate` 不复位（理论） | ⚠️ 接受：`begin_quit` 只发起一次且 1.5s 后必然 `app.exit(0)`，进程生命周期内不存在「握手后继续运行」的分支 |
-| P3 | 自动同步只在设置页挂载期间运行 | ⚠️ 既有行为（`useSync` 由 `SettingsDialog` 调用），本轮不改；已在 D-072 履历中如实写明 |
+| P3 | 自动同步只在设置页挂载期间运行 | ✅ **已修**（D-20261115-074）：同步控制器上移到应用级 `<SyncProvider>`，启动/定时同步与 keyring 迁移不再依赖设置页挂载；新增 4 例回归测试 |
 | P3 | `release.yml` 空 `--notes` 在 PS 5.1 下会报「参数缺少值」 | ⚠️ 接受：当前触发总是带 notes；若将来要走空 notes，改用 `--notes-file` |
 | P3 | 未独立验证：`tauri build` 本机复跑、真机 T6/T7/T8、§12.1 双 `--config` 起点包实跑、四主题视觉回归 | 如实声明：这些均需真机/密钥，已列入真机清单 |
 
@@ -276,3 +276,17 @@ P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」�
 > 说明：本节的新增（自检脚本）发生在 `v0.2.1` 二进制构建之后，属**发布工具**而非产品逻辑，
 > 因此不需要重发 0.2.1；已发布的安装包与当前 `src/`/`src-tauri/src/` 的产品代码仍然一致
 > （本轮没有改动任何运行时逻辑）。
+
+## 14. 0.2.1 之后（2026-11-15）：应用级自动同步
+
+- **D-20261115-074（approved）**：修掉「不开设置页就永不同步」。根因不是猜测：`useSync()` 的三组
+  effect（启动同步 / 定时同步 / keyring 迁移回填）挂在 `SettingsDialog` 里，而 `App.tsx` 是
+  `{settingsOpen && <SettingsDialog/>}`。提交 `1b2e537` 声称的 `sync-on-launch` 实际未生效。
+- 修法是**只提升挂载位置**：新增 `src/sync/SyncProvider.tsx`（应用级持有唯一实例，Context 分发），
+  `main.tsx` 只在主窗口包 Provider（托盘窗口不挂，避免并发写同一份远端），`SettingsDialog` 改用
+  `useSyncController()`；`useSync` 内部逻辑一行未改。类型归位到 `src/sync/types.ts`。
+- 新增 4 例回归测试，关键一条是「只挂 Provider、不挂 SettingsDialog 也会在 2s 后触发启动同步」。
+- 顺带修掉一个**日期相关 flake**：`Heatmap.test.tsx` 的 aria-disabled 用例在周日跑必然失败
+  （13 周网格以本周结尾，周日没有未来日）。已固定系统时间到周三，断言不变。
+- 门禁：`tsc` 0；`npm test` **110 文件 / 1137 用例**；`design:check` **74 条**；`format:check`；
+  `build` index 428.91 kB（+0.29 kB，chunk 归属未变）；CI run 43617100269 **success**。

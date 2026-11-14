@@ -3,6 +3,32 @@
 本项目遵循「每次改动都能追到一条设计记录」的约定：每条变更下方的 `D-YYYYMMDD-NNN` 指向
 `design/records/` 里对应的记录（含背景、方案、取舍与验收证据）。
 
+## [未发布] — 2026-11-15（0.2.2 候选：应用级自动同步）
+
+### 修复：不开设置页就永不同步（D-20261115-074 approved）
+
+- **根因**：`useSync()` 里的「启动同步 / 定时同步 / keyring 探测迁移回填」三组 effect 只在
+  `SettingsDialog` 挂载时存在，而 `App.tsx` 是 `{settingsOpen && <SettingsDialog/>}`。
+  于是配了自动同步的用户重启后不会自动同步（提交 `1b2e537` 声称的 `sync-on-launch` 实际未生效）。
+- **修法**：新增应用级 `<SyncProvider>`（`src/sync/SyncProvider.tsx`），在 `main.tsx` 的主窗口分支
+  持有唯一 `useSync()` 实例并经 Context 分发给设置页；托盘菜单窗口不挂（避免两窗口并发写同一份远端）。
+  `useSync` 内部逻辑零改动；类型 `SyncErrorCode` / `SyncController` / `WebDavErrorCode` 归位到
+  `src/sync/types.ts`（`webdav.ts`、`WebdavPanel.tsx` 保留 re-export，调用点零改动）。
+- **用户可见**：配了自动同步的用户，重启后约 2 秒会自动同步一次，不再需要先打开设置页；
+  keyring 迁移/回填也提前到启动时完成。
+- **测试**：新增 `src/sync/SyncProvider.test.tsx` 4 例，含关键回归「只挂 Provider、不挂设置页也会触发启动同步」
+  与「Provider 外调用 `useSyncController()` 抛错」。
+
+### 测试稳定性
+
+- 修掉 `Heatmap.test.tsx` 的日期相关 flake：13 周网格以本周结尾，**周日**运行时没有「未来日期」格子，
+  aria-disabled 用例必然失败（CI 每周约 1/7 概率随机红）。已把系统时间固定到 2026-11-11（周三），断言不变。
+
+### 门禁
+
+- `npx tsc --noEmit` 0；`npm test` **110 文件 / 1137 用例**；`design:check` **74 条**；`format:check`；
+  `build` index 428.91 kB / gzip 131.09；CI **success**（run 43617100269）。
+
 ## [0.2.1] — 2026-11-14（第十二轮：可发布状态 —— 记录审核 / 存档握手 / keyring / 发布链路）
 
 人类授权「批准一切必要请求与最佳方案、可新增依赖、可 push main、可生成签名密钥、可配置 secrets、
