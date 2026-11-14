@@ -3,7 +3,7 @@
 本项目遵循「每次改动都能追到一条设计记录」的约定：每条变更下方的 `D-YYYYMMDD-NNN` 指向
 `design/records/` 里对应的记录（含背景、方案、取舍与验收证据）。
 
-## [未发布] — 2026-11-15（0.2.2 候选：应用级自动同步）
+## [0.2.2] — 2026-11-15（第十三轮：应用级自动同步 / 发布自检闭环 / 仓库门面与工程债）
 
 ### 修复：不开设置页就永不同步（D-20261115-074 approved）
 
@@ -24,10 +24,27 @@
 - 修掉 `Heatmap.test.tsx` 的日期相关 flake：13 周网格以本周结尾，**周日**运行时没有「未来日期」格子，
   aria-disabled 用例必然失败（CI 每周约 1/7 概率随机红）。已把系统时间固定到 2026-11-11（周三），断言不变。
 
-### 门禁
+### 门禁（0.2.2 候选，发布前）
 
 - `npx tsc --noEmit` 0；`npm test` **110 文件 / 1137 用例**；`design:check` **74 条**；`format:check`；
   `build` index 428.91 kB / gzip 131.09；CI **success**（run 43617100269）。
+
+### 发布侧自检闭环（D-20261115-075 approved）
+
+- **tag 钉住触发提交**：`gh release create` 增加 `--target "$GITHUB_SHA"`。此前 tag 取「创建那一刻默认分支
+  HEAD」，发布期间再 push 一条提交 tag 就会漂到二进制构建提交之后（0.2.1 的 tag 实际落在 `8ac03c9`、二进制构建自
+  `fae5a0b`，只能靠报告解释）；现在 tag 与 workflow checkout 的提交严格一致。
+- **空 notes 兜底**：发布说明统一写入 `release-notes.md`，`gh release create --notes-file` 与
+  `make-latest-json.mjs --notes-file` 都读文件，不再依赖 PowerShell 对空字符串参数的处理（verifier 0.2.1
+  复查点名的隐藏地雷）。
+- **新增 `.sha256` 资产**：Release 额外上传 `BlockHabit_<ver>_x64-setup.exe.sha256`（GNU 风格
+  `<hash>  <文件名>`，MSI 存在时同样一份），用户/企业可离线核对下载完整性。
+- **自检进流水线**：release workflow 最后一步执行
+  `node scripts/check-release.mjs --version <ver> --download`（10 次 × 15 秒重试覆盖 CDN/索引延迟），
+  失败即红灯——不再出现「流水线自称成功、Release 实际不可用」的绿灯。
+- **release:check 增强**：`scripts/check-release.mjs` 增加「`.sha256` 资产存在」与「`.sha256` 内容与
+  GitHub 记录的 digest 一致」两项判定；`--download` 下的实测 sha256 比对保留。自检项 11 → 13（带下载）。
+- 单测 `scripts/check-release.test.mjs` 9 → 11 例（新增缺 .sha256 / 内容不一致两例）。
 
 ## [0.2.1] — 2026-11-14（第十二轮：可发布状态 —— 记录审核 / 存档握手 / keyring / 发布链路）
 

@@ -290,3 +290,37 @@ P1（§12 脚本仓库名少一个 e、无 fail-fast）不是「改个字符」�
   （13 周网格以本周结尾，周日没有未来日）。已固定系统时间到周三，断言不变。
 - 门禁：`tsc` 0；`npm test` **110 文件 / 1137 用例**；`design:check` **74 条**；`format:check`；
   `build` index 428.91 kB（+0.29 kB，chunk 归属未变）；CI run 43617100269 **success**。
+
+
+## 15. 0.2.2（2026-11-15 第十三轮）
+
+### 15.1 版本与候选提交
+
+- 版本：`0.2.1` → **`0.2.2`**（`package.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` +
+  `Cargo.lock` 的 blockhabit 包，`npm run check:versions` 通过）。
+- 0.2.1 之后、0.2.2 之前的候选内容：应用级自动同步修复（D-20261115-074）与 Heatmap 日期 flake 修复。
+- 0.2.2 发布候选新增：发布侧自检闭环（D-20261115-075）：
+
+| 项 | 内容 |
+| --- | --- |
+| tag 钉住提交 | `gh release create --target "$GITHUB_SHA"`，tag 与 workflow checkout 提交严格一致 |
+| 空 notes 兜底 | 发布说明写 `release-notes.md`，`--notes-file` 同时用于 Release 与 latest.json |
+| 校验资产 | Release 新增 `BlockHabit_<ver>_x64-setup.exe.sha256`（GNU 风格；MSI 同样一份） |
+| 流水线自检 | workflow 最后一步 `node scripts/check-release.mjs --version <ver> --download`（10×15s 重试），失败即红灯 |
+| 自检增强 | `release:check` 增加 .sha256 资产存在 + 内容与 GitHub digest 一致；带 `--download` 共 13 项 |
+
+### 15.2 门禁（发布候选，实测）
+
+| 门禁 | 结果 |
+| --- | --- |
+| `npx tsc --noEmit` | 0 错误 |
+| `npm test` | **110 文件 / 1139 用例全绿**（check-release 单测 9 → 11 例） |
+| `npm run design:check` | **75 条**（新增 D-20261115-075） |
+| `npm run format:check` | 通过 |
+| `npm run check:versions` | 0.2.2 |
+| `npm run build` | 见发布后复测 |
+| `cargo test --lib` | 见发布后复测 |
+
+### 15.3 发布结果
+
+- 待 v0.2.2 Release workflow 成功后回填（资产、latest.json、release:check 输出、tag 指向）。
