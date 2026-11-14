@@ -27,9 +27,29 @@ import type { SyncController } from '../sync/types'
 
 export type { SyncController }
 
+/** endpoint 的 host（非法 URL 返回空串）。只用于服务商预设识别，不作安全边界。 */
+export function endpointHost(endpoint: string): string {
+  try {
+    return new URL(endpoint).host.toLowerCase()
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * 是否坚果云固定端点：按 **host** 判断（等于 jianguoyun.com 或其子域）。
+ * CodeQL js/incomplete-url-substring-sanitization 首次扫描指出：原实现用
+ * `endpoint.includes('jianguoyun.com')`，恶意/异常 URL 只要在路径或查询串里塞这个字符串就会被误判；
+ * 正常 URL 行为不变（D-20261115-079）。
+ */
+export function isJianguoyunEndpoint(endpoint: string): boolean {
+  const host = endpointHost(endpoint)
+  return host === 'jianguoyun.com' || host.endsWith('.jianguoyun.com')
+}
+
 /** 从已有 endpoint 推断服务商（仅用于设置页首次展开时的预设高亮） */
-function detectProvider(endpoint: string): ProviderId {
-  if (endpoint.includes('jianguoyun.com')) return 'jianguoyun'
+export function detectProvider(endpoint: string): ProviderId {
+  if (isJianguoyunEndpoint(endpoint)) return 'jianguoyun'
   if (endpoint.includes('/remote.php/dav/')) return 'nextcloud'
   if (endpoint.includes('/home/BlockHabit')) return 'synology'
   return 'generic'
@@ -135,7 +155,7 @@ export function WebdavPanel({ sync, onToast }: Props) {
       return
     }
     // 固定端点（如坚果云）切回需要自填服务器的预设：先清空，避免把旧 host 带过去
-    if (endpoint.includes('jianguoyun.com')) {
+    if (isJianguoyunEndpoint(endpoint)) {
       setEndpoint('')
       updateSyncConfig({ endpoint: '' })
       return

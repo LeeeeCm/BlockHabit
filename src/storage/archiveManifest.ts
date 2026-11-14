@@ -236,7 +236,12 @@ export function buildBuildingsReadme(buildings: ArchiveBuilding[]): string {
   lines.push('| --- | --- | --- | --- | --- |')
   buildings.forEach((building, index) => {
     const names = blueprintNames(building.blueprintId)
-    const note = (building.foundationNote ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ')
+    // Markdown 表格转义：必须先转义反斜杠，再转义竖线（顺序反了会让反斜杠被 Markdown 吃掉，
+    // 单元格仍可能被拆开；CodeQL js/incomplete-sanitization 首次扫描指出，见 D-20261115-079）。
+    const note = (building.foundationNote ?? '')
+      .replace(/\\/g, '\\\\')
+      .replace(/\|/g, '\\|')
+      .replace(/\n/g, ' ')
     lines.push(
       `| ${index + 1} | ${building.blueprintId} | ${names.zh} / ${names.en} | ${building.completedAt} | ${note} |`
     )
