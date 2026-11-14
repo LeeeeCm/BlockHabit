@@ -1,15 +1,12 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
-import type { AppState, PlacedBlock } from '../types'
 import { blueprints } from '../logic/blueprints'
 import { CONTENT_VERSION } from '../logic/blueprints/manifest'
 import { getTranslation } from '../i18n'
 import { prepareImport } from './adapter'
-import { serializeState } from '../store/serializeState'
 import {
   ARCHIVE_CONTENT_VERSION,
   ARCHIVE_FOLDER_PREFIX,
   ARCHIVE_FORMAT_VERSION,
-  ARCHIVE_TMP_PREFIX,
   archiveFolderName,
   archiveStamp,
   archiveZipFileName,
@@ -20,196 +17,21 @@ import {
   crc32,
   deepEqualJson,
   dosDateTime,
-  downloadBlobFile,
-  isArchiveExporting,
   parseArchiveManifest,
-  runArchiveExport,
   sha256Hex,
   sha256HexPure,
   utf8Decode,
   utf8Encode,
   verifyStateRoundTrip,
-  type ArchiveFs,
   type ZipEntryInput
 } from './archive'
-import { ARCHIVE_BUILDING_SIZE, renderBuildingPng } from '../render/archiveCanvas'
+import { archiveState, entryBytes, FAKE_PNG, parseZip, plantBlocks } from './archiveTestUtils'
 
 /**
  * A4 档案包（D-20261110-062）：
  * ZIP STORE+CRC32、SHA-256（WebCrypto + 纯 TS 兜底）、state round-trip、
  * 凭据断言、manifest/checksums 一致、失败清理与取消、浏览器 ZIP 路径。
  */
-
-/* ---------------- 夹具 ---------------- */
-
-const BASE_STATE: AppState = {
-  schemaVersion: 2,
-  habits: [
-    { id: 'h1', name: '读书', frequency: { type: 'daily' }, createdAt: '2026-01-01T08:00:00.000Z' }
-  ],
-  checkIns: [],
-  builds: [],
-  activeBlueprintId: 'plant',
-  completedBlueprintIds: [],
-  settings: { theme: 'light', language: 'zh' },
-  dayClaims: [],
-  deletedDayClaims: []
-}
-
-function archiveState(overrides: Partial<AppState> = {}): { state: AppState; stateJson: string } {
-  const raw = { ...BASE_STATE, ...overrides }
-  const normalized = prepareImport(JSON.parse(JSON.stringify(raw)))
-  if (!normalized) throw new Error('invalid test state')
-  const state = serializeState(normalized)
-  return { state, stateJson: JSON.stringify(state, null, 2) }
-}
-
-function plantBlocks(overrides: { placedAt?: string; count?: number } = {}): PlacedBlock[] {
-  const capacity = blueprints.plant.blocks.length
-  const count = overrides.count ?? capacity
-  const placedAt = overrides.placedAt ?? new Date(2026, 2, 12, 12).toISOString()
-  return blueprints.plant.blocks.slice(0, count).map((_, index) => ({
-    id: `plant-${index}`,
-    blueprintId: 'plant',
-    index,
-    placedAt,
-    fromHabitId: 'h1',
-    bonus: false
-  }))
-}
-
-const FAKE_PNG = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 0, 1, 2, 3])
-
-interface ParsedZipEntry {
-  path: string
-  method: number
-  crc: number
-  compressedSize: number
-  uncompressedSize: number
-  data: Uint8Array
-  localOffset: number
-}
-
-interface ParsedZip {
-  entries: ParsedZipEntry[]
-  centralOffset: number
-  centralSize: number
-  eocdOffset: number
-  flags: number[]
-}
-
-/** 测试用最小 ZIP 中央目录解析器（外部可读性验证：不是自己写自己读） */
-function parseZip(bytes: Uint8Array): ParsedZip {
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  let eocdOffset = -1
-  for (let i = bytes.length - 22; i >= 0; i--) {
-    if (view.getUint32(i, true) === 0x06054b50) {
-      eocdOffset = i
-      break
-    }
-  }
-  if (eocdOffset < 0) throw new Error('EOCD not found')
-  const count = view.getUint16(eocdOffset + 10, true)
-  const centralSize = view.getUint32(eocdOffset + 12, true)
-  const centralOffset = view.getUint32(eocdOffset + 16, true)
-  const entries: ParsedZipEntry[] = []
-  const flags: number[] = []
-  let cursor = centralOffset
-  for (let index = 0; index < count; index++) {
-    if (view.getUint32(cursor, true) !== 0x02014b50) throw new Error('bad central header')
-    const flag = view.getUint16(cursor + 8, true)
-    flags.push(flag)
-    const method = view.getUint16(cursor + 10, true)
-    const crc = view.getUint32(cursor + 16, true)
-    const compressedSize = view.getUint32(cursor + 20, true)
-    const uncompressedSize = view.getUint32(cursor + 24, true)
-    const nameLength = view.getUint16(cursor + 28, true)
-    const extraLength = view.getUint16(cursor + 30, true)
-    const commentLength = view.getUint16(cursor + 32, true)
-    const localOffset = view.getUint32(cursor + 42, true)
-    const path = utf8Decode(bytes.slice(cursor + 46, cursor + 46 + nameLength))
-    if (view.getUint32(localOffset, true) !== 0x04034b50) throw new Error('bad local header')
-    const localNameLength = view.getUint16(localOffset + 26, true)
-    const localExtraLength = view.getUint16(localOffset + 28, true)
-    const dataStart = localOffset + 30 + localNameLength + localExtraLength
-    entries.push({
-      path,
-      method,
-      crc,
-      compressedSize,
-      uncompressedSize,
-      data: bytes.slice(dataStart, dataStart + compressedSize),
-      localOffset
-    })
-    cursor += 46 + nameLength + extraLength + commentLength
-  }
-  return { entries, centralOffset, centralSize, eocdOffset, flags }
-}
-
-async function inflateRaw(bytes: Uint8Array): Promise<Uint8Array> {
-  const stream = new Blob([bytes as unknown as BlobPart])
-    .stream()
-    .pipeThrough(new DecompressionStream('deflate-raw'))
-  return new Uint8Array(await new Response(stream).arrayBuffer())
-}
-
-function entryBytes(entry: ParsedZipEntry): Promise<Uint8Array> {
-  return entry.method === 8 ? inflateRaw(entry.data) : Promise.resolve(entry.data)
-}
-
-/* ---------------- mock fs ---------------- */
-
-function createMockFs(options: { failWriteAt?: number; collisionOnce?: boolean } = {}) {
-  const calls: string[] = []
-  const dirs = new Set<string>()
-  const files = new Map<string, Uint8Array | string>()
-  let writeCount = 0
-  let finalExistsCalls = 0
-  const fs: ArchiveFs = {
-    async appDataDir() {
-      calls.push('appDataDir')
-      return 'C:/AppData/BlockHabit'
-    },
-    async join(...parts: string[]) {
-      return parts.join('/').replace(/\/{2,}/g, '/')
-    },
-    async mkdir(path: string) {
-      calls.push('mkdir:' + path)
-      dirs.add(path)
-    },
-    async writeFile(path: string, bytes: Uint8Array) {
-      calls.push('writeFile:' + path)
-      writeCount += 1
-      if (options.failWriteAt !== undefined && writeCount === options.failWriteAt)
-        throw new Error('disk full')
-      files.set(path, bytes)
-    },
-    async writeTextFile(path: string, text: string) {
-      calls.push('writeTextFile:' + path)
-      writeCount += 1
-      if (options.failWriteAt !== undefined && writeCount === options.failWriteAt)
-        throw new Error('disk full')
-      files.set(path, text)
-    },
-    async exists(path: string) {
-      calls.push('exists:' + path)
-      if (path.includes(ARCHIVE_TMP_PREFIX)) return false
-      if (!options.collisionOnce) return false
-      finalExistsCalls += 1
-      return finalExistsCalls === 1
-    },
-    async rename(oldPath: string, newPath: string) {
-      calls.push(`rename:${oldPath}->${newPath}`)
-    },
-    async remove(path: string) {
-      calls.push('remove:' + path)
-    },
-    async reveal(path: string) {
-      calls.push('reveal:' + path)
-    }
-  }
-  return { fs, calls, dirs, files }
-}
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -674,163 +496,5 @@ describe('manifest 版本语义（archiveFormatVersion / appContentVersion）', 
 
   it('ARCHIVE_CONTENT_VERSION 仅为旧名别名（= ARCHIVE_FORMAT_VERSION）', () => {
     expect(ARCHIVE_CONTENT_VERSION).toBe(ARCHIVE_FORMAT_VERSION)
-  })
-})
-
-/* ---------------- 导出编排 ---------------- */
-
-describe('runArchiveExport（桌面端文件夹）', () => {
-  async function runDesktop(
-    mock = createMockFs(),
-    overrides: Partial<Parameters<typeof runArchiveExport>[0]> = {}
-  ) {
-    const { state, stateJson } = archiveState({ builds: plantBlocks() })
-    const progress: Array<{ phase: string; done: number; total: number }> = []
-    const result = await runArchiveExport({
-      state,
-      stateJson,
-      appVersion: '0.2.0',
-      platform: 'desktop',
-      lang: 'zh',
-      renderBuilding: async () => FAKE_PNG,
-      fs: mock.fs,
-      onProgress: (value) => progress.push(value),
-      now: new Date(Date.UTC(2026, 10, 10, 12, 0, 0)),
-      ...overrides
-    })
-    return { result, progress, mock }
-  }
-
-  it('写 tmp → 全部文件 → rename → reveal，产物在 exports 下', async () => {
-    const { result, progress, mock } = await runDesktop()
-    expect(result.ok).toBe(true)
-    if (!result.ok || result.mode !== 'desktop') throw new Error('desktop export failed')
-    expect(result.dir).toContain(ARCHIVE_FOLDER_PREFIX)
-    expect(result.dir).not.toContain(ARCHIVE_TMP_PREFIX)
-    expect(result.readmePath.endsWith('README.md')).toBe(true)
-    expect(result.files).toBeGreaterThanOrEqual(5)
-    expect(result.bytes).toBeGreaterThan(0)
-    const renameCall = mock.calls.find((call) => call.startsWith('rename:'))
-    expect(renameCall).toBeDefined()
-    expect(renameCall).toContain(ARCHIVE_TMP_PREFIX)
-    expect(renameCall!.split('->')[1]).toContain(ARCHIVE_FOLDER_PREFIX)
-    expect(mock.calls.some((call) => call.startsWith('reveal:'))).toBe(true)
-    expect(progress.some((item) => item.phase === 'render')).toBe(true)
-    expect(progress.some((item) => item.phase === 'checksum')).toBe(true)
-    expect(progress.some((item) => item.phase === 'write')).toBe(true)
-    expect(mock.calls).toContain('appDataDir')
-  })
-
-  it('写入失败：清理 tmp、不 rename、返回失败（无半成品）', async () => {
-    const mock = createMockFs({ failWriteAt: 2 })
-    const { result } = await runDesktop(mock)
-    expect(result.ok).toBe(false)
-    if (result.ok) return
-    expect(result.cancelled).toBe(false)
-    expect(result.error).toContain('disk full')
-    expect(mock.calls.some((call) => call.startsWith('remove:'))).toBe(true)
-    expect(mock.calls.some((call) => call.startsWith('rename:'))).toBe(false)
-  })
-
-  it('取消：渲染阶段 abort → 不写盘、清理并返回 cancelled', async () => {
-    const controller = new AbortController()
-    const mock = createMockFs()
-    const { result } = await runDesktop(mock, {
-      signal: controller.signal,
-      renderBuilding: async () => {
-        controller.abort()
-        return FAKE_PNG
-      }
-    })
-    expect(result.ok).toBe(false)
-    if (result.ok) return
-    expect(result.cancelled).toBe(true)
-    expect(mock.calls.some((call) => call.startsWith('writeFile:'))).toBe(false)
-  })
-
-  it('同名目录已存在时追加 -2 后缀，不覆盖旧档案', async () => {
-    const mock = createMockFs({ collisionOnce: true })
-    const { result } = await runDesktop(mock)
-    expect(result.ok).toBe(true)
-    if (!result.ok || result.mode !== 'desktop') return
-    expect(result.dir).toMatch(/-2$/)
-  })
-
-  it('并发保护：导出进行中再次调用返回 busy', async () => {
-    let release: () => void = () => {}
-    const gate = new Promise<void>((resolve) => {
-      release = resolve
-    })
-    const mock = createMockFs()
-    const first = runDesktop(mock, {
-      renderBuilding: async () => {
-        await gate
-        return FAKE_PNG
-      }
-    })
-    await Promise.resolve()
-    expect(isArchiveExporting()).toBe(true)
-    const second = await runDesktop(createMockFs())
-    expect(second.result).toEqual({ ok: false, cancelled: false, error: 'busy' })
-    release()
-    await first
-    expect(isArchiveExporting()).toBe(false)
-  })
-})
-
-describe('runArchiveExport（浏览器 ZIP）', () => {
-  it('返回单个 ZIP：条目数正确、state 可 round-trip、文件名含时间戳', async () => {
-    const { state, stateJson } = archiveState({ builds: plantBlocks() })
-    const result = await runArchiveExport({
-      state,
-      stateJson,
-      appVersion: '0.2.0',
-      platform: 'browser',
-      lang: 'zh',
-      renderBuilding: async () => FAKE_PNG,
-      now: new Date(Date.UTC(2026, 10, 10, 12, 0, 0))
-    })
-    expect(result.ok).toBe(true)
-    if (!result.ok || result.mode !== 'browser') throw new Error('browser export failed')
-    expect(result.filename).toBe('BlockHabit-Archive-2026-11-10T12-00-00Z.zip')
-    const parsed = parseZip(result.zip)
-    expect(parsed.entries).toHaveLength(result.files)
-    const stateEntry = parsed.entries.find((entry) => entry.path === 'data/blockhabit-state.json')
-    expect(stateEntry).toBeDefined()
-    const stateBytes = await entryBytes(stateEntry!)
-    expect(prepareImport(JSON.parse(utf8Decode(stateBytes)))).not.toBeNull()
-    const manifestEntry = parsed.entries.find((entry) => entry.path === 'manifest.json')
-    const manifest = JSON.parse(utf8Decode(await entryBytes(manifestEntry!)))
-    expect(manifest.archiveFormatVersion).toBe(ARCHIVE_FORMAT_VERSION)
-    expect(manifest.appContentVersion).toBe(CONTENT_VERSION)
-    expect(manifest.platform).toBe('browser')
-    expect(result.bytes).toBe(result.zip.length)
-  })
-
-  it('downloadBlobFile：Blob + <a download> 触发下载（文件名正确）', () => {
-    const clicks: string[] = []
-    const original = HTMLAnchorElement.prototype.click
-    HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
-      clicks.push(this.download)
-    }
-    try {
-      expect(downloadBlobFile('BlockHabit-Archive-test.zip', FAKE_PNG)).toBe(true)
-      expect(clicks).toEqual(['BlockHabit-Archive-test.zip'])
-    } finally {
-      HTMLAnchorElement.prototype.click = original
-    }
-  })
-})
-
-/* ---------------- 建筑图渲染 ---------------- */
-
-describe('renderBuildingPng（离屏建筑图）', () => {
-  it('jsdom 无 2D context 时返回 null（不阻塞导出，走 warnings）', async () => {
-    await expect(renderBuildingPng('plant')).resolves.toBeNull()
-  })
-
-  it('尺寸常量符合「透明 2×」约定', () => {
-    expect(ARCHIVE_BUILDING_SIZE).toBe(320)
-    expect(ARCHIVE_BUILDING_SIZE * 2).toBe(640)
   })
 })
