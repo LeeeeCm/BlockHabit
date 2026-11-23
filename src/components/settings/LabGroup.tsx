@@ -1,7 +1,6 @@
 import type { AppSettings } from '../../types'
 import type { TranslationSchema } from '../../i18n'
 import { triggerHaptic } from '../../platform'
-import { resetGuideTips } from '../../platform/guideTips'
 import { MINI_SIZE_ORDER } from '../../platform/miniWindow'
 import { DiagnosticsExportPanel } from '../ArchiveDataPanel'
 import { Group } from './Group'
@@ -16,7 +15,7 @@ interface Props {
 
 /**
  * 实验室分组（默认折叠）：时段光照 / 温和风化 / 生态彩蛋 / 透视考古等视觉开关，
- * 敲击音色、移动端陀螺仪或桌面端迷你摆件、诊断包导出与页面提示重置。
+ * 敲击音色、移动端陀螺仪或桌面端迷你摆件、诊断包导出。
  */
 export function LabGroup({ settings, isMobile, t, onUpdateSettings, onToast }: Props) {
   return (
@@ -294,24 +293,6 @@ export function LabGroup({ settings, isMobile, t, onUpdateSettings, onToast }: P
       )}
 
       <DiagnosticsExportPanel onToast={onToast} />
-
-      {/* D-20261110-054 页面提示：清空已读，三页首访提示重新出现一次 */}
-      <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
-        <label>{t.guide.replayTitle}</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <button
-            className="btn ghost"
-            style={{ padding: '7px 16px' }}
-            onClick={() => {
-              triggerHaptic('selection')
-              resetGuideTips()
-              onToast(t.guide.replayToast, 2400)
-            }}
-          >
-            {t.guide.replay}
-          </button>
-        </div>
-      </div>
     </Group>
   )
 }

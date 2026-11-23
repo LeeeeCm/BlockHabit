@@ -69,6 +69,8 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
                 const placed = builds.filter((b) => b.blueprintId === id).length
                 const done = completed.includes(id)
                 const building = id === activeId && !done
+                /** 已暂停的未完成建筑（切走当前蓝图后仍保留进度）也显示当前样子 */
+                const inProgress = building || (placed > 0 && !done)
                 const unlocked = canSelectBlueprint(id, completed)
                 const locked = !unlocked
                 const bpName = getBlueprintName(id, lang)
@@ -77,17 +79,17 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
                       label: `${t.gallery.completed} · ${t.build.blocksCount(bp.blocks.length, bp.blocks.length)}`,
                       color: 'var(--progress-green)'
                     }
-                  : building
-                    ? {
-                        label: `${t.gallery.inProgress} · ${placed}/${bp.blocks.length}`,
-                        color: 'var(--progress-blue)'
-                      }
-                    : unlocked
+                  : locked
+                    ? { label: t.gallery.locked, color: 'var(--ink-2)' }
+                    : inProgress
                       ? {
+                          label: `${t.gallery.inProgress} · ${placed}/${bp.blocks.length}`,
+                          color: 'var(--progress-blue)'
+                        }
+                      : {
                           label: `${t.build.startBuildBtn} · ${t.gallery.totalBlocks(bp.blocks.length)}`,
                           color: 'var(--ink-2)'
                         }
-                      : { label: t.gallery.locked, color: 'var(--ink-2)' }
                 return (
                   <div key={id} style={{ position: 'relative', minWidth: 0, display: 'flex' }}>
                     <button
@@ -103,7 +105,11 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
                         opacity: locked ? 1 : undefined
                       }}
                     >
-                      <BlueprintThumb blueprint={bp} silhouette={locked} />
+                      <BlueprintThumb
+                        blueprint={bp}
+                        silhouette={locked}
+                        placedCount={inProgress && !locked ? placed : undefined}
+                      />
                       <div className="gallery-name">{bpName}</div>
                       <div className="gallery-status" style={{ color: status.color }}>
                         {status.label}

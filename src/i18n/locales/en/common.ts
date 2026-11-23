@@ -64,6 +64,7 @@ export const mini: TranslationSchema['mini'] = {
   toastQuickCheckIn: (name) => `+1 Block · ${name}`,
   toastComplete: (name) => `"${name}" Completed!`,
   allDone: 'All tasks completed for today',
+  noneToday: 'Nothing left to check in today',
   habitCheckInTip: (name) => `Click to complete "${name}"`,
   todayLabel: 'Today',
   nextMilestone: (blueprint, remaining) => `${remaining} blocks to finish "${blueprint}"`,

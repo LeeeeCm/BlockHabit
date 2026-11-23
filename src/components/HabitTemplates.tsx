@@ -21,16 +21,12 @@ export function HabitTemplates({ onPick }: { onPick: (template: HabitTemplate) =
         marginTop: 8
       }}
     >
-      <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>
-        {t.templates.title}
-      </span>
       {habitTemplates.map((template) => (
         <button
           key={template.id}
           className="pill-action"
           onClick={() => onPick(template)}
           style={{ fontSize: 'var(--fs-small)', padding: '4px 11px' }}
-          title={t.templates.hint}
         >
           <IconPlus size={11} style={{ marginRight: 3 }} />
           {t.templates[template.id]}

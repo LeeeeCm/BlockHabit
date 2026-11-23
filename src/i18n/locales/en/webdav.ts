@@ -22,13 +22,6 @@ export const webdav: TranslationSchema['settings']['webdav'] = {
   interval30m: '30 min',
   interval1h: '1 hour',
   interval3h: '3 hours',
-  providerLabel: 'Provider',
-  providerNextcloud: 'Nextcloud',
-  providerJianguoyun: 'Jianguoyun',
-  providerSynology: 'Synology',
-  providerGeneric: 'Generic',
-  appPasswordHint:
-    'Use an app password, not your login password (login passwords fail when two-factor authentication is enabled).',
   testButton: 'Test connection',
   testing: 'Checking...',
   testSuccess: 'Connection works. Ready to sync.',

@@ -5,18 +5,14 @@ import { useAppStore } from '../store/appStore'
 import { useReminderStore } from '../store/reminderStore'
 import { useTimerStore } from '../store/timerStore'
 import { useTodayKey } from '../logic/useTodayKey'
-import { canCheckInHabit, habitMetOnDay } from '../logic/checkin'
+import { canCheckInHabit, habitMetOnDay, weekCountFor } from '../logic/checkin'
+import { parseKey } from '../logic/dates'
 import { noBlockReason } from '../logic/blockHints'
-import { buildTodayBrief } from '../logic/todayBrief'
 import { templateFrequency, type HabitTemplate } from '../logic/habitTemplates'
-import { getNudgeConsent, setNudgeConsent, type NudgeConsent } from '../platform/eveningNudgePrefs'
-import { TodayBrief } from '../components/TodayBrief'
-import { EveningNudgeConsent } from '../components/EveningNudgeConsent'
 import { blueprintOrder, getBlueprint } from '../logic/blueprints'
 import { useI18n } from '../i18n'
 import { playCelebrationSound } from '../audio/sound'
 import { triggerHaptic, usePlatform } from '../platform'
-import { ensureNotifyPermission } from '../platform/notify'
 import {
   PERIOD_ORDER,
   focusHabitCard,
@@ -36,14 +32,12 @@ import { TodayOverlays } from './today/TodayOverlays'
 
 interface Props {
   onCelebrate?: () => void
-  /** F1：首启引导里「看看建造页」的跳转（由 App 提供） */
-  onGoBuild?: () => void
   /** 提醒「开始打卡」跳转过来时待高亮的习惯 id（消费后回调清空） */
   focusHabitId?: string | null
   onFocusConsumed?: () => void
 }
 
-export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusConsumed }: Props) {
+export default function Today({ onCelebrate, focusHabitId, onFocusConsumed }: Props) {
   const { t } = useI18n()
   const habits = useAppStore((s) => s.habits)
   const checkIns = useAppStore((s) => s.checkIns)
@@ -56,35 +50,18 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
   const deleteHabit = useAppStore((s) => s.deleteHabit)
   const enableGentleDecay = useAppStore((s) => s.settings.enableGentleDecay !== false)
   const addHabit = useAppStore((s) => s.addHabit)
-  const updateSettings = useAppStore((s) => s.updateSettings)
-  const nudgeEnabled = useAppStore((s) => s.settings.eveningNudgeEnabled === true)
   const pendingReminders = useReminderStore((s) => s.pending)
   const reopenReminders = useReminderStore((s) => s.reopen)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Habit | null>(null)
-  const [nudgeConsent, setNudgeConsentState] = useState<NudgeConsent | null>(() =>
-    getNudgeConsent()
-  )
   const [toast, setTransientToast] = useTransient<TodayToast>(2400)
   const [showArchive, setShowArchive] = useState(false)
   const [archDelete, setArchDelete] = useState<Habit | null>(null)
   const [dropModal, setDropModal] = useState<DropModalState | null>(null)
   // 「今天」由统一 hook 驱动：10s 轮询 + 聚焦/可见性刷新（跨午夜翻转）
   const day = useTodayKey()
-  const [now, setNow] = useState(() => new Date())
-  // 问候语只依赖小时：每分钟检查一次，只有跨小时才触发重渲染（避免整页每分钟刷新）
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setNow((prev) => {
-        const next = new Date()
-        return next.getHours() === prev.getHours() ? prev : next
-      })
-    }, 60_000)
-    return () => clearInterval(timer)
-  }, [])
-  useEffect(() => {
-    setNow(new Date())
-  }, [day])
+  /** 连击计算只需要"今天"这个日期；每次渲染从 day 派生，避免缓存跨时区失效 */
+  const todayDate = parseKey(day)
   // memo 化：下游 categories/filteredActive/metCount/grouped 的 useMemo 依赖此引用
   const active = useMemo(() => habits.filter((h) => !h.archivedAt), [habits])
   const archived = habits.filter((h) => h.archivedAt)
@@ -127,22 +104,6 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
     return g
   }, [filteredActive])
 
-  const brief = useMemo(
-    () =>
-      buildTodayBrief({
-        now,
-        day,
-        habits,
-        checkIns,
-        builds,
-        activeBlueprintId,
-        targetHabits: filteredActive,
-        completedBlueprintIds
-      }),
-    [now, day, habits, checkIns, builds, activeBlueprintId, filteredActive, completedBlueprintIds]
-  )
-  const hasAnyCheckIn = useMemo(() => checkIns.some((c) => !c.deletedAt), [checkIns])
-
   const echoEntry = useMemo(() => {
     const candidates = checkIns.filter((c) => !c.deletedAt && c.date < day && c.note?.trim())
     if (candidates.length === 0) return null
@@ -176,7 +137,12 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
     () =>
       pendingReminders.filter((item) => {
         const h = habits.find((x) => x.id === item.habitId)
-        return h !== undefined && !h.archivedAt && !habitMetOnDay(h, checkIns, day)
+        return (
+          h !== undefined &&
+          !h.archivedAt &&
+          !habitMetOnDay(h, checkIns, day) &&
+          canCheckInHabit(h, checkIns, day).ok
+        )
       }),
     [pendingReminders, habits, checkIns, day]
   )
@@ -193,11 +159,6 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
     setTransientToast({ text, accent }, 2400)
   }
 
-  const handleStartFirst = useCallback(() => {
-    triggerHaptic('selection')
-    focusHabitCard(brief.firstPendingHabitId)
-  }, [brief.firstPendingHabitId])
-
   const handleTemplatePick = useCallback(
     (template: HabitTemplate) => {
       triggerHaptic('light')
@@ -207,21 +168,6 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
     },
     [t, addHabit]
   )
-
-  const handleNudgeEnable = useCallback(() => {
-    triggerHaptic('light')
-    setNudgeConsent('enabled')
-    setNudgeConsentState('enabled')
-    updateSettings({ eveningNudgeEnabled: true, eveningNudgeTime: '21:00' })
-    // 在用户点「开启提醒」的当下申请系统通知权限，避免 21:00 突然弹权限框
-    void ensureNotifyPermission()
-    showToast(t.eveningNudge.enabledToast, true)
-  }, [t, updateSettings])
-
-  const handleNudgeDecline = useCallback(() => {
-    setNudgeConsent('declined')
-    setNudgeConsentState('declined')
-  }, [])
 
   const handleHabitCheck = useCallback(
     (res: CheckInResult, h: Habit) => {
@@ -262,6 +208,20 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
       if (res.bonus) showToast(t.today.streakBonusToast(7), true)
     },
     [t, completedBlueprintIds, activeBlueprintId]
+  )
+
+  /** 被拒打卡的可读回执：周频配额满 / 今天已经打过。
+   * 回调保持稳定（不依赖 checkIns），否则任意一次打卡都会让所有习惯卡重渲染。 */
+  const handleHabitBlocked = useCallback(
+    (reason: 'already' | 'weekly-full', h: Habit) => {
+      if (reason === 'weekly-full' && h.frequency.type === 'weekly') {
+        const latest = useAppStore.getState().checkIns
+        showToast(t.today.weekQuotaDone(weekCountFor(latest, h.id, day), h.frequency.times))
+      } else {
+        showToast(t.today.alreadyCheckedIn)
+      }
+    },
+    [t, day]
   )
 
   const handleEdit = useCallback((h: Habit) => {
@@ -348,7 +308,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
       style={{ padding: '24px 24px 80px', maxWidth: 720, margin: '0 auto' }}
     >
       <TodayHeader
-        now={now}
+        now={todayDate}
         blueprintId={blueprint.id}
         placedCount={placedCount}
         total={total}
@@ -359,17 +319,12 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
         onNewHabit={handleNewHabit}
       />
 
-      {brief.show && <TodayBrief brief={brief} onStartFirst={handleStartFirst} />}
-
       {focusStartHabit && (
         <TodayFocusEntry
           habit={focusStartHabit}
           isMobile={isMobile}
           onStart={() => handleStartFocus(focusStartHabit)}
         />
-      )}
-      {hasAnyCheckIn && nudgeConsent === null && !nudgeEnabled && (
-        <EveningNudgeConsent onEnable={handleNudgeEnable} onDecline={handleNudgeDecline} />
       )}
 
       {categories.length > 0 && (
@@ -410,20 +365,16 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
         }}
       />
       {active.length === 0 ? (
-        <TodayEmptyState
-          blueprintId={blueprint.id}
-          onTemplatePick={handleTemplatePick}
-          onNewHabit={handleNewHabit}
-          onGoBuild={onGoBuild}
-        />
+        <TodayEmptyState onTemplatePick={handleTemplatePick} onNewHabit={handleNewHabit} />
       ) : (
         <TodayHabitSections
           grouped={grouped}
           checkIns={checkIns}
-          now={now}
+          now={todayDate}
           day={day}
           enableGentleDecay={enableGentleDecay}
           onCheck={handleHabitCheck}
+          onBlocked={handleHabitBlocked}
           onNoteSaved={handleNoteSaved}
           onEdit={handleEdit}
         />

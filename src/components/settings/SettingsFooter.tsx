@@ -1,5 +1,6 @@
 import type { Habit } from '../../types'
 import type { TranslationSchema } from '../../i18n'
+import { REPAIR_MAX } from '../../logic/repairBricks'
 import { IconKeyboard, IconRepair } from '../Icons'
 
 interface Props {
@@ -47,7 +48,9 @@ export function SettingsFooter({ habits, completedCount, repairBricks, t }: Prop
             }}
           >
             <IconRepair size={13} style={{ color: 'var(--accent)' }} />
-            <span>{repairBricks} / 2</span>
+            <span>
+              {repairBricks} / {REPAIR_MAX}
+            </span>
           </div>
           <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 2 }}>
             {t.settings.repairInventory}
@@ -80,18 +83,6 @@ export function SettingsFooter({ habits, completedCount, repairBricks, t }: Prop
           {t.settings.shortcutsDetail}
         </div>
       </div>
-
-      <p
-        style={{
-          fontSize: 'var(--fs-small)',
-          color: 'var(--ink-2)',
-          margin: '0',
-          textAlign: 'center',
-          opacity: 0.8
-        }}
-      >
-        {t.settings.slogan}
-      </p>
     </>
   )
 }

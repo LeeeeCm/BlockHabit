@@ -129,7 +129,10 @@ export function getCubeSprite(
   dpr: number
 ): CubeSprite | null {
   const colorPart = color ? color : `${p.top}_${p.left}_${p.right}`
-  const cacheKey = `${colorPart}_${type}_${noStuds}_${c.tileW}_${c.tileH}_${c.blockH}_${dpr}_${p.ink}_${p.accent}_${p.top}_${p.left}_${p.right}`
+  const tonePart = p.tone
+    ? `${p.tone.top}_${p.tone.left}_${p.tone.right}_${p.tone.bg ?? ''}`
+    : 'std'
+  const cacheKey = `${colorPart}_${tonePart}_${type}_${noStuds}_${c.tileW}_${c.tileH}_${c.blockH}_${dpr}_${p.ink}_${p.accent}_${p.top}_${p.left}_${p.right}`
   let sprite = spriteCache.get(cacheKey)
   if (sprite) {
     // LRU：命中即移到队尾（Map 的插入序），避免「刚用过的块」被后面的新块挤掉
@@ -225,7 +228,7 @@ function drawCubeBody(
   const cornerR = Math.min(3, c.tileW * 0.0625)
   const silR = [0, cornerR, cornerR, 0, cornerR, cornerR]
 
-  const sh = color ? deriveShadingForColor(color) : deriveShading(p)
+  const sh = color ? deriveShadingForColor(color, p.tone) : deriveShading(p)
   const polyPath = (pts: Pt[]) => {
     ctx.beginPath()
     ctx.moveTo(pts[0][0], pts[0][1])

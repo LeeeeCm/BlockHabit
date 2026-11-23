@@ -1,6 +1,6 @@
 import type { TranslationSchema } from '../types'
 import { a11y, common, errorBoundary, microMood, mini, nav, titlebar, tray } from './en/common'
-import { blockDrop, guide, templates, today, todayBrief } from './en/today'
+import { blockDrop, templates, today } from './en/today'
 import { blueprints, build, gallery, polaroid, showcase } from './en/build'
 import { poster, reflections, stats } from './en/stats'
 import { habitDialog } from './en/habitDialog'
@@ -31,9 +31,7 @@ export const en: TranslationSchema = {
   microMood,
   reflections,
   poster,
-  todayBrief,
   templates,
-  guide,
   eveningNudge,
   yearbook,
   archive,

@@ -3,7 +3,7 @@ import type { HabitPeriod } from '../../types'
 /** 自上而下：任意 → 早晨 → 午后 → 夜晚 */
 export const PERIOD_ORDER: HabitPeriod[] = ['any', 'morning', 'afternoon', 'evening']
 
-/** 滚动到某张习惯卡并脉冲高亮：提醒跳转与今日简报「开始第一个」共用同一套定位 */
+/** 滚动到某张习惯卡并脉冲高亮：提醒「开始打卡」跳转定位用 */
 export function focusHabitCard(id: string | null | undefined) {
   if (!id) return
   const el = document.getElementById(`habit-${id}`)

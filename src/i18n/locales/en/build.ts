@@ -23,21 +23,16 @@ export const build: TranslationSchema['build'] = {
   xray: {
     toggleTooltip: 'Toggle X-Ray Inspection',
     btn: 'X-Ray'
-  },
-  foundationGuide: (name) =>
-    `The dashed border marks the foundation for "${name}".\nComplete check-ins in "Today" to drop blocks layer by layer.`
+  }
 }
 
 export const showcase: TranslationSchema['showcase'] = {
   title: 'Showcase Island',
   countDisplay: (c) => `${c} Buildings Displayed`,
   autoArrange: 'Auto Arrange',
-  dragHint: 'Drag buildings to place freely · Click to view Polaroid memorial card',
-  emptyHint:
-    'No completed buildings yet. Complete daily habits to finish models, and they will be exhibited here.',
   fullHint: 'Showcase is full — some buildings could not be rearranged',
   decoration: 'Decorate',
-  decorationHint: 'Drag to arrange, rotate models; this session only — resets on reopen',
+  decorationResetToast: 'Decor exited — rotations and plants reset',
   exitDecoration: 'Exit decor',
   rotateLeft: 'Rotate left 90°',
   rotateRight: 'Rotate right 90°',

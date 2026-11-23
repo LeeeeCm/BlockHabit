@@ -85,7 +85,7 @@ export function PreferencesGroup({
         </div>
       </div>
 
-      {/* D-20261110-055 晚间收尾提醒：默认关，首次打卡后由用户显式开启 */}
+      {/* D-20261110-055 晚间收尾提醒：默认关；D-20261124-081 起只在设置页开启（不再有今日页一次性授权卡） */}
       <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
         <label>{t.eveningNudge.settingsTitle}</label>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>

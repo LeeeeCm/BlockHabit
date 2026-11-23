@@ -39,8 +39,8 @@ export const habitDialog: TranslationSchema['habitDialog'] = {
   reminderEndInvalid: 'End time must be after start time',
   durationLabel: 'Target Duration',
   durationUnit: 'minutes',
-  moreSettings: 'More settings (time of day / reminder / category / note)',
-  fewerSettings: 'Hide more settings',
+  moreSettings: 'More options',
+  fewerSettings: 'Hide',
   noteLabel: 'Note',
   notePlaceholder: 'Why do you want to build this habit?',
   archiveBtn: 'Archive'

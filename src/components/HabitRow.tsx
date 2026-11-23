@@ -23,6 +23,8 @@ interface Props {
   inRestPeriod?: boolean
   day: string
   onCheck?: (res: CheckInResult, habit: Habit) => void
+  /** 打卡被拒（今日已打卡 / 周配额已满）：宿主给出可读反馈，避免静默失败 */
+  onBlocked?: (reason: 'already' | 'weekly-full', habit: Habit) => void
   onEdit?: (habit: Habit) => void
   /** 随笔镌刻保存成功后的回调（宿主页用于弹 toast） */
   onNoteSaved?: () => void
@@ -43,6 +45,7 @@ export const HabitRow = memo(function HabitRow({
   inRestPeriod,
   day,
   onCheck,
+  onBlocked,
   onEdit,
   onNoteSaved,
   resilienceProtected,
@@ -102,9 +105,23 @@ export const HabitRow = memo(function HabitRow({
     const t = setInterval(() => setNow(Date.now()), 500)
     return () => clearInterval(t)
   }, [session])
+  // 习惯已完成（例如周配额改小/其它入口打卡）时，残留的专注会话不再有可见的放弃入口：
+  // 这里主动取消，避免计时器继续跑并在到点后发通知。
+  useEffect(() => {
+    if (done && session) cancelTimer(habit.id)
+  }, [done, session, habit.id, cancelTimer])
 
   const missed = !done && weekMissed(habit, weekCount, day)
   const isFocus = habit.kind === 'focus' && Boolean(habit.targetMinutes)
+  const isWeekly = habit.frequency.type === 'weekly'
+  const weeklyTimes = habit.frequency.type === 'weekly' ? habit.frequency.times : null
+  /** counter 的完成以当日数值为准，不受周配额约束：不能套用「本周进度」状态 */
+  const isWeeklyQuota = isWeekly && habit.kind !== 'counter'
+  const checkedInToday = Boolean(todayCheckIn)
+  /** 周频今日已打卡但配额未满：显示「今天已打卡」，仍可撤销，但不能再打一次 */
+  const checkedInTodayWeekly = isWeeklyQuota && checkedInToday
+  const undoableToday = checkedInToday
+  const weekProgress = weeklyTimes !== null ? t.today.weekProgress(weekCount, weeklyTimes) : ''
   const targetMs = (habit.targetMinutes ?? 25) * 60_000
   // B2/B4：摆件可延长会话，今日页必须用「含延长的有效目标」，否则会在原目标提前显示「待确认」
   const sessionTargetMs = session ? effectiveTargetMs(session) : targetMs
@@ -128,21 +145,27 @@ export const HabitRow = memo(function HabitRow({
   })()
   const meta = [
     habit.category ? `#${habit.category}` : '',
-    freqLabel,
+    habit.frequency.type === 'daily' ? '' : freqLabel,
     inRestPeriod && !done ? t.today.inRestPeriod : '',
     resilienceProtected ? t.today.resilienceContinuation : '',
-    habit.period && habit.period !== 'any' ? t.today.periods[habit.period] : '',
-    isFocus
-      ? t.today.targetMinutes(habit.targetMinutes ?? 25)
-      : isCounter
-        ? `${targetVal} ${habit.unit ?? ''}`
-        : t.today.instantCheckIn
+    isFocus ? t.today.targetMinutes(habit.targetMinutes ?? 25) : ''
   ]
     .filter(Boolean)
     .join(' · ')
+
+  /** 被拒打卡统一回传宿主：宁可多一次 toast，也不要让用户以为“点了没反应” */
+  function reportBlocked(verdict: { ok: boolean; reason?: string }) {
+    if (verdict.ok) return
+    if (verdict.reason === 'already' || verdict.reason === 'weekly-full') {
+      onBlocked?.(verdict.reason, habit)
+    }
+  }
   function performCheckIn(actualMins?: number, noteText?: string) {
     const verdict = canCheckInHabit(habit, todayCheckIns, day, weekCount)
-    if (!verdict.ok) return
+    if (!verdict.ok) {
+      reportBlocked(verdict)
+      return
+    }
     triggerHaptic('medium')
     const res = checkIn(habit.id, actualMins, noteText)
     cancelTimer(habit.id)
@@ -162,7 +185,10 @@ export const HabitRow = memo(function HabitRow({
     e?.stopPropagation()
     if (delta < 0 && counterVal <= 0) return
     const verdict = canCheckInHabit(habit, todayCheckIns, day, weekCount)
-    if (!verdict.ok && delta > 0) return
+    if (!verdict.ok) {
+      if (delta > 0) reportBlocked(verdict)
+      return
+    }
     triggerHaptic('light')
     const res = checkIn(habit.id, undefined, undefined, delta)
     playSnapSound()
@@ -178,10 +204,14 @@ export const HabitRow = memo(function HabitRow({
     onCheck?.(res, habit)
   }
   function handleStatusClick() {
-    if (done) {
-      // 已完成状态点击：支持撤销打卡（有确认，防误触摧毁积木/连击）
-      triggerHaptic('light')
-      setShowUndoConfirm(true)
+    if (done || checkedInTodayWeekly) {
+      // 已有今天的打卡：允许撤销；周频配额完成但今天没打卡时，给一次明确回执
+      if (undoableToday) {
+        triggerHaptic('light')
+        setShowUndoConfirm(true)
+      } else if (isWeeklyQuota) {
+        onBlocked?.('weekly-full', habit)
+      }
       return
     }
     if (isCounter) {
@@ -198,12 +228,20 @@ export const HabitRow = memo(function HabitRow({
       }
       return
     }
+    if (isFocus) {
+      // 专注习惯的状态键 = 开始计时；直接结算会凭空得到目标分钟数（A6 数据诚实）
+      handleStartFocus()
+      return
+    }
     triggerHaptic('medium')
     performCheckIn()
   }
   function handleStartFocus() {
     const verdict = canCheckInHabit(habit, todayCheckIns, day, weekCount)
-    if (!verdict.ok) return
+    if (!verdict.ok) {
+      reportBlocked(verdict)
+      return
+    }
     startTimer(habit.id, targetMs)
     setPulse(true)
     setTimeout(() => setPulse(false), 300)
@@ -300,7 +338,7 @@ export const HabitRow = memo(function HabitRow({
     handleStartFocus()
   }
   function handleFooterPillClick(e: React.MouseEvent) {
-    if (done) {
+    if (done && undoableToday) {
       e.stopPropagation()
       setShowUndoConfirm(true)
     }
@@ -319,6 +357,43 @@ export const HabitRow = memo(function HabitRow({
     : running || ended
       ? 'var(--progress-blue)'
       : 'var(--ink-2)'
+  const statusTitle =
+    done || checkedInTodayWeekly
+      ? undoableToday
+        ? t.today.undoTooltip
+        : t.today.weekDoneTooltip
+      : isRestDay
+        ? t.today.restDay
+        : missed
+          ? t.today.weekMissed
+          : running
+            ? t.today.timingTooltip
+            : ended
+              ? t.today.checkInTooltip
+              : isFocus
+                ? t.today.focus
+                : t.today.checkInTooltip
+  const footerStatus = done
+    ? isWeeklyQuota
+      ? {
+          text: weekProgress,
+          clickable: undoableToday,
+          title: undoableToday ? t.today.undoTooltip : t.today.weekDoneTooltip
+        }
+      : {
+          text: t.today.completedPill,
+          clickable: undoableToday,
+          title: undoableToday ? t.today.undoTooltip : t.today.weekDoneTooltip
+        }
+    : isRestDay
+      ? { text: t.today.restDay, clickable: false, title: t.today.restDay }
+      : checkedInTodayWeekly
+        ? {
+            text: t.today.weekProgressToday(weekCount, weeklyTimes ?? weekCount),
+            clickable: false,
+            title: undefined
+          }
+        : null
   const remainingMs = session ? session.startedAt + sessionTargetMs - now : 0
 
   return (
@@ -348,14 +423,14 @@ export const HabitRow = memo(function HabitRow({
         t={t}
         isMobile={isMobile}
         done={done}
+        checkedIn={checkedInTodayWeekly}
         running={running}
         ended={ended}
         missed={missed}
-        isRestDay={isRestDay}
-        isFocus={isFocus}
         pulse={pulse}
         pinned={Boolean(habit.pinned)}
         statusColor={statusColor}
+        statusTitle={statusTitle}
         onStatusClick={handleStatusBtnClick}
         onTogglePin={handleTogglePin}
         onEditClick={handleEditClick}
@@ -373,7 +448,11 @@ export const HabitRow = memo(function HabitRow({
       >
         {habit.name}
       </div>
-      <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginTop: 4 }}>{meta}</div>
+      {meta ? (
+        <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginTop: 4 }}>
+          {meta}
+        </div>
+      ) : null}
       {habit.note ? (
         <div
           style={{
@@ -407,7 +486,7 @@ export const HabitRow = memo(function HabitRow({
         />
       )}
 
-      {done && (
+      {done && todayCheckIn && (
         <HabitReflectionSection
           t={t}
           todayCheckIn={todayCheckIn}
@@ -446,11 +525,10 @@ export const HabitRow = memo(function HabitRow({
         onStopCardClick={stopCardClick}
       />
 
-      {!running && !ended && (
+      {(footerStatus || streak > 0) && !running && !ended && (
         <HabitRowFooter
           t={t}
-          done={done}
-          isRestDay={isRestDay}
+          status={footerStatus}
           streak={streak}
           onPillClick={handleFooterPillClick}
         />

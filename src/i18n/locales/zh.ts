@@ -41,8 +41,6 @@ export const zh: TranslationSchema = {
     close: '关闭'
   },
   today: {
-    emptyHint: (bp) =>
-      `还没有习惯。点右上角 + 创建第一个，\n每完成一个习惯即可为「${bp}」掉落一块积木。`,
     newHabit: '新建习惯',
     archivedCount: (c) => `已归档 · ${c}`,
     collapse: '收起 ▴',
@@ -65,7 +63,11 @@ export const zh: TranslationSchema = {
     freqWeekends: '周末',
     freqCustom: (days) => `周${days.join('、')}`,
     freqWeekly: (times) => `每周 ${times} 次`,
-    instantCheckIn: '瞬时打卡',
+    weekProgress: (done, times) => `本周 ${done}/${times}`,
+    weekProgressToday: (done, times) => `今日已打卡 · 本周 ${done}/${times}`,
+    weekDoneTooltip: '本周已完成',
+    alreadyCheckedIn: '今天已打卡',
+    weekQuotaDone: (done, times) => `本周已完成 ${done}/${times}`,
     targetMinutes: (min) => `${min} 分钟`,
     focus: '专注',
     cancelTimer: '放弃',
@@ -95,17 +97,10 @@ export const zh: TranslationSchema = {
       claimed: '已领全勤'
     },
     view3dModel: '前往建造页面查看 3D 模型',
+    viewBuild: '看建造页',
     filterAll: '全部',
     activeCompleteNoBlock: '当前蓝图已落成，去「建造」开始下一座吧',
     allBlueprintsDone: '所有蓝图已落成 —— 打卡仍会记录，但不再产生新积木',
-    startJourney: '开启第一块积木的专注旅途',
-    onboardingStep1Title: '建第一个习惯',
-    onboardingStep1Body: '从一件 30 秒就能完成的小事开始：喝一杯水、读一页书。',
-    onboardingStep2Title: '打一次卡',
-    onboardingStep2Body: '第一块积木会落在你的桌子上，位置就对应它的那一天。',
-    onboardingStep3Title: '看它长起来',
-    onboardingStep3Body: '每多一天就多一块；这张桌子拼满了，就换下一件作品。',
-    onboardingSeeBuild: '看看建造页',
     inRestPeriod: '晨雾休整期 (今日打卡接续)',
     unpinHabit: '取消置顶',
     pinHabit: '置顶习惯',
@@ -118,8 +113,7 @@ export const zh: TranslationSchema = {
     completedHabit: (name) => `已完成「${name}」`,
     skip: '跳过动画',
     progress: (p, t, pct) => `进度 ${p} / ${t} 块 (${pct}%)`,
-    completedBlueprint: (name) => `「${name}」落成！`,
-    firstBlockHint: '这是你的第一块积木 —— 它会出现在「建造」页的桌子上，往后的每块都会拼在它旁边。'
+    completedBlueprint: (name) => `「${name}」落成！`
   },
   build: {
     blocksCount: (p, t) => `${p} / ${t} 块`,
@@ -144,19 +138,15 @@ export const zh: TranslationSchema = {
     xray: {
       toggleTooltip: '开启/关闭透视考古探针',
       btn: '透视考古'
-    },
-    foundationGuide: (name) =>
-      `虚线框是「${name}」的地基范围。\n回到「今日」完成打卡，积木会一层层落进来。`
+    }
   },
   showcase: {
     title: '展台沙盘',
     countDisplay: (c) => `陈列 ${c} 座建筑`,
     autoArrange: '自动排列',
-    dragHint: '拖拽建筑可自由摆放 · 点击建筑可查看落成纪念相纸',
-    emptyHint: '还没有落成的建筑。去「今日」打卡完成拼搭，建筑会自动陈列在沙盘上。',
     fullHint: '展台空间已满，部分建筑未能重新排列',
     decoration: '装饰模式',
-    decorationHint: '拖动摆位、旋转模型；仅本次会话有效，重开复原',
+    decorationResetToast: '已退出装饰，旋转与植被已复原',
     exitDecoration: '退出装饰',
     rotateLeft: '逆时针旋转 90°',
     rotateRight: '顺时针旋转 90°',
@@ -169,7 +159,7 @@ export const zh: TranslationSchema = {
     subtitle: '近 13 周 · 每个习惯的完成记录',
     filterByHabit: '按习惯筛选',
     focusHours: (h) => ` · 累计深度专注 ${h} 小时`,
-    repairBricksBadge: (c, max) => `修复积木: ${c} / ${max}`,
+    repairBricksBadge: (c, max) => `修复积木：${c} / ${max}`,
     repairBricksTooltip:
       '每月发放 2 块、落成建筑再加 1 块、连击每满 30 天再奖 1 块（最多存 4 块）。点击下方热图可补签过去 30 天内的遗漏打卡',
     empty: '还没有习惯，先去「今日」创建。',
@@ -252,8 +242,8 @@ export const zh: TranslationSchema = {
     reminderEndInvalid: '截止时间需晚于开始时间',
     durationLabel: '目标时长',
     durationUnit: '分钟',
-    moreSettings: '更多设置（时段 / 提醒 / 分类 / 备注）',
-    fewerSettings: '收起更多设置',
+    moreSettings: '更多设置',
+    fewerSettings: '收起',
     noteLabel: '备注',
     notePlaceholder: '为什么想做这件事？',
     archiveBtn: '归档'
@@ -303,7 +293,7 @@ export const zh: TranslationSchema = {
       password: '密码',
       passwordPlaceholder: '密码 / Token',
       syncing: '正在连接同步中...',
-      lastSync: '上次同步: ',
+      lastSync: '上次同步：',
       notSynced: '未同步',
       syncingBtn: '同步中...',
       syncNowBtn: '立即同步',
@@ -318,12 +308,6 @@ export const zh: TranslationSchema = {
       interval30m: '30 分钟',
       interval1h: '1 小时',
       interval3h: '3 小时',
-      providerLabel: '服务商',
-      providerNextcloud: 'Nextcloud',
-      providerJianguoyun: '坚果云',
-      providerSynology: '群晖',
-      providerGeneric: '通用',
-      appPasswordHint: '请使用「应用专用密码」，不要填登录密码（开启两步验证后登录密码会失败）。',
       testButton: '测试连接',
       testing: '正在检查…',
       testSuccess: '连接正常，可以同步。',
@@ -404,7 +388,6 @@ export const zh: TranslationSchema = {
     assetSummaryTitle: '自律资产统计',
     assetSummaryDetail: (habits, buildings) => `在册习惯 ${habits} 个 · 已落成建筑 ${buildings} 座`,
     repairInventory: '修复积木库存',
-    slogan: 'BlockHabit · 每一次打卡，都算数。',
     aboutTitle: '内容路线',
     aboutContent: (blueprints, blocks, contentVersion) =>
       `当前版本内置 ${blueprints} 座蓝图 / ${blocks} 块积木（contentVersion ${contentVersion}）。`,
@@ -505,6 +488,7 @@ export const zh: TranslationSchema = {
     toastQuickCheckIn: (name) => `+1 积木 · ${name}`,
     toastComplete: (name) => `「${name}」落成！`,
     allDone: '今日待办已全部搞定',
+    noneToday: '今天没有可打卡的了',
     habitCheckInTip: (name) => `点击完成「${name}」`,
     todayLabel: '今日',
     nextMilestone: (blueprint, remaining) => `《${blueprint}》还差 ${remaining} 块落成`,
@@ -603,26 +587,8 @@ export const zh: TranslationSchema = {
     defaultQuote: '“每一块积木落下的声音，都是击碎拖延的响指。”',
     builderRecord: (date) => `筑造者记 · ${date}`
   },
-  /** 今日简报（D-20261110-052） */
-  todayBrief: {
-    greetings: {
-      night: '夜深了',
-      morning: '早上好',
-      noon: '中午好',
-      afternoon: '下午好',
-      evening: '晚上好'
-    },
-    idle: (total) => `今天 ${total} 件，一件一件来。`,
-    inProgress: (done, total, pending) => `已完成 ${done}/${total}，还有 ${pending} 件没落块。`,
-    milestone: (blueprint, remaining) => `《${blueprint}》还差 ${remaining} 块落成`,
-    nextReady: (blueprint) => `下一座《${blueprint}》已就绪`,
-    startFirst: '开始第一个',
-    viewBuild: '去建造页看看'
-  },
   /** 习惯模板（D-20261110-053） */
   templates: {
-    title: '或者，从这些开始',
-    hint: '点一下就能建好，之后随时可改。',
     water: '喝水',
     read: '阅读',
     walk: '走动',
@@ -630,30 +596,12 @@ export const zh: TranslationSchema = {
     ledger: '记账',
     created: (name) => `已建好「${name}」，点卡片完成第一次打卡。`
   },
-  /** 页面提示（D-20261110-054） */
-  guide: {
-    buildTitle: '这是你的工地',
-    buildBody: '滚轮缩放、拖拽平移；落下的积木会按蓝图逐块咬合。',
-    showcaseTitle: '展台沙盘',
-    showcaseBody: '拖动建筑换位置，点一下它会打开落成纪念相纸。',
-    statsTitle: '这是你的时间形状',
-    statsBody: '灰阶越深，那天完成得越多；点格子可以看那一天。',
-    gotIt: '知道了',
-    replayTitle: '页面提示',
-    replay: '重看页面提示',
-    replayToast: '页面提示会在下次进入时重新出现'
-  },
   /** 晚间收尾提醒（D-20261110-055） */
   eveningNudge: {
     settingsTitle: '晚间收尾提醒',
     settingsDesc: '到点提醒你还没完成的事，每天最多一次。',
     settingsTime: '提醒时间',
     settingsTimeNote: '应用运行中生效',
-    consentTitle: '要每天提醒你收尾吗？',
-    consentBody: (time) => `默认 ${time}，只在你还有没完成的事时提醒，随时可在设置里关闭。`,
-    consentEnable: '开启提醒',
-    consentLater: '暂时不用',
-    enabledToast: '已开启晚间收尾提醒',
     notificationBody: (pending) => `还有 ${pending} 件没落块，今天还没收尾。`
   },
   /** 落成年鉴（D-20261110-060） */

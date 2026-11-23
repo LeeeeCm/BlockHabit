@@ -20,7 +20,7 @@ import {
   persistenceReady,
   isDemoMode
 } from './store/appStore'
-import { cacheAppearance } from './platform/appearance'
+import { cacheAppearance, THEME_CHANGED_EVENT } from './platform/appearance'
 import { pickAdapter } from './storage'
 import { setSoundMuted, setVolume } from './audio/sound'
 import { getBlueprint } from './logic/blueprints'
@@ -268,6 +268,8 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = themeSetting
     clearCubeSpriteCache()
+    // 画布不会因为 CSS 变量变化自动重绘：显式通知已挂载的场景刷新
+    window.dispatchEvent(new Event(THEME_CHANGED_EVENT))
   }, [themeSetting])
   useEffect(() => {
     document.documentElement.lang = langSetting
@@ -470,7 +472,6 @@ export default function App() {
         {tab === 'today' && (
           <Today
             onCelebrate={() => setTab('build')}
-            onGoBuild={() => setTab('build')}
             focusHabitId={focusHabitId}
             onFocusConsumed={() => setFocusHabitId(null)}
           />

@@ -44,8 +44,6 @@ vi.mock('../components/PolaroidModal', () => ({
   )
 }))
 
-vi.mock('../components/GuideTip', () => ({ GuideTip: () => null }))
-
 let root: Root | null = null
 let container: HTMLDivElement | null = null
 
@@ -122,7 +120,6 @@ describe('Showcase 自由装饰模式（D-20261111-068）', () => {
 
     click(view, '装饰模式')
     expect(view.textContent).toContain('退出装饰')
-    expect(view.textContent).toContain('拖动摆位、旋转模型')
     expect(view.textContent).toContain('换一组植被')
     expect(view.querySelector('[role="toolbar"]')).not.toBeNull()
     expect(latestSceneProps().rotations).toEqual({})

@@ -93,12 +93,15 @@ describe('silhouettePalette（纯函数）', () => {
 })
 
 describe('BlueprintThumb 剪影态', () => {
-  it('普通态：画布尺寸正确、背景为 surface、不传 silhouette 时正常绘制', () => {
+  it('普通态：画布尺寸正确、透明底、响应式宽度（不溢出卡片）', () => {
     const { canvas, unmount } = renderThumb(<BlueprintThumb blueprint={blueprints.plant} />)
     const el = canvas()
     expect(el.width).toBe(132)
     expect(el.height).toBe(92)
-    expect(el.style.background).toBe('var(--surface)')
+    expect(el.style.background).toBe('transparent')
+    expect(el.style.width).toBe('100%')
+    expect(el.style.maxWidth).toBe('132px')
+    expect(el.style.margin).toBe('0px auto')
     expect(fake.calls.some((call) => call.name === 'fill')).toBe(true)
     expect(fake.calls.some((call) => call.name === 'clearRect')).toBe(true)
     unmount()
@@ -125,8 +128,24 @@ describe('BlueprintThumb 剪影态', () => {
     )
     const canvases = Array.from(container.querySelectorAll('canvas'))
     expect(canvases).toHaveLength(2)
-    expect(canvases[0].style.background).toBe('var(--surface)')
+    expect(canvases[0].style.background).toBe('transparent')
     expect(canvases[1].style.background).toBe('transparent')
+    unmount()
+  })
+
+  it('建造中：placedCount 只绘制前 N 块（当前样子），地基/取景包含完整地基足迹', () => {
+    const { unmount } = renderThumb(<BlueprintThumb blueprint={blueprints.plant} placedCount={3} />)
+    const draws = fake.calls.filter((call) => call.name === 'drawImage').length
+    expect(draws).toBe(3)
+    // 地基/舞台仍在画（不是空白缩略图）
+    expect(fake.calls.some((call) => call.name === 'fill')).toBe(true)
+    unmount()
+  })
+
+  it('建造中 0 块：只画地基，不画积木（不伪造进度）', () => {
+    const { unmount } = renderThumb(<BlueprintThumb blueprint={blueprints.plant} placedCount={0} />)
+    expect(fake.calls.filter((call) => call.name === 'drawImage')).toHaveLength(0)
+    expect(fake.calls.some((call) => call.name === 'fill')).toBe(true)
     unmount()
   })
 })

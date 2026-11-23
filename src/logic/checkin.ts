@@ -54,6 +54,23 @@ export function habitMetOnDay(habit: Habit, checkIns: CheckIn[], day: string): b
   }
   return false
 }
+
+/**
+ * 今日卡片的「完成」判定：与 habitMetOnDay 同口径，但：
+ * - 量化型始终以当日累计数值为准（缺 targetValue 的旧档按 1 处理，与 store 默认一致）；
+ * - 自定义休息日没打卡 → 不算完成，保留「今日免战」样式；补了卡 → 算完成（可撤销）。
+ * 周频在本周配额已满后（即使今天没打卡）即为完成，避免卡片天天可点却天天失败。
+ */
+export function habitDoneOnDay(habit: Habit, checkIns: CheckIn[], day: string): boolean {
+  if (habit.kind === 'counter') {
+    const target = habit.targetValue && habit.targetValue > 0 ? habit.targetValue : 1
+    return dayCounterValue(checkIns, habit.id, day) >= target
+  }
+  if (habit.frequency.type === 'custom' && !isHabitDueOnDay(habit, day)) {
+    return dayCheckInsFor(checkIns, habit.id, day).length > 0
+  }
+  return habitMetOnDay(habit, checkIns, day)
+}
 export function canCheckInHabit(
   habit: Habit,
   checkIns: CheckIn[],

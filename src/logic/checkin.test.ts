@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { canCheckIn, weekCountFor, habitMetOnDay, isDayComplete } from './checkin'
+import { canCheckIn, weekCountFor, habitMetOnDay, habitDoneOnDay, isDayComplete } from './checkin'
 import type { Habit, CheckIn } from '../types'
 
 const daily: Habit = {
@@ -151,5 +151,87 @@ describe('isDayComplete', () => {
 
   it('no habits → false (空状态不算全完成)', () => {
     expect(isDayComplete([], [], '2026-08-22')).toBe(false)
+  })
+})
+
+describe('habitDoneOnDay（今日卡片完成态）', () => {
+  it('日频：今天有打卡才完成', () => {
+    expect(habitDoneOnDay(daily, [], '2026-08-22')).toBe(false)
+    expect(habitDoneOnDay(daily, [ci('h1', '2026-08-22')], '2026-08-22')).toBe(true)
+  })
+
+  it('周频：本周配额已满即完成，即使今天没打卡（修复「任意时段健身无法打卡」）', () => {
+    const cs = [ci('h2', '2026-08-17'), ci('h2', '2026-08-18'), ci('h2', '2026-08-19')]
+    // 8-22 当天没有打卡，但本周 3/3 已满
+    expect(habitDoneOnDay(weekly3, cs, '2026-08-22')).toBe(true)
+    // 与头部/统计用的 habitMetOnDay 同口径
+    expect(habitMetOnDay(weekly3, cs, '2026-08-22')).toBe(true)
+  })
+
+  it('周频：配额未满时今天已打卡也不算完成（卡片显示进行中而不是绿勾）', () => {
+    const cs = [ci('h2', '2026-08-17')]
+    expect(habitDoneOnDay(weekly3, cs, '2026-08-17')).toBe(false)
+  })
+
+  it('custom 休息日：没打卡不冒充完成；补了卡则算完成（可撤销）', () => {
+    const custom: Habit = {
+      id: 'h4',
+      name: '健身',
+      frequency: { type: 'custom', days: [1, 3, 5] },
+      createdAt: '2026-08-01T00:00:00.000Z'
+    }
+    // 2026-08-22 是周六（非执行日）
+    expect(habitMetOnDay(custom, [], '2026-08-22')).toBe(true)
+    expect(habitDoneOnDay(custom, [], '2026-08-22')).toBe(false)
+    // 休息日主动补卡：显示完成并可撤销
+    expect(habitDoneOnDay(custom, [ci('h4', '2026-08-22')], '2026-08-22')).toBe(true)
+    // 执行日仍需当天打卡
+    expect(habitDoneOnDay(custom, [], '2026-08-21')).toBe(false)
+    expect(habitDoneOnDay(custom, [ci('h4', '2026-08-21')], '2026-08-21')).toBe(true)
+  })
+
+  it('counter：当日累计达标即完成', () => {
+    const counter: Habit = {
+      id: 'h5',
+      name: '喝水',
+      frequency: { type: 'daily' },
+      kind: 'counter',
+      targetValue: 500,
+      step: 250,
+      createdAt: '2026-08-01T00:00:00.000Z'
+    }
+    const partial: CheckIn = {
+      id: 'c1',
+      habitId: 'h5',
+      date: '2026-08-22',
+      at: '2026-08-22T08:00:00.000Z',
+      value: 250
+    }
+    expect(habitDoneOnDay(counter, [partial], '2026-08-22')).toBe(false)
+    const full: CheckIn = { ...partial, id: 'c2', value: 250 }
+    expect(habitDoneOnDay(counter, [partial, full], '2026-08-22')).toBe(true)
+  })
+
+  it('custom 休息日的量化习惯：补了半档仍不算完成（A6 未达目标不亮勾）', () => {
+    const restCounter: Habit = {
+      id: 'h6',
+      name: '俯卧撑',
+      frequency: { type: 'custom', days: [1, 3, 5] },
+      kind: 'counter',
+      targetValue: 500,
+      step: 250,
+      createdAt: '2026-08-01T00:00:00.000Z'
+    }
+    const partial: CheckIn = {
+      id: 'c3',
+      habitId: 'h6',
+      date: '2026-08-22',
+      at: '2026-08-22T08:00:00.000Z',
+      value: 250
+    }
+    // 8-22 周六是休息日；补 250/500 仍不亮勾
+    expect(habitDoneOnDay(restCounter, [partial], '2026-08-22')).toBe(false)
+    const rest = { ...partial, id: 'c4', value: 250 }
+    expect(habitDoneOnDay(restCounter, [partial, rest], '2026-08-22')).toBe(true)
   })
 })

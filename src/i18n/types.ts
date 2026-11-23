@@ -45,7 +45,6 @@ export interface TranslationSchema {
     close: string
   }
   today: {
-    emptyHint: (blueprintName: string) => string
     newHabit: string
     archivedCount: (count: number) => string
     collapse: string
@@ -68,7 +67,15 @@ export interface TranslationSchema {
     freqWeekends: string
     freqCustom: (days: string[]) => string
     freqWeekly: (times: number) => string
-    instantCheckIn: string
+    /** 周频：本周已完成次数（静态状态，不是提示语） */
+    weekProgress: (done: number, times: number) => string
+    /** 周频：今天已打卡但本周配额未满 */
+    weekProgressToday: (done: number, times: number) => string
+    weekDoneTooltip: string
+    /** 今日已打卡（周频配额未满时点击卡片给出原因） */
+    alreadyCheckedIn: string
+    /** 周频配额已满时点击卡片的回执 */
+    weekQuotaDone: (done: number, times: number) => string
     targetMinutes: (min: number) => string
     focus: string
     cancelTimer: string
@@ -100,20 +107,13 @@ export interface TranslationSchema {
       claimed: string
     }
     view3dModel: string
+    /** 全勤卡完成态的「看建造页」按钮 */
+    viewBuild: string
     filterAll: string
-    startJourney: string
     /** F2：当前蓝图已落成但还有下一座时的提示 */
     activeCompleteNoBlock: string
     /** F2：全部蓝图落成后，打卡不再产块时的提示 */
     allBlueprintsDone: string
-    /** F1 首启三步引导 */
-    onboardingStep1Title: string
-    onboardingStep1Body: string
-    onboardingStep2Title: string
-    onboardingStep2Body: string
-    onboardingStep3Title: string
-    onboardingStep3Body: string
-    onboardingSeeBuild: string
     inRestPeriod: string
     unpinHabit: string
     pinHabit: string
@@ -127,8 +127,6 @@ export interface TranslationSchema {
     skip: string
     progress: (placed: number, total: number, pct: number) => string
     completedBlueprint: (name: string) => string
-    /** F1：第一块积木落下的专属说明 */
-    firstBlockHint: string
   }
   build: {
     blocksCount: (placed: number, total: number) => string
@@ -154,18 +152,15 @@ export interface TranslationSchema {
       toggleTooltip: string
       btn: string
     }
-    foundationGuide: (name: string) => string
   }
   showcase: {
     title: string
     countDisplay: (count: number) => string
     autoArrange: string
-    dragHint: string
-    emptyHint: string
     fullHint: string
     /** D-068 自由装饰模式（全落成后解锁；旋转/植被重排仅本次会话有效） */
     decoration: string
-    decorationHint: string
+    decorationResetToast: string
     exitDecoration: string
     rotateLeft: string
     rotateRight: string
@@ -327,13 +322,6 @@ export interface TranslationSchema {
       interval30m: string
       interval1h: string
       interval3h: string
-      /** D-20261110-061：服务商预设与分步自检 */
-      providerLabel: string
-      providerNextcloud: string
-      providerJianguoyun: string
-      providerSynology: string
-      providerGeneric: string
-      appPasswordHint: string
       testButton: string
       testing: string
       testSuccess: string
@@ -414,7 +402,6 @@ export interface TranslationSchema {
     assetSummaryTitle: string
     assetSummaryDetail: (habits: number, buildings: number) => string
     repairInventory: string
-    slogan: string
     /** C2 内容路线/关于（D-20261110-063 §3.5.5 approved 范围） */
     aboutTitle: string
     aboutContent: (blueprints: number, blocks: number, contentVersion: number) => string
@@ -501,6 +488,8 @@ export interface TranslationSchema {
     toastQuickCheckIn: (name: string) => string
     toastComplete: (name: string) => string
     allDone: string
+    /** 没有可打卡项，但周目标尚未全部完成 */
+    noneToday: string
     habitCheckInTip: (name: string) => string
     /** D-20261110-059：三档摆件共用文案 */
     todayLabel: string
@@ -600,26 +589,8 @@ export interface TranslationSchema {
     defaultQuote: string
     builderRecord: (date: string) => string
   }
-  /** 今日简报（D-20261110-052） */
-  todayBrief: {
-    greetings: {
-      night: string
-      morning: string
-      noon: string
-      afternoon: string
-      evening: string
-    }
-    idle: (total: number) => string
-    inProgress: (done: number, total: number, pending: number) => string
-    milestone: (blueprint: string, remaining: number) => string
-    nextReady: (blueprint: string) => string
-    startFirst: string
-    viewBuild: string
-  }
   /** 习惯模板（D-20261110-053） */
   templates: {
-    title: string
-    hint: string
     water: string
     read: string
     walk: string
@@ -627,30 +598,12 @@ export interface TranslationSchema {
     ledger: string
     created: (name: string) => string
   }
-  /** 页面提示（D-20261110-054） */
-  guide: {
-    buildTitle: string
-    buildBody: string
-    showcaseTitle: string
-    showcaseBody: string
-    statsTitle: string
-    statsBody: string
-    gotIt: string
-    replayTitle: string
-    replay: string
-    replayToast: string
-  }
   /** 晚间收尾提醒（D-20261110-055） */
   eveningNudge: {
     settingsTitle: string
     settingsDesc: string
     settingsTime: string
     settingsTimeNote: string
-    consentTitle: string
-    consentBody: (time: string) => string
-    consentEnable: string
-    consentLater: string
-    enabledToast: string
     notificationBody: (pending: number) => string
   }
   /** 落成年鉴（D-20261110-060） */

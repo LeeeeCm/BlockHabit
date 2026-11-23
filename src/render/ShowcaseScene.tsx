@@ -18,6 +18,7 @@ import {
   type TouchGestureState
 } from './touchGesture'
 import { triggerHaptic } from '../platform'
+import { THEME_CHANGED_EVENT } from '../platform/appearance'
 import { useAppStore } from '../store/appStore'
 import { applyPinchZoom, applyWheelZoom, fitShowcaseView } from './showcase/camera'
 import {
@@ -556,6 +557,13 @@ export function ShowcaseScene({
   useEffect(() => {
     draw()
   }, [enableAmbient, enableGyroscope, draw])
+
+  // 主题切换：App 在设置 data-theme + 清精灵缓存后派发事件，这里同步重绘
+  useEffect(() => {
+    const onThemeChanged = () => draw()
+    window.addEventListener(THEME_CHANGED_EVENT, onThemeChanged)
+    return () => window.removeEventListener(THEME_CHANGED_EVENT, onThemeChanged)
+  }, [draw])
 
   // 移动端重力感应微视差交互（遵循无障碍减弱动态标准，仅在用户显式开启时激活）
   useEffect(() => {

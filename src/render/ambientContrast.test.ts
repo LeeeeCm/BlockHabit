@@ -3,6 +3,7 @@ import {
   applyAmbientLighting,
   adjustLightness,
   contrastRatio,
+  deriveShadingForColor,
   floorContrast,
   relativeLuminance,
   type IsoPalette
@@ -129,5 +130,71 @@ describe('环境光对比度地板（C4）', () => {
     const dawn = applyAmbientLighting(base, 'dawn', bg)
     expect(dawn.top).toBe(adjustLightness(base.top, 1.14))
     expect(dawn.right).toBe(adjustLightness(base.right, 0.9))
+  })
+
+  it('非正午时段把环境光乘数写进 palette.tone，正午不带 tone', () => {
+    const { bg, base } = THEMES.light
+    expect(applyAmbientLighting(base, 'noon', bg).tone).toBeUndefined()
+    const night = applyAmbientLighting(base, 'night', bg)
+    expect(night.tone).toEqual({ top: 0.9, left: 0.68, right: 0.55, bg })
+    const dusk = applyAmbientLighting(base, 'dusk', bg)
+    expect(dusk.tone?.left).toBe(0.84)
+  })
+
+  it('晨曦 tone 不带 bg：自定义配色只提亮/压暗，不触发暗底地板', () => {
+    const dawn = applyAmbientLighting(THEMES.dark.base, 'dawn', THEMES.dark.bg)
+    expect(dawn.tone).toEqual({ top: 1.14, left: 1.08, right: 0.9 })
+    const material = '#8b5a3c'
+    const sh = deriveShadingForColor(material, dawn.tone)
+    expect(sh.rightA).toBe(adjustLightness(material, 0.9 * 0.52))
+  })
+})
+
+describe('自定义配色积木的环境光（夜灯修复）', () => {
+  const material = '#8b5a3c' // 绿意盆栽的陶土砖色（仓库既有色相）
+  const nightTone = { top: 0.9, left: 0.68, right: 0.55, bg: '#fafafa' }
+
+  it('无 tone 时保持原有明暗阶梯（零回归）', () => {
+    const sh = deriveShadingForColor(material)
+    expect(sh.topA).toBe(adjustLightness(material, 1.0))
+    expect(sh.topB).toBe(adjustLightness(material, 0.88))
+    expect(sh.leftA).toBe(adjustLightness(material, 0.78))
+    expect(sh.leftB).toBe(adjustLightness(material, 0.62))
+    expect(sh.rightA).toBe(adjustLightness(material, 0.52))
+    expect(sh.rightB).toBe(adjustLightness(material, 0.36))
+  })
+
+  it('night tone 让三面一致变暗（夜灯对彩色积木生效）', () => {
+    const day = deriveShadingForColor(material)
+    const night = deriveShadingForColor(material, nightTone)
+    for (const face of ['topA', 'leftA', 'rightA'] as const) {
+      expect(relativeLuminance(night[face])).toBeLessThan(relativeLuminance(day[face]))
+    }
+    // 光照方向仍成立：顶 > 左 > 右
+    expect(relativeLuminance(night.topA)).toBeGreaterThan(relativeLuminance(night.leftA))
+    expect(relativeLuminance(night.leftA)).toBeGreaterThan(relativeLuminance(night.rightA))
+  })
+
+  it('色相不变：只调 HSL 亮度，不引入第二种色相', () => {
+    const day = deriveShadingForColor(material)
+    const night = deriveShadingForColor(material, nightTone)
+    // RGB 的相对大小（R > G > B）是色相未翻转的充分代理
+    for (const face of ['topA', 'leftA', 'rightA'] as const) {
+      const parse = (v: string): number[] => v.match(/\d+/g)!.map(Number)
+      const [dr, dg, db] = parse(day[face])
+      const [nr, ng, nb] = parse(night[face])
+      expect(Math.sign(nr - ng)).toBe(Math.sign(dr - dg))
+      expect(Math.sign(ng - nb)).toBe(Math.sign(dg - db))
+    }
+  })
+
+  it('墨黑主题：夜间自定义右脸不低于标准光照的对比度（对比度地板）', () => {
+    const bg = '#0a0a0a'
+    const darkMaterial = '#1c1c1c'
+    const day = deriveShadingForColor(darkMaterial)
+    const night = deriveShadingForColor(darkMaterial, { ...nightTone, bg })
+    expect(contrastRatio(night.rightA, bg)).toBeGreaterThanOrEqual(
+      contrastRatio(day.rightA, bg) - 0.001
+    )
   })
 })

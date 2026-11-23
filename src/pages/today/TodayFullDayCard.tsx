@@ -102,7 +102,7 @@ export function TodayFullDayCard({ claimed, onClaim, onCelebrate }: Props) {
                 onCelebrate()
               }}
             >
-              {t.todayBrief.viewBuild}
+              {t.today.viewBuild}
             </button>
           )}
         </div>

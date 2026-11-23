@@ -2,7 +2,6 @@ import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { DEFAULT_WEBDAV_CONFIG } from '../sync/types'
-import { JIANGUOYUN_ENDPOINT } from '../sync/providers'
 import { useAppStore } from '../store/appStore'
 import type { SyncErrorCode } from '../sync/useSync'
 import { WebdavPanel, type SyncController } from './WebdavPanel'
@@ -22,7 +21,7 @@ vi.mock('../platform/diagnostics', () => ({ exportDiagnosticsPackage: vi.fn(asyn
 
 /**
  * B3 面板拆分回归测试（D-20261110-061 / D-20261110-062）：
- * - WebdavPanel：服务商预设 / 端点联动 / 自检浏览器拦截 / 自动同步 / 状态与 toast 转发；
+ * - WebdavPanel：通用地址/凭据输入 / 自检浏览器拦截 / 自动同步 / 状态与 toast 转发；
  * - ArchiveDataPanel / DiagnosticsExportPanel / ArchiveBackupsPanel：拆分后入口与回调不变；
  * - SettingsDialog：组合引用与分组外壳保持（WebDAV 默认展开、数据安全默认折叠）。
  */
@@ -82,50 +81,41 @@ afterEach(() => {
 })
 
 describe('WebdavPanel（从 SettingsDialog 抽出）', () => {
-  it('渲染服务商预设、地址/凭据输入、测试连接与立即同步空态', () => {
+  it('只保留通用 WebDAV 表单：没有服务商预设，地址可编辑', () => {
     const { container, unmount } = render(<WebdavPanel sync={makeSync()} onToast={vi.fn()} />)
     const text = container.textContent ?? ''
-    expect(text).toContain('服务商')
     expect(text).toContain('WebDAV 地址')
     expect(text).toContain('用户名')
     expect(text).toContain('密码')
-    expect(button(container, 'Nextcloud')).toBeDefined()
-    expect(button(container, '坚果云')).toBeDefined()
-    expect(button(container, '群晖')).toBeDefined()
-    expect(button(container, '通用')).toBeDefined()
+    expect(text).not.toContain('服务商')
+    for (const label of ['Nextcloud', '坚果云', '群晖', '通用']) {
+      expect(
+        Array.from(container.querySelectorAll('button')).some(
+          (el) => (el.textContent ?? '').trim() === label
+        )
+      ).toBe(false)
+    }
+    const url = Array.from(container.querySelectorAll('input[type="text"]'))[0] as HTMLInputElement
+    expect(url.readOnly).toBe(false)
+    expect(url.value).toBe('')
     expect(button(container, '测试连接').disabled).toBe(true)
     expect(button(container, '立即同步').disabled).toBe(true)
     expect(text).toContain('未同步')
     unmount()
   })
 
-  it('选择坚果云预设：地址改为固定端点、只读，并提示应用专用密码', async () => {
+  it('通用地址输入直接写入同步配置', async () => {
     const sync = makeSync()
     const { container, unmount } = render(<WebdavPanel sync={sync} onToast={vi.fn()} />)
+    const url = Array.from(container.querySelectorAll('input[type="text"]'))[0] as HTMLInputElement
     await act(async () => {
-      button(container, '坚果云').click()
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+      setter.call(url, 'https://dav.example.com/sync/')
+      url.dispatchEvent(new Event('input', { bubbles: true }))
     })
-    expect(sync.updateConfig).toHaveBeenCalledWith({ endpoint: JIANGUOYUN_ENDPOINT })
-    const inputs = Array.from(
-      container.querySelectorAll('input[type="text"]')
-    ) as HTMLInputElement[]
-    expect(inputs[0].value).toBe(JIANGUOYUN_ENDPOINT)
-    expect(inputs[0].readOnly).toBe(true)
-    expect(container.textContent).toContain('应用专用密码')
-    unmount()
-  })
-
-  it('从坚果云切回通用：清空旧 host，不把固定端点带过去', async () => {
-    const sync = makeSync({ config: { ...DEFAULT_WEBDAV_CONFIG, endpoint: JIANGUOYUN_ENDPOINT } })
-    const { container, unmount } = render(<WebdavPanel sync={sync} onToast={vi.fn()} />)
-    await act(async () => {
-      button(container, '通用').click()
+    expect(sync.updateConfig).toHaveBeenCalledWith({
+      endpoint: 'https://dav.example.com/sync/'
     })
-    expect(sync.updateConfig).toHaveBeenCalledWith({ endpoint: '' })
-    const endpoints = Array.from(
-      container.querySelectorAll('input[type="text"]')
-    ) as HTMLInputElement[]
-    expect(endpoints[0].value).toBe('')
     unmount()
   })
 
@@ -214,7 +204,7 @@ describe('WebdavPanel（从 SettingsDialog 抽出）', () => {
         onToast={vi.fn()}
       />
     )
-    expect(synced.container.textContent).toContain('上次同步: ')
+    expect(synced.container.textContent).toContain('上次同步：')
     synced.unmount()
   })
 
@@ -343,7 +333,8 @@ describe('SettingsDialog 组合引用', () => {
       </SyncProvider>
     )
     expect(container.textContent).toContain('WebDAV 数据同步')
-    expect(container.textContent).toContain('服务商')
+    expect(container.textContent).toContain('WebDAV 地址')
+    expect(container.textContent).not.toContain('服务商')
     expect(container.textContent).not.toContain('导出备份')
 
     const titles = Array.from(container.querySelectorAll('.apple-group-title'))

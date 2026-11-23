@@ -13,14 +13,15 @@ interface Props {
   t: TranslationSchema
   isMobile: boolean
   done: boolean
+  /** 周频今日已打卡但配额未满：用勾表达事实，颜色仍为墨色（不是绿勾） */
+  checkedIn: boolean
   running: boolean
   ended: boolean
   missed: boolean
-  isRestDay: boolean
-  isFocus: boolean
   pulse: boolean
   pinned: boolean
   statusColor: string
+  statusTitle: string
   onStatusClick: (e: React.MouseEvent) => void
   onTogglePin: (e: React.MouseEvent) => void
   onEditClick: (e: React.MouseEvent) => void
@@ -32,14 +33,14 @@ export function HabitRowHeader({
   t,
   isMobile,
   done,
+  checkedIn,
   running,
   ended,
   missed,
-  isRestDay,
-  isFocus,
   pulse,
   pinned,
   statusColor,
+  statusTitle,
   onStatusClick,
   onTogglePin,
   onEditClick,
@@ -50,21 +51,7 @@ export function HabitRowHeader({
       <button
         className="status-btn"
         onClick={onStatusClick}
-        title={
-          done
-            ? t.today.undoTooltip
-            : isRestDay
-              ? t.today.restDay
-              : missed
-                ? t.today.weekMissed
-                : running
-                  ? t.today.timingTooltip
-                  : ended
-                    ? t.today.checkInTooltip
-                    : isFocus
-                      ? t.today.focus
-                      : t.today.checkInTooltip
-        }
+        title={statusTitle}
         style={{
           width: isMobile ? 44 : 40,
           height: isMobile ? 44 : 40,
@@ -75,10 +62,10 @@ export function HabitRowHeader({
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'transform var(--dur-lg) var(--ease-bounce)',
-          transform: pulse ? 'scale(1.25) rotate(90deg)' : 'scale(1) rotate(0deg)'
+          transform: pulse ? 'scale(1.18)' : 'scale(1)'
         }}
       >
-        {done ? (
+        {done || checkedIn ? (
           <IconDone size={36} />
         ) : running || ended ? (
           <IconInProgress size={36} />

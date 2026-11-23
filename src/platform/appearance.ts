@@ -23,6 +23,9 @@ function safeSet(key: string, value: string): void {
   }
 }
 
+/** 主题切换完成后派发：画布类消费者（Build/Showcase）据此重绘，避免 CSS 变了画布还是旧色 */
+export const THEME_CHANGED_EVENT = 'blockhabit:theme-changed'
+
 /**
  * 首帧外观（C8）：存档是异步读的（Tauri 走文件），React 首帧必然拿不到 settings.theme。
  * 用上次写入的缓存主题/语言先把根节点属性摆正，避免暗色/燕麦/雾灰主题启动时闪一下纸白。

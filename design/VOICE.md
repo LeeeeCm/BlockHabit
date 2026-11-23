@@ -69,3 +69,10 @@
 | ⑧ | 占位符 `'—'` | `BuildScene.tsx:519 / 762`、`Stats.tsx` 等 | 多处 | 合规（缺失值占位），统一全角破折号 |
 
 **一句话验收**：`grep -rn "lang === 'zh'" src/` 只剩 3 处（1 画布例外 + 2 语言按钮）；非 i18n 文件里的中文只剩「注释 + 上表 ③ 的历史数据」。
+## 6. 2026-11-24 文案精简（D-20261124-081）
+
+- 删除的文案组：`todayBrief`（问候语/今日事实/开始第一个）、`guide`（三页页面提示与设置里的重看）、`today.startJourney`、`today.emptyHint`、`today.onboardingStep*`、`today.onboardingSeeBuild`、`templates.title`、`templates.hint`、`today.instantCheckIn`、`build.foundationGuide`、`showcase.dragHint`、`showcase.emptyHint`、`showcase.decorationHint`、`blockDrop.firstBlockHint`、`settings.slogan`、`eveningNudge.consent*`。
+- 删除原则：标题能由布局与控件表达时不写句子；能由状态胶囊表达时不写提示。
+- 新增的状态文案（不是提示）：`today.weekProgress(done,times)`「本周 x/y」、`today.weekProgressToday(done,times)`「今日已打卡 · 本周 x/y」、`today.weekDoneTooltip`「本周已完成」、`today.alreadyCheckedIn`「今天已打卡」、`today.weekQuotaDone(done,times)`、`today.viewBuild`「看建造页」。
+- 保留：设置页功能性说明（解释有歧义的开关）、所有 toast 的一次性反馈。
+- 晚间提醒授权卡已从今日页移除（D-20261124-081）：开启/关闭统一在设置页，仍会请求系统通知权限。

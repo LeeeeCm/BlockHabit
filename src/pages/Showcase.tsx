@@ -10,16 +10,8 @@ import {
 } from '../logic/showcase'
 import { ShowcaseScene } from '../render/ShowcaseScene'
 import { PolaroidModal } from '../components/PolaroidModal'
-import { GuideTip } from '../components/GuideTip'
-import { hasSeenTip, markTipSeen } from '../platform/guideTips'
 import { getBlueprintName, useI18n } from '../i18n'
-import {
-  IconBulb,
-  IconRotateCcw,
-  IconRotateCw,
-  IconShuffle,
-  IconSparkle
-} from '../components/Icons'
+import { IconRotateCcw, IconRotateCw, IconShuffle, IconSparkle } from '../components/Icons'
 import type { ShowcasePlacement } from '../types'
 
 /** 旋转按钮触控目标（D-20261111-068 验收：移动端 ≥44px） */
@@ -38,9 +30,6 @@ export default function Showcase() {
   const completed = useAppStore((s) => s.completedBlueprintIds)
   const [selectedBlueprintId, setSelectedBlueprintId] = useState<string | null>(null)
   const [toast, showToast] = useTransient<string>(2400)
-  // 页面提示（D-20261110-054）：已有摆放时首次提示拖动/点击；挂载即标记已读
-  const [showGuideTip, setShowGuideTip] = useState(() => !hasSeenTip('showcase'))
-  const guideTipVisible = showGuideTip && showcasePlacements.length > 0
 
   // 装饰模式解锁（D-20261111-068）：completedBlueprintIds 覆盖 blueprintOrder 全部；长度动态。
   const decorationUnlocked = isDecorationUnlocked(completed, blueprintOrder)
@@ -59,10 +48,6 @@ export default function Showcase() {
       updateShowcasePlacement(blueprintId, gridX, gridY, rotationsRef.current),
     [updateShowcasePlacement]
   )
-
-  useEffect(() => {
-    if (guideTipVisible) markTipSeen('showcase')
-  }, [guideTipVisible])
 
   // 数据若回退到「未全落成」（重置/撤销），自动收起装饰模式，不留无解锁依据的入口
   useEffect(() => {
@@ -97,10 +82,12 @@ export default function Showcase() {
 
   function exitDecorationMode() {
     // 退出装饰 = 回原行为：旋转/植被重排只存在于本次装饰会话，退出即复原（存档本就没写）
+    const hadEdits = Object.keys(rotations).length > 0 || ecoSeed !== 0
     setDecorationMode(false)
     setDecorationSelectedId(null)
     setRotations({})
     setEcoSeed(0)
+    if (hadEdits) showToast(t.showcase.decorationResetToast)
   }
 
   function toggleDecorationMode() {
@@ -178,18 +165,6 @@ export default function Showcase() {
       >
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
           <span style={{ fontWeight: 700, fontSize: 'var(--fs-title)' }}>{t.showcase.title}</span>
-          <span
-            style={{
-              fontSize: 'var(--fs-small)',
-              color: 'var(--ink-2)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5
-            }}
-          >
-            <IconBulb size={13} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-            <span>{decorationMode ? t.showcase.decorationHint : t.showcase.dragHint}</span>
-          </span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -264,26 +239,6 @@ export default function Showcase() {
           ecoSeed={ecoSeed}
           selectedId={decorationMode ? decorationSelectedId : null}
         />
-
-        {showcasePlacements.length === 0 && (
-          <div
-            style={{
-              position: 'absolute',
-              left: 24,
-              bottom: 24,
-              padding: '12px 18px',
-              background: 'color-mix(in srgb, var(--surface) 90%, transparent)',
-              backdropFilter: 'blur(8px)',
-              borderRadius: 'var(--r-md)',
-              border: '1px solid var(--line)',
-              fontSize: 'var(--fs-body)',
-              color: 'var(--ink-2)',
-              lineHeight: 1.6
-            }}
-          >
-            {t.showcase.emptyHint}
-          </div>
-        )}
       </div>
 
       {/* 装饰模式工具条：选中模型显示旋转控件；「换一组植被」始终可用 */}
@@ -387,17 +342,6 @@ export default function Showcase() {
             <span>{t.showcase.ecoReshuffle}</span>
           </button>
         </div>
-      )}
-
-      {/* D-20261110-054：首次有摆放时给一次「拖动换位置 / 点击看相纸」提示 */}
-      {guideTipVisible && (
-        <GuideTip
-          variant="fixed"
-          title={t.guide.showcaseTitle}
-          body={t.guide.showcaseBody}
-          dismissLabel={t.guide.gotIt}
-          onDismiss={() => setShowGuideTip(false)}
-        />
       )}
 
       {/* 点击模型打开拍立得纪念卡（装饰模式下点击语义改为选中，由 handleSelectModel 分流） */}

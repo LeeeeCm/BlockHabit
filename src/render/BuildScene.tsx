@@ -6,6 +6,7 @@ import { useAppStore } from '../store/appStore'
 import { useI18n } from '../i18n'
 import { isQuickTap, type TouchGestureState } from './touchGesture'
 import { triggerHaptic } from '../platform'
+import { THEME_CHANGED_EVENT } from '../platform/appearance'
 import { prefersReducedMotion } from '../platform/dom'
 import {
   applyZoomAt,
@@ -354,6 +355,13 @@ export function BuildScene({
   useEffect(() => {
     drawRef.current()
   }, [enableAmbient, enableGyroscope, ecoStage, xrayMode])
+
+  // 主题切换：App 在设置 data-theme + 清精灵缓存后派发事件，这里同步重绘
+  useEffect(() => {
+    const onThemeChanged = () => drawRef.current()
+    window.addEventListener(THEME_CHANGED_EVENT, onThemeChanged)
+    return () => window.removeEventListener(THEME_CHANGED_EVENT, onThemeChanged)
+  }, [])
 
   // 交互：拖拽平移 / 滚轮缩放
   useEffect(() => {

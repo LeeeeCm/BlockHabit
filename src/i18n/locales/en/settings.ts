@@ -57,7 +57,6 @@ export const settings: TranslationSchema['settings'] = {
   assetSummaryDetail: (habits, buildings) =>
     `${habits} Active Habits · ${buildings} Completed Buildings`,
   repairInventory: 'Repair Brick Stock',
-  slogan: 'BlockHabit · Every check-in builds something lasting.',
   aboutTitle: 'Content Roadmap',
   aboutContent: (blueprints, blocks, contentVersion) =>
     `This build ships ${blueprints} blueprints / ${blocks} blocks (contentVersion ${contentVersion}).`,

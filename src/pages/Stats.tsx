@@ -6,7 +6,6 @@ import { bestStreak, currentStreak } from '../logic/streak'
 import { useTodayKey } from '../logic/useTodayKey'
 import { Heatmap } from '../components/Heatmap'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-import { GuideTip } from '../components/GuideTip'
 import { MonthlyPosterModal } from '../components/MonthlyPosterModal'
 import { YearbookModal } from '../components/YearbookModal'
 import {
@@ -22,7 +21,7 @@ import {
 } from '../components/Icons'
 import { useI18n } from '../i18n'
 import { triggerHaptic } from '../platform'
-import { hasSeenTip, markTipSeen } from '../platform/guideTips'
+
 import type { MicroMood } from '../types'
 
 const MOODS: MicroMood[] = ['energetic', 'hard', 'spark', 'calm']
@@ -59,52 +58,47 @@ export default function Stats() {
   const [toast, showToast] = useTransient<string>(2500)
   const [posterOpen, setPosterOpen] = useState(false)
   const [yearbookOpen, setYearbookOpen] = useState(false)
-  // 页面提示（D-20261110-054）：有在册习惯时首次给出热图读法；状态初始化时只读一次 localStorage
-  const [showGuideTip, setShowGuideTip] = useState(() => !hasSeenTip('stats'))
 
   // 稳定引用：避免 rows useMemo 每次渲染失效（切换页签重挂时自然刷新）
   const now = useMemo(() => new Date(), [])
   const today = useTodayKey()
   const active = useMemo(() => habits.filter((h) => !h.archivedAt), [habits])
-  // 提示只出现在指标视图（热图所在处）；挂载即标记已读
-  const guideTipVisible = showGuideTip && active.length > 0 && viewMode === 'metrics'
-  useEffect(() => {
-    if (guideTipVisible) markTipSeen('stats')
-  }, [guideTipVisible])
+  /** 统计/手账/导出只看未撤销的打卡（撤销 = 墓碑，不再展示） */
+  const liveCheckIns = useMemo(() => checkIns.filter((c) => !c.deletedAt), [checkIns])
 
   const rows = useMemo(
     () =>
       active.map((h) => {
-        const hCheckIns = checkIns.filter((c) => c.habitId === h.id)
+        const hCheckIns = liveCheckIns.filter((c) => c.habitId === h.id)
         const totalMinutes = hCheckIns.reduce(
           (sum, c) => sum + (c.actualMinutes ?? h.targetMinutes ?? 0),
           0
         )
         return {
           habit: h,
-          current: currentStreak(h, checkIns, now),
-          best: bestStreak(h, checkIns),
+          current: currentStreak(h, liveCheckIns, now),
+          best: bestStreak(h, liveCheckIns),
           total: hCheckIns.length,
           totalMinutes
         }
       }),
-    [active, checkIns, now]
+    [active, liveCheckIns, now]
   )
 
   const grandTotalMinutes = useMemo(
-    () => checkIns.reduce((sum, c) => sum + (c.actualMinutes ?? 0), 0),
-    [checkIns]
+    () => liveCheckIns.reduce((sum, c) => sum + (c.actualMinutes ?? 0), 0),
+    [liveCheckIns]
   )
 
   // 积木历史回响：提取过往（非今日）具有随笔的打卡记录
   const echoEntry = useMemo(() => {
-    const candidates = checkIns.filter((c) => c.date < today && c.note?.trim())
+    const candidates = liveCheckIns.filter((c) => c.date < today && c.note?.trim())
     if (candidates.length === 0) return null
     const dayOfYear = Math.floor(
       (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
     )
     return candidates[dayOfYear % candidates.length]
-  }, [checkIns, today])
+  }, [liveCheckIns, today])
 
   const echoDaysAgo = useMemo(() => {
     if (!echoEntry) return 0
@@ -114,7 +108,7 @@ export default function Stats() {
   }, [echoEntry, today])
   // 手账长廊项目过滤
   const chronicleItems = useMemo(() => {
-    let list = checkIns.filter((c) => c.note?.trim())
+    let list = liveCheckIns.filter((c) => c.note?.trim())
     if (filterHabitId !== 'all') {
       list = list.filter((c) => c.habitId === filterHabitId)
     }
@@ -139,7 +133,7 @@ export default function Stats() {
     }
     list.sort((a, b) => b.date.localeCompare(a.date))
     return list
-  }, [checkIns, filterHabitId, filterMood, onlyStarred, searchQuery, habits, t.microMood])
+  }, [liveCheckIns, filterHabitId, filterMood, onlyStarred, searchQuery, habits, t.microMood])
 
   async function handleExportMarkdown() {
     const lines = [
@@ -337,17 +331,6 @@ export default function Stats() {
         </div>
       )}
 
-      {/* D-20261110-054：首次进入说明热图灰阶与点击行为 */}
-      {guideTipVisible && (
-        <GuideTip
-          variant="inline"
-          title={t.guide.statsTitle}
-          body={t.guide.statsBody}
-          dismissLabel={t.guide.gotIt}
-          onDismiss={() => setShowGuideTip(false)}
-        />
-      )}
-
       {/* 视图分支 */}
       {viewMode === 'metrics' ? (
         <div>
@@ -368,7 +351,7 @@ export default function Stats() {
                 <div style={{ marginBottom: 14 }}>
                   <Heatmap
                     habits={habits}
-                    checkIns={checkIns}
+                    checkIns={liveCheckIns}
                     habitId={habit.id}
                     cell={13}
                     weeks={13}
@@ -377,7 +360,9 @@ export default function Stats() {
                       const diffDays = Math.round(
                         (todayMs - new Date(day + 'T00:00:00').getTime()) / 86400000
                       )
-                      const already = checkIns.some((c) => c.habitId === habit.id && c.date === day)
+                      const already = liveCheckIns.some(
+                        (c) => c.habitId === habit.id && c.date === day
+                      )
                       if (already) return
                       if (diffDays > REPAIR_WINDOW_DAYS || diffDays < 0) {
                         showToast(t.stats.repairLimitToast, 2200)
@@ -430,7 +415,7 @@ export default function Stats() {
                 </div>
 
                 {(() => {
-                  const notes = checkIns
+                  const notes = liveCheckIns
                     .filter((c) => c.habitId === habit.id && c.note?.trim())
                     .sort((a, b) => (b.date > a.date ? 1 : -1))
                     .slice(0, 3)

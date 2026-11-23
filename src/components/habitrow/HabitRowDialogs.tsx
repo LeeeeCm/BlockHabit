@@ -24,7 +24,9 @@ export function HabitRowDialogs({
   onConfirmUndo
 }: Props) {
   return (
-    <>
+    // 弹窗经 portal 渲染，但 React 事件仍沿组件树冒泡到 HabitRow 的卡片点击：
+    // 用 display:contents 包裹并拦掉点击，避免点弹窗正文误触发打卡。
+    <div style={{ display: 'contents' }} onClick={(e) => e.stopPropagation()}>
       {confirmDelete && (
         <ConfirmDialog
           title={t.today.deleteConfirmTitle}
@@ -48,6 +50,6 @@ export function HabitRowDialogs({
           onConfirm={onConfirmUndo}
         />
       )}
-    </>
+    </div>
   )
 }

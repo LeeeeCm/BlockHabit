@@ -3,7 +3,7 @@ import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
 import { useTimerStore } from '../store/timerStore'
 import { getBlueprint } from '../logic/blueprints'
-import { habitMetOnDay, isHabitDueOnDay } from '../logic/checkin'
+import { canCheckInHabit, habitMetOnDay, isHabitDueOnDay } from '../logic/checkin'
 import {
   MAX_EXTENSIONS,
   normalizeExtensions,
@@ -89,22 +89,39 @@ export function MiniDeskToy({ size, pinned, onTogglePin, onExpand, onClose }: Pr
     return () => window.clearTimeout(timer)
   }, [justPlacedIndex])
 
-  // 今日应执行且未达标的习惯（与今日页同一判定口径）
+  // 今日应执行、未达标、且今天仍可打卡的习惯（与今日页同一判定口径 + 可打卡性）
   const pendingHabits = useMemo(() => {
     return activeHabits
-      .filter((h) => isHabitDueOnDay(h, day) && !habitMetOnDay(h, checkIns, day))
+      .filter(
+        (h) =>
+          isHabitDueOnDay(h, day) &&
+          !habitMetOnDay(h, checkIns, day) &&
+          canCheckInHabit(h, checkIns, day).ok
+      )
       .slice(0, preset.maxPills)
   }, [activeHabits, checkIns, day, preset.maxPills])
 
   function handleQuickCheckIn(habitId: string, habitName: string) {
     const res = checkIn(habitId)
+    if (res.reason) {
+      const habit = activeHabits.find((h) => h.id === habitId)
+      const text =
+        res.reason === 'weekly-full' && habit?.frequency.type === 'weekly'
+          ? t.today.weekQuotaDone(habit.frequency.times, habit.frequency.times)
+          : t.today.alreadyCheckedIn
+      showToast(text, 1800)
+      return
+    }
     playSnapSound()
-    playJellySound()
+    if (res.placed || res.complete) playJellySound()
     if (res.complete) {
       playCelebrationSound()
       showToast(t.mini.toastComplete(getBlueprintName(blueprint.id, lang)), 1800)
-    } else {
+    } else if (res.placed) {
       showToast(t.mini.toastQuickCheckIn(habitName), 1800)
+    } else {
+      // 没有掉块（counter 未达标 / 蓝图已满）：只确认打卡，不承诺积木
+      showToast(t.today.checkedInToast(habitName), 1800)
     }
   }
 

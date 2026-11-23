@@ -7,7 +7,6 @@ import { BuildScene } from '../render/BuildScene'
 import { GalleryDialog } from '../components/GalleryDialog'
 import { PolaroidModal } from '../components/PolaroidModal'
 import { FoundationNoteDialog } from '../components/FoundationNoteDialog'
-import { GuideTip } from '../components/GuideTip'
 import {
   IconCamera,
   IconEcho,
@@ -18,7 +17,6 @@ import {
   IconSparkle
 } from '../components/Icons'
 import { triggerHaptic } from '../platform'
-import { hasSeenTip, markTipSeen } from '../platform/guideTips'
 export default function Build() {
   const { lang, t } = useI18n()
   const builds = useAppStore((s) => s.builds)
@@ -44,12 +42,6 @@ export default function Build() {
   const [xrayMode, setXrayMode] = useState(xrayDefault)
   const enableAmbientLighting = useAppStore((s) => s.settings.enableAmbientLighting !== false)
   const period = getTimePeriod()
-  // 页面提示（D-20261110-054）：首次进入且已有积木时出现一次；挂载即标记已读，避免不点就永远重复
-  const [showGuideTip, setShowGuideTip] = useState(() => !hasSeenTip('build'))
-  const guideTipVisible = showGuideTip && placedCount >= 1
-  useEffect(() => {
-    if (guideTipVisible) markTipSeen('build')
-  }, [guideTipVisible])
   useEffect(() => {
     setCeremonyShown(
       builds.filter((b) => b.blueprintId === activeBlueprintId).length >=
@@ -298,33 +290,6 @@ export default function Build() {
               “{foundationNote}”
             </span>
           </div>
-        )}
-
-        {placedCount === 0 && (
-          <div
-            style={{
-              position: 'absolute',
-              left: 20,
-              bottom: 18,
-              color: 'var(--ink-2)',
-              fontSize: 'var(--fs-body)',
-              lineHeight: 1.7
-            }}
-          >
-            <span style={{ whiteSpace: 'pre-line' }}>
-              {t.build.foundationGuide(getBlueprintName(blueprint.id, lang))}
-            </span>
-          </div>
-        )}
-
-        {guideTipVisible && (
-          <GuideTip
-            variant="fixed"
-            title={t.guide.buildTitle}
-            body={t.guide.buildBody}
-            dismissLabel={t.guide.gotIt}
-            onDismiss={() => setShowGuideTip(false)}
-          />
         )}
 
         {showCeremony && (

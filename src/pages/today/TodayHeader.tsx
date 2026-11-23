@@ -69,17 +69,19 @@ export function TodayHeader({
             {placedCount}/{total} ({percent}%)
           </span>
         </button>
-        <span
-          style={{
-            color: 'var(--ink-2)',
-            fontSize: 'var(--fs-body)',
-            border: '1px solid var(--line)',
-            borderRadius: 999,
-            padding: '4px 12px'
-          }}
-        >
-          {metCount} / {activeCount}
-        </span>
+        {activeCount > 0 && (
+          <span
+            style={{
+              color: 'var(--ink-2)',
+              fontSize: 'var(--fs-body)',
+              border: '1px solid var(--line)',
+              borderRadius: 999,
+              padding: '4px 12px'
+            }}
+          >
+            {metCount} / {activeCount}
+          </span>
+        )}
         <button
           className="icon-btn"
           title={t.today.newHabit}

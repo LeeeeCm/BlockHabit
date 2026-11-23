@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useAppStore } from '../store/appStore'
 import { useReminderStore } from '../store/reminderStore'
-import { habitMetOnDay } from '../logic/checkin'
+import { canCheckInHabit, habitMetOnDay } from '../logic/checkin'
 import { todayKey } from '../logic/dates'
 import { scanHabitReminder } from '../logic/reminderScheduler'
 import { shouldEveningNudge } from '../logic/eveningNudge'
@@ -43,13 +43,15 @@ export function ReminderWatcher() {
       for (const habit of liveHabits) {
         if (!habit.reminder) continue
         const metToday = habitMetOnDay(habit, store.checkIns, day)
+        // 今天已经打过（周频配额未满）或本周配额已满：提醒无意义，按「已达标」静默
+        const canCheckToday = canCheckInHabit(habit, store.checkIns, day).ok
         const skippedToday = log[habit.id]?.date === day && log[habit.id]?.action === 'skipped'
         const result = scanHabitReminder({
           now,
           day,
           habit,
           remindersEnabled: enabled,
-          metToday,
+          metToday: metToday || !canCheckToday,
           skippedToday,
           track: reminderStore.tracks[habit.id]
         })
@@ -88,7 +90,11 @@ export function ReminderWatcher() {
       for (const item of useReminderStore.getState().pending) {
         const habit = store.habits.find((h) => h.id === item.habitId)
         const stillRelevant =
-          habit && !habit.archivedAt && habit.reminder && !habitMetOnDay(habit, store.checkIns, day)
+          habit &&
+          !habit.archivedAt &&
+          habit.reminder &&
+          !habitMetOnDay(habit, store.checkIns, day) &&
+          canCheckInHabit(habit, store.checkIns, day).ok
         if (!stillRelevant) {
           useReminderStore.getState().dismiss(item.habitId)
         }

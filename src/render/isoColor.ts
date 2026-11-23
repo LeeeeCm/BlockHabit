@@ -14,7 +14,27 @@ export interface IsoPalette {
   accent: string
   /** 主题墨色（轮廓/交界线均按透明度派生自它） */
   ink: string
+  /**
+   * 当前时段的环境光乘数（仅非正午设置；正午缺省 = 标准光照）。
+   * 自定义配色积木（蓝图 color）用它把明暗变化带进同一个光照系统，
+   * 色相不变，只改亮度；bg 用于暗底对比度地板。
+   */
+  tone?: AmbientTone
 }
+
+export interface AmbientTone {
+  top: number
+  left: number
+  right: number
+  bg?: string
+}
+
+/**
+ * C4：环境光暗化后的「块面对比度地板」（相对页面背景 --bg）。
+ * 只约束暗化的两个时段（黄昏/夜幕）：它们把背光面乘到 0.55–0.68，
+ * 在墨黑主题下会与背景几乎同色，积木轮廓消失；自定义配色同样适用。
+ */
+const MIN_FACE_CONTRAST = 1.02
 
 /* ---------------- 颜色派生（从主题 CSS 变量程序化调整，双主题通用） ---------------- */
 
@@ -168,29 +188,44 @@ export function deriveShading(p: IsoPalette): BlockShading {
 const shadingColorCache = new Map<string, BlockShading>()
 
 /** 为任意自定义十六进制或 RGB 颜色派生符合等距立体光照的三面渐变色 */
-export function deriveShadingForColor(baseColor: string): BlockShading {
-  const cached = shadingColorCache.get(baseColor)
+export function deriveShadingForColor(baseColor: string, tone?: AmbientTone): BlockShading {
+  const cacheKey = tone
+    ? `${baseColor}_${tone.top}_${tone.left}_${tone.right}_${tone.bg ?? ''}`
+    : baseColor
+  const cached = shadingColorCache.get(cacheKey)
   if (cached) return cached
-  const topA = adjustLightness(baseColor, 1.0)
+  // 环境光乘数作用在最终面上（与主题块面的 floorFace 口径一致），色相不变。
+  const topA = adjustLightness(baseColor, tone ? tone.top : 1.0)
+  const leftA = adjustLightness(baseColor, tone ? tone.left * 0.78 : 0.78)
+  const rightA = adjustLightness(baseColor, tone ? tone.right * 0.52 : 0.52)
+  const bg = tone?.bg
+  /** 暗底对比度地板：只在「该面被环境光压暗」时生效（晨曦/恒等乘数不回收） */
+  const floorFace = (dimmed: string, standard: string, dimmedByAmbient: boolean): string =>
+    bg && dimmedByAmbient
+      ? floorContrast(dimmed, bg, Math.max(MIN_FACE_CONTRAST, contrastRatio(standard, bg)))
+      : dimmed
+  const leftDimmed = tone ? tone.left < 1 : false
+  const rightDimmed = tone ? tone.right < 1 : false
   const result: BlockShading = {
     topA,
-    topB: adjustLightness(baseColor, 0.88),
-    leftA: adjustLightness(baseColor, 0.78),
-    leftB: adjustLightness(baseColor, 0.62),
-    rightA: adjustLightness(baseColor, 0.52),
-    rightB: adjustLightness(baseColor, 0.36),
+    topB: adjustLightness(baseColor, tone ? tone.top * 0.88 : 0.88),
+    leftA: floorFace(leftA, adjustLightness(baseColor, 0.78), leftDimmed),
+    leftB: floorFace(
+      adjustLightness(baseColor, tone ? tone.left * 0.62 : 0.62),
+      adjustLightness(baseColor, 0.62),
+      leftDimmed
+    ),
+    rightA: floorFace(rightA, adjustLightness(baseColor, 0.52), rightDimmed),
+    rightB: floorFace(
+      adjustLightness(baseColor, tone ? tone.right * 0.36 : 0.36),
+      adjustLightness(baseColor, 0.36),
+      rightDimmed
+    ),
     studTop: adjustLightness(topA, 1.08)
   }
-  shadingColorCache.set(baseColor, result)
+  shadingColorCache.set(cacheKey, result)
   return result
 }
-
-/**
- * C4：环境光暗化后的「块面对比度地板」（相对页面背景 --bg）。
- * 只约束暗化的两个时段（黄昏/夜幕）：它们把背光面乘到 0.55–0.68，
- * 在墨黑主题下会与背景几乎同色，积木轮廓消失。
- */
-const MIN_FACE_CONTRAST = 1.02
 
 export type TimePeriod = 'dawn' | 'noon' | 'dusk' | 'night'
 
@@ -200,6 +235,17 @@ export function getTimePeriod(hour = new Date().getHours()): TimePeriod {
   if (hour >= 10 && hour < 16) return 'noon'
   if (hour >= 16 && hour < 19) return 'dusk'
   return 'night'
+}
+
+/** 环境光乘数表（与 applyAmbientLighting 的既有数值逐项一致） */
+export const AMBIENT_MULTIPLIERS: Record<
+  TimePeriod,
+  { top: number; left: number; right: number; ghost: number }
+> = {
+  dawn: { top: 1.14, left: 1.08, right: 0.9, ghost: 1 },
+  noon: { top: 1, left: 1, right: 1, ghost: 1 },
+  dusk: { top: 1.1, left: 0.84, right: 0.68, ghost: 0.9 },
+  night: { top: 0.9, left: 0.68, right: 0.55, ghost: 0.75 }
 }
 
 export function applyAmbientLighting(
@@ -213,33 +259,42 @@ export function applyAmbientLighting(
    */
   const floorFace = (base: string, dimmed: string): string =>
     floorContrast(dimmed, bg, Math.max(MIN_FACE_CONTRAST, contrastRatio(base, bg)))
+  const m = AMBIENT_MULTIPLIERS[period]
+  // 晨曦只提亮、不做暗底地板（与主题色路径一致）；bg 只给 dusk/night 的对比度回收用。
+  const tone: AmbientTone =
+    period === 'dawn'
+      ? { top: m.top, left: m.left, right: m.right }
+      : { top: m.top, left: m.left, right: m.right, bg }
   switch (period) {
     case 'dawn':
       // 晨曦：明显暖金晨光，顶面提亮、背光面微沉
       return {
         ...p,
-        top: adjustLightness(p.top, 1.14),
-        left: adjustLightness(p.left, 1.08),
-        right: adjustLightness(p.right, 0.9)
+        top: adjustLightness(p.top, m.top),
+        left: adjustLightness(p.left, m.left),
+        right: adjustLightness(p.right, m.right),
+        tone
       }
     case 'dusk':
       // 黄昏：日落暖橘，暗面明显加深、顶面留金
       return {
         ...p,
-        top: adjustLightness(p.top, 1.1),
-        left: floorFace(p.left, adjustLightness(p.left, 0.84)),
-        right: floorFace(p.right, adjustLightness(p.right, 0.68)),
-        ghost: adjustLightness(p.ghost, 0.9)
+        top: adjustLightness(p.top, m.top),
+        left: floorFace(p.left, adjustLightness(p.left, m.left)),
+        right: floorFace(p.right, adjustLightness(p.right, m.right)),
+        ghost: adjustLightness(p.ghost, m.ghost),
+        tone
       }
     case 'night':
       // 夜幕：夜灯质感，块身整体沉稳变暗、顶面保留聚光。
       // C4：暗化后按对比度地板回收——墨黑主题右脸曾被压到 1.03:1（与背景几乎同色）。
       return {
         ...p,
-        top: adjustLightness(p.top, 0.9),
-        left: floorFace(p.left, adjustLightness(p.left, 0.68)),
-        right: floorFace(p.right, adjustLightness(p.right, 0.55)),
-        ghost: adjustLightness(p.ghost, 0.75)
+        top: adjustLightness(p.top, m.top),
+        left: floorFace(p.left, adjustLightness(p.left, m.left)),
+        right: floorFace(p.right, adjustLightness(p.right, m.right)),
+        ghost: adjustLightness(p.ghost, m.ghost),
+        tone
       }
     case 'noon':
     default:
@@ -248,17 +303,16 @@ export function applyAmbientLighting(
   }
 }
 
-let cachedThemeKey = ''
-let cachedPalette: IsoPalette | null = null
+/** 每个 document 独立缓存：测试/托盘/主窗共用同一函数时不会串用主题与背景色 */
+const paletteCache = new WeakMap<Document, { key: string; palette: IsoPalette }>()
 
 /** 从 CSS 变量读取当前主题的调色板（支持时段感知昼夜环境光照与记忆化缓存） */
 export function paletteFromDocument(doc: Document = document, enableAmbient = false): IsoPalette {
   const theme = doc.documentElement.getAttribute('data-theme') || 'light'
   const period: TimePeriod = enableAmbient ? getTimePeriod() : 'noon'
   const cacheKey = `${theme}_${enableAmbient ? period : 'std'}`
-  if (cachedPalette && cachedThemeKey === cacheKey) {
-    return cachedPalette
-  }
+  const cached = paletteCache.get(doc)
+  if (cached && cached.key === cacheKey) return cached.palette
   const s = getComputedStyle(doc.documentElement)
   const v = (name: string) => s.getPropertyValue(name).trim()
   const basePalette: IsoPalette = {
@@ -270,10 +324,10 @@ export function paletteFromDocument(doc: Document = document, enableAmbient = fa
     accent: v('--accent'),
     ink: v('--ink')
   }
-  cachedThemeKey = cacheKey
   // 对比度地板需要知道页面背景色（--bg）：暗色主题的积木面与背景同色系
-  cachedPalette = enableAmbient
+  const palette = enableAmbient
     ? applyAmbientLighting(basePalette, period, v('--bg') || '#ffffff')
     : basePalette
-  return cachedPalette
+  paletteCache.set(doc, { key: cacheKey, palette })
+  return palette
 }

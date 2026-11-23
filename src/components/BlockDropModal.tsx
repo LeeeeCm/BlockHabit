@@ -178,20 +178,6 @@ export function BlockDropModal({
           </button>
         </div>
 
-        {/* F1：首块专属说明（放在标题栏下方整行，避免挤进标题 flex 行） */}
-        {placedCount === 1 && (
-          <div
-            style={{
-              fontSize: 'var(--fs-small)',
-              color: 'var(--ink-2)',
-              lineHeight: 1.6,
-              padding: '10px 20px 0'
-            }}
-          >
-            {t.blockDrop.firstBlockHint}
-          </div>
-        )}
-
         {/* 3D 单块掉落舞台 */}
         <div style={{ height: 240, position: 'relative', background: 'var(--bg)' }}>
           <BuildScene

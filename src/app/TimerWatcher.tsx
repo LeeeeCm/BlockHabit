@@ -4,6 +4,8 @@ import { IconCheck } from '../components/Icons'
 import { useAppStore } from '../store/appStore'
 import { useTimerStore } from '../store/timerStore'
 import { planFocusNotifications } from '../logic/focusSession'
+import { canCheckInHabit } from '../logic/checkin'
+import { todayKey } from '../logic/dates'
 import { notify } from '../platform/notify'
 import { useI18n } from '../i18n'
 
@@ -38,6 +40,11 @@ export function TimerWatcher() {
       for (const plan of plans) {
         const habit = currentHabits.find((h) => h.id === plan.habitId)
         if (!habit) continue
+        // 到点时习惯今天已无法打卡（手动打卡/周配额已满/改配额）：取消会话，不弹注定失败的通知
+        if (!canCheckInHabit(habit, useAppStore.getState().checkIns, todayKey()).ok) {
+          useTimerStore.getState().cancel(plan.habitId)
+          continue
+        }
         // 先落盘再去弹：即使进程立刻被杀，重开也不会重复通知
         useTimerStore.getState().markNotified(plan.habitId, plan.notifiedAt)
         const msg = tRef.current.focusCompanion.notificationBody(habit.name)

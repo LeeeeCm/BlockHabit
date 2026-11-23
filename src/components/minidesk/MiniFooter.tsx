@@ -32,6 +32,9 @@ export function MiniFooter({
   const { lang, t } = useI18n()
   const preset = MINI_PRESETS[size]
   const compact = size === 'pocket'
+  /** 快捷项为空有两种含义：目标都完成了，或今天已无可打卡（周配额未满） */
+  const emptyText =
+    activeHabitCount > 0 && doneCount >= activeHabitCount ? t.mini.allDone : t.mini.noneToday
   return (
     <div
       style={{
@@ -162,7 +165,7 @@ export function MiniFooter({
                 padding: '2px 0'
               }}
             >
-              {t.mini.allDone}
+              {emptyText}
             </div>
           )}
         </div>
@@ -194,7 +197,7 @@ export function MiniFooter({
                 padding: '2px 0'
               }}
             >
-              {t.mini.allDone}
+              {emptyText}
             </div>
           )}
         </div>

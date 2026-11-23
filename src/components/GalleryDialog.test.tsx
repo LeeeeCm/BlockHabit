@@ -16,23 +16,50 @@ import { zh } from '../i18n/locales/zh'
 
 const INSTALLED_TOTAL = 23
 const g = globalThis as unknown as {
-  __galleryThumbProps?: Array<{ blueprintId: string; silhouette?: boolean }>
+  __galleryThumbProps?: Array<{
+    blueprintId: string
+    silhouette?: boolean
+    placedCount?: number
+  }>
 }
 
 vi.mock('./BlueprintThumb', () => ({
-  BlueprintThumb: (props: { blueprint: { id: string }; silhouette?: boolean }) => {
+  BlueprintThumb: (props: {
+    blueprint: { id: string }
+    silhouette?: boolean
+    placedCount?: number
+  }) => {
     g.__galleryThumbProps = g.__galleryThumbProps ?? []
-    g.__galleryThumbProps.push({ blueprintId: props.blueprint.id, silhouette: props.silhouette })
+    g.__galleryThumbProps.push({
+      blueprintId: props.blueprint.id,
+      silhouette: props.silhouette,
+      placedCount: props.placedCount
+    })
     return null
   }
 }))
 
+function fakeBuilds(blueprintId: string, count: number) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `b-${blueprintId}-${index}`,
+    blueprintId,
+    index,
+    placedAt: '2026-11-24T00:00:00.000Z',
+    fromHabitId: 'h1',
+    bonus: false
+  }))
+}
+
 function setState(
-  over: { completedBlueprintIds?: string[]; activeBlueprintId?: string } = {}
+  over: {
+    completedBlueprintIds?: string[]
+    activeBlueprintId?: string
+    builds?: ReturnType<typeof fakeBuilds>
+  } = {}
 ): void {
   const current = useAppStore.getState()
   useAppStore.setState({
-    builds: [],
+    builds: over.builds ?? [],
     completedBlueprintIds: over.completedBlueprintIds ?? [],
     activeBlueprintId: over.activeBlueprintId ?? blueprintOrder[0],
     settings: { ...current.settings, language: 'zh' }
@@ -157,5 +184,42 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
     const all = [...blueprintOrder]
     expect(firstIncompleteIndex(all)).toBe(total)
     expect(canSelectBlueprint(blueprintOrder[total - 1], all)).toBe(true)
+  })
+
+  it('建造中的卡片把已落块数交给缩略图（当前样子）；完成/锁定态不传', () => {
+    const activeId = blueprintOrder[0]
+    setState({ activeBlueprintId: activeId, builds: fakeBuilds(activeId, 5) })
+    const view = renderGallery(() => {})
+    const props = g.__galleryThumbProps ?? []
+    expect(props).toHaveLength(blueprintOrder.length)
+    const activeThumb = props.find((p) => p.blueprintId === activeId)
+    expect(activeThumb?.placedCount).toBe(5)
+    expect(activeThumb?.silhouette).toBe(false)
+    for (const p of props.filter((p) => p.blueprintId !== activeId)) {
+      expect(p.placedCount).toBeUndefined()
+      expect(p.silhouette).toBe(true)
+    }
+    // 建造中文案仍显示已落数 / 总数
+    expect(view.cards()[0].textContent).toContain(
+      zh.gallery.inProgress + ' · 5/' + blueprints[activeId].blocks.length
+    )
+    view.unmount()
+  })
+
+  it('切走当前蓝图后，暂停的未完成建筑仍显示当前进度与建造中文案', () => {
+    const doneId = blueprintOrder[0]
+    const pausedId = blueprintOrder[1]
+    setState({
+      completedBlueprintIds: [doneId],
+      activeBlueprintId: doneId,
+      builds: fakeBuilds(pausedId, 4)
+    })
+    const view = renderGallery(() => {})
+    const props = g.__galleryThumbProps ?? []
+    expect(props.find((p) => p.blueprintId === pausedId)?.placedCount).toBe(4)
+    expect(view.cards()[1].textContent).toContain(
+      zh.gallery.inProgress + ' · 4/' + blueprints[pausedId].blocks.length
+    )
+    view.unmount()
   })
 })

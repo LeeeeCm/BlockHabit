@@ -1,7 +1,7 @@
 import { HabitRow } from '../../components/HabitRow'
 import { useI18n } from '../../i18n'
 import { currentStreakWithResilience } from '../../logic/streak'
-import { habitMetOnDay } from '../../logic/checkin'
+import { habitDoneOnDay } from '../../logic/checkin'
 import type { CheckIn, CheckInResult, Habit, HabitPeriod } from '../../types'
 import { PERIOD_ORDER } from './todayUtils'
 
@@ -12,6 +12,7 @@ interface Props {
   day: string
   enableGentleDecay: boolean
   onCheck: (res: CheckInResult, habit: Habit) => void
+  onBlocked?: (reason: 'already' | 'weekly-full', habit: Habit) => void
   onNoteSaved: () => void
   onEdit: (habit: Habit) => void
 }
@@ -24,6 +25,7 @@ export function TodayHabitSections({
   day,
   enableGentleDecay,
   onCheck,
+  onBlocked,
   onNoteSaved,
   onEdit
 }: Props) {
@@ -46,10 +48,8 @@ export function TodayHabitSections({
         <div className="habit-grid">
           {list.map((h) => {
             const streakInfo = currentStreakWithResilience(h, checkIns, now, enableGentleDecay)
-            // 完成态 = 今日有打卡 且 达标（counter 未满目标不亮绿勾；周频达标但今日未打卡不算完成）
-            const doneToday =
-              checkIns.some((c) => !c.deletedAt && c.habitId === h.id && c.date === day) &&
-              habitMetOnDay(h, checkIns, day)
+            // 完成态 = 规则函数判定（周频配额满即完成；休息日保留免战样式）
+            const doneToday = habitDoneOnDay(h, checkIns, day)
             return (
               <HabitRow
                 key={h.id}
@@ -60,6 +60,7 @@ export function TodayHabitSections({
                 inRestPeriod={streakInfo.inRestPeriod}
                 resilienceProtected={streakInfo.protectedContinuation === true}
                 onCheck={onCheck}
+                onBlocked={onBlocked}
                 onNoteSaved={onNoteSaved}
                 onEdit={onEdit}
                 domId={`habit-${h.id}`}

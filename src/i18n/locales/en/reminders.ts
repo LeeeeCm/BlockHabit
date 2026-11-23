@@ -24,12 +24,6 @@ export const eveningNudge: TranslationSchema['eveningNudge'] = {
   settingsDesc: 'One reminder a day when habits are still open.',
   settingsTime: 'Reminder time',
   settingsTimeNote: 'Works while the app is running',
-  consentTitle: 'Want a daily wrap-up reminder?',
-  consentBody: (time) =>
-    `Defaults to ${time}. Only when habits are still open. You can turn it off anytime.`,
-  consentEnable: 'Enable reminder',
-  consentLater: 'Not now',
-  enabledToast: 'Evening reminder enabled',
   notificationBody: (pending) =>
     `${pending} ${pending > 1 ? 'habits are' : 'habit is'} still open. Time to wrap up.`
 }
