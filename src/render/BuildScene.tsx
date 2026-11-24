@@ -287,6 +287,17 @@ export function BuildScene({
     touchStateRef.current = null
   }, [])
 
+  const handleResetView = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const w = canvas.clientWidth
+    const h = canvas.clientHeight
+    if (w === 0 || h === 0) return
+    interactedRef.current = false
+    viewRef.current = fitSceneView(stateRef.current, w, h)
+    draw()
+  }, [draw])
+
   // 尺寸初始化 + 自适应：未手动取景时最大化/放大窗口重新取景（场景保持在中心偏下）；
   // 已手动取景（拖拽/滚轮缩放过）时模型随窗口等比缩放并保持窗口内相对位置
   useEffect(() => {
@@ -492,6 +503,7 @@ export function BuildScene({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
+      onDoubleClick={handleResetView}
     />
   )
 }

@@ -64,7 +64,14 @@ describe('theme.css 无障碍基线（C1/C2）', () => {
       const rawBeziers = src.match(/cubic-bezier\(/g) ?? []
       expect(rawDurations, file + ' 仍有裸时长: ' + rawDurations.join(',')).toEqual([])
       expect(rawBeziers, file + ' 仍有裸贝塞尔').toEqual([])
+      const transitionAll = src.match(/transition:\s*all\b/g) ?? []
+      expect(transitionAll, file + ' 仍有 transition: all').toEqual([])
     }
+  })
+
+  it('为动态数值类 .big-num 启用等宽数字 tabular-nums', () => {
+    expect(css).toContain('.big-num')
+    expect(css).toContain('font-variant-numeric: tabular-nums')
   })
 
   it('提供键盘焦点环，且只用令牌颜色（不新增色相）', () => {

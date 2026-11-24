@@ -1,9 +1,8 @@
 /**
- * 全局统一平滑阻尼鼠标滚轮控制器：
- * - 拦截 Windows / WebKit 原生单格滚轮粗暴瞬跳（±100~120px）
- * - 归一化为缓慢、均匀、一致的步进距离（每个滚轮齿槽步进 44px）
- * - 采用 requestAnimationFrame 物理缓动插值（lerp damping），实现平缓顺滑的恒速/缓动滚动
- * - 自动识别当前鼠标悬停的滚动容器（.dialog、.content 或任意 overflow-y 容器）
+ * 全局统一平滑阻尼鼠标滚轮控制器（原生优先分流）：
+ * - 放行精密触控板连续微位移手势（deltaMode === 0 且 |deltaY| < 40）、横向滚动与 prefers-reduced-motion
+ * - 仅针对 Windows / 桌面离散鼠标滚轮（±100~120px）归一化为均匀一致的 44px 步进
+ * - 采用 requestAnimationFrame 亚像素阻尼插值，方向反转或外部跳转时同步真实 scrollTop
  * - 不干扰 Ctrl+滚轮缩放与 Canvas 3D 视角操作
  */
 
@@ -15,6 +14,22 @@ interface ActiveScroll {
 }
 
 let active: ActiveScroll | null = null
+
+/** 仅在明确开启减弱动态偏好时停用脚本插值，交还原生瞬时/系统滚动 */
+export function isReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+}
+
+/** 识别精密触控板像素级连续手势与横向滚动，交给浏览器 120Hz 合成器线程原生处理 */
+export function isTrackpadOrHorizontal(e: WheelEvent): boolean {
+  if (e.deltaY === 0 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return true
+  if (e.deltaMode === 0 && Math.abs(e.deltaY) < 40) return true
+  return false
+}
 
 export function findScrollableParent(el: HTMLElement | null): HTMLElement | null {
   let curr = el
@@ -37,7 +52,7 @@ function tick() {
   const { element, targetY, currentY } = active
   const diff = targetY - currentY
 
-  // 到达目标位置精度阈值，优雅对齐结束
+  // 到达目标位置精度阈值，对齐终点并结束帧循环
   if (Math.abs(diff) < 0.6) {
     element.scrollTop = targetY
     active.animId = null
@@ -45,10 +60,10 @@ function tick() {
     return
   }
 
-  // 平缓恒定插值阻尼：每帧行进剩余距离的 16%，速度平缓、节奏一致且完全无顿挫
+  // 亚像素插值阻尼：消除高分屏尾段取整产生的 1px 阶梯抖动
   const nextY = currentY + diff * 0.16
   active.currentY = nextY
-  element.scrollTop = Math.round(nextY)
+  element.scrollTop = nextY
 
   active.animId = requestAnimationFrame(tick)
 }
@@ -57,8 +72,8 @@ export function initSmoothScroll(): () => void {
   if (typeof window === 'undefined') return () => {}
 
   const onWheel = (e: WheelEvent) => {
-    // 1. 如果已有事件阻止（如 3D 画布滚轮缩放、Ctrl+滚轮网页缩放），不拦截
-    if (e.defaultPrevented || e.ctrlKey) return
+    // 1. 已有阻止（如 3D 画布缩放）、Ctrl+缩放、减弱动态、触控板微位移或横向滚动均放行原生处理
+    if (e.defaultPrevented || e.ctrlKey || isReducedMotion() || isTrackpadOrHorizontal(e)) return
 
     // 2. 找到当前鼠标悬停的可滚动容器
     const scrollable = findScrollableParent(e.target as HTMLElement | null)
@@ -72,11 +87,10 @@ export function initSmoothScroll(): () => void {
     if (direction > 0 && scrollable.scrollTop >= maxScroll - 1) return
     if (direction < 0 && scrollable.scrollTop <= 1) return
 
-    // 4. 拦截原生生硬跳动
+    // 4. 拦截离散鼠标滚轮生硬跳动
     e.preventDefault()
 
-    // 5. 归一化步进距离：
-    // Windows 鼠标滚轮单格通常为 ±100~120px，归一化为缓慢而恒定的 44px
+    // 5. 归一化步进距离：Windows 鼠标滚轮单格通常为 ±100~120px，归一化为平缓的 44px
     const STEP = 44
 
     if (!active || active.element !== scrollable) {
@@ -86,6 +100,13 @@ export function initSmoothScroll(): () => void {
         currentY: scrollable.scrollTop,
         targetY: scrollable.scrollTop,
         animId: null
+      }
+    } else {
+      const prevDir = active.targetY - active.currentY
+      // 外部拖动滚动条或方向反转时，立即与真实 scrollTop 对齐，避免反向滞后
+      if (Math.abs(scrollable.scrollTop - active.currentY) > 2 || prevDir * direction < 0) {
+        active.currentY = scrollable.scrollTop
+        active.targetY = scrollable.scrollTop
       }
     }
 
@@ -101,6 +122,7 @@ export function initSmoothScroll(): () => void {
 
   return () => {
     if (active?.animId) cancelAnimationFrame(active.animId)
+    active = null
     window.removeEventListener('wheel', onWheel, { capture: true })
   }
 }

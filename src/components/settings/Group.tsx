@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { IconChevronDown } from '../Icons'
 
 /**
  * D4：设置分组容器。
@@ -54,16 +55,18 @@ export function Group({
             aria-hidden="true"
             style={{
               display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               color: 'var(--ink-2)',
-              transition: 'transform var(--dur-xs) var(--ease-default)',
-              transform: open ? 'rotate(90deg)' : 'none'
+              transition: 'transform var(--dur-sm) var(--ease-out)',
+              transform: open ? 'rotate(0deg)' : 'rotate(-90deg)'
             }}
           >
-            ›
+            <IconChevronDown size={15} />
           </span>
         )}
       </div>
-      {open && children}
+      {open && (collapsible ? <div className="apple-group-body">{children}</div> : children)}
     </div>
   )
 }

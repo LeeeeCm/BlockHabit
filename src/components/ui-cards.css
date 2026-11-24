@@ -45,12 +45,14 @@
     border-color var(--dur-md) var(--ease-default);
 }
 
-.habit-card:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--ink) 18%, var(--line));
-  box-shadow:
-    0 8px 24px color-mix(in srgb, var(--ink) 7%, transparent),
-    0 2px 6px color-mix(in srgb, var(--ink) 3.5%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .habit-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--ink) 18%, var(--line));
+    box-shadow:
+      0 8px 24px color-mix(in srgb, var(--ink) 7%, transparent),
+      0 2px 6px color-mix(in srgb, var(--ink) 3.5%, transparent);
+  }
 }
 
 .habit-card .card-actions-group {
@@ -59,7 +61,19 @@
   background: color-mix(in srgb, var(--ink) 3.5%, transparent);
   border-radius: 10px;
   padding: 2px;
-  transition: background var(--dur-sm) var(--ease-default);
+  transition:
+    background var(--dur-sm) var(--ease-default),
+    opacity var(--dur-sm) var(--ease-default);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .habit-card .card-actions-group {
+    opacity: 0.68;
+  }
+  .habit-card:hover .card-actions-group,
+  .habit-card:focus-within .card-actions-group {
+    opacity: 1;
+  }
 }
 
 .habit-card .card-actions-group:hover {
@@ -100,6 +114,7 @@
   color: var(--ink);
   font-size: var(--fs-small);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
   padding: 5px 12px;
   display: inline-flex;
   align-items: center;
@@ -110,10 +125,12 @@
     color var(--dur-xs) var(--ease-default),
     transform var(--dur-xs) var(--ease-default);
 }
-.pill-action:hover,
-.habit-card .pill-action:hover {
-  background: color-mix(in srgb, var(--ink) 13%, transparent);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .pill-action:hover,
+  .habit-card .pill-action:hover {
+    background: color-mix(in srgb, var(--ink) 13%, transparent);
+    transform: translateY(-1px);
+  }
 }
 .pill-action:active,
 .habit-card .pill-action:active {
@@ -123,22 +140,26 @@
 .habit-card .pill-action.success {
   background: color-mix(in srgb, var(--progress-green) 15%, transparent);
   color: var(--success-text);
-  font-weight: 600;
+  font-weight: 500;
 }
-.pill-action.success:hover,
-.habit-card .pill-action.success:hover {
-  background: var(--progress-green);
-  color: var(--on-success);
+@media (hover: hover) and (pointer: fine) {
+  .pill-action.success:hover,
+  .habit-card .pill-action.success:hover {
+    background: var(--progress-green);
+    color: var(--on-success);
+  }
 }
 .pill-action.danger,
 .habit-card .pill-action.danger {
   background: color-mix(in srgb, var(--danger) 10%, transparent);
   color: var(--danger);
 }
-.pill-action.danger:hover,
-.habit-card .pill-action.danger:hover {
-  background: var(--danger);
-  color: var(--on-danger);
+@media (hover: hover) and (pointer: fine) {
+  .pill-action.danger:hover,
+  .habit-card .pill-action.danger:hover {
+    background: var(--danger);
+    color: var(--on-danger);
+  }
 }
 
 /* 状态图标按钮（卡片左上） */
@@ -171,17 +192,19 @@
     transform var(--dur-xs) var(--ease-default),
     background var(--dur-xs) var(--ease-default);
 }
-.gallery-card:hover {
-  border-color: var(--ink);
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .gallery-card:hover {
+    border-color: var(--ink);
+    transform: translateY(-2px);
+  }
+  .gallery-card.locked:hover {
+    border-color: var(--line);
+    transform: none;
+  }
 }
 .gallery-card.locked {
   opacity: 0.5;
   cursor: not-allowed;
-}
-.gallery-card.locked:hover {
-  border-color: var(--line);
-  transform: none;
 }
 
 .gallery-name {

@@ -60,7 +60,7 @@ export function drawGroundBase(
 
   ctx.save()
   traceIsoGroundPath(ctx, x0, x1, y0, y1, c, radii, c.blockH)
-  ctx.fillStyle = 'rgba(128, 128, 128, 0.05)'
+  ctx.fillStyle = withAlpha(p.ink, 0.04)
   ctx.fill()
   ctx.setLineDash([8, 6])
   ctx.lineJoin = 'round'

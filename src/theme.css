@@ -171,6 +171,11 @@ h3,
   letter-spacing: 0.01em;
 }
 
+.big-num,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
 :root[lang='en'] {
   letter-spacing: -0.01em;
 }

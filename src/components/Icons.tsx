@@ -502,6 +502,15 @@ export function IconClose(props: IconProps) {
   )
 }
 
+/** 折叠/展开箭头：几何中心严格位于 (12, 12)，旋转时不发生基线偏移 */
+export function IconChevronDown(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6.5 9.5L12 15l5.5-5.5" />
+    </Svg>
+  )
+}
+
 /** 必填标记：填充小圆角块 */
 export function IconRequired() {
   return (

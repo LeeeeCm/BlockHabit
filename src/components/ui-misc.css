@@ -45,6 +45,7 @@
   padding: 6px 16px;
   font-size: var(--fs-body);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-2);
   border-radius: var(--r-pill);
   border: none;
@@ -65,7 +66,6 @@
 .apple-segmented-item.active {
   background: var(--surface);
   color: var(--ink);
-  font-weight: 600;
   box-shadow:
     0 1.5px 6px color-mix(in srgb, var(--ink) 9%, transparent),
     0 0.5px 2px color-mix(in srgb, var(--ink) 4%, transparent);
@@ -91,10 +91,12 @@
     border-color var(--dur-md) var(--ease-default);
 }
 
-.chronicle-card:hover {
-  transform: translateY(-1.5px);
-  border-color: color-mix(in srgb, var(--ink) 20%, var(--line));
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--ink) 6%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .chronicle-card:hover {
+    transform: translateY(-1.5px);
+    border-color: color-mix(in srgb, var(--ink) 20%, var(--line));
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--ink) 6%, transparent);
+  }
 }
 
 /* 移动端习惯卡片触控与按压反馈 */

@@ -236,18 +236,29 @@ export default function Build({ openPetGallery = false }: BuildProps) {
           >
             <IconRotateCcw size={15} />
           </button>
-          <span
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => rotation !== 0 && setRotation(0)}
+            disabled={rotation === 0}
+            title={rotation !== 0 ? '0°' : undefined}
+            aria-label={`${rotation * 90}°`}
             style={{
+              width: 'auto',
+              height: 28,
+              minWidth: 36,
+              padding: '0 6px',
+              borderRadius: 999,
               fontSize: 'var(--fs-small)',
               fontWeight: 600,
-              color: 'var(--ink-2)',
-              minWidth: 32,
-              textAlign: 'center',
-              userSelect: 'none'
+              fontVariantNumeric: 'tabular-nums',
+              color: rotation === 0 ? 'var(--ink-2)' : 'var(--ink)',
+              opacity: 1,
+              cursor: rotation === 0 ? 'default' : 'pointer'
             }}
           >
             {rotation * 90}°
-          </span>
+          </button>
           <button
             className="icon-btn"
             onClick={() => setRotation((r) => (r + 1) % 4)}

@@ -208,3 +208,8 @@
 - 图鉴：锁定卡使用 `BlueprintThumb` 的 `silhouette` 模式——只用 `--ink` 透明度派生灰阶、透明底、忽略建筑自定义色、不画虚线地基；卡片不再整体压暗，名字与「待解锁」保持可读；已完成/当前建筑视觉不变。
 - 解锁：完成基础 12 座后自动指向扩展包第一座，其余按 `blueprintOrder` 顺序解锁；旧 12 座数据与视觉零改动。
 - 必须：内容版本门（`contentVersion=2`）先于 sanitize；旧客户端读新档只能 needsUpgrade，不得静默清洗；图鉴 18 卡可滚动，底部关闭按钮固定。
+
+### 5.9 2026-11-19 交互与动效轻量化精修（D-20261119-001）
+- **全局滚动与快捷键**：`smoothScroll` 放行精密触控板连续微位移、横向滚动与 `prefers-reduced-motion`；支持 `Ctrl+,` / `Cmd+,` 打开设置；桌面 `.tabbar` 增加 `1px --line` 顶边、毛玻璃背景分层与 `aria-current="page"`。
+- **今日页与弹窗**：`BlockDropModal` 镌刻抽屉使用 CSS Grid `0fr -> 1fr` 过渡替代硬编码 `max-height`；`Group` 与 `HabitDialog` 折叠指示统一使用几何居中 SVG `IconChevronDown`；`HabitRowHeader` 主状态按钮补充含习惯名的 `aria-label`；桌面卡片右上角操作组默认 `opacity: 0.68`，hover/focus-within 时升至 `1`。
+- **建造页**：双击 3D 画布复位平移/缩放至默认取景；旋转角度标签在非 `0°` 时可点击一键归零（不新增顶栏按钮）。
