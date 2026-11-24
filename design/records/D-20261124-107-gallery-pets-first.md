@@ -2,13 +2,13 @@
 id: D-20261124-107
 date: 2026-11-24
 title: 桌宠蓝图在图鉴中默认置顶（取代按钮方案）
-status: proposed
+status: approved
 owner: Claude Code
 surface: [gallery]
 axioms: [A2, A4]
 files: [src/components/GalleryDialog.tsx, src/components/GalleryDialog.test.tsx, src/components/ui-cards.css, src/i18n/types.ts, src/i18n/locales/zh.ts, src/i18n/locales/en/build.ts, README.md]
 supersedes: [D-20261124-106]
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -47,3 +47,4 @@ D-20261124-106 实现了「建筑蓝图 / 桌宠蓝图」两个二级标题，�
 ## 变更履历
 
 - 2026-11-24 created（Claude Code），按用户澄清改为默认置顶。
+- 2026-11-24 approved（LeeCM），设计记录通过人工审核。

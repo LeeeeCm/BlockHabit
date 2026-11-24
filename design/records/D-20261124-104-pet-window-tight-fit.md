@@ -2,13 +2,13 @@
 id: D-20261124-104
 date: 2026-11-24
 title: 桌宠窗口收紧到角色外沿，减少透明死区
-status: proposed
+status: approved
 owner: Claude Code
 surface: [mini-widget]
 axioms: [A3, A4, A5]
 files: [src-tauri/tauri.conf.json, src-tauri/src/lib.rs, src/platform/petMotion.ts, src/render/petCanvas.ts, src/render/petCanvas.test.ts, README.md]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -54,3 +54,4 @@ reviewer: pending
 
 - 2026-11-24 created（Claude Code），按用户反馈收紧桌宠透明窗口。
 - 2026-11-24 verified（Claude Code）：实机窗口 96×128；三档截图深色像素包围盒 56×63 / 48×54 / 42×52（未含柔和阴影），脚底 y=118 不变；block/cat/bot × 三档 × 静止/跳跃/伸懒腰均无裁切；右键面板仍贴身且桌宠坐标不变。
+- 2026-11-24 approved（LeeCM），设计记录通过人工审核。

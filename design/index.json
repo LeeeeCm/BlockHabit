@@ -942,18 +942,18 @@
       "id": "D-20261124-104",
       "date": "2026-11-24",
       "title": "桌宠窗口收紧到角色外沿，减少透明死区",
-      "status": "proposed",
+      "status": "approved",
       "owner": "Claude Code",
-      "reviewer": "pending",
+      "reviewer": "LeeCM",
       "file": "design/records/D-20261124-104-pet-window-tight-fit.md"
     },
     {
       "id": "D-20261124-105",
       "date": "2026-11-24",
       "title": "四页顶栏齐高齐位、统计标题归位与全项目隐藏滚动条",
-      "status": "proposed",
+      "status": "approved",
       "owner": "Claude Code",
-      "reviewer": "pending",
+      "reviewer": "LeeCM",
       "file": "design/records/D-20261124-105-header-scrollbar-unify.md"
     },
     {
@@ -969,27 +969,27 @@
       "id": "D-20261124-107",
       "date": "2026-11-24",
       "title": "桌宠蓝图在图鉴中默认置顶（取代按钮方案）",
-      "status": "proposed",
+      "status": "approved",
       "owner": "Claude Code",
-      "reviewer": "pending",
+      "reviewer": "LeeCM",
       "file": "design/records/D-20261124-107-gallery-pets-first.md"
     },
     {
       "id": "D-20261124-108",
       "date": "2026-11-24",
       "title": "习惯弹窗「更多设置」与首个选填字段的间距对齐",
-      "status": "proposed",
+      "status": "approved",
       "owner": "Claude Code",
-      "reviewer": "pending",
+      "reviewer": "LeeCM",
       "file": "design/records/D-20261124-108-habit-more-settings-gap.md"
     },
     {
       "id": "D-20261124-109",
       "date": "2026-11-24",
       "title": "今日/统计页滚动容器铺满整行，修复两侧滚轮失效",
-      "status": "proposed",
+      "status": "approved",
       "owner": "Claude Code",
-      "reviewer": "pending",
+      "reviewer": "LeeCM",
       "file": "design/records/D-20261124-109-page-scroll-full-width.md"
     }
   ]

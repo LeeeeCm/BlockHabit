@@ -2,13 +2,13 @@
 id: D-20261124-108
 date: 2026-11-24
 title: 习惯弹窗「更多设置」与首个选填字段的间距对齐
-status: proposed
+status: approved
 owner: Claude Code
 surface: [today]
 axioms: [A4]
 files: [src/components/HabitDialog.tsx]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -40,3 +40,4 @@ reviewer: pending
 ## 变更履历
 
 - 2026-11-24 created（Claude Code），按用户截图对齐选填区间距。
+- 2026-11-24 approved（LeeCM），设计记录通过人工审核。

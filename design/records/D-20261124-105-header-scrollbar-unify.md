@@ -2,13 +2,13 @@
 id: D-20261124-105
 date: 2026-11-24
 title: 四页顶栏齐高齐位、统计标题归位与全项目隐藏滚动条
-status: proposed
+status: approved
 owner: Claude Code
 surface: [global, today, stats]
 axioms: [A2, A4]
 files: [src/components/ui-base.css, src/components/ui-overlay.css, src/theme.css, src/pages/today/TodayHeader.tsx, src/pages/stats/StatsHeader.tsx, src/pages/Build.tsx, src/pages/Showcase.tsx]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -54,3 +54,4 @@ reviewer: pending
 
 - 2026-11-24 created（Claude Code），按用户反馈修复三处回归。
 - 2026-11-24 verified（Claude Code）：CDP 实测四页顶栏均为 64px，标题均为 x=20 / y=77.1 / 16px / 700 / 24.8px；今日与统计滚动容器 `offsetWidth-clientWidth` 为 0，滚轮后 `scrollTop` 0→44。
+- 2026-11-24 approved（LeeCM），设计记录通过人工审核。

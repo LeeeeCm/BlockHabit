@@ -2,13 +2,13 @@
 id: D-20261124-109
 date: 2026-11-24
 title: 今日/统计页滚动容器铺满整行，修复两侧滚轮失效
-status: proposed
+status: approved
 owner: Claude Code
 surface: [today, stats]
 axioms: [A4]
 files: [src/pages/Today.tsx, src/pages/Stats.tsx, src/pages/Stats.test.tsx]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -46,3 +46,4 @@ reviewer: pending
 
 - 2026-11-24 created（Claude Code），按用户反馈修复两侧滚轮无效。
 - 2026-11-24 verified（Claude Code）：1116px 视口下今日与统计容器均为 1116px 全宽，内容首项 x 仍为 222 / 242；鼠标在 x=50 左侧与 x=558 中间滚动，两页 `scrollTop` 都从 0 → 44，行为一致。
+- 2026-11-24 approved（LeeCM），设计记录通过人工审核。
