@@ -92,4 +92,14 @@ describe('Stats 拆分后的两种视图', () => {
     clickByText(view, '纪念品')
     expect(view.querySelector('[data-testid="memorabilia"]')).not.toBeNull()
   })
+
+  it('滚动容器铺满整行，左右留白也在滚轮命中区内', () => {
+    const view = renderStats()
+    const scroll = view.querySelector<HTMLElement>('.stats-page-container')
+    expect(scroll).not.toBeNull()
+    expect(scroll?.style.width).toBe('100%')
+    expect(scroll?.style.maxWidth).toBe('')
+    expect(scroll?.style.margin).toBe('')
+    expect(scroll?.style.overflowY).toBe('auto')
+  })
 })

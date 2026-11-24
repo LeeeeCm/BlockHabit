@@ -360,10 +360,10 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
       <div
         className="today-page-container"
         style={{
-          padding: '24px 24px 80px',
-          maxWidth: 720,
+          // 滚动容器铺满整行，内容用左右 padding 保持 720px 居中：
+          // 鼠标在左右留白处滚轮也能命中容器，而不是落在容器外。
+          padding: '24px max(24px, calc(24px + (100% - 720px) / 2)) 80px',
           width: '100%',
-          margin: '0 auto',
           boxSizing: 'border-box',
           flex: 1,
           minHeight: 0,

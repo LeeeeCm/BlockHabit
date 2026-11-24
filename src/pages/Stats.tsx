@@ -184,10 +184,10 @@ export default function Stats() {
       <div
         className="stats-page-container"
         style={{
-          padding: '24px 24px 80px',
-          maxWidth: 680,
+          // 与今日页同理：容器铺满整行，左右 padding 保持 680px 内容居中；
+          // 鼠标在两侧留白处滚轮也能命中滚动容器。
+          padding: '24px max(24px, calc(24px + (100% - 680px) / 2)) 80px',
           width: '100%',
-          margin: '0 auto',
           boxSizing: 'border-box',
           flex: 1,
           minHeight: 0,

@@ -982,6 +982,15 @@
       "owner": "Claude Code",
       "reviewer": "pending",
       "file": "design/records/D-20261124-108-habit-more-settings-gap.md"
+    },
+    {
+      "id": "D-20261124-109",
+      "date": "2026-11-24",
+      "title": "今日/统计页滚动容器铺满整行，修复两侧滚轮失效",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-109-page-scroll-full-width.md"
     }
   ]
 }
