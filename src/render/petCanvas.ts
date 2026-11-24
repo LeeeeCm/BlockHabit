@@ -39,9 +39,15 @@ const MAX_STAGE_SCALE = 3
 const CORNER_RADIUS = Math.min(3, tileW * 0.0625)
 const PAD = 2
 const TURNED_BODY_HEIGHT = blockH + tileH + STUD_H
-const FLOOR_ROOM = tileH / 4
-const MIN_HOP_LIFT = PEAK_HOP_LIFT / 3
-const SHADOW_CONFIG = { tileW, tileH: tileH / 2, blockH: 0 }
+/** 窗口底部留给接触阴影的像素；脚底锚点贴底，不再像旧窗口那样垂直居中。 */
+const BOTTOM_ROOM = 10
+/** 三档尺寸共用同一窗口：按最大档 1.05 倍预留，避免切到大号时裁切。 */
+const MAX_SIZE_SCALE = 1.05
+/** 侧向转体时立方体的最大横向占位；猫尾/机器人手臂都不超过 tileW。 */
+const ART_MAX_WIDTH = tileW
+/** 脚底到跳跃最高点（含凸点）的最大占位。 */
+const ART_MAX_HEIGHT = TURNED_BODY_HEIGHT + PEAK_HOP_LIFT
+const SHADOW_CONFIG = { tileW: tileW * 0.6, tileH: tileH * 0.45, blockH: 0 }
 const SHADOW_FOOTPRINT = [{ x: 0, y: 0 }]
 
 function mixShade(from: string, to: string, amount: number): string {
@@ -238,28 +244,36 @@ function paintPart(
 
 /** 小窗只为短跳预留最少上升空间；宽松画布保留完整幅度，整段不重取景。 */
 /** 桌宠脚底/接地线的屏幕 y；缩放角色时以它为锚点，底部位置不变。 */
-export function petStageFloor(width: number, height: number): number {
+export function petStageFloor(_width: number, height: number): number {
+  return Math.max(PAD + 1, height - BOTTOM_ROOM)
+}
+
+/** 角色在窗口内的绘制比例：宽、高都按最大档预留，跳起与侧身都不越界。 */
+export interface PetLayout {
+  /** 脚底/接地线的屏幕 y */
+  floor: number
+  /** 角色绘制比例（未乘用户选择的小/中/大档位） */
+  scale: number
+  /** 角色最大横向占位（等距单位） */
+  artWidth: number
+  /** 脚底到跳跃最高点的最大占位（等距单位） */
+  artHeight: number
+}
+
+export function petLayout(width: number, height: number): PetLayout {
+  const floor = petStageFloor(width, height)
   const scale = Math.min(
     MAX_STAGE_SCALE,
-    (width - PAD * 2) / (2 * tileW),
-    (height - PAD * 2) / (TURNED_BODY_HEIGHT + FLOOR_ROOM + MIN_HOP_LIFT)
+    (width - PAD * 2) / (ART_MAX_WIDTH * MAX_SIZE_SCALE),
+    Math.max(0, floor - PAD) / (ART_MAX_HEIGHT * MAX_SIZE_SCALE)
   )
-  if (scale <= 0) return height
-  return Math.max(
-    PAD + (TURNED_BODY_HEIGHT + MIN_HOP_LIFT) * scale,
-    (height + (blockH + STUD_H) * scale) / 2
-  )
+  return { floor, scale, artWidth: ART_MAX_WIDTH, artHeight: ART_MAX_HEIGHT }
 }
 
 export function paintPet(ctx: CanvasRenderingContext2D, frame: PetFrame): void {
   const { width, height, pose, palette, model } = frame
-  const scale = Math.min(
-    MAX_STAGE_SCALE,
-    (width - PAD * 2) / (2 * tileW),
-    (height - PAD * 2) / (TURNED_BODY_HEIGHT + FLOOR_ROOM + MIN_HOP_LIFT)
-  )
+  const { floor, scale } = petLayout(width, height)
   if (scale <= 0) return
-  const floor = petStageFloor(width, height)
   const liftRoom = Math.min(PEAK_HOP_LIFT, (floor - PAD) / scale - TURNED_BODY_HEIGHT)
   const geometry = projectPet(model, pose.turn)
   const lighting = petLighting(palette, pose.turn, frame.shading)

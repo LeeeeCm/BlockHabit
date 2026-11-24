@@ -38,8 +38,8 @@
       {
         "label": "pet",
         "title": "",
-        "width": 160,
-        "height": 180,
+        "width": 96,
+        "height": 128,
         "resizable": false,
         "decorations": false,
         "visible": false,

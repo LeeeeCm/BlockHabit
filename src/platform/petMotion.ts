@@ -16,7 +16,7 @@ export interface PetWorkArea {
 }
 
 /** 宠物窗口逻辑尺寸（与 tauri.conf.json 的 pet 窗口保持一致） */
-export const PET_SIZE = { w: 160, h: 180 } as const
+export const PET_SIZE = { w: 96, h: 128 } as const
 
 export function clampPetPosition(
   pos: PetPoint,

@@ -218,6 +218,13 @@ pub fn run() {
             credentials::credential_delete
         ])
         .setup(|app| {
+            // Windows 对带 WS_THICKFRAME 的窗口有约 136px 的最小宽度，CreateWindow 时
+            // 会把 96px 的桌宠窗撑宽。窗口创建后再 SetWindowPos 一次，才能在 show 之前
+            // 收到 96×128；与前端 PET_SIZE 保持一致。
+            if let Some(win) = app.get_webview_window("pet") {
+                let _ = win.set_size(tauri::LogicalSize::new(96.0, 128.0));
+            }
+
             // 托盘菜单窗口：失焦即隐藏
             if let Some(win) = app.get_webview_window("tray-menu") {
                 let w = win.clone();
