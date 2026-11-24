@@ -9,10 +9,8 @@ describe('pet types（D-20261124-088）', () => {
     expect(petSizeScale('medium')).toBe(1)
   })
 
-  it('积木默认可用，机器人完成 1 座、猫完成 3 座建筑后解锁', () => {
+  it('积木默认可用，猫完成 3 座建筑后解锁', () => {
     expect(isPetSkinUnlocked('block', 0)).toBe(true)
-    expect(isPetSkinUnlocked('robot', 0)).toBe(false)
-    expect(isPetSkinUnlocked('robot', 1)).toBe(true)
     expect(isPetSkinUnlocked('cat', 2)).toBe(false)
     expect(isPetSkinUnlocked('cat', 3)).toBe(true)
   })

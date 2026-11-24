@@ -112,5 +112,6 @@
 | D-20261124-092 | 2026-11-24 | 图鉴缩略图修复：建造中显示当前形态 + 计划轮廓 | proposed | gallery | pending |
 | D-20261124-093 | 2026-11-24 | 设置信息架构合并：5 组、全部可折叠、新增桌宠分组 | proposed | settings | pending |
 | D-20261124-094 | 2026-11-24 | 桌宠材质色 DIY 与第三形象（猫） | approved | mini-widget, settings | LeeCM |
+| D-20261124-095 | 2026-11-24 | 移除机器人桌宠形象 | approved | mini-widget, settings | LeeCM |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

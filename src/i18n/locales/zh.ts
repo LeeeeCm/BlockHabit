@@ -464,7 +464,6 @@ export const zh: TranslationSchema = {
     petSizeLarge: '大',
     petSkinLabel: '形象',
     petSkinBlock: '积木',
-    petSkinRobot: '机器人',
     petSkinCat: '猫',
     petColorLabel: '颜色',
     petColorTheme: '跟随主题',

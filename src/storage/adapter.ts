@@ -389,10 +389,7 @@ export function normalizeState(s: AppState): AppState {
         s.settings?.petSize === 'small' || s.settings?.petSize === 'large'
           ? s.settings.petSize
           : 'medium',
-      petSkin:
-        s.settings?.petSkin === 'robot' || s.settings?.petSkin === 'cat'
-          ? s.settings.petSkin
-          : 'block',
+      petSkin: s.settings?.petSkin === 'cat' ? 'cat' : 'block',
       petRoam: s.settings?.petRoam !== false,
       petColor: normalizePetColor(s.settings?.petColor)
     },

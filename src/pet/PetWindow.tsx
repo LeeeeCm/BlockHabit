@@ -215,11 +215,7 @@ export function PetWindow({ preview = false }: Props) {
       const config = configRef.current
       const roam = config.roam !== false
       const skin =
-        config.skin === 'cat' && isPetSkinUnlocked('cat', config.completed)
-          ? 'cat'
-          : config.skin === 'robot' && isPetSkinUnlocked('robot', config.completed)
-            ? 'bot'
-            : 'block'
+        config.skin === 'cat' && isPetSkinUnlocked('cat', config.completed) ? 'cat' : 'block'
 
       if (menuOpenRef.current) {
         if (mode === 'walk') {
@@ -489,18 +485,6 @@ export function PetWindow({ preview = false }: Props) {
               onClick={() => changePref({ skin: 'block' })}
             >
               {t.settings.petSkinBlock}
-            </button>
-            <button
-              className={config.skin === 'robot' ? 'active' : ''}
-              disabled={!isPetSkinUnlocked('robot', config.completed)}
-              title={
-                isPetSkinUnlocked('robot', config.completed)
-                  ? undefined
-                  : t.settings.petSkinLocked(1)
-              }
-              onClick={() => changePref({ skin: 'robot' })}
-            >
-              {t.settings.petSkinRobot}
             </button>
             <button
               className={config.skin === 'cat' ? 'active' : ''}

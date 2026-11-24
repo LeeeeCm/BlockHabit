@@ -42,3 +42,4 @@ reviewer: LeeCM
 ## 变更履历
 
 - 2026-11-24 created（Claude Code），按用户明确要求增加颜色 DIY 与更多模型。
+- 2026-11-24 机器人形象已由 D-20261124-095 移除，桌宠保留 block / cat。

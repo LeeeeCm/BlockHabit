@@ -1,6 +1,6 @@
 /** 桌宠角色尺寸与形象（形象来自旧版正面投影渲染器） */
 export type PetSize = 'small' | 'medium' | 'large'
-export type PetSkin = 'block' | 'robot' | 'cat'
+export type PetSkin = 'block' | 'cat'
 
 /** 可用材质色（全部来自 D-067 已批准的蓝图调色板，不新增色相） */
 export const PET_COLORS = [
@@ -46,9 +46,8 @@ export const DEFAULT_PET_CONFIG: PetConfig = {
   completed: 0
 }
 
-/** 积木默认可用；机器人完成 1 座建筑后解锁；猫完成 3 座后解锁 */
+/** 积木默认可用；猫完成 3 座建筑后解锁（机器人形象已移除） */
 export function isPetSkinUnlocked(skin: PetSkin, completedCount: number): boolean {
-  if (skin === 'block') return true
   if (skin === 'cat') return completedCount >= 3
-  return completedCount >= 1
+  return true
 }

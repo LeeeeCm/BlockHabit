@@ -114,7 +114,6 @@ export const settings: TranslationSchema['settings'] = {
   petSizeLarge: 'Large',
   petSkinLabel: 'Appearance',
   petSkinBlock: 'Block',
-  petSkinRobot: 'Robot',
   petSkinCat: 'Cat',
   petColorLabel: 'Color',
   petColorTheme: 'Follow theme',

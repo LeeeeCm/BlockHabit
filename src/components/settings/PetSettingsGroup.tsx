@@ -66,16 +66,6 @@ export function PetSettingsGroup({ settings, completedCount, t, onUpdateSettings
               {t.settings.petSkinBlock}
             </button>
             <button
-              className={currentSkin === 'robot' ? 'active' : ''}
-              disabled={!isPetSkinUnlocked('robot', completedCount)}
-              title={
-                isPetSkinUnlocked('robot', completedCount) ? undefined : t.settings.petSkinLocked(1)
-              }
-              onClick={() => onUpdateSettings({ petSkin: 'robot' })}
-            >
-              {t.settings.petSkinRobot}
-            </button>
-            <button
               className={currentSkin === 'cat' ? 'active' : ''}
               disabled={!isPetSkinUnlocked('cat', completedCount)}
               title={

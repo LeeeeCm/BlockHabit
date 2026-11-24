@@ -847,6 +847,15 @@
       "owner": "Claude Code",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261124-094-pet-colors-models.md"
+    },
+    {
+      "id": "D-20261124-095",
+      "date": "2026-11-24",
+      "title": "移除机器人桌宠形象",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261124-095-remove-robot-pet.md"
     }
   ]
 }

@@ -470,7 +470,6 @@ export interface TranslationSchema {
     petSizeLarge: string
     petSkinLabel: string
     petSkinBlock: string
-    petSkinRobot: string
     petSkinCat: string
     petColorLabel: string
     petColorTheme: string
