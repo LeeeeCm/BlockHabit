@@ -61,6 +61,16 @@ describe('canSelectBlueprint（顺序解锁）', () => {
     const all = [...blueprintOrder]
     for (const id of all) expect(canSelectBlueprint(id, all)).toBe(true)
   })
+  it('both pet blueprints are selectable before the first main build', () => {
+    expect(canSelectBlueprint('pet-cat', [])).toBe(true)
+    expect(canSelectBlueprint('pet-bot', [])).toBe(true)
+  })
+
+  it('pet completions cannot stand in for a missing main blueprint', () => {
+    expect(canSelectBlueprint('coffee', ['pet-cat', 'pet-bot'])).toBe(false)
+    expect(canSelectBlueprint('camera', ['plant', 'pet-cat', 'pet-bot'])).toBe(false)
+  })
+
   it('unknown id → not selectable', () => {
     expect(canSelectBlueprint('nope', [])).toBe(false)
   })

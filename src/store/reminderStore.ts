@@ -47,8 +47,14 @@ export const useReminderStore = create<ReminderStore>()((set, get) => ({
 
   push(item) {
     set((s) => {
-      if (s.pending.some((p) => p.habitId === item.habitId)) return s
-      return { pending: [...s.pending, item], suppressed: false }
+      const prior = s.pending.find((p) => p.habitId === item.habitId)
+      if (prior?.stage === item.stage) return s
+      return {
+        pending: prior
+          ? s.pending.map((p) => (p.habitId === item.habitId ? item : p))
+          : [...s.pending, item],
+        suppressed: false
+      }
     })
   },
 

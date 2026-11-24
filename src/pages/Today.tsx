@@ -12,7 +12,8 @@ import { templateFrequency, type HabitTemplate } from '../logic/habitTemplates'
 import { getNudgeConsent, setNudgeConsent, type NudgeConsent } from '../platform/eveningNudgePrefs'
 import { TodayBrief } from '../components/TodayBrief'
 import { EveningNudgeConsent } from '../components/EveningNudgeConsent'
-import { blueprintOrder, getBlueprint } from '../logic/blueprints'
+import { blueprintCatalogIds, getBlueprint } from '../logic/blueprints'
+import { completedCatalogCount } from '../logic/blueprint'
 import { useI18n } from '../i18n'
 import { playCelebrationSound } from '../audio/sound'
 import { triggerHaptic, usePlatform } from '../platform'
@@ -243,9 +244,10 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
       } else {
         // F2：没有掉块时必须说清原因，而不是让用户以为「积木丢了」。
         // 判别规则抽到 pure logic（logic/blockHints）以便单测；这里只负责选文案。
+        const { builds: liveBuilds, completedBlueprintIds: completedIds } = useAppStore.getState()
         const reason = noBlockReason({
-          completedBlueprints: completedBlueprintIds.length,
-          blueprintTotal: blueprintOrder.length,
+          completedBlueprints: completedCatalogCount(completedIds, liveBuilds),
+          blueprintTotal: blueprintCatalogIds.length,
           placedCount: placedCountRef.current,
           activeBlueprintBlocks: getBlueprint(activeBlueprintId).blocks.length
         })
@@ -261,7 +263,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
       // B1：连击每满 7 天掉落的积木是点缀色奖励块 —— 让用户知道这块为什么不一样
       if (res.bonus) showToast(t.today.streakBonusToast(7), true)
     },
-    [t, completedBlueprintIds, activeBlueprintId]
+    [t, activeBlueprintId]
   )
 
   const handleEdit = useCallback((h: Habit) => {

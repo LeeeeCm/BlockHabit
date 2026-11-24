@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { getTimePeriod } from '../render/iso'
-import { blueprintOrder, blueprints, getBlueprint } from '../logic/blueprints'
+import { blueprintCatalogIds, blueprintOrder, getBlueprint } from '../logic/blueprints'
+import { blueprintProgress, completedCatalogCount, firstIncompleteIndex } from '../logic/blueprint'
 import { getBlueprintName, useI18n } from '../i18n'
 import { BuildScene } from '../render/BuildScene'
 import { GalleryDialog } from '../components/GalleryDialog'
@@ -19,22 +20,29 @@ import {
 } from '../components/Icons'
 import { triggerHaptic } from '../platform'
 import { hasSeenTip, markTipSeen } from '../platform/guideTips'
-export default function Build() {
+interface BuildProps {
+  openPetGallery?: boolean
+}
+
+export default function Build({ openPetGallery = false }: BuildProps) {
   const { lang, t } = useI18n()
   const builds = useAppStore((s) => s.builds)
   const activeBlueprintId = useAppStore((s) => s.activeBlueprintId)
   const chooseBlueprint = useAppStore((s) => s.chooseBlueprint)
   const completedBlueprintIds = useAppStore((s) => s.completedBlueprintIds)
   const blueprint = getBlueprint(activeBlueprintId)
-  const placedCount = builds.filter((b) => b.blueprintId === activeBlueprintId).length
-  const total = blueprint.blocks.length
-  // 进度不得超过 100%：多端离线各自建满后合并可能让投影块数短暂超出蓝图容量
-  const progressRatio = total > 0 ? Math.min(1, placedCount / total) : 0
-  const complete = placedCount >= total
+  const {
+    placed: placedCount,
+    total,
+    complete
+  } = useMemo(() => blueprintProgress(builds, blueprint.id), [builds, blueprint.id])
+  const progressRatio = total > 0 ? placedCount / total : 0
 
   // 已建成的蓝图被查看时不重播落成仪式；本会话内拼满时才触发
-  const [ceremonyShown, setCeremonyShown] = useState(() => placedCount >= total)
-  const [galleryOpen, setGalleryOpen] = useState(false)
+  const [ceremonyShown, setCeremonyShown] = useState(complete)
+  const [galleryView, setGalleryView] = useState<'main' | 'pet' | null>(
+    openPetGallery ? 'pet' : null
+  )
   const [polaroidOpen, setPolaroidOpen] = useState(false)
   const [foundationModalOpen, setFoundationModalOpen] = useState(false)
   const foundationNote = useAppStore((s) => s.foundationNotes?.[blueprint.id])
@@ -51,22 +59,18 @@ export default function Build() {
     if (guideTipVisible) markTipSeen('build')
   }, [guideTipVisible])
   useEffect(() => {
-    setCeremonyShown(
-      builds.filter((b) => b.blueprintId === activeBlueprintId).length >=
-        getBlueprint(activeBlueprintId).blocks.length
-    )
+    // 只在换项目时读取完成态，当前项目从建造中转为完成应播放仪式。
+    setCeremonyShown(complete)
   }, [activeBlueprintId])
 
   const showCeremony = complete && !ceremonyShown
+  const nextChoiceId = blueprintOrder[firstIncompleteIndex(completedBlueprintIds)]
 
-  const nextChoice = useMemo(() => {
-    const idx = blueprintOrder.indexOf(activeBlueprintId)
-    const nextId = blueprintOrder[(idx + 1) % blueprintOrder.length]
-    return blueprints[nextId]
-  }, [activeBlueprintId])
-
-  /** F2：全部蓝图落成 —— 打卡不再产块，必须显式告知，而不是静默无反应 */
-  const allBlueprintsDone = completedBlueprintIds.length >= blueprintOrder.length
+  /** F2：主线与支线全部落成后，才没有任何新蓝图可以落块。 */
+  const allBlueprintsDone = useMemo(
+    () => completedCatalogCount(completedBlueprintIds, builds) === blueprintCatalogIds.length,
+    [completedBlueprintIds, builds]
+  )
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -181,7 +185,7 @@ export default function Build() {
         <button
           className="btn ghost"
           style={{ padding: '7px 14px', fontSize: 'var(--fs-body)' }}
-          onClick={() => setGalleryOpen(true)}
+          onClick={() => setGalleryView('main')}
           title={t.build.galleryBtn}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -203,7 +207,7 @@ export default function Build() {
             lineHeight: 1.5
           }}
         >
-          {t.build.allDoneHint(blueprintOrder.length)}
+          {t.build.allDoneHint(blueprintCatalogIds.length)}
         </div>
       )}
 
@@ -378,15 +382,16 @@ export default function Build() {
                     color: 'var(--ink-2)',
                     background: 'color-mix(in srgb, var(--ink) 6%, transparent)'
                   }}
-                  title={t.build.allDoneHint(blueprintOrder.length)}
+                  title={t.build.allDoneHint(blueprintCatalogIds.length)}
                 >
                   <IconSparkle size={13} style={{ color: 'var(--accent)' }} />
                   {t.build.allDoneBadge}
                 </span>
               ) : (
-                nextChoice && (
-                  <button className="btn" onClick={() => chooseBlueprint(nextChoice.id)}>
-                    {t.build.nextTargetPrompt(getBlueprintName(nextChoice.id, lang))}
+                nextChoiceId &&
+                nextChoiceId !== activeBlueprintId && (
+                  <button className="btn" onClick={() => chooseBlueprint(nextChoiceId)}>
+                    {t.build.nextTargetPrompt(getBlueprintName(nextChoiceId, lang))}
                   </button>
                 )
               )}
@@ -398,7 +403,9 @@ export default function Build() {
         )}
       </div>
 
-      {galleryOpen && <GalleryDialog onClose={() => setGalleryOpen(false)} />}
+      {galleryView && (
+        <GalleryDialog petFirst={galleryView === 'pet'} onClose={() => setGalleryView(null)} />
+      )}
       {polaroidOpen && (
         <PolaroidModal blueprint={blueprint} onClose={() => setPolaroidOpen(false)} />
       )}

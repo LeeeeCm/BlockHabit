@@ -1,5 +1,6 @@
 import type { AppState, CheckIn, Habit, MicroMood, PlacedBlock } from '../types'
-import { blueprints, blueprintOrder } from './blueprints'
+import { validPlacedBlocks } from './blueprint'
+import { blueprintCatalogIds, findBlueprint } from './blueprints'
 import { dateKey } from './dates'
 
 /**
@@ -122,23 +123,14 @@ function dayDiff(a: string, b: string): number {
   return Math.round((Date.UTC(ay, am - 1, ad) - Date.UTC(by, bm - 1, bd)) / DAY_MS)
 }
 
-function liveBlocksOf(state: BuildingArchiveState, blueprintId: string): PlacedBlock[] {
-  return state.builds.filter((b) => b.blueprintId === blueprintId && !b.deletedAt)
-}
-
-function capitalOf(blueprintId: string): number | null {
-  const blueprint = blueprints[blueprintId]
-  return blueprint ? blueprint.blocks.length : null
-}
-
 /**
  * 该蓝图落成时间戳（ms）：块数达容量时取 max(placedAt)；未落成/时间戳非法 → null。
  * 只依赖 builds 切片，供 completionDateOf / completionDateOfBuilds 共用，避免两处口径漂移。
  */
 function completionMsOfBuilds(builds: PlacedBlock[], blueprintId: string): number | null {
-  const capacity = capitalOf(blueprintId)
-  if (capacity === null) return null
-  const blocks = builds.filter((b) => b.blueprintId === blueprintId && !b.deletedAt)
+  const capacity = findBlueprint(blueprintId)?.blocks.length ?? 0
+  if (capacity === 0) return null
+  const blocks = validPlacedBlocks(builds, blueprintId)
   if (blocks.length < capacity) return null
   let max = -Infinity
   for (const block of blocks) {
@@ -174,9 +166,9 @@ export function completionDateOfBuilds(builds: PlacedBlock[], blueprintId: strin
 
 /** 已落成建筑（按落成时间倒序；同刻按蓝图顺序稳定） */
 export function listArchiveBuildings(state: BuildingArchiveState): string[] {
-  const orderIndex = new Map(blueprintOrder.map((id, index) => [id, index] as const))
+  const orderIndex = new Map(blueprintCatalogIds.map((id, index) => [id, index] as const))
   const completed: Array<{ id: string; ms: number }> = []
-  for (const id of blueprintOrder) {
+  for (const id of blueprintCatalogIds) {
     const ms = completionMsOf(state, id)
     if (ms !== null) completed.push({ id, ms })
   }
@@ -198,8 +190,7 @@ export function blockMetaIndex(
     if (ci.placedBlockId && !ci.deletedAt) ciByPlacedBlockId.set(ci.placedBlockId, ci)
   }
   const habitMap = new Map<string, string>(state.habits.map((h) => [h.id, h.name] as const))
-  for (const pb of state.builds) {
-    if (pb.blueprintId !== blueprintId || pb.deletedAt) continue
+  for (const pb of validPlacedBlocks(state.builds, blueprintId)) {
     const ci = ciByPlacedBlockId.get(pb.id)
     index.set(pb.index, { pb, ci, habitName: ci ? habitMap.get(ci.habitId) : undefined })
   }
@@ -257,8 +248,8 @@ function buildMilestones(
 
 function buildNotes(state: BuildingArchiveState, blueprintId: string): ArchiveNoteEntry[] {
   const indexByBlockId = new Map<string, number>()
-  for (const pb of state.builds) {
-    if (pb.blueprintId === blueprintId && !pb.deletedAt) indexByBlockId.set(pb.id, pb.index)
+  for (const pb of validPlacedBlocks(state.builds, blueprintId)) {
+    indexByBlockId.set(pb.id, pb.index)
   }
   const habitMap = new Map<string, string>(state.habits.map((h) => [h.id, h.name] as const))
   const notes: ArchiveNoteEntry[] = []
@@ -317,9 +308,9 @@ export function buildBuildingArchive(
   state: BuildingArchiveState,
   blueprintId: string
 ): BuildingArchive {
-  const blueprint = blueprints[blueprintId]
+  const blueprint = findBlueprint(blueprintId)
   const capacity = blueprint ? blueprint.blocks.length : 0
-  const blocks = liveBlocksOf(state, blueprintId)
+  const blocks = validPlacedBlocks(state.builds, blueprintId)
   const completed = blueprint !== undefined && blocks.length >= capacity && capacity > 0
   const completionMs = completed ? completionMsOf(state, blueprintId) : null
   const completedAt = completionMs === null ? null : dateKey(new Date(completionMs))
@@ -339,10 +330,12 @@ export function buildBuildingArchive(
       ? Math.max(0, dayDiff(completedAt, firstPlacedAt))
       : null
 
-  const completedAsc = [...blueprintOrder]
+  const completedAsc = blueprintCatalogIds
     .map((id) => ({ id, ms: completionMsOf(state, id) }))
     .filter((entry): entry is { id: string; ms: number } => entry.ms !== null)
-    .sort((a, b) => a.ms - b.ms || blueprintOrder.indexOf(a.id) - blueprintOrder.indexOf(b.id))
+    .sort(
+      (a, b) => a.ms - b.ms || blueprintCatalogIds.indexOf(a.id) - blueprintCatalogIds.indexOf(b.id)
+    )
   const ordinalIndex = completedAsc.findIndex((entry) => entry.id === blueprintId)
 
   const topHabits = buildTopHabits(state, blocks)

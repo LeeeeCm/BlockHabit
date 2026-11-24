@@ -64,6 +64,33 @@ afterEach(() => {
   delete (blueprints as Record<string, unknown>).__small__
 })
 
+describe('桌宠建筑档案', () => {
+  it('桌宠真实落成后列入档案顺序，不需要主线蓝图完成', () => {
+    const placed = Array.from({ length: 12 }, (_, index): PlacedBlock => ({
+      id: `cat-${index}`,
+      blueprintId: 'pet-cat',
+      index,
+      placedAt: atLocal('2026-11-24'),
+      fromHabitId: 'h1',
+      bonus: false
+    }))
+    const state = makeState({ builds: placed })
+    expect(listArchiveBuildings(state)).toEqual(['pet-cat'])
+    expect(buildBuildingArchive(state, 'pet-cat')).toMatchObject({
+      completed: true,
+      ordinal: 1,
+      totalCompleted: 1
+    })
+    const duplicate = { ...placed[0], id: 'duplicate' }
+    const partial = makeState({ builds: [...placed.slice(0, -1), duplicate] })
+    expect(listArchiveBuildings(partial)).toEqual([])
+    expect(buildBuildingArchive(partial, 'pet-cat')).toMatchObject({
+      completed: false,
+      totalBlocks: 11
+    })
+  })
+})
+
 describe('空数据与未落成', () => {
   it('未知蓝图 / 空数据：未落成、统计为空、不崩', () => {
     const archive = buildBuildingArchive(makeState(), 'unknown-bp')

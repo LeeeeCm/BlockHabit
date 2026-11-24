@@ -1,0 +1,265 @@
+import {
+  contrastRatio,
+  deriveShading,
+  parseColor,
+  withAlpha,
+  type BlockShading,
+  type IsoPalette
+} from './isoColor'
+import { DEFAULT_ISO_CONFIG, STUD_H, roundedPoly, type Pt } from './isoGeometry'
+import { drawGroundShadow } from './isoGround'
+import { projectPet, type PetModel, type PetPart } from './petGeometry'
+import { PEAK_HOP_LIFT, type PetPose } from './petMotion'
+
+export type PetMood = 'idle' | 'focus' | 'ready' | 'happy'
+
+interface PetFrame {
+  width: number
+  height: number
+  model: PetModel
+  mood: PetMood
+  palette: IsoPalette
+  pose: Readonly<PetPose>
+  blinking: boolean
+}
+
+type FacetShades = [string, string]
+
+interface PetLighting {
+  brick: BlockShading
+  front: FacetShades
+  side: FacetShades
+  faceInk: string
+}
+
+const { tileW, tileH, blockH } = DEFAULT_ISO_CONFIG
+const MAX_STAGE_SCALE = 3
+const CORNER_RADIUS = Math.min(3, tileW * 0.0625)
+const PAD = 2
+const TURNED_BODY_HEIGHT = blockH + tileH + STUD_H
+const FLOOR_ROOM = tileH / 4
+const MIN_HOP_LIFT = PEAK_HOP_LIFT / 3
+const SHADOW_CONFIG = { tileW, tileH: tileH / 2, blockH: 0 }
+const SHADOW_FOOTPRINT = [{ x: 0, y: 0 }]
+
+function mixShade(from: string, to: string, amount: number): string {
+  if (amount === 0) return from
+  if (amount === 1) return to
+  const start = parseColor(from)
+  const end = parseColor(to)
+  if (!start || !end) return from
+  return `rgb(${start.map((channel, i) => Math.round(channel + (end[i] - channel) * amount)).join(',')})`
+}
+
+function petLighting(palette: IsoPalette, turn: number): PetLighting {
+  const brick = deriveShading(palette)
+  // 右跳时正脸逐渐变成右侧暗面；只在原有两面材质之间插值，避免起跳闪色。
+  const mix = Math.max(0, turn)
+  const front: FacetShades = [
+    mixShade(brick.leftA, brick.rightA, mix),
+    mixShade(brick.leftB, brick.rightB, mix)
+  ]
+  const faceTone = mixShade(...front, 0.5)
+  const faceInk =
+    contrastRatio(palette.ink, faceTone) >= contrastRatio(brick.topA, faceTone)
+      ? palette.ink
+      : brick.topA
+  return {
+    brick,
+    front,
+    faceInk,
+    side: turn > 0 ? [brick.leftA, brick.leftB] : [brick.rightA, brick.rightB]
+  }
+}
+
+function fillFacet(ctx: CanvasRenderingContext2D, points: Pt[], a: string, b: string) {
+  const ys = points.map(([, y]) => y)
+  const gradient = ctx.createLinearGradient(0, Math.min(...ys), 0, Math.max(...ys))
+  gradient.addColorStop(0, a)
+  gradient.addColorStop(1, b)
+  roundedPoly(ctx, points, 0)
+  ctx.fillStyle = gradient
+  ctx.fill()
+}
+
+/** isoCube 凸点的同一圆柱侧裙、顶面和左上高光，纵轴随相机浅俯视。 */
+function paintStud(
+  ctx: CanvasRenderingContext2D,
+  stud: NonNullable<PetPart['stud']>,
+  sh: BlockShading,
+  ink: string
+) {
+  const {
+    center: [x, y],
+    rx,
+    ry,
+    height
+  } = stud
+  const skirt = () => {
+    ctx.beginPath()
+    ctx.moveTo(x - rx, y - height)
+    ctx.lineTo(x - rx, y)
+    ctx.ellipse(x, y, rx, ry, 0, Math.PI, 0, true)
+    ctx.lineTo(x + rx, y - height)
+    ctx.ellipse(x, y - height, rx, ry, 0, 0, Math.PI, true)
+    ctx.closePath()
+  }
+  ctx.save()
+  skirt()
+  ctx.fillStyle = sh.leftA
+  ctx.fill()
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(x, y - height - ry, rx, height + 2 * ry)
+  ctx.clip()
+  skirt()
+  ctx.fillStyle = sh.rightA
+  ctx.fill()
+  ctx.restore()
+  skirt()
+  ctx.strokeStyle = withAlpha(ink, 0.4)
+  ctx.lineWidth = 1
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.ellipse(x, y - height, rx, ry, 0, 0, 2 * Math.PI)
+  ctx.fillStyle = sh.studTop
+  ctx.fill()
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.ellipse(x, y - height, 0.68 * rx, 0.68 * ry, 0, 1.05 * Math.PI, 1.6 * Math.PI)
+  ctx.strokeStyle = 'white' // ART §3 的原凸点高光，不是调色板新颜色
+  ctx.globalAlpha = 0.6
+  ctx.lineWidth = 1.2
+  ctx.stroke()
+  ctx.restore()
+}
+
+function paintEyes(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  mood: PetMood,
+  blinking: boolean
+) {
+  const y = height * 0.4
+  const radius = Math.min(width, height) * 0.07
+  const eyesAsLines = blinking || mood === 'focus' || mood === 'happy'
+  ctx.beginPath()
+  for (const x of [width * 0.32, width * 0.68]) {
+    const rx = mood === 'ready' ? radius * 1.18 : radius
+    if (eyesAsLines) {
+      ctx.moveTo(x - rx, y)
+      if (mood === 'happy') ctx.quadraticCurveTo(x, y - rx * 1.7, x + rx, y)
+      else ctx.lineTo(x + rx, y)
+    } else {
+      ctx.moveTo(x + rx, y)
+      ctx.ellipse(x, y, rx, radius * 1.2, 0, 0, 2 * Math.PI)
+    }
+  }
+  if (eyesAsLines) ctx.stroke()
+  else ctx.fill()
+}
+
+function paintFace(
+  ctx: CanvasRenderingContext2D,
+  part: PetPart,
+  mood: PetMood,
+  blinking: boolean,
+  ink: string
+) {
+  if (!part.face) return
+  const { width, height } = part.face
+  const [left, right] = part.front
+  ctx.save()
+  // 正面自己的局部坐标：两眼和嘴共用这一变换，不换面也不镜像。
+  ctx.transform((right[0] - left[0]) / width, (right[1] - left[1]) / width, 0, 1, ...left)
+  ctx.strokeStyle = ink
+  ctx.fillStyle = ink
+  ctx.lineCap = 'round'
+  ctx.lineWidth = 1.5
+  paintEyes(ctx, width, height, mood, blinking)
+
+  const x = width / 2
+  const y = height * 0.68
+  const radius = Math.min(width, height) * 0.12
+  ctx.beginPath()
+  if (mood === 'ready') {
+    ctx.ellipse(x, y, radius * 0.62, radius * 0.68, 0, 0, 2 * Math.PI)
+  } else {
+    ctx.moveTo(x - radius, y)
+    const curve = mood === 'happy' ? radius : mood === 'idle' ? radius * 0.44 : 0
+    ctx.quadraticCurveTo(x, y + curve, x + radius, y)
+  }
+  ctx.stroke()
+  ctx.restore()
+}
+
+function paintPart(
+  ctx: CanvasRenderingContext2D,
+  part: PetPart,
+  lighting: PetLighting,
+  frame: PetFrame
+) {
+  const { ink } = frame.palette
+  const { brick: sh, front, side, faceInk } = lighting
+  ctx.save()
+  roundedPoly(ctx, part.outline, CORNER_RADIUS)
+  ctx.clip()
+  // 同色底避免多面共享棱线在 HiDPI 抗锯齿时露缝。
+  ctx.fillStyle = front[0]
+  ctx.fill()
+  fillFacet(ctx, part.front, ...front)
+  for (const facet of part.facets) {
+    if (facet.kind === 'top') fillFacet(ctx, facet.points, sh.topA, sh.topB)
+    else fillFacet(ctx, facet.points, ...side)
+  }
+  ctx.beginPath()
+  for (const {
+    seam: [a, b]
+  } of part.facets) {
+    ctx.moveTo(...a)
+    ctx.lineTo(...b)
+  }
+  ctx.strokeStyle = withAlpha(ink, 0.4)
+  ctx.lineWidth = 1
+  ctx.stroke()
+  paintFace(ctx, part, frame.mood, frame.blinking, faceInk)
+  ctx.restore()
+
+  roundedPoly(ctx, part.outline, CORNER_RADIUS)
+  ctx.strokeStyle = withAlpha(ink, 0.58)
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+  if (part.stud) paintStud(ctx, part.stud, sh, ink)
+}
+
+/** 小窗只为短跳预留最少上升空间；宽松画布保留完整幅度，整段不重取景。 */
+export function paintPet(ctx: CanvasRenderingContext2D, frame: PetFrame): void {
+  const { width, height, pose, palette, model } = frame
+  const scale = Math.min(
+    MAX_STAGE_SCALE,
+    (width - PAD * 2) / (2 * tileW),
+    (height - PAD * 2) / (TURNED_BODY_HEIGHT + FLOOR_ROOM + MIN_HOP_LIFT)
+  )
+  if (scale <= 0) return
+  const floor = Math.max(
+    PAD + (TURNED_BODY_HEIGHT + MIN_HOP_LIFT) * scale,
+    (height + (blockH + STUD_H) * scale) / 2
+  )
+  const liftRoom = Math.min(PEAK_HOP_LIFT, (floor - PAD) / scale - TURNED_BODY_HEIGHT)
+  const geometry = projectPet(model, pose.turn)
+  const lighting = petLighting(palette, pose.turn)
+  ctx.save()
+  ctx.translate(width / 2 + pose.x * scale, floor)
+  ctx.scale(scale, scale)
+  ctx.save()
+  ctx.globalAlpha = 1 - (pose.lift / PEAK_HOP_LIFT) * 0.55
+  drawGroundShadow(ctx, SHADOW_FOOTPRINT, SHADOW_CONFIG, palette)
+  ctx.restore()
+
+  ctx.translate(0, (-pose.lift / PEAK_HOP_LIFT) * liftRoom)
+  ctx.scale(pose.scaleX, pose.scaleY)
+  ctx.translate(0, -geometry.ground) // 先贴齐底部再压扁，落点不陷入桌面
+  for (const part of geometry.parts) paintPart(ctx, part, lighting, frame)
+  ctx.restore()
+}

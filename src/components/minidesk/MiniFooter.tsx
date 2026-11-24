@@ -1,4 +1,4 @@
-import type { Habit } from '../../types'
+import type { PetPendingHabit } from '../../logic/petActions'
 import { MINI_PRESETS, type MiniSize } from '../../platform/miniWindow'
 import { getBlueprintName, useI18n } from '../../i18n'
 import { IconCheck } from '../Icons'
@@ -12,8 +12,8 @@ interface MiniFooterProps {
   remaining: number
   activeHabitCount: number
   doneCount: number
-  pendingHabits: Habit[]
-  onQuickCheckIn: (habitId: string, habitName: string) => void
+  pendingHabits: PetPendingHabit[]
+  onQuickCheckIn: (habitId: string) => void
 }
 
 /** 底部：按尺寸档切换信息密度（进度条 + 今日清单 / 快捷打卡胶囊） */
@@ -34,10 +34,9 @@ export function MiniFooter({
   const compact = size === 'pocket'
   return (
     <div
+      className="pet-quiet-footer"
       style={{
         padding: compact ? '5px 8px 7px' : '8px 12px 10px',
-        borderTop: '1px solid var(--line)',
-        background: 'var(--bg)',
         flexShrink: 0
       }}
     >
@@ -117,11 +116,12 @@ export function MiniFooter({
             </span>
           </div>
           {pendingHabits.length > 0 ? (
-            pendingHabits.map((h) => (
+            pendingHabits.map(({ habit: h, canRecord }) => (
               <button
                 key={h.id}
-                onClick={() => onQuickCheckIn(h.id, h.name)}
-                title={t.mini.habitCheckInTip(h.name)}
+                onClick={() => onQuickCheckIn(h.id)}
+                disabled={!canRecord}
+                title={canRecord ? h.name : t.pet.alreadyToday}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -162,14 +162,14 @@ export function MiniFooter({
                 padding: '2px 0'
               }}
             >
-              {t.mini.allDone}
+              {activeHabitCount === 0 ? t.pet.noSchedule : t.pet.allDone}
             </div>
           )}
         </div>
       ) : (
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {pendingHabits.length > 0 ? (
-            pendingHabits.map((h) => (
+            pendingHabits.map(({ habit: h, canRecord }) => (
               <button
                 key={h.id}
                 className="pill-action"
@@ -179,8 +179,9 @@ export function MiniFooter({
                   minHeight: 32,
                   background: 'color-mix(in srgb, var(--ink) 8%, transparent)'
                 }}
-                onClick={() => onQuickCheckIn(h.id, h.name)}
-                title={t.mini.habitCheckInTip(h.name)}
+                onClick={() => onQuickCheckIn(h.id)}
+                disabled={!canRecord}
+                title={canRecord ? h.name : t.pet.alreadyToday}
               >
                 {h.name}
               </button>
@@ -194,7 +195,7 @@ export function MiniFooter({
                 padding: '2px 0'
               }}
             >
-              {t.mini.allDone}
+              {activeHabitCount === 0 ? t.pet.noSchedule : t.pet.allDone}
             </div>
           )}
         </div>

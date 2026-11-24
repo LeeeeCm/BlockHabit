@@ -2,6 +2,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useAppStore } from '../store/appStore'
+import { useReminderStore } from '../store/reminderStore'
 import { FOCUS_SESSIONS_STORAGE_KEY, readFocusSessions, useTimerStore } from '../store/timerStore'
 import { MINI_PRESETS } from '../platform/miniWindow'
 import { getTranslation } from '../i18n'
@@ -82,6 +83,96 @@ describe('MiniDeskToy component', () => {
   afterEach(() => {
     if (container.parentElement) {
       document.body.removeChild(container)
+    }
+  })
+
+  it('opens a pet side panel without a write and restores focus when closing with Escape', () => {
+    mockTodayKey.mockReturnValue('2026-09-30')
+    const root = createRoot(container)
+    const onPanelChange = vi.fn()
+    act(() => {
+      root.render(
+        <MiniDeskToy
+          size="standard"
+          pinned={false}
+          onTogglePin={vi.fn()}
+          onExpand={vi.fn()}
+          onClose={vi.fn()}
+          onPanelChange={onPanelChange}
+        />
+      )
+    })
+    const trigger = container.querySelector<HTMLButtonElement>('[aria-haspopup="dialog"]')
+    expect(trigger).not.toBeNull()
+    act(() => {
+      trigger?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
+    })
+    const panel = container.querySelector('[data-testid="pet-side-panel"]')
+    expect(panel?.textContent).toContain('阅读')
+    expect(useAppStore.getState().checkIns).toHaveLength(1)
+    act(() => {
+      panel?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
+    expect(container.querySelector('[data-testid="pet-side-panel"]')).toBeNull()
+    expect(document.activeElement).toBe(trigger)
+    expect(onPanelChange.mock.calls).toEqual([[true], [false]])
+    act(() => root.unmount())
+  })
+
+  it('dismisses the scheduled bubble without recording, then adds only one counter step on click', () => {
+    vi.useFakeTimers()
+    const now = new Date(2026, 8, 30, 9, 1)
+    vi.setSystemTime(now)
+    mockTodayKey.mockReturnValue('2026-09-30')
+    const root = createRoot(container)
+    try {
+      useAppStore.setState((state) => ({
+        habits: state.habits.map((h) =>
+          h.id === 'h2'
+            ? { ...h, kind: 'counter', targetValue: 6, step: 2, reminder: { start: '09:00' } }
+            : h
+        )
+      }))
+      useReminderStore.setState({
+        suppressed: false,
+        pending: [
+          { habitId: 'h2', name: '阅读', stage: 'start', start: '09:00', firedAt: now.getTime() }
+        ]
+      })
+      act(() =>
+        root.render(
+          <MiniDeskToy
+            size="standard"
+            pinned={false}
+            onTogglePin={vi.fn()}
+            onExpand={vi.fn()}
+            onClose={vi.fn()}
+          />
+        )
+      )
+      const findBubble = () => container.querySelector('[data-testid="pet-reminder-bubble"]')
+      const finder = (text: string) =>
+        [...(findBubble()?.querySelectorAll('button') ?? [])].find(
+          (button) => (button.getAttribute('aria-label') ?? button.textContent) === text
+        )
+      const t = getTranslation(useAppStore.getState().settings.language)
+      expect(findBubble()).not.toBeNull()
+      expect(useAppStore.getState().checkIns).toHaveLength(1)
+      act(() => finder(t.pet.dismissReminder)?.click())
+      expect(findBubble()).toBeNull()
+      expect(useAppStore.getState().checkIns).toHaveLength(1)
+      act(() => useReminderStore.getState().reopen())
+      const step = finder(t.pet.step('2'))
+      expect(step).toBeDefined()
+      act(() => step?.click())
+      const records = useAppStore.getState().checkIns.filter(({ habitId }) => habitId === 'h2')
+      expect(records.map(({ value }) => value)).toEqual([2])
+      expect(findBubble()).not.toBeNull()
+      expect(useAppStore.getState().builds).toHaveLength(0)
+    } finally {
+      act(() => root.unmount())
+      useReminderStore.setState({ pending: [], suppressed: false })
+      vi.useRealTimers()
     }
   })
 
@@ -226,6 +317,11 @@ describe('MiniDeskToy component', () => {
   describe('专注陪伴（B2 / D-20261110-064）', () => {
     beforeEach(() => {
       mockTodayKey.mockReturnValue('2026-09-30')
+      // 这些会话来自真实的专注习惯：普通习惯或今日已记录的习惯不能打开确认入口。
+      useAppStore.setState((state) => ({
+        habits: state.habits.map((habit) => ({ ...habit, kind: 'focus', targetMinutes: 25 })),
+        checkIns: []
+      }))
     })
 
     const en = getTranslation('en')
@@ -245,6 +341,64 @@ describe('MiniDeskToy component', () => {
       })
       return root
     }
+
+    it('keeps a finished session visible on a rest day without offering check-in', () => {
+      mockTodayKey.mockReturnValue('2026-10-01')
+      useAppStore.setState((state) => ({
+        habits: state.habits.map((habit) =>
+          habit.id === 'h2' ? { ...habit, frequency: { type: 'custom', days: [3] } } : habit
+        )
+      }))
+      useTimerStore.setState({
+        sessions: { h2: { startedAt: Date.now() - 26 * MINUTE, targetMs: 25 * MINUTE } }
+      })
+      const root = renderToy('standard')
+      const bubble = container.querySelector('[data-testid="pet-focus-bubble"]')
+      expect(bubble?.textContent).toContain('阅读')
+      const confirmation = bubble?.querySelector<HTMLButtonElement>('button.primary')
+      expect(confirmation?.disabled).toBe(true)
+      expect(useAppStore.getState().checkIns).toHaveLength(0)
+      act(() => root.unmount())
+    })
+
+    it('lets a second focus session finish after the earlier bubble was dismissed', () => {
+      vi.useFakeTimers()
+      const now = Date.now()
+      const root = createRoot(container)
+      try {
+        useTimerStore.setState({
+          sessions: {
+            h1: { startedAt: now - 26 * MINUTE, targetMs: 25 * MINUTE },
+            h2: { startedAt: now - 25 * MINUTE + 1000, targetMs: 25 * MINUTE }
+          }
+        })
+        act(() =>
+          root.render(
+            <MiniDeskToy
+              size="standard"
+              pinned={false}
+              onTogglePin={vi.fn()}
+              onExpand={vi.fn()}
+              onClose={vi.fn()}
+            />
+          )
+        )
+        const bubble = () => container.querySelector('[data-testid="pet-focus-bubble"]')
+        const dismiss = bubble()?.querySelector<HTMLButtonElement>('.pet-close')
+        expect(bubble()?.textContent).toContain('晨跑')
+        expect(dismiss).not.toBeNull()
+        act(() => dismiss?.click())
+        expect(bubble()).toBeNull()
+        act(() => {
+          vi.advanceTimersByTime(1500)
+        })
+        expect(bubble()?.textContent).toContain('阅读')
+        expect(useAppStore.getState().checkIns).toHaveLength(0)
+      } finally {
+        act(() => root.unmount())
+        vi.useRealTimers()
+      }
+    })
 
     it('focusing：摆件切到专注面板（倒计时），口袋档不再显示快捷打卡', () => {
       useTimerStore.getState().start('h2', 25 * MINUTE)

@@ -7,14 +7,14 @@ import { canSelectBlueprint, firstIncompleteIndex } from '../logic/blueprint'
 import { noBlockReason } from '../logic/blockHints'
 import { useAppStore } from '../store/appStore'
 import { zh } from '../i18n/locales/zh'
+import { getBlueprintName } from '../i18n'
 
 /**
  * B1 / D-20261111-070：图鉴总数、解锁顺序、锁定剪影全部跟随真实注册表。
- * 当前安装包 = 基础 12 座 + 内容包 v2 6 座 + v3 5 座 = 23 座。
- * 断言一律从 blueprintOrder.length 派生，v3 之后再加内容包不会假红。
+ * D-20261124-081：主线 23 座 + 桌宠支线 2 座，主线门槛保持不变。
  */
 
-const INSTALLED_TOTAL = 23
+const INSTALLED_TOTAL = 25
 const g = globalThis as unknown as {
   __galleryThumbProps?: Array<{ blueprintId: string; silhouette?: boolean }>
 }
@@ -39,12 +39,12 @@ function setState(
   })
 }
 
-function renderGallery(onClose: () => void) {
+function renderGallery(onClose: () => void, petFirst = false) {
   const container = document.createElement('div')
   document.body.appendChild(container)
   const root = createRoot(container)
   act(() => {
-    root.render(<GalleryDialog onClose={onClose} />)
+    root.render(<GalleryDialog onClose={onClose} petFirst={petFirst} />)
   })
   return {
     container,
@@ -69,13 +69,27 @@ afterEach(() => {
 })
 
 describe('图鉴动态总数（B1 / D-20261111-070）', () => {
-  it('标题与卡片数跟随 blueprintOrder 实际长度（当前安装包 23 座）', () => {
-    expect(blueprintOrder).toHaveLength(INSTALLED_TOTAL)
+  it('标题与卡片数包括桌宠支线，但主线仍只有第一座可建', () => {
     const view = renderGallery(() => {})
-    expect(view.title()).toContain(String(blueprintOrder.length))
-    expect(view.cards()).toHaveLength(blueprintOrder.length)
-    // 只有第一座可建，其余按顺序锁定
+    expect(view.title()).toContain(String(INSTALLED_TOTAL))
+    expect(view.cards()).toHaveLength(INSTALLED_TOTAL)
     expect(view.lockedCards()).toHaveLength(blueprintOrder.length - 1)
+    view.unmount()
+  })
+
+  it('可从支线直接选宠物蓝图，不推进主线也不额外发放积木', () => {
+    const onClose = vi.fn()
+    const view = renderGallery(onClose, true)
+    const [cat, bot] = view.cards()
+    expect(cat?.textContent).toContain(getBlueprintName('pet-cat'))
+    expect(bot?.textContent).toContain(getBlueprintName('pet-bot'))
+    expect(cat?.getAttribute('aria-disabled')).toBe('false')
+    expect(bot?.getAttribute('aria-disabled')).toBe('false')
+    act(() => bot.click())
+    expect(useAppStore.getState().activeBlueprintId).toBe('pet-bot')
+    expect(useAppStore.getState().completedBlueprintIds).toEqual([])
+    expect(useAppStore.getState().builds).toEqual([])
+    expect(onClose).toHaveBeenCalledTimes(1)
     view.unmount()
   })
 
@@ -100,7 +114,7 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
     }
     // 缩略图：除第 1 座外全部以剪影渲染
     const props = g.__galleryThumbProps ?? []
-    expect(props).toHaveLength(blueprintOrder.length)
+    expect(props).toHaveLength(INSTALLED_TOTAL)
     expect(props.filter((p) => p.silhouette === true)).toHaveLength(blueprintOrder.length - 1)
     expect(props[0].silhouette).toBe(false)
     view.unmount()

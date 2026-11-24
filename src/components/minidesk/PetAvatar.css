@@ -1,0 +1,28 @@
+.pet-avatar {
+  position: relative;
+  display: block;
+  flex: 1 1 0;
+  align-self: stretch;
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  cursor: pointer;
+}
+
+.pet-avatar:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.pet-avatar > canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  pointer-events: none;
+}

@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { reminderIsCurrent } from '../logic/petActions'
 import { useAppStore } from '../store/appStore'
 import { useReminderStore } from '../store/reminderStore'
 import { habitMetOnDay } from '../logic/checkin'
@@ -22,8 +23,10 @@ const WAKE_DEDUPE_MS = 2_000
  * - pending 由 ReminderDialog（合并列表）、Today 横幅、托盘 tooltip 共用
  * - 窗口藏在托盘时不做任何唤起，回窗后自然呈现（不打断为主）
  */
-export function ReminderWatcher() {
+export function ReminderWatcher({ preferPet = false }: { preferPet?: boolean }) {
   const { t } = useI18n()
+  const petRef = useRef(preferPet)
+  petRef.current = preferPet
 
   useEffect(() => {
     let disposed = false
@@ -39,6 +42,22 @@ export function ReminderWatcher() {
       const enabled = store.settings.remindersEnabled !== false
       const log = store.reminderLog ?? {}
       const liveHabits = store.habits.filter((h) => !h.archivedAt)
+      const byId = new Map(liveHabits.map((habit) => [habit.id, habit]))
+      // 先清除失效条目，避免昨天的队列污染今天的去重。
+      for (const item of reminderStore.pending) {
+        if (
+          !reminderIsCurrent(
+            item,
+            byId.get(item.habitId),
+            store.checkIns,
+            now,
+            enabled,
+            log[item.habitId]
+          )
+        ) {
+          reminderStore.dismiss(item.habitId)
+        }
+      }
 
       for (const habit of liveHabits) {
         if (!habit.reminder) continue
@@ -65,32 +84,30 @@ export function ReminderWatcher() {
         ) {
           reminderStore.setTrack(habit.id, result.track)
         }
-        if (result.notify) {
-          reminderStore.push({
-            habitId: habit.id,
-            name: habit.name,
-            stage: result.notify.stage,
-            start: habit.reminder.start,
-            end: habit.reminder.end,
-            firedAt: Date.now()
-          })
-          playReminderChime()
+        if (!result.notify) continue
+        const stage = result.notify.stage
+        if (
+          useReminderStore
+            .getState()
+            .pending.some((item) => item.habitId === habit.id && item.stage === stage)
+        )
+          continue
+        reminderStore.push({
+          habitId: habit.id,
+          name: habit.name,
+          stage,
+          start: habit.reminder.start,
+          end: habit.reminder.end,
+          firedAt: now.getTime()
+        })
+        playReminderChime()
+        // 窗口隐藏时保留系统通知；可见的桌宠已经承接这条队列，不再重复弹系统通知。
+        if (!petRef.current || document.visibilityState !== 'visible') {
           const body =
-            result.notify.stage === 'due-soon'
+            stage === 'due-soon'
               ? t.reminder.dueSoonBody(habit.name)
               : t.reminder.startBody(habit.name)
-          // 系统通知：Tauri 走插件（托盘/隐藏窗口态可弹），浏览器回退 Web Notification，失败静默
           void notify('BlockHabit', body)
-        }
-      }
-
-      // 剪枝：提醒被移除/已归档/已达标的待展示条目自动清出（打卡后弹窗自然消失）
-      for (const item of useReminderStore.getState().pending) {
-        const habit = store.habits.find((h) => h.id === item.habitId)
-        const stillRelevant =
-          habit && !habit.archivedAt && habit.reminder && !habitMetOnDay(habit, store.checkIns, day)
-        if (!stillRelevant) {
-          useReminderStore.getState().dismiss(item.habitId)
         }
       }
 

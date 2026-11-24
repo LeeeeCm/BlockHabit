@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '../i18n'
 import type { Language } from '../i18n'
-import { blueprintOrder, blueprints } from '../logic/blueprints'
+import { blueprints } from '../logic/blueprints'
 import { CONTENT_VERSION } from '../logic/blueprints/manifest'
 import { APP_VERSION } from '../platform/errorLog'
 import { forceFlush } from '../store/appStore'
@@ -68,11 +68,9 @@ function toUiState(result: UpdateCheckResult): UpdateUiState {
 
 export function AboutPanel() {
   const { lang, t } = useI18n()
-  const blueprintCount = blueprintOrder.length
-  const blockCount = blueprintOrder.reduce(
-    (sum, id) => sum + (blueprints[id]?.blocks.length ?? 0),
-    0
-  )
+  const catalog = Object.values(blueprints)
+  const blueprintCount = catalog.length
+  const blockCount = catalog.reduce((sum, blueprint) => sum + blueprint.blocks.length, 0)
   const rows: Array<{ title: string; body: string }> = [
     {
       title: t.settings.aboutPaceTitle,

@@ -96,5 +96,7 @@ export const blueprints: TranslationSchema['blueprints'] = {
   bookshop: 'Old Bookshop',
   postoffice: 'Post Office',
   firestation: 'Fire Station',
-  watertower: 'Water Tower'
+  watertower: 'Water Tower',
+  'pet-cat': 'Block cat',
+  'pet-bot': 'Little robot'
 }

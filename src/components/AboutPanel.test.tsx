@@ -2,7 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AboutPanel } from './AboutPanel'
-import { blueprintOrder, blueprints, plantBlueprint } from '../logic/blueprints'
+import { blueprints, plantBlueprint } from '../logic/blueprints'
 import { CONTENT_VERSION } from '../logic/blueprints/manifest'
 import { APP_VERSION } from '../platform/errorLog'
 import { useAppStore } from '../store/appStore'
@@ -10,7 +10,7 @@ import type { UpdateCheckResult } from '../platform/updater'
 
 /**
  * C2 / D-20261110-063 §3.5.5：设置页「内容路线 / 关于」只展示事实。
- * 数字必须动态取自 blueprintOrder / manifest，不允许硬编码未来内容包或日期。
+ * 数字必须动态取自 完整蓝图注册表 / manifest，不允许硬编码未来内容包或日期。
  *
  * D-20261111-069：追加「版本与更新」行状态用例。适配层整体 mock，
  * 以便在 jsdom（非 Tauri）里驱动 enabled/latest/available/error/取消 分支。
@@ -75,13 +75,13 @@ afterEach(() => {
 })
 
 describe('AboutPanel：内容路线/关于', () => {
-  it('zh：展示当前内置数量与 contentVersion（动态值）', () => {
+  it('zh：展示包括桌宠的 25 座与当前内容版本', () => {
     const text = renderAbout('zh')
-    const expectedBlocks = blueprintOrder.reduce(
+    const expectedBlocks = Object.keys(blueprints).reduce(
       (sum, id) => sum + (blueprints[id]?.blocks.length ?? 0),
       0
     )
-    expect(text).toContain(`${blueprintOrder.length} 座蓝图`)
+    expect(text).toContain('25 座蓝图')
     expect(text).toContain(`${expectedBlocks} 块积木`)
     expect(text).toContain(`contentVersion ${CONTENT_VERSION}`)
     expect(text).toContain('年度免费扩建')
@@ -103,7 +103,6 @@ describe('AboutPanel：内容路线/关于', () => {
 
   it('数量随蓝图注册表动态变化（无硬编码 18/1985）', () => {
     const extraId = '__about_test_blueprint__'
-    blueprintOrder.push(extraId)
     blueprints[extraId] = {
       ...plantBlueprint,
       id: extraId,
@@ -111,14 +110,13 @@ describe('AboutPanel：内容路线/关于', () => {
     }
     try {
       const text = renderAbout('zh')
-      const expectedBlocks = blueprintOrder.reduce(
+      const expectedBlocks = Object.keys(blueprints).reduce(
         (sum, id) => sum + (blueprints[id]?.blocks.length ?? 0),
         0
       )
-      expect(text).toContain(`${blueprintOrder.length} 座蓝图`)
+      expect(text).toContain(`${Object.keys(blueprints).length} 座蓝图`)
       expect(text).toContain(`${expectedBlocks} 块积木`)
     } finally {
-      blueprintOrder.pop()
       delete blueprints[extraId]
     }
   })

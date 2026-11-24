@@ -1,6 +1,7 @@
 import type { AppState, Language, PlacedBlock, ShowcasePlacement } from '../types'
 import { getBlueprint } from '../logic/blueprints'
 import { CONTENT_VERSION } from '../logic/blueprints/manifest'
+import { DEFAULT_PET_MODEL } from '../logic/petModels'
 
 /**
  * appStore 的纯 helper（不依赖 store 实例）：id 生成、蓝图完成态对账、默认状态。
@@ -57,6 +58,7 @@ export function defaultState(): AppState {
       eveningNudgeTime: '21:00',
       miniWidgetSize: 'standard',
       miniWidgetAlwaysOnTop: false,
+      petModel: DEFAULT_PET_MODEL,
       enableGyroscope: false,
       enableXRayInspection: false
     },

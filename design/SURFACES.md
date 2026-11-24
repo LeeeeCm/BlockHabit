@@ -50,6 +50,7 @@
 - **尺寸**：`gap:10px`、卡片 `padding:14px 12px`（ui.css:570–586）；锁定态 `opacity:.5` 且 hover 不动。
 - **必须**：解锁顺序 = `blueprintOrder`（logic/blueprints/index.ts:30–43），前一座未落成才锁；锁定态不加锁图标（用状态行表达）。
 - **例外**：无。
+- **D-081 增补**：`blueprintOrder` 仍只管主线 23 座；内容 v4 的方块猫、小机器人列在独立「桌宠蓝图」分区，直接可选建造。包含两份支线的目录与设置计数从 `blueprintCatalogIds`／manifest 动态派生。
 
 ## 6. 设置弹窗 SettingsDialog.tsx
 
@@ -108,6 +109,7 @@
 - **结构**：外框 r-md + `0 12px 36px rgba(0,0,0,.18)` → 顶栏（拖拽区 logo 16px + 标题 13px + 展开/关闭 24px 键）→ 3D 区（flex 1）→ 底栏（进度 11px 文本 + 3.5px 进度条 + 待办胶囊 ≤3 个）。
 - **必须**：拖拽区必须 `data-tauri-drag-region`；关闭=隐藏窗口而非退出；手动退出要写回 `enableMiniWidget:false`（App.tsx:261–264）。
 - **例外**：进度条 3.5px（其余表面 5–6px），尺寸压缩属合理例外。
+- **桌宠（[D-20261124-081](records/D-20261124-081-desktop-pet.md)）**：沿用 D-059 三档尺寸，画布安静时正脸；右键或键盘打开右侧待办面板，贴右沿优先临时左移整组，Esc 收回并还焦。到点气泡在现有窗口内提示，不能取代用户确认；三档与面板临时尺寸分别处理，不改变主窗。另见 [D-082](records/D-20261124-082-unframed-pet.md)：桌宠无额外卡片边框，工具栏按指向与焦点显露。
 
 ## 13. 移动端 BottomSheet.tsx / BottomTabBar.tsx
 

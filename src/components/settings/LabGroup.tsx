@@ -1,4 +1,8 @@
-import type { AppSettings } from '../../types'
+import { useId } from 'react'
+import type { AppSettings, PetModel } from '../../types'
+import { blueprintProgress } from '../../logic/blueprint'
+import { PET_MODELS, petBlueprintId, resolvePetModel } from '../../logic/petModels'
+import { useAppStore } from '../../store/appStore'
 import type { TranslationSchema } from '../../i18n'
 import { triggerHaptic } from '../../platform'
 import { resetGuideTips } from '../../platform/guideTips'
@@ -10,6 +14,8 @@ interface Props {
   settings: AppSettings
   isMobile: boolean
   t: TranslationSchema
+  defaultOpen?: boolean
+  onOpenPetBlueprints?: () => void
   onUpdateSettings: (patch: Partial<AppSettings>) => void
   onToast: (message: string, durationMs?: number) => void
 }
@@ -18,9 +24,25 @@ interface Props {
  * 实验室分组（默认折叠）：时段光照 / 温和风化 / 生态彩蛋 / 透视考古等视觉开关，
  * 敲击音色、移动端陀螺仪或桌面端迷你摆件、诊断包导出与页面提示重置。
  */
-export function LabGroup({ settings, isMobile, t, onUpdateSettings, onToast }: Props) {
+export function LabGroup({
+  settings,
+  isMobile,
+  t,
+  defaultOpen = false,
+  onUpdateSettings,
+  onOpenPetBlueprints,
+  onToast
+}: Props) {
   return (
-    <Group title={t.settings.labTitle} collapsible defaultOpen={false}>
+    <Group title={t.settings.labTitle} collapsible defaultOpen={defaultOpen}>
+      {!isMobile && (
+        <PetModelPicker
+          choice={settings.petModel}
+          t={t}
+          onUpdateSettings={onUpdateSettings}
+          onOpenPetBlueprints={onOpenPetBlueprints}
+        />
+      )}
       {/* 时段感知昼夜光照 */}
       <div className="field" style={{ marginBottom: 12 }}>
         <label>{t.settings.ambientLightingLabel}</label>
@@ -313,5 +335,78 @@ export function LabGroup({ settings, isMobile, t, onUpdateSettings, onToast }: P
         </div>
       </div>
     </Group>
+  )
+}
+
+interface PetModelPickerProps extends Pick<
+  Props,
+  't' | 'onUpdateSettings' | 'onOpenPetBlueprints'
+> {
+  choice: PetModel | undefined
+}
+
+function PetModelPicker({ choice, t, onUpdateSettings, onOpenPetBlueprints }: PetModelPickerProps) {
+  const titleId = useId()
+  const builds = useAppStore((s) => s.builds)
+  const equipped = resolvePetModel(choice, builds)
+
+  function equip(model: PetModel): void {
+    // 读最新投影，以免选择按钮和同步/撤销恰在同一拍执行。
+    if (resolvePetModel(model, useAppStore.getState().builds) !== model) return
+    triggerHaptic('selection')
+    onUpdateSettings({ petModel: model })
+  }
+
+  return (
+    <section className="field" aria-labelledby={titleId}>
+      <h4 id={titleId} style={{ margin: 0, fontSize: 'var(--fs-subhead)' }}>
+        {t.pet.modelsTitle}
+      </h4>
+      {PET_MODELS.map((model) => {
+        const id = petBlueprintId(model)
+        const progress = id ? blueprintProgress(builds, id) : null
+        const isLocked = progress !== null && !progress.complete
+        const isEquipped = model === equipped
+        const statusId = titleId + '-' + model
+        const name = t.pet.modelNames[model]
+        const count = progress ? t.build.blocksCount(progress.placed, progress.total) : ''
+        const source = progress
+          ? t.pet.blueprints + ' · ' + (isLocked ? t.pet.locked(count) : count)
+          : ''
+        const status = [isEquipped ? t.pet.equipped : '', source].filter(Boolean).join(' · ')
+        return (
+          <div
+            key={model}
+            style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}
+          >
+            <button
+              className={`btn ${isEquipped ? 'primary' : 'ghost'}`}
+              type="button"
+              aria-pressed={isEquipped}
+              aria-describedby={status ? statusId : undefined}
+              disabled={isLocked}
+              onClick={() => equip(model)}
+            >
+              {name}
+            </button>
+            {status && (
+              <span id={statusId} style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-caption)' }}>
+                {status}
+              </span>
+            )}
+            {isLocked && onOpenPetBlueprints && (
+              <button
+                className="btn ghost"
+                type="button"
+                aria-label={`${t.pet.viewBlueprints} · ${name}`}
+                onClick={onOpenPetBlueprints}
+              >
+                {t.pet.viewBlueprints}
+              </button>
+            )}
+          </div>
+        )
+      })}
+    </section>
   )
 }

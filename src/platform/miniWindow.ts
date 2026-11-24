@@ -102,6 +102,40 @@ export function clampMiniPosition(
   }
 }
 
+export const PET_SIDE_WIDTH = MINI_PRESETS.pocket.w
+const WORK_AREA_MARGIN = 8
+
+export interface PetPanelLayout extends LogicalPoint {
+  w: number
+  h: number
+  arrangement: 'side' | 'stack'
+}
+
+/** 右栏优先：原地放不下时移动整组，横向工作区真的不够才改上下排列。 */
+export function planPetPanel(
+  anchor: LogicalPoint,
+  workArea: LogicalRect,
+  preset: Pick<MiniPreset, 'w' | 'h'>
+): PetPanelLayout {
+  const marginX = Math.min(WORK_AREA_MARGIN, Math.max(0, (workArea.width - 1) / 2))
+  const marginY = Math.min(WORK_AREA_MARGIN, Math.max(0, (workArea.height - 1) / 2))
+  const maxW = Math.max(1, Math.floor(workArea.width - marginX * 2))
+  const maxH = Math.max(1, Math.floor(workArea.height - marginY * 2))
+  const sideW = preset.w + PET_SIDE_WIDTH
+  const arrangement = sideW <= maxW ? 'side' : 'stack'
+  const w = arrangement === 'side' ? sideW : Math.min(maxW, preset.w)
+  const h = Math.min(maxH, Math.max(preset.h, MINI_PRESETS.standard.h))
+  const x = Math.min(
+    Math.max(anchor.x, workArea.x + marginX),
+    workArea.x + workArea.width - marginX - w
+  )
+  const y = Math.min(
+    Math.max(anchor.y, workArea.y + marginY),
+    workArea.y + workArea.height - marginY - h
+  )
+  return { x, y, w, h, arrangement }
+}
+
 export interface WindowLayoutV1 {
   version: 1
   main?: { w: number; h: number; x?: number; y?: number }

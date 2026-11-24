@@ -495,6 +495,38 @@ export interface TranslationSchema {
     reminderToggleOff: string
     reminderToggleHint: string
   }
+  pet: {
+    title: string
+    menu: (model: string) => string
+    menuHint: string
+    pendingTitle: string
+    remaining: (count: number) => string
+    noSchedule: string
+    allDone: string
+    alreadyToday: string
+    record: string
+    step: (amount: string) => string
+    startFocus: string
+    continueFocus: string
+    focusUnavailable: string
+    showToday: string
+    settings: string
+    pin: string
+    unpin: string
+    fold: string
+    blueprints: string
+    modelsTitle: string
+    modelNames: Record<'block' | 'cat' | 'bot', string>
+    equipped: string
+    locked: (progress: string) => string
+    viewBlueprints: string
+    staleAction: string
+    recordedStep: (name: string, progress: string) => string
+    reminderTitle: string
+    reminderCount: (count: number) => string
+    moreReminders: (count: number) => string
+    dismissReminder: string
+  }
   mini: {
     expandTooltip: string
     closeTooltip: string

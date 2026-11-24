@@ -1,16 +1,114 @@
 import { useState } from 'react'
 import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
-import { blueprintOrder, getBlueprint } from '../logic/blueprints'
-import { canSelectBlueprint } from '../logic/blueprint'
-import { getBlueprintName, useI18n } from '../i18n'
+import {
+  blueprintCatalogIds,
+  blueprintOrder,
+  getBlueprint,
+  isPetBlueprintId,
+  PET_BLUEPRINT_IDS
+} from '../logic/blueprints'
+import { blueprintProgress, canSelectBlueprint } from '../logic/blueprint'
+import { getBlueprintName, useI18n, type Language, type TranslationSchema } from '../i18n'
+import type { PlacedBlock } from '../types'
 import { IconClose, IconNote } from './Icons'
 import { BlueprintThumb } from './BlueprintThumb'
 import { BuildingArchiveModal } from './BuildingArchiveModal'
 import { triggerHaptic } from '../platform'
 import { useDialogA11y } from './useDialogA11y'
-/** 模型图鉴：按顺序解锁，前一座未落成时后一座不可选 */
-export function GalleryDialog({ onClose }: { onClose: () => void }) {
+
+interface GalleryCardProps {
+  id: string
+  builds: readonly PlacedBlock[]
+  completed: readonly string[]
+  activeId: string
+  lang: Language
+  t: TranslationSchema
+  onSelect: (id: string) => void
+  onOpenArchive: (id: string) => void
+}
+
+function GalleryCard({
+  id,
+  builds,
+  completed,
+  activeId,
+  lang,
+  t,
+  onSelect,
+  onOpenArchive
+}: GalleryCardProps) {
+  const bp = getBlueprint(id)
+  const { placed, total, complete } = blueprintProgress(builds, id)
+  const isPet = isPetBlueprintId(id)
+  const done = isPet ? complete : completed.includes(id)
+  const building = !done && (id === activeId || (isPet && placed > 0))
+  const locked = !canSelectBlueprint(id, completed)
+  const bpName = getBlueprintName(id, lang)
+  const status = done
+    ? `${t.gallery.completed} · ${t.build.blocksCount(total, total)}`
+    : building
+      ? `${t.gallery.inProgress} · ${placed}/${total}`
+      : locked
+        ? t.gallery.locked
+        : `${t.build.startBuildBtn} · ${t.gallery.totalBlocks(total)}`
+  const statusColor = done
+    ? 'var(--progress-green)'
+    : building
+      ? 'var(--progress-blue)'
+      : 'var(--ink-2)'
+  return (
+    <div style={{ position: 'relative', minWidth: 0, display: 'flex' }}>
+      <button
+        type="button"
+        className={`gallery-card${locked ? ' locked' : ''}`}
+        onClick={() => onSelect(id)}
+        title={locked ? t.gallery.completePreviousFirst : bpName}
+        aria-disabled={locked}
+        style={{
+          width: '100%',
+          paddingBottom: done ? 34 : undefined,
+          // B1：锁定信息由剪影传达，不能把名字一同压暗。
+          opacity: locked ? 1 : undefined
+        }}
+      >
+        <BlueprintThumb blueprint={bp} silhouette={locked} />
+        <div className="gallery-name">{bpName}</div>
+        <div className="gallery-status" style={{ color: statusColor }}>
+          {status}
+        </div>
+      </button>
+      {done && (
+        <button
+          type="button"
+          className="pill-action"
+          onClick={() => onOpenArchive(id)}
+          title={`${bpName} · ${t.buildingArchive.title}`}
+          aria-label={`${bpName} · ${t.buildingArchive.title}`}
+          style={{
+            position: 'absolute',
+            right: 8,
+            bottom: 8,
+            padding: '3px 9px',
+            fontSize: 'var(--fs-caption)',
+            gap: 4
+          }}
+        >
+          <IconNote size={11} style={{ flexShrink: 0 }} />
+          <span>{t.buildingArchive.entry}</span>
+        </button>
+      )}
+    </div>
+  )
+}
+
+interface GalleryDialogProps {
+  onClose: () => void
+  /** 从桌宠设置进入时，先显示支线；其余入口仍先显示主线。 */
+  petFirst?: boolean
+}
+
+export function GalleryDialog({ onClose, petFirst = false }: GalleryDialogProps) {
   const { lang, t } = useI18n()
   const builds = useAppStore((s) => s.builds)
   const completed = useAppStore((s) => s.completedBlueprintIds)
@@ -21,14 +119,48 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
   // 档案卡叠在图鉴之上：档案打开时让出 Esc/焦点，避免一次 Esc 连关两层
   const { ref: dialogRef } = useDialogA11y({ open: true, onClose, enabled: archiveId === null })
 
-  function handleSelect(id: string) {
-    if (!canSelectBlueprint(id, completed)) {
-      showToast(t.gallery.completePreviousFirst, 2200)
+  function handleSelect(id: string): void {
+    if (!canSelectBlueprint(id, useAppStore.getState().completedBlueprintIds)) {
+      showToast(t.gallery.completePreviousFirst)
       return
     }
     choose(id)
     onClose()
   }
+
+  function handleOpenArchive(id: string): void {
+    triggerHaptic('selection')
+    setArchiveId(id)
+  }
+
+  function renderCards(ids: readonly string[]) {
+    return (
+      <div className="gallery-grid">
+        {ids.map((id) => (
+          <GalleryCard
+            key={id}
+            id={id}
+            builds={builds}
+            completed={completed}
+            activeId={activeId}
+            lang={lang}
+            t={t}
+            onSelect={handleSelect}
+            onOpenArchive={handleOpenArchive}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  const petSection = (
+    <section aria-labelledby="gallery-pet-blueprints-title" style={{ display: 'grid', gap: 8 }}>
+      <h4 id="gallery-pet-blueprints-title" style={{ margin: 0, fontSize: 'var(--fs-subhead)' }}>
+        {t.pet.blueprints}
+      </h4>
+      {renderCards(PET_BLUEPRINT_IDS)}
+    </section>
+  )
 
   return (
     <>
@@ -48,7 +180,7 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
         >
           <div className="dialog-header">
             <h3 id="gallery-dialog-title">
-              {t.gallery.title} · {blueprintOrder.length}
+              {t.gallery.title} · {blueprintCatalogIds.length}
             </h3>
             <button
               className="icon-btn"
@@ -62,80 +194,10 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
             </button>
           </div>
 
-          <div className="dialog-body">
-            <div className="gallery-grid">
-              {blueprintOrder.map((id) => {
-                const bp = getBlueprint(id)
-                const placed = builds.filter((b) => b.blueprintId === id).length
-                const done = completed.includes(id)
-                const building = id === activeId && !done
-                const unlocked = canSelectBlueprint(id, completed)
-                const locked = !unlocked
-                const bpName = getBlueprintName(id, lang)
-                const status = done
-                  ? {
-                      label: `${t.gallery.completed} · ${t.build.blocksCount(bp.blocks.length, bp.blocks.length)}`,
-                      color: 'var(--progress-green)'
-                    }
-                  : building
-                    ? {
-                        label: `${t.gallery.inProgress} · ${placed}/${bp.blocks.length}`,
-                        color: 'var(--progress-blue)'
-                      }
-                    : unlocked
-                      ? {
-                          label: `${t.build.startBuildBtn} · ${t.gallery.totalBlocks(bp.blocks.length)}`,
-                          color: 'var(--ink-2)'
-                        }
-                      : { label: t.gallery.locked, color: 'var(--ink-2)' }
-                return (
-                  <div key={id} style={{ position: 'relative', minWidth: 0, display: 'flex' }}>
-                    <button
-                      className={`gallery-card${locked ? ' locked' : ''}`}
-                      onClick={() => handleSelect(id)}
-                      title={unlocked ? bpName : t.gallery.completePreviousFirst}
-                      aria-disabled={locked}
-                      style={{
-                        width: '100%',
-                        paddingBottom: done ? 34 : undefined,
-                        // .gallery-card.locked 的 opacity:.5 会把「名字」也压暗；
-                        // B1：锁定信息由剪影表达，名字必须保持可读（inline 覆盖 CSS 类）。
-                        opacity: locked ? 1 : undefined
-                      }}
-                    >
-                      <BlueprintThumb blueprint={bp} silhouette={locked} />
-                      <div className="gallery-name">{bpName}</div>
-                      <div className="gallery-status" style={{ color: status.color }}>
-                        {status.label}
-                      </div>
-                    </button>
-                    {done && (
-                      <button
-                        type="button"
-                        className="pill-action"
-                        onClick={() => {
-                          triggerHaptic('selection')
-                          setArchiveId(id)
-                        }}
-                        title={`${bpName} · ${t.buildingArchive.title}`}
-                        aria-label={`${bpName} · ${t.buildingArchive.title}`}
-                        style={{
-                          position: 'absolute',
-                          right: 8,
-                          bottom: 8,
-                          padding: '3px 9px',
-                          fontSize: 'var(--fs-caption)',
-                          gap: 4
-                        }}
-                      >
-                        <IconNote size={11} style={{ flexShrink: 0 }} />
-                        <span>{t.buildingArchive.entry}</span>
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+          <div className="dialog-body" style={{ display: 'grid', gap: 12 }}>
+            {petFirst && petSection}
+            {renderCards(blueprintOrder)}
+            {!petFirst && petSection}
           </div>
 
           <div className="dialog-footer">

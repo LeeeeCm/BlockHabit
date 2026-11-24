@@ -1,6 +1,8 @@
 import type { TranslationSchema } from '../types'
+import { petZh } from './pet'
 
 export const zh: TranslationSchema = {
+  pet: petZh,
   common: {
     cancel: '取消',
     save: '保存',
@@ -533,7 +535,9 @@ export const zh: TranslationSchema = {
     bookshop: '旧书店',
     postoffice: '邮政所',
     firestation: '消防站',
-    watertower: '水塔'
+    watertower: '水塔',
+    'pet-cat': '方块猫',
+    'pet-bot': '小机器人'
   },
   tray: {
     tooltipDone: '今日打卡已全部搞定',

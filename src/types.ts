@@ -135,6 +135,7 @@ export interface ShowcasePlacement {
 export type Theme = 'light' | 'dark' | 'oat' | 'fog'
 export type Language = 'zh' | 'en'
 export type SoundMaterial = 'classic' | 'walnut' | 'crystal' | 'metal' | 'mute'
+export type PetModel = 'block' | 'cat' | 'bot'
 
 export interface AppSettings {
   theme: Theme
@@ -163,6 +164,8 @@ export interface AppSettings {
   miniWidgetSize?: 'pocket' | 'standard' | 'display'
   /** 迷你摆件是否置顶（默认关，避免打扰） */
   miniWidgetAlwaysOnTop?: boolean
+  /** 用户选择的桌宠形象；实际是否可用从当前积木投影派生。 */
+  petModel?: PetModel
   /** 移动端陀螺仪重力微视差 (默认关闭，遵循 Apple 减弱动态无障碍规范) */
   enableGyroscope?: boolean
   /** 积木透视考古探针模式 (透视幽灵蓝图 + 琥珀色随笔高亮) */

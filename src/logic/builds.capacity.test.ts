@@ -47,9 +47,20 @@ describe('rebuildBuilds 容量钳制', () => {
     expect(builds.map((b) => b.index)).toEqual(Array.from({ length: capacity }, (_, i) => i))
   })
 
-  it('容量表覆盖全部蓝图（基础 12 + 内容包 v2 6 + v3 5，自动派生）', () => {
-    expect(Object.keys(BLUEPRINT_CAPACITY)).toHaveLength(blueprintOrder.length)
-    expect(blueprintOrder.length).toBeGreaterThanOrEqual(23)
+  it('容量表覆盖主线和桌宠支线，支线仍钳制离线合并溢出的积木', () => {
+    expect(Object.keys(BLUEPRINT_CAPACITY)).toEqual([...blueprintOrder, 'pet-cat', 'pet-bot'])
+    expect(
+      rebuildBuilds(
+        Array.from({ length: 17 }, (_, i) => ci(i, 'pet-cat')),
+        []
+      )
+    ).toHaveLength(12)
+    expect(
+      rebuildBuilds(
+        Array.from({ length: 17 }, (_, i) => ci(i, 'pet-bot')),
+        []
+      )
+    ).toHaveLength(16)
   })
 })
 

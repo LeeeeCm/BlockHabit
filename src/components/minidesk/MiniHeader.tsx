@@ -17,16 +17,25 @@ interface MiniHeaderProps {
   onTogglePin: () => void
   onExpand: () => void
   onClose: () => void
+  dragDisabled?: boolean
 }
 
 /** 顶部轻量拖拽栏（双击展开主窗） */
-export function MiniHeader({ size, pinned, onTogglePin, onExpand, onClose }: MiniHeaderProps) {
+export function MiniHeader({
+  size,
+  pinned,
+  onTogglePin,
+  onExpand,
+  onClose,
+  dragDisabled
+}: MiniHeaderProps) {
   const { t } = useI18n()
   const preset = MINI_PRESETS[size]
   const compact = size === 'pocket'
   return (
     <div
-      data-tauri-drag-region
+      className="pet-toolbar"
+      data-tauri-drag-region={dragDisabled ? undefined : ''}
       onDoubleClick={onExpand}
       title={t.mini.doubleClickHint}
       style={{
@@ -37,18 +46,16 @@ export function MiniHeader({ size, pinned, onTogglePin, onExpand, onClose }: Min
         padding: compact ? '2px 6px' : '2px 8px',
         height: preset.headerH,
         flexShrink: 0,
-        borderBottom: '1px solid var(--line)',
-        background: 'var(--bg)',
-        cursor: 'move'
+        cursor: dragDisabled ? 'default' : 'move'
       }}
     >
       <div
-        data-tauri-drag-region
+        data-tauri-drag-region={dragDisabled ? undefined : ''}
         style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}
       >
         <img src={logoUrl} alt="" width={compact ? 12 : 14} height={compact ? 12 : 14} />
         <span
-          data-tauri-drag-region
+          data-tauri-drag-region={dragDisabled ? undefined : ''}
           style={{
             fontSize: compact ? 'var(--fs-caption)' : 'var(--fs-small)',
             fontWeight: 700,

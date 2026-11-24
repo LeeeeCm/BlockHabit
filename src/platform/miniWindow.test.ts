@@ -5,6 +5,7 @@ import {
   clampMiniPosition,
   defaultMiniPosition,
   loadWindowLayout,
+  planPetPanel,
   presetFits,
   saveWindowLayout,
   WINDOW_LAYOUT_KEY
@@ -56,6 +57,26 @@ describe('position helpers', () => {
     )
     expect(Number.isFinite(p.x)).toBe(true)
     expect(Number.isFinite(p.y)).toBe(true)
+  })
+})
+
+describe('pet panel layout', () => {
+  it('keeps the menu on the right by shifting the group in from a negative-origin screen edge', () => {
+    const area = { x: -1440, y: 0, width: 1440, height: 840 }
+    const layout = planPetPanel({ x: -296, y: 424 }, area, MINI_PRESETS.standard)
+    expect(layout.arrangement).toBe('side')
+    expect(layout.x).toBeLessThan(-296)
+    expect(layout.x + layout.w).toBe(-8)
+    expect(layout.y + layout.h).toBeLessThanOrEqual(832)
+  })
+
+  it('stacks the menu if even a single side panel cannot fit', () => {
+    const area = { x: 10, y: 20, width: 360, height: 310 }
+    const layout = planPetPanel({ x: 30, y: 200 }, area, MINI_PRESETS.standard)
+    expect(layout.arrangement).toBe('stack')
+    expect(layout.x).toBeGreaterThanOrEqual(18)
+    expect(layout.x + layout.w).toBeLessThanOrEqual(362)
+    expect(layout.y + layout.h).toBeLessThanOrEqual(322)
   })
 })
 

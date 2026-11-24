@@ -105,7 +105,10 @@ afterEach(() => {
 
 describe('Showcase 自由装饰模式（D-20261111-068）', () => {
   it('未全落成时零入口：没有「装饰模式」开关', () => {
-    seedStore(blueprintOrder.slice(0, -1), [{ blueprintId: 'plant', gridX: 2, gridY: 2 }])
+    seedStore(
+      [...blueprintOrder.slice(0, -2), 'pet-cat', 'pet-bot'],
+      [{ blueprintId: 'plant', gridX: 2, gridY: 2 }]
+    )
     const view = renderShowcase()
     expect(view.textContent).not.toContain('装饰模式')
     expect(view.querySelector('[role="toolbar"]')).toBeNull()

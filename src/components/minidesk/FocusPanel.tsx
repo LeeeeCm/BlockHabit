@@ -16,6 +16,7 @@ interface FocusPanelProps {
   canExtend: boolean
   /** 放弃二次确认态由 MiniDeskToy 持有（切换会话时重置） */
   giveUpPending: boolean
+  canConfirm?: boolean
   onConfirm: () => void
   onExtend: () => void
   onRequestGiveUp: () => void
@@ -34,6 +35,7 @@ export function FocusPanel({
   otherFocusCount,
   canExtend,
   giveUpPending,
+  canConfirm = true,
   onConfirm,
   onExtend,
   onRequestGiveUp,
@@ -193,6 +195,7 @@ export function FocusPanel({
             <button
               className="btn primary"
               onClick={onConfirm}
+              disabled={!canConfirm}
               style={{
                 minHeight: 30,
                 padding: '2px 8px',
@@ -200,7 +203,7 @@ export function FocusPanel({
                 flexShrink: 0
               }}
             >
-              {t.focusCompanion.confirmCheckIn}
+              {canConfirm ? t.focusCompanion.confirmCheckIn : t.pet.focusUnavailable}
             </button>
             <div style={{ display: 'flex', gap: 6, minWidth: 0 }}>
               {canExtend && (
@@ -402,6 +405,7 @@ export function FocusPanel({
           <button
             className="btn primary"
             onClick={onConfirm}
+            disabled={!canConfirm}
             style={{
               flex: 1,
               minWidth: 0,
@@ -410,7 +414,7 @@ export function FocusPanel({
               fontSize: 'var(--fs-caption)'
             }}
           >
-            {t.focusCompanion.confirmCheckIn}
+            {canConfirm ? t.focusCompanion.confirmCheckIn : t.pet.focusUnavailable}
           </button>
           {canExtend && (
             <button

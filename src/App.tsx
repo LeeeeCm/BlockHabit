@@ -5,6 +5,7 @@ import { inTauri } from './app/inTauri'
 import { TimerWatcher } from './app/TimerWatcher'
 import { TitleBar } from './app/TitleBar'
 import { TraySync } from './app/TraySync'
+import { usePetPanelWindow } from './app/usePetPanelWindow'
 import {
   currentMonitor,
   getCurrentWindow,
@@ -63,7 +64,8 @@ export default function App() {
       typeof location !== 'undefined' ? new URLSearchParams(location.search).get('tab') : null
     return tParam === 'build' || tParam === 'showcase' || tParam === 'stats' ? tParam : 'today'
   })
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState<'general' | 'pet' | null>(null)
+  const [petGalleryRequest, setPetGalleryRequest] = useState(0)
   const [miniMode, setMiniMode] = useState(false)
   // 提醒「开始打卡」：跳到 Today 并高亮该习惯卡片
   const [focusHabitId, setFocusHabitId] = useState<string | null>(null)
@@ -90,15 +92,39 @@ export default function App() {
   const buildProgressPercent =
     bp.blocks.length > 0 ? Math.round((placedCount / bp.blocks.length) * 100) : 0
 
+  const {
+    layout: petPanel,
+    setOpen: setPetPanelOpen,
+    isTemporary: isPetPanelTemporary
+  } = usePetPanelWindow(miniWidgetSize)
   const miniModeRef = useRef(false)
-  miniModeRef.current = miniMode
+  const miniWindowQueue = useRef<Promise<void>>(Promise.resolve())
+  const pendingMiniModes = useRef(0)
 
-  /** 进入/退出迷你摆件（D-20261110-059）：三档 preset + 显式最小尺寸 + 位置钳制 */
-  async function toggleMini(enable: boolean, sizeOverride?: MiniSize) {
+  function toggleMini(enable: boolean, sizeOverride?: MiniSize): Promise<void> {
+    pendingMiniModes.current += 1
+    const task = miniWindowQueue.current
+      .catch(() => {})
+      .then(async () => {
+        if (enable === miniModeRef.current) return
+        if (!enable) await setPetPanelOpen(false)
+        await applyMiniWindow(enable, sizeOverride)
+        // 原生窗口先就位，再让桌宠菜单可交互，避免两套尺寸写入互相覆盖。
+        miniModeRef.current = enable
+        setMiniMode(enable)
+      })
+      .finally(() => {
+        pendingMiniModes.current -= 1
+      })
+    miniWindowQueue.current = task
+    return task
+  }
+
+  /** 三档 preset + 显式最小尺寸 + 位置钳制（D-20261110-059）。 */
+  async function applyMiniWindow(enable: boolean, sizeOverride?: MiniSize): Promise<void> {
     const size = sizeOverride ?? useAppStore.getState().settings.miniWidgetSize ?? 'standard'
     const preset = MINI_PRESETS[size]
     const wasMini = miniModeRef.current
-    setMiniMode(enable)
     if (!inTauri) {
       updateSettings(
         enable ? { enableMiniWidget: true, miniWidgetSize: size } : { enableMiniWidget: false }
@@ -172,16 +198,17 @@ export default function App() {
         .catch(() => {})
   }
 
-  // 摆件使用中改尺寸：即时应用到当前窗口（不经过进入/退出流程）
+  // 摆件使用中改尺寸：展开面板的临时大小由 usePetPanelWindow 持有。
   useEffect(() => {
     if (!inTauri || !miniModeRef.current) return
+    if (isPetPanelTemporary() || pendingMiniModes.current > 0) return
     const win = getCurrentWindow()
     const preset = MINI_PRESETS[miniWidgetSize]
     void (async () => {
       await win.setMinSize(new LogicalSize(preset.w, preset.h)).catch(() => {})
       await win.setSize(new LogicalSize(preset.w, preset.h))
     })()
-  }, [miniWidgetSize])
+  }, [miniWidgetSize, isPetPanelTemporary])
 
   // 摆件使用中切换置顶：即时应用
   useEffect(() => {
@@ -198,9 +225,10 @@ export default function App() {
     let timer: number | undefined
     let disposed = false
     const persistPosition = async () => {
+      if (isPetPanelTemporary() || pendingMiniModes.current > 0) return
       const f = (await win.scaleFactor().catch(() => 1)) || 1
       const pos = await win.outerPosition().catch(() => null)
-      if (!pos || disposed) return
+      if (!pos || disposed || isPetPanelTemporary()) return
       const layout = loadWindowLayout()
       saveWindowLayout({
         ...layout,
@@ -209,7 +237,7 @@ export default function App() {
     }
     const schedule = () => {
       if (timer) window.clearTimeout(timer)
-      timer = window.setTimeout(() => void persistPosition(), 400)
+      if (!isPetPanelTemporary()) timer = window.setTimeout(() => void persistPosition(), 400)
     }
     const unlistenPromise = win.onMoved(schedule)
     return () => {
@@ -217,21 +245,17 @@ export default function App() {
       if (timer) window.clearTimeout(timer)
       void unlistenPromise.then((unlisten) => unlisten()).catch(() => {})
     }
-  }, [miniMode])
+  }, [miniMode, isPetPanelTemporary])
 
-  /**
-   * A10：窗口关闭请求。
-   * 迷你悬浮件是不可调整大小的 260×380 置顶窗，如果直接隐藏，下次从托盘唤起仍卡在迷你尺寸。
-   * 因此迷你模式下关闭 = 先退出迷你模式（恢复尺寸/可调整），再收进托盘。
-   */
+  /** 先恢复主窗尺寸再收进托盘，避免下次唤起仍卡在桌宠尺寸。 */
   async function handleWindowCloseRequest(): Promise<void> {
-    if (!inTauri) return
-    const win = getCurrentWindow()
-    if (miniModeRef.current) {
-      await toggleMini(false)
-    }
-    await win.hide()
+    if (miniModeRef.current || pendingMiniModes.current > 0) await toggleMini(false)
+    if (inTauri) await getCurrentWindow().hide()
   }
+
+  useEffect(() => {
+    if (tab !== 'build') setPetGalleryRequest(0)
+  }, [tab])
 
   useEffect(() => {
     void initPersistence(pickAdapter())
@@ -364,174 +388,199 @@ export default function App() {
     return <div className="app" aria-busy="true" />
   }
 
-  if (miniMode) {
-    // 浏览器预览没有真实窗口，用预设尺寸居中模拟，便于开发/验收三档视觉；Tauri 下铺满真实窗口
-    const preview = MINI_PRESETS[miniWidgetSize]
-    return (
+  const preview = MINI_PRESETS[miniWidgetSize]
+  const desktopPet = miniMode ? (
+    <div
+      className="app"
+      style={{
+        height: '100vh',
+        padding: 0,
+        background: 'var(--bg)',
+        display: inTauri ? 'block' : 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
       <div
-        className="app"
-        style={{
-          height: '100vh',
-          padding: 0,
-          background: 'var(--bg)',
-          display: inTauri ? 'block' : 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
+        style={
+          inTauri
+            ? { height: '100vh' }
+            : {
+                width: petPanel?.w ?? preview.w,
+                height: petPanel?.h ?? preview.h,
+                maxWidth: '100vw',
+                maxHeight: '100vh'
+              }
+        }
       >
-        <div
-          style={
-            inTauri
-              ? { height: '100vh' }
-              : { width: preview.w, height: preview.h, maxWidth: '100vw', maxHeight: '100vh' }
-          }
-        >
-          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg)' }} />}>
-            <MiniDeskToy
-              size={miniWidgetSize}
-              pinned={miniWidgetAlwaysOnTop}
-              onTogglePin={toggleMiniPin}
-              onExpand={() => void toggleMini(false)}
-              onClose={async () => {
-                // 关闭 = 先恢复主窗再收托盘，避免下次从托盘唤起仍卡在迷你尺寸
-                await toggleMini(false)
-                if (inTauri) await getCurrentWindow().hide()
-              }}
-            />
-          </Suspense>
-        </div>
+        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg)' }} />}>
+          <MiniDeskToy
+            size={miniWidgetSize}
+            pinned={miniWidgetAlwaysOnTop}
+            onTogglePin={toggleMiniPin}
+            onExpand={() => void toggleMini(false)}
+            onToday={() => {
+              setTab('today')
+              void toggleMini(false)
+            }}
+            onSettings={() => {
+              void toggleMini(false).then(() => setSettingsOpen('pet'))
+            }}
+            onPanelChange={(open) => {
+              if (!open || pendingMiniModes.current === 0) void setPetPanelOpen(open)
+            }}
+            panelArrangement={petPanel?.arrangement}
+            onClose={handleWindowCloseRequest}
+          />
+        </Suspense>
       </div>
-    )
-  }
+    </div>
+  ) : null
 
   return (
-    <div className={`app ${isMobile ? 'mobile-app-root' : ''}`}>
-      {isMobile ? (
-        <header
-          className="mobile-header"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingTop: 'max(12px, var(--sat))',
-            paddingBottom: '12px',
-            paddingLeft: '16px',
-            paddingRight: '16px',
-            background: 'color-mix(in srgb, var(--surface) 85%, transparent)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderBottom: '1px solid var(--line)',
-            flexShrink: 0,
-            zIndex: 80
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src={logoUrl} alt="BlockHabit" width={24} height={24} />
-            <span
+    <>
+      {inTauri && <TraySync />}
+      <TimerWatcher preferPet={miniMode} />
+      <ReminderWatcher preferPet={miniMode} />
+      {desktopPet ?? (
+        <div className={`app ${isMobile ? 'mobile-app-root' : ''}`}>
+          {isMobile ? (
+            <header
+              className="mobile-header"
               style={{
-                fontSize: 'var(--fs-title)',
-                fontWeight: 700,
-                fontFamily: "'Rubik', sans-serif"
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: 'max(12px, var(--sat))',
+                paddingBottom: '12px',
+                paddingLeft: '16px',
+                paddingRight: '16px',
+                background: 'color-mix(in srgb, var(--surface) 85%, transparent)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                borderBottom: '1px solid var(--line)',
+                flexShrink: 0,
+                zIndex: 80
               }}
             >
-              {tabs.find(([id]) => id === tab)?.[1] ?? 'BlockHabit'}
-            </span>
-          </div>
-          <button
-            className="icon-btn"
-            title={t.titlebar.settings}
-            aria-label={t.titlebar.settings}
-            onClick={() => setSettingsOpen(true)}
-            style={{
-              width: 44,
-              height: 44,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <img src={logoUrl} alt="BlockHabit" width={24} height={24} />
+                <span
+                  style={{
+                    fontSize: 'var(--fs-title)',
+                    fontWeight: 700,
+                    fontFamily: "'Rubik', sans-serif"
+                  }}
+                >
+                  {tabs.find(([id]) => id === tab)?.[1] ?? 'BlockHabit'}
+                </span>
+              </div>
+              <button
+                className="icon-btn"
+                title={t.titlebar.settings}
+                aria-label={t.titlebar.settings}
+                onClick={() => setSettingsOpen('general')}
+                style={{
+                  width: 44,
+                  height: 44,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <IconSettings size={20} />
+              </button>
+            </header>
+          ) : (
+            <TitleBar
+              onSettings={() => setSettingsOpen('general')}
+              onToggleMini={() => void toggleMini(true, miniWidgetSize)}
+              onRequestClose={() => void handleWindowCloseRequest()}
+            />
+          )}
+          <main
+            className={`content ${isMobile ? 'mobile-content-area' : ''}`}
+            style={isMobile ? { paddingTop: 12 } : undefined}
           >
-            <IconSettings size={20} />
-          </button>
-        </header>
-      ) : (
-        <TitleBar
-          onSettings={() => setSettingsOpen(true)}
-          onToggleMini={() => void toggleMini(true, miniWidgetSize)}
-          onRequestClose={() => void handleWindowCloseRequest()}
-        />
-      )}
-      {inTauri && <TraySync />}
-      <TimerWatcher />
-      <ReminderWatcher />
-      <main
-        className={`content ${isMobile ? 'mobile-content-area' : ''}`}
-        style={isMobile ? { paddingTop: 12 } : undefined}
-      >
-        {tab === 'today' && (
-          <Today
-            onCelebrate={() => setTab('build')}
-            onGoBuild={() => setTab('build')}
-            focusHabitId={focusHabitId}
-            onFocusConsumed={() => setFocusHabitId(null)}
+            {tab === 'today' && (
+              <Today
+                onCelebrate={() => setTab('build')}
+                onGoBuild={() => setTab('build')}
+                focusHabitId={focusHabitId}
+                onFocusConsumed={() => setFocusHabitId(null)}
+              />
+            )}
+            {tab === 'build' && (
+              <Build key={petGalleryRequest} openPetGallery={petGalleryRequest > 0} />
+            )}
+            {tab === 'showcase' && <Showcase />}
+            {tab === 'stats' && <Stats />}
+          </main>
+          {isMobile ? (
+            <BottomTabBar
+              currentTab={tab}
+              onChange={(nextTab) => setTab(nextTab)}
+              hasUnfinishedToday={hasUnfinishedToday}
+              buildProgressPercent={buildProgressPercent}
+            />
+          ) : (
+            <nav className="tabbar">
+              {tabs.map(([id, label, Icon], index) => (
+                <button
+                  key={id}
+                  className={tab === id ? 'active' : ''}
+                  title={t.common.shortcut(label, String(index + 1))}
+                  onClick={() => setTab(id)}
+                >
+                  <Icon size={21} />
+                  {label}
+                </button>
+              ))}
+            </nav>
+          )}
+          {needsUpgrade && (
+            <div className="toast" style={{ zIndex: 2000, whiteSpace: 'normal', maxWidth: '80vw' }}>
+              {t.settings.needsUpgradeToast}
+            </div>
+          )}
+          {saveErrorVisible && (
+            <div className="toast" style={{ zIndex: 2000 }}>
+              {t.settings.saveFailedToast}
+            </div>
+          )}
+          {loadFailed && (
+            <div className="toast" style={{ zIndex: 2000, whiteSpace: 'normal', maxWidth: '80vw' }}>
+              {t.settings.loadFailedToast}
+            </div>
+          )}
+          {dataCorrupt && (
+            <div className="toast" style={{ zIndex: 2000, whiteSpace: 'normal', maxWidth: '80vw' }}>
+              {t.settings.corruptRecoveredToast}
+            </div>
+          )}
+          {settingsOpen && (
+            <SettingsDialog
+              openPetModels={settingsOpen === 'pet'}
+              onClose={() => setSettingsOpen(null)}
+              onOpenPetBlueprints={() => {
+                setSettingsOpen(null)
+                setPetGalleryRequest((request) => request + 1)
+                setTab('build')
+              }}
+            />
+          )}
+          <ReminderDialog
+            onStart={(habitId) => {
+              setTab('today')
+              setFocusHabitId(habitId)
+            }}
+            onToast={(text) => {
+              showReminderToast(text, 2400)
+            }}
           />
-        )}
-        {tab === 'build' && <Build />}
-        {tab === 'showcase' && <Showcase />}
-        {tab === 'stats' && <Stats />}
-      </main>
-      {isMobile ? (
-        <BottomTabBar
-          currentTab={tab}
-          onChange={(nextTab) => setTab(nextTab)}
-          hasUnfinishedToday={hasUnfinishedToday}
-          buildProgressPercent={buildProgressPercent}
-        />
-      ) : (
-        <nav className="tabbar">
-          {tabs.map(([id, label, Icon], index) => (
-            <button
-              key={id}
-              className={tab === id ? 'active' : ''}
-              title={t.common.shortcut(label, String(index + 1))}
-              onClick={() => setTab(id)}
-            >
-              <Icon size={21} />
-              {label}
-            </button>
-          ))}
-        </nav>
-      )}
-      {needsUpgrade && (
-        <div className="toast" style={{ zIndex: 2000, whiteSpace: 'normal', maxWidth: '80vw' }}>
-          {t.settings.needsUpgradeToast}
+          {reminderToast && <div className="toast">{reminderToast}</div>}
         </div>
       )}
-      {saveErrorVisible && (
-        <div className="toast" style={{ zIndex: 2000 }}>
-          {t.settings.saveFailedToast}
-        </div>
-      )}
-      {loadFailed && (
-        <div className="toast" style={{ zIndex: 2000, whiteSpace: 'normal', maxWidth: '80vw' }}>
-          {t.settings.loadFailedToast}
-        </div>
-      )}
-      {dataCorrupt && (
-        <div className="toast" style={{ zIndex: 2000, whiteSpace: 'normal', maxWidth: '80vw' }}>
-          {t.settings.corruptRecoveredToast}
-        </div>
-      )}
-      {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
-      <ReminderDialog
-        onStart={(habitId) => {
-          setTab('today')
-          setFocusHabitId(habitId)
-        }}
-        onToast={(text) => {
-          showReminderToast(text, 2400)
-        }}
-      />
-      {reminderToast && <div className="toast">{reminderToast}</div>}
-    </div>
+    </>
   )
 }

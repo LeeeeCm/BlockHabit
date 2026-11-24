@@ -54,17 +54,19 @@ describe('contentPackKit：纯函数', () => {
     expect(packBlockCount(['a', 'missing'], { a: 100 })).toBe(100)
   })
 
-  it('真实注册表可统计 23 座 / 2485 块（v3 已落地）', () => {
+  it('真实注册表可统计 25 座 / 2513 块（主线 23 座 + 桌宠 2 座）', () => {
     const counts = countRegisteredBlocks()
-    expect(Object.keys(counts).length).toBe(23)
-    expect(Object.values(counts).reduce((a, b) => a + b, 0)).toBe(2485)
-    // 真实注册表上 v3 五座的块数与 CONTENT_VERSION 一致
+    expect(Object.keys(counts).length).toBe(25)
+    expect(Object.values(counts).reduce((a, b) => a + b, 0)).toBe(2513)
+    expect(counts['pet-cat']).toBe(12)
+    expect(counts['pet-bot']).toBe(16)
+    // 真实注册表上 v3 五座的块数保持原样
     expect(counts.bakery).toBe(98)
     expect(counts.bookshop).toBe(104)
     expect(counts.postoffice).toBe(92)
     expect(counts.firestation).toBe(112)
     expect(counts.watertower).toBe(94)
-    expect(nextContentVersion()).toBe(4)
+    expect(nextContentVersion()).toBe(5)
   })
 })
 

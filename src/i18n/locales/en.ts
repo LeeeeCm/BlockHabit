@@ -8,8 +8,10 @@ import { settings } from './en/settings'
 import { eveningNudge, reminder } from './en/reminders'
 import { archive, buildingArchive, yearbook } from './en/yearbook'
 import { focusCompanion } from './en/focusCompanion'
+import { petEn } from './pet'
 
 export const en: TranslationSchema = {
+  pet: petEn,
   common,
   a11y,
   nav,

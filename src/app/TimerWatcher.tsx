@@ -14,8 +14,10 @@ import { useI18n } from '../i18n'
  * - 顺带 prune：已删除/已归档习惯的会话、超过 TTL 的过期会话都清掉；
  * - 不自动打卡（数据诚实），确认落块在摆件/今日页由用户完成。
  */
-export function TimerWatcher() {
+export function TimerWatcher({ preferPet = false }: { preferPet?: boolean }) {
   const { t } = useI18n()
+  const petRef = useRef(preferPet)
+  petRef.current = preferPet
   const habits = useAppStore((s) => s.habits)
   const [toast, showToast] = useTransient<string>(5200)
   // 长生命周期 interval 里读最新引用：语言/习惯变化不需要重建定时器
@@ -40,17 +42,23 @@ export function TimerWatcher() {
         if (!habit) continue
         // 先落盘再去弹：即使进程立刻被杀，重开也不会重复通知
         useTimerStore.getState().markNotified(plan.habitId, plan.notifiedAt)
-        const msg = tRef.current.focusCompanion.notificationBody(habit.name)
-        toastRef.current(msg, 5200)
-        void notify('BlockHabit', msg)
+        if (!petRef.current || document.visibilityState !== 'visible') {
+          const msg = tRef.current.focusCompanion.notificationBody(habit.name)
+          toastRef.current(msg, 5200)
+          void notify('BlockHabit', msg)
+        }
       }
     }
     scan()
     const timer = window.setInterval(scan, 1000)
-    return () => window.clearInterval(timer)
+    document.addEventListener('visibilitychange', scan)
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', scan)
+    }
   }, [])
 
-  if (!toast) return null
+  if (!toast || preferPet) return null
   return (
     <div
       className="toast"

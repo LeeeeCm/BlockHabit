@@ -12,6 +12,7 @@
 - 画家算法排序键：**先 `rx+ry` 升序，再 `z` 升序**（BuildScene.tsx:161–173；展台同键 compareCubes，ShowcaseScene.tsx:49–55）。iso.ts:52 的 `depth()` 仅测试保留，实际排序不在 iso.ts。
 - 视角：滚轮缩放 clamp **0.3–3**（BuildScene.tsx:805），双指 pinch **0.5–3.0**（461）；展台 wheel **0.4–2.5**（ShowcaseScene.tsx:792）、pinch **0.4–2.5**（586）；窗口 resize 跟随 `followResize` clamp **0.3–3**（iso.ts:82–85）。
 - 自动取景（BuildScene.tsx:617–634）：`PAD = 48`，`scale = min((w−96)/模型的宽, (h−96)/模型的高, 2)`，`panY = h·0.56 − 中心y·scale`（**整体下沉约 6% 视口**，给"桌子"留出上方空气）。展台：`SHOWCASE_GRID_SIZE = 26`（logic/showcase.ts:3）、初始 `scale = min((w−48)/sceneW,(h−48)/sceneH,1.2)`（ShowcaseScene.tsx:451）。
+- 桌宠（[D-20261124-081](records/D-20261124-081-desktop-pet.md)）是相机朝向的局部例外：安静时正面朝向用户，脸只在一个物理面上，允许浅顶面；左右短跳才露侧面。正视与侧跳共用主题积木的派生色、圆角、凸点高光和接触阴影；不改变建造、展台的等距投影或材质。减少动态时正脸静止。
 
 ## 2. 立方体三面着色模型（iso.ts:180–196，由 --block-* 派生）
 

@@ -24,9 +24,11 @@ const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 interface Props {
   onClose: () => void
+  openPetModels?: boolean
+  onOpenPetBlueprints?: () => void
 }
 
-export function SettingsDialog({ onClose }: Props) {
+export function SettingsDialog({ onClose, openPetModels = false, onOpenPetBlueprints }: Props) {
   const { lang, t } = useI18n()
   const { isMobile } = usePlatform()
   const settings = useAppStore((s) => s.settings)
@@ -108,8 +110,21 @@ export function SettingsDialog({ onClose }: Props) {
     </div>
   )
 
+  const labGroup = (
+    <LabGroup
+      settings={settings}
+      isMobile={isMobile}
+      t={t}
+      defaultOpen={openPetModels}
+      onUpdateSettings={updateSettings}
+      onOpenPetBlueprints={onOpenPetBlueprints}
+      onToast={showMsg}
+    />
+  )
+
   const bodyContent = (
     <>
+      {openPetModels && labGroup}
       {/* 1. 界面与感官偏好 */}
       <PreferencesGroup
         settings={settings}
@@ -123,14 +138,7 @@ export function SettingsDialog({ onClose }: Props) {
 
       <SoundGroup muted={muted} volume={volume} t={t} onUpdateSettings={updateSettings} />
 
-      {/* 2. 感官与氛围体验 (Apple HIG Ambience Panel) */}
-      <LabGroup
-        settings={settings}
-        isMobile={isMobile}
-        t={t}
-        onUpdateSettings={updateSettings}
-        onToast={showMsg}
-      />
+      {!openPetModels && labGroup}
 
       {/* 2. 系统与常驻 */}
       {inTauri && (
