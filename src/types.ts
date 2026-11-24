@@ -163,6 +163,11 @@ export interface AppSettings {
   quickCheckInEnabled?: boolean
   /** 积木透视考古探针模式 (透视幽灵蓝图 + 琥珀色随笔高亮) */
   enableXRayInspection?: boolean
+  /** 透明悬浮桌宠（D-20261124-091）；缺省视为开启 */
+  enablePet?: boolean
+  petSize?: 'small' | 'medium' | 'large'
+  petSkin?: 'block' | 'robot'
+  petRoam?: boolean
 }
 export interface AppState {
   schemaVersion: 2

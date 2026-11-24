@@ -54,6 +54,33 @@ fn show_tray_menu(app: &AppHandle, x: f64, y: f64) {
     let _ = win.set_focus();
 }
 
+/// 桌宠窗口显示/隐藏（D-20261124-091）：主窗按设置调用，桌宠自身不管理可见性。
+#[tauri::command]
+fn set_pet_visible(app: AppHandle, visible: bool) {
+    if let Some(win) = app.get_webview_window("pet") {
+        if visible {
+            let _ = win.show();
+            let _ = win.set_always_on_top(true);
+        } else {
+            let _ = win.hide();
+        }
+    }
+}
+
+/// 桌宠双击：唤起主窗
+#[tauri::command]
+fn pet_open_main(app: AppHandle) {
+    show_main(&app);
+}
+
+/// 桌宠右键：唤起主窗并请求打开设置里的桌宠分组
+#[tauri::command]
+fn pet_open_settings(app: AppHandle) {
+    use tauri::Emitter;
+    show_main(&app);
+    let _ = app.emit("open-pet-settings", ());
+}
+
 /// JS 侧更新托盘状态文案（图标恒定不变，杜绝托盘图标缓存/状态粘滞问题）
 #[tauri::command]
 fn update_tray(app: AppHandle, status: String) {
@@ -126,6 +153,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             update_tray,
             tray_menu,
+            set_pet_visible,
+            pet_open_main,
+            pet_open_settings,
             confirm_quit,
             credentials::credential_available,
             credentials::credential_set,

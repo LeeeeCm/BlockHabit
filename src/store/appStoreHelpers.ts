@@ -55,6 +55,10 @@ export function defaultState(): AppState {
       eveningNudgeEnabled: false,
       eveningNudgeTime: '21:00',
       quickCheckInEnabled: false,
+      enablePet: true,
+      petSize: 'medium',
+      petSkin: 'block',
+      petRoam: true,
       enableGyroscope: false,
       enableXRayInspection: false
     },

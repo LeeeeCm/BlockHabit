@@ -6,7 +6,9 @@ import { TimerWatcher } from './app/TimerWatcher'
 import { TitleBar } from './app/TitleBar'
 import { TraySync } from './app/TraySync'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { listen } from '@tauri-apps/api/event'
+import { listen, emitTo } from '@tauri-apps/api/event'
+import { setPetVisible } from './platform/petWindow'
+import type { PetConfig } from './pet/types'
 import { initPersistence, useAppStore, forceFlush, isDemoMode } from './store/appStore'
 import { cacheAppearance } from './platform/appearance'
 import { pickAdapter } from './storage'
@@ -41,6 +43,7 @@ export default function App() {
     return tParam === 'build' || tParam === 'showcase' || tParam === 'stats' ? tParam : 'today'
   })
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [focusPetSettings, setFocusPetSettings] = useState(false)
   // 提醒「开始打卡」：跳到 Today 并高亮该习惯卡片
   const [focusHabitId, setFocusHabitId] = useState<string | null>(null)
   const [reminderToast, showReminderToast] = useTransient<string>(2400)
@@ -66,6 +69,7 @@ export default function App() {
 
   /** 打开设置 */
   function openSettings() {
+    setFocusPetSettings(false)
     setSettingsOpen(true)
   }
 
@@ -77,6 +81,50 @@ export default function App() {
 
   useEffect(() => {
     void initPersistence(pickAdapter())
+  }, [])
+
+  // D-20261124-091：桌宠可见性与配置由主窗驱动；pet 窗口只负责绘制与交互。
+  const enablePet = useAppStore((s) => s.settings.enablePet !== false)
+  const petSize = useAppStore((s) => s.settings.petSize ?? 'medium')
+  const petSkin = useAppStore((s) => s.settings.petSkin ?? 'block')
+  const petRoam = useAppStore((s) => s.settings.petRoam !== false)
+  const completedCount = useAppStore((s) => s.completedBlueprintIds.length)
+  const petDone = activeHabits.filter((h) => habitMetOnDay(h, checkIns, day)).length
+  useEffect(() => {
+    if (!inTauri) return
+    void setPetVisible(enablePet)
+  }, [enablePet])
+  useEffect(() => {
+    if (!inTauri || !enablePet) return
+    const config: PetConfig = {
+      size: petSize,
+      skin: petSkin,
+      roam: petRoam,
+      done: petDone,
+      total: activeHabits.length,
+      completed: completedCount
+    }
+    const send = () => void emitTo('pet', 'pet-config', config).catch(() => {})
+    send()
+    const late = window.setTimeout(send, 600)
+    return () => window.clearTimeout(late)
+  }, [enablePet, petSize, petSkin, petRoam, petDone, activeHabits.length, completedCount])
+  useEffect(() => {
+    if (!inTauri) return
+    let disposed = false
+    const unlisten = listen('open-pet-settings', () => {
+      if (disposed) return
+      const win = getCurrentWindow()
+      void win.show().catch(() => {})
+      void win.unminimize().catch(() => {})
+      void win.setFocus().catch(() => {})
+      setFocusPetSettings(true)
+      setSettingsOpen(true)
+    })
+    return () => {
+      disposed = true
+      void unlisten.then((fn) => fn()).catch(() => {})
+    }
   }, [])
 
   // D-20261124-086：全局快捷键（默认关）。注册失败时回滚设置并如实提示。
@@ -338,8 +386,10 @@ export default function App() {
       )}
       {settingsOpen && (
         <SettingsDialog
+          focusPet={focusPetSettings}
           onClose={() => {
             setSettingsOpen(false)
+            setFocusPetSettings(false)
           }}
         />
       )}

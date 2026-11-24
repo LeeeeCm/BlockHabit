@@ -19,15 +19,18 @@ import { Group } from './settings/Group'
 import { PreferencesGroup } from './settings/PreferencesGroup'
 import { SoundGroup } from './settings/SoundGroup'
 import { LabGroup } from './settings/LabGroup'
+import { PetSettingsGroup } from './settings/PetSettingsGroup'
 import { SystemGroup } from './settings/SystemGroup'
 import { SettingsFooter } from './settings/SettingsFooter'
 const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 interface Props {
   onClose: () => void
+  /** 桌宠右键：打开后滚动到桌宠分组 */
+  focusPet?: boolean
 }
 
-export function SettingsDialog({ onClose }: Props) {
+export function SettingsDialog({ onClose, focusPet = false }: Props) {
   const { lang, t } = useI18n()
   const { isMobile } = usePlatform()
   const settings = useAppStore((s) => s.settings)
@@ -45,6 +48,13 @@ export function SettingsDialog({ onClose }: Props) {
   /** 通过深度校验、待用户确认后覆盖导入的存档 */
   const [importCandidate, setImportCandidate] = useState<AppState | null>(null)
   const [autostart, setAutostart] = useState<boolean | null>(null)
+  useEffect(() => {
+    if (!focusPet) return
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('pet-settings')?.scrollIntoView({ block: 'start' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [focusPet])
   useEffect(() => {
     if (!inTauri) return
     void (async () => {
@@ -134,7 +144,15 @@ export function SettingsDialog({ onClose }: Props) {
         )}
       </PreferencesGroup>
 
-      {/* 2. 数据与同步：备份 / 导入 / 诊断 / 完整档案包 / WebDAV */}
+      {/* 2. 桌宠：独立分组，右键桌宠直达 */}
+      <PetSettingsGroup
+        settings={settings}
+        completedCount={completed.length}
+        t={t}
+        onUpdateSettings={updateSettings}
+      />
+
+      {/* 3. 数据与同步：备份 / 导入 / 诊断 / 完整档案包 / WebDAV */}
       <Group title={t.settings.groupData} collapsible defaultOpen={false}>
         <ArchiveDataPanel onImportFile={doImport} />
         <HabitImportPanel onToast={showMsg} />

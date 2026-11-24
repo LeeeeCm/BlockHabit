@@ -453,6 +453,25 @@ export const zh: TranslationSchema = {
     updateCopied: '已复制',
     updateCopyFailed: '复制失败，请手动选择文本',
     labTitle: '实验室',
+    petGroupTitle: '桌宠',
+    petLabel: '悬浮桌宠',
+    petOn: '显示',
+    petOff: '隐藏',
+    petHint: '透明小窗常驻桌面，可拖动到任意位置；右键可打开这里。',
+    petSizeLabel: '大小',
+    petSizeSmall: '小',
+    petSizeMedium: '中',
+    petSizeLarge: '大',
+    petSkinLabel: '形象',
+    petSkinBlock: '积木',
+    petSkinRobot: '机器人',
+    petSkinHint: '机器人由积木拼成，会迈步走动。',
+    petSkinLocked: (count) => `完成 ${count} 座建筑后解锁机器人`,
+    petRoamLabel: '自主走动',
+    petRoamOn: '开启',
+    petRoamOff: '关闭',
+    petRoamHint: '空闲时在屏幕下方散步，工作时不打扰。',
+    petRightClickHint: '右键桌宠可随时回到这个分组。',
     soundGroupTitle: '声音',
     diagnosticsLabel: '诊断包',
     diagnosticsHint: '导出本机诊断文本：崩溃日志、数据体量、帧率采样。只在本机生成，不会上传。',
@@ -759,5 +778,6 @@ export const zh: TranslationSchema = {
     persistedHint: '计时按真实时间计算，重开应用会直接显示当前状态',
     notificationBody: (name) => `「${name}」专注时间到，确认后落块`,
     moreSessions: (n) => `另有 ${n} 个专注`
-  }
+  },
+  pet: { hint: '桌宠：双击打开主窗，右键打开桌宠设置，拖动可移动' }
 }

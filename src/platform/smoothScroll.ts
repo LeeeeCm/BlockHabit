@@ -16,7 +16,10 @@ interface ActiveScroll {
 
 let active: ActiveScroll | null = null
 
+const MODAL_SELECTOR = '.overlay, .drop-overlay, [role="dialog"], .bottom-sheet, .drop-modal'
+
 export function findScrollableParent(el: HTMLElement | null): HTMLElement | null {
+  const modal = el?.closest(MODAL_SELECTOR) ?? null
   let curr = el
   while (curr && curr !== document.body && curr !== document.documentElement) {
     const style = window.getComputedStyle(curr)
@@ -24,8 +27,11 @@ export function findScrollableParent(el: HTMLElement | null): HTMLElement | null
     if ((oy === 'auto' || oy === 'scroll') && curr.scrollHeight > curr.clientHeight) {
       return curr
     }
+    if (curr === modal) break
     curr = curr.parentElement
   }
+  // 弹窗内部滚动到底/顶时，不得回退到弹窗后面的页面滚动容器
+  if (modal) return null
   // 回退：主内容区 .content
   const content = document.querySelector('.content') as HTMLElement | null
   if (content && content.scrollHeight > content.clientHeight) return content
@@ -60,17 +66,28 @@ export function initSmoothScroll(): () => void {
     // 1. 如果已有事件阻止（如 3D 画布滚轮缩放、Ctrl+滚轮网页缩放），不拦截
     if (e.defaultPrevented || e.ctrlKey) return
 
-    // 2. 找到当前鼠标悬停的可滚动容器
-    const scrollable = findScrollableParent(e.target as HTMLElement | null)
-    if (!scrollable) return
+    // 2. 找到当前鼠标悬停的可滚动容器；弹窗内没有可滚动区域时拦住默认行为，避免滚动背后的页面
+    const target = e.target as HTMLElement | null
+    const inModal = Boolean(target?.closest(MODAL_SELECTOR))
+    const scrollable = findScrollableParent(target)
+    if (!scrollable) {
+      if (inModal) e.preventDefault()
+      return
+    }
 
     const maxScroll = scrollable.scrollHeight - scrollable.clientHeight
     if (maxScroll <= 0) return
 
-    // 3. 边界检查：若已在最顶部且往上滚，或已在最底部且往下滚，放行默认行为
+    // 3. 边界检查：弹窗内到达边界也必须拦住，防止滚动链回到页面
     const direction = e.deltaY > 0 ? 1 : -1
-    if (direction > 0 && scrollable.scrollTop >= maxScroll - 1) return
-    if (direction < 0 && scrollable.scrollTop <= 1) return
+    if (direction > 0 && scrollable.scrollTop >= maxScroll - 1) {
+      if (inModal) e.preventDefault()
+      return
+    }
+    if (direction < 0 && scrollable.scrollTop <= 1) {
+      if (inModal) e.preventDefault()
+      return
+    }
 
     // 4. 拦截原生生硬跳动
     e.preventDefault()

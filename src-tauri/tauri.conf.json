@@ -34,6 +34,21 @@
         "shadow": false,
         "focus": false,
         "backgroundColor": "#00000000"
+      },
+      {
+        "label": "pet",
+        "title": "",
+        "width": 160,
+        "height": 180,
+        "resizable": false,
+        "decorations": false,
+        "visible": false,
+        "skipTaskbar": true,
+        "alwaysOnTop": true,
+        "transparent": true,
+        "shadow": false,
+        "focus": false,
+        "backgroundColor": "#00000000"
       }
     ],
     "security": {
@@ -44,9 +59,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU5RUQwM0QyOEI3OThGQzMKUldURGozbUwwZ1B0V1RkeWpxM2NHSkJFMGhhUzhKZUhhL08ramc4VTNOS2JzaXJSR3BYaDJwV3gK",
-      "endpoints": [
-        "https://github.com/LeeeeCm/BlockHabit/releases/latest/download/latest.json"
-      ],
+      "endpoints": ["https://github.com/LeeeeCm/BlockHabit/releases/latest/download/latest.json"],
       "windows": {
         "installMode": "passive"
       }

@@ -1,0 +1,7 @@
+html[data-win='pet'],
+html[data-win='pet'] body,
+html[data-win='pet'] #root {
+  background: transparent !important;
+  margin: 0;
+  overflow: hidden;
+}

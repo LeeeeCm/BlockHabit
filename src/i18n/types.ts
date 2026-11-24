@@ -459,6 +459,25 @@ export interface TranslationSchema {
     updateCopyFailed: string
     /** D4：实验性开关组（默认折叠） */
     labTitle: string
+    petGroupTitle: string
+    petLabel: string
+    petOn: string
+    petOff: string
+    petHint: string
+    petSizeLabel: string
+    petSizeSmall: string
+    petSizeMedium: string
+    petSizeLarge: string
+    petSkinLabel: string
+    petSkinBlock: string
+    petSkinRobot: string
+    petSkinHint: string
+    petSkinLocked: (count: number) => string
+    petRoamLabel: string
+    petRoamOn: string
+    petRoamOff: string
+    petRoamHint: string
+    petRightClickHint: string
     /** D4：声音分组（音效开关 + 音量） */
     soundGroupTitle: string
     /** F9 本地诊断包 */
@@ -754,4 +773,5 @@ export interface TranslationSchema {
     /** B4：多会话展示副行 */
     moreSessions: (n: number) => string
   }
+  pet: { hint: string }
 }

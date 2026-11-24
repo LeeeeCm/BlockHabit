@@ -382,7 +382,14 @@ export function normalizeState(s: AppState): AppState {
         /^([01]\d|2[0-3]):[0-5]\d$/.test(s.settings.eveningNudgeTime)
           ? s.settings.eveningNudgeTime
           : '21:00',
-      quickCheckInEnabled: s.settings?.quickCheckInEnabled === true
+      quickCheckInEnabled: s.settings?.quickCheckInEnabled === true,
+      enablePet: s.settings?.enablePet !== false,
+      petSize:
+        s.settings?.petSize === 'small' || s.settings?.petSize === 'large'
+          ? s.settings.petSize
+          : 'medium',
+      petSkin: s.settings?.petSkin === 'robot' ? 'robot' : 'block',
+      petRoam: s.settings?.petRoam !== false
     },
     dayClaims: Array.isArray(s.dayClaims)
       ? (s.dayClaims as unknown[]).flatMap((c) => {

@@ -6,6 +6,7 @@
   position: fixed;
   inset: 0;
   background: var(--overlay);
+  overscroll-behavior: contain;
   backdrop-filter: var(--backdrop-filter);
   -webkit-backdrop-filter: var(--backdrop-filter);
   display: flex;
@@ -68,6 +69,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   padding: 18px 24px 20px;
   min-height: 0;
   scrollbar-width: thin;
@@ -260,4 +262,10 @@
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
   }
+}
+
+/* 弹窗打开期间锁住背后的页面滚动，避免滚轮在弹窗边界继续带动主内容 */
+body:has(.overlay) .content,
+body:has(.drop-overlay) .content {
+  overflow: hidden;
 }

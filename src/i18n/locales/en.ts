@@ -37,5 +37,6 @@ export const en: TranslationSchema = {
   yearbook,
   archive,
   buildingArchive,
-  focusCompanion
+  focusCompanion,
+  pet: { hint: 'Pet: double-click to open the app, right-click for pet settings, drag to move' }
 }

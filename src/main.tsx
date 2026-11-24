@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { TrayMenu } from './components/TrayMenu'
+import { PetWindow } from './pet/PetWindow'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { initSmoothScroll } from './platform/smoothScroll'
@@ -37,10 +38,18 @@ applyCachedAppearance()
 
 const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
-const isTrayMenu = inTauri && getCurrentWindow().label === 'tray-menu'
+const windowLabel = inTauri ? getCurrentWindow().label : ''
+const isTrayMenu = windowLabel === 'tray-menu'
+const isPet = windowLabel === 'pet'
+const petPreview =
+  !inTauri &&
+  typeof location !== 'undefined' &&
+  new URLSearchParams(location.search).has('pet-preview')
 
 if (isTrayMenu) {
   document.documentElement.dataset.win = 'tray-menu'
+} else if (isPet || petPreview) {
+  document.documentElement.dataset.win = 'pet'
 } else {
   initSmoothScroll()
 }
@@ -61,6 +70,8 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
       {isTrayMenu ? (
         <TrayMenu />
+      ) : isPet || petPreview ? (
+        <PetWindow preview={petPreview} />
       ) : (
         <SyncProvider>
           <App />
