@@ -159,7 +159,8 @@ export default function App() {
       const patch: Partial<AppSettings> = {}
       if (payload.size === 'small' || payload.size === 'medium' || payload.size === 'large')
         patch.petSize = payload.size
-      if (payload.skin === 'block' || payload.skin === 'cat') patch.petSkin = payload.skin
+      if (payload.skin === 'block' || payload.skin === 'cat' || payload.skin === 'bot')
+        patch.petSkin = payload.skin
       if (typeof payload.roam === 'boolean') patch.petRoam = payload.roam
       if (typeof payload.color === 'string') patch.petColor = normalizePetColor(payload.color)
       if (Object.keys(patch).length > 0) updateSettings(patch)
