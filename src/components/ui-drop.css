@@ -151,18 +151,38 @@
   background: var(--surface);
 }
 
-/* 积木即刻镌刻栏：平滑抽屉展开，避免弹窗突兀跳动 */
+/* 积木即刻镌刻栏：基于 CSS Grid 轨道的零重排抽屉展开，避免固定 max-height 裁剪 */
+.drop-engrave-drawer {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  border-top: 0 solid var(--line);
+  pointer-events: none;
+  transition:
+    grid-template-rows var(--dur-lg) var(--ease-out),
+    opacity var(--dur-md) var(--ease-default);
+}
+
+.drop-engrave-drawer.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  border-top-width: 1px;
+  pointer-events: auto;
+}
+
 .drop-engrave-section {
   background: var(--surface);
-  border-top: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   gap: 10px;
   overflow: hidden;
-  transition:
-    max-height var(--dur-lg) var(--ease-bounce),
-    opacity var(--dur-md) var(--ease-default),
-    padding var(--dur-lg) var(--ease-default);
+  min-height: 0;
+  padding: 0 18px;
+  transition: padding var(--dur-lg) var(--ease-out);
+}
+
+.drop-engrave-drawer.open .drop-engrave-section {
+  padding: 12px 18px 14px;
 }
 
 .micro-mood-group {
@@ -181,7 +201,11 @@
   background: color-mix(in srgb, var(--ink) 2%, transparent);
   color: var(--ink-2);
   cursor: pointer;
-  transition: all var(--dur-sm) var(--ease-default);
+  transition:
+    background var(--dur-sm) var(--ease-default),
+    color var(--dur-sm) var(--ease-default),
+    border-color var(--dur-sm) var(--ease-default),
+    transform var(--dur-xs) var(--ease-out);
   user-select: none;
 }
 
@@ -195,7 +219,6 @@
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, var(--surface));
   color: var(--ink);
-  font-weight: 600;
 }
 
 .drop-engrave-input-row {
@@ -233,7 +256,11 @@
   align-items: center;
   justify-content: center;
   color: var(--ink-2);
-  transition: all var(--dur-xs) var(--ease-default);
+  transition:
+    background var(--dur-xs) var(--ease-default),
+    color var(--dur-xs) var(--ease-default),
+    border-color var(--dur-xs) var(--ease-default),
+    transform var(--dur-2xs) var(--ease-out);
 }
 
 .star-toggle-btn.starred {

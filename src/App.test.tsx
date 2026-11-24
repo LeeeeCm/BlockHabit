@@ -55,6 +55,7 @@ vi.mock('@tauri-apps/api/event', () => ({
 }))
 
 import App from './App'
+import { SyncProvider } from './sync/SyncProvider'
 
 describe('App keyboard shortcuts and modal guard', () => {
   let container: HTMLDivElement
@@ -180,6 +181,32 @@ describe('App keyboard shortcuts and modal guard', () => {
     })
     expect(container.querySelector('[data-testid="page-today"]')).not.toBeNull()
     expect(container.querySelector('[data-testid="page-showcase"]')).toBeNull()
+
+    act(() => {
+      root.unmount()
+    })
+  })
+
+  it('marks active desktop tab with aria-current="page" and opens settings on Ctrl+,', async () => {
+    const root = createRoot(container)
+    await act(async () => {
+      root.render(
+        <SyncProvider>
+          <App />
+        </SyncProvider>
+      )
+      await flushLazy()
+    })
+
+    const activeBtn = container.querySelector('.tabbar button.active')
+    expect(activeBtn?.getAttribute('aria-current')).toBe('page')
+    expect(container.querySelector('#settings-dialog-title')).toBeNull()
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: ',', ctrlKey: true }))
+      await flushLazy()
+    })
+    expect(container.querySelector('#settings-dialog-title')).not.toBeNull()
 
     act(() => {
       root.unmount()

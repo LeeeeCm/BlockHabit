@@ -65,7 +65,13 @@ export function TodayHeader({
           <span style={{ fontWeight: 600, color: 'var(--ink)' }}>
             {getBlueprintName(blueprintId, lang)}
           </span>
-          <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-caption)' }}>
+          <span
+            style={{
+              color: 'var(--ink-2)',
+              fontSize: 'var(--fs-caption)',
+              fontVariantNumeric: 'tabular-nums'
+            }}
+          >
             {placedCount}/{total} ({percent}%)
           </span>
         </button>
@@ -73,6 +79,7 @@ export function TodayHeader({
           style={{
             color: 'var(--ink-2)',
             fontSize: 'var(--fs-body)',
+            fontVariantNumeric: 'tabular-nums',
             border: '1px solid var(--line)',
             borderRadius: 999,
             padding: '4px 12px'

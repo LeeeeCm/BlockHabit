@@ -11,6 +11,7 @@ import {
 
 interface Props {
   t: TranslationSchema
+  habitName?: string
   isMobile: boolean
   done: boolean
   running: boolean
@@ -30,6 +31,7 @@ interface Props {
 /** 卡片顶部：状态按钮（打卡/撤销/进行中/未达标）+ 置顶/编辑/删除动作组。 */
 export function HabitRowHeader({
   t,
+  habitName,
   isMobile,
   done,
   running,
@@ -45,26 +47,27 @@ export function HabitRowHeader({
   onEditClick,
   onDeleteClick
 }: Props) {
+  const statusTitle = done
+    ? t.today.undoTooltip
+    : isRestDay
+      ? t.today.restDay
+      : missed
+        ? t.today.weekMissed
+        : running
+          ? t.today.timingTooltip
+          : ended
+            ? t.today.checkInTooltip
+            : isFocus
+              ? t.today.focus
+              : t.today.checkInTooltip
+
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <button
         className="status-btn"
         onClick={onStatusClick}
-        title={
-          done
-            ? t.today.undoTooltip
-            : isRestDay
-              ? t.today.restDay
-              : missed
-                ? t.today.weekMissed
-                : running
-                  ? t.today.timingTooltip
-                  : ended
-                    ? t.today.checkInTooltip
-                    : isFocus
-                      ? t.today.focus
-                      : t.today.checkInTooltip
-        }
+        title={statusTitle}
+        aria-label={habitName ? `${habitName} · ${statusTitle}` : statusTitle}
         style={{
           width: isMobile ? 44 : 40,
           height: isMobile ? 44 : 40,

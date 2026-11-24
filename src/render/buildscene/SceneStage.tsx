@@ -1,4 +1,4 @@
-import type { TouchEventHandler } from 'react'
+import type { MouseEventHandler, TouchEventHandler } from 'react'
 import { BrickInspectPopover } from '../../components/BrickInspectPopover'
 import type { HoveredBlock, Ref } from './sceneTypes'
 
@@ -13,6 +13,7 @@ interface Props {
   onTouchMove: TouchEventHandler<HTMLCanvasElement>
   onTouchEnd: TouchEventHandler<HTMLCanvasElement>
   onTouchCancel: TouchEventHandler<HTMLCanvasElement>
+  onDoubleClick?: MouseEventHandler<HTMLCanvasElement>
 }
 
 /**
@@ -26,7 +27,8 @@ export function SceneStage({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  onTouchCancel
+  onTouchCancel,
+  onDoubleClick
 }: Props) {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
@@ -36,6 +38,7 @@ export function SceneStage({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onTouchCancel={onTouchCancel}
+        onDoubleClick={onDoubleClick}
         style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
       />
       {hoveredBlock && interactiveInspect && (

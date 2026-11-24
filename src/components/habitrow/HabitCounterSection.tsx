@@ -34,10 +34,22 @@ export function HabitCounterSection({
           fontSize: 'var(--fs-small)'
         }}
       >
-        <span style={{ fontWeight: 600, color: done ? 'var(--progress-green)' : 'var(--ink)' }}>
+        <span
+          style={{
+            fontWeight: 600,
+            color: done ? 'var(--progress-green)' : 'var(--ink)',
+            fontVariantNumeric: 'tabular-nums'
+          }}
+        >
           {counterVal} / {targetVal} {unit ?? ''}
         </span>
-        <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-caption)' }}>
+        <span
+          style={{
+            color: 'var(--ink-2)',
+            fontSize: 'var(--fs-caption)',
+            fontVariantNumeric: 'tabular-nums'
+          }}
+        >
           {Math.round(counterRatio * 100)}%
         </span>
       </div>

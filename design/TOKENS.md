@@ -169,3 +169,11 @@
 1. 新动效只允许写 `var(--dur-*)` / `var(--ease-*)`；
 2. 迭代/填充关键字（`linear` / `ease-in` / `forwards` / `both` / `infinite`）不受限制；
 3. 需要新档位时**先改令牌表再改代码**，不允许在组件里加魔法数字。
+
+## 10. 2026-11-19 轻量化动效与排版精修增补（D-20261119-001）
+
+1. **禁止 `transition: all`**：所有交互控件过渡必须显式列举参与过渡的 CSS 属性（由 `themeMotion.test.ts` 守门）。
+2. **交互态字重恒定**：中文在 `font-weight >= 600` 触发阿里妈妈数黑体、`400/500` 走 MiSans；分段控制器 `.apple-segmented-item`、胶囊按钮 `.pill-action`、心境标签 `.micro-mood-chip` 与星期格不得通过切换字重表达选中态，应保持字重恒定并依靠表面对比传递状态。
+3. **等宽数字（`tabular-nums`）**：`.big-num`、`.tabular-nums`、底部导航、分段控件与计数/百分比读数启用 `font-variant-numeric: tabular-nums`。
+4. **触控悬停门控**：卡片与胶囊的 `translateY` 悬停抬升收敛至 `@media (hover: hover) and (pointer: fine)`。
+5. **地基填充令牌化**：`isoGround.ts` 地基填充使用 `withAlpha(p.ink, 0.04)` 替代硬编码 `rgba(128, 128, 128, 0.05)`。

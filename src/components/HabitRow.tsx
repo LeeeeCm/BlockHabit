@@ -346,6 +346,7 @@ export const HabitRow = memo(function HabitRow({
     >
       <HabitRowHeader
         t={t}
+        habitName={habit.name}
         isMobile={isMobile}
         done={done}
         running={running}

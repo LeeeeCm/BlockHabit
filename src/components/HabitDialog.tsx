@@ -4,7 +4,7 @@ import { useAppStore } from '../store/appStore'
 import { useI18n } from '../i18n'
 import { suggestedReminderStart } from '../logic/reminderScheduler'
 import { playSnapSound } from '../audio/sound'
-import { IconClose, IconOptional, IconRequired } from './Icons'
+import { IconChevronDown, IconClose, IconOptional, IconRequired } from './Icons'
 import { triggerHaptic, usePlatform } from '../platform'
 import { BottomSheet } from './BottomSheet'
 import { useDialogA11y } from './useDialogA11y'
@@ -387,9 +387,10 @@ export function HabitDialog({ habit, onClose }: Props) {
                       background: active ? 'var(--ink)' : 'var(--bg)',
                       color: active ? 'var(--bg)' : 'var(--ink-2)',
                       fontSize: 'var(--fs-body)',
-                      fontWeight: active ? 700 : 400,
+                      fontWeight: 600,
                       cursor: 'pointer',
-                      transition: 'all var(--dur-xs) var(--ease-default)'
+                      transition:
+                        'background var(--dur-xs) var(--ease-default), color var(--dur-xs) var(--ease-default), border-color var(--dur-xs) var(--ease-default)'
                     }}
                   >
                     {label}
@@ -445,11 +446,13 @@ export function HabitDialog({ habit, onClose }: Props) {
           aria-hidden="true"
           style={{
             display: 'inline-flex',
-            transition: 'transform var(--dur-xs) var(--ease-default)',
-            transform: moreOpen ? 'rotate(180deg)' : 'none'
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'transform var(--dur-sm) var(--ease-out)',
+            transform: moreOpen ? 'rotate(180deg)' : 'rotate(0deg)'
           }}
         >
-          ⌄
+          <IconChevronDown size={15} />
         </span>
       </button>
 

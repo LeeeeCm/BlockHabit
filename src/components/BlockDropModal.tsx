@@ -202,88 +202,80 @@ export function BlockDropModal({
           />
         </div>
 
-        {/* 即刻镌刻栏（随笔与微状态，落地后果冻抽屉平滑滑出，避免弹窗跳动） */}
+        {/* 即刻镌刻栏（随笔与微状态，落地后通过 CSS Grid 抽屉平滑展开，避免弹窗跳动） */}
         {checkInId && (
-          <div
-            className="drop-engrave-section"
-            style={{
-              maxHeight: animated ? 150 : 0,
-              opacity: animated ? 1 : 0,
-              paddingTop: animated ? 12 : 0,
-              paddingBottom: animated ? 14 : 0,
-              paddingLeft: 18,
-              paddingRight: 18,
-              borderTopWidth: animated ? 1 : 0,
-              pointerEvents: animated ? 'auto' : 'none'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div className="micro-mood-group">
-                {MOODS.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className={`micro-mood-chip${selectedMood === m ? ' active' : ''}`}
-                    onClick={() => handleMoodToggle(m)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                  >
-                    <IconMood mood={m} size={12} style={{ flexShrink: 0 }} />
-                    <span>{t.microMood[m]}</span>
-                  </button>
-                ))}
+          <div className={`drop-engrave-drawer${animated ? ' open' : ''}`}>
+            <div className="drop-engrave-section">
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <div className="micro-mood-group">
+                  {MOODS.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      className={`micro-mood-chip${selectedMood === m ? ' active' : ''}`}
+                      onClick={() => handleMoodToggle(m)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    >
+                      <IconMood mood={m} size={12} style={{ flexShrink: 0 }} />
+                      <span>{t.microMood[m]}</span>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className={`star-toggle-btn${starred ? ' starred' : ''}`}
+                  onClick={() => {
+                    cancelAutoClose()
+                    setStarred((prev) => !prev)
+                  }}
+                  title={starred ? t.reflections.unstarTooltip : t.reflections.starTooltip}
+                >
+                  <IconStar size={14} filled={starred} />
+                </button>
               </div>
-              <button
-                type="button"
-                className={`star-toggle-btn${starred ? ' starred' : ''}`}
-                onClick={() => {
-                  cancelAutoClose()
-                  setStarred((prev) => !prev)
-                }}
-                title={starred ? t.reflections.unstarTooltip : t.reflections.starTooltip}
-              >
-                <IconStar size={14} filled={starred} />
-              </button>
-            </div>
 
-            <div className="drop-engrave-input-row">
-              <input
-                ref={inputRef}
-                type="text"
-                className="drop-engrave-input"
-                value={note}
-                placeholder={t.reflections.engravePlaceholder}
-                onFocus={cancelAutoClose}
-                onChange={(e) => {
-                  cancelAutoClose()
-                  setNote(e.target.value)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    handleEngraveSubmit()
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className="btn primary"
-                style={{
-                  padding: '6px 14px',
-                  fontSize: 'var(--fs-small)',
-                  borderRadius: 'var(--r-sm)'
-                }}
-                disabled={engraved}
-                onClick={handleEngraveSubmit}
-              >
-                {engraved ? (
-                  <IconCheck
-                    size={14}
-                    style={{ display: 'inline-block', verticalAlign: 'middle' }}
-                  />
-                ) : (
-                  t.reflections.engraveAction
-                )}
-              </button>
+              <div className="drop-engrave-input-row">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  className="drop-engrave-input"
+                  value={note}
+                  placeholder={t.reflections.engravePlaceholder}
+                  onFocus={cancelAutoClose}
+                  onChange={(e) => {
+                    cancelAutoClose()
+                    setNote(e.target.value)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleEngraveSubmit()
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn primary"
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: 'var(--fs-small)',
+                    borderRadius: 'var(--r-sm)'
+                  }}
+                  disabled={engraved}
+                  onClick={handleEngraveSubmit}
+                >
+                  {engraved ? (
+                    <IconCheck
+                      size={14}
+                      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                    />
+                  ) : (
+                    t.reflections.engraveAction
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -306,7 +298,7 @@ export function BlockDropModal({
             }}
           >
             <span style={{ fontWeight: 600 }}>{getBlueprintName(blueprint.id, lang)}</span>
-            <span style={{ color: 'var(--ink-2)' }}>
+            <span style={{ color: 'var(--ink-2)', fontVariantNumeric: 'tabular-nums' }}>
               {t.blockDrop.progress(placedCount, total, progressPercent)}
             </span>
           </div>

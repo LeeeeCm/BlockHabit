@@ -342,8 +342,13 @@ export default function App() {
       const tag = target?.tagName?.toLowerCase()
       if (tag === 'input' || tag === 'textarea' || tag === 'select' || target?.isContentEditable)
         return
-      // 弹窗打开时不响应数字键切页
+      // 弹窗打开时不响应全局快捷键
       if (document.querySelector('[role="dialog"][aria-modal="true"]')) return
+      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+        e.preventDefault()
+        setSettingsOpen(true)
+        return
+      }
       if (e.key === '1') setTab('today')
       else if (e.key === '2') setTab('build')
       else if (e.key === '3') setTab('showcase')
@@ -492,6 +497,7 @@ export default function App() {
             <button
               key={id}
               className={tab === id ? 'active' : ''}
+              aria-current={tab === id ? 'page' : undefined}
               title={t.common.shortcut(label, String(index + 1))}
               onClick={() => setTab(id)}
             >
