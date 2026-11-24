@@ -96,8 +96,19 @@ describe('内容版本门（B1 兼容矩阵，v2 → v3）', () => {
     expect(sanitizeState(future)?.completedBlueprintIds).toEqual([])
   })
 
-  it('导入/同步前置：更高内容版本（v4）返回 null，不覆盖本地', () => {
-    const future = { ...baseState(), contentVersion: 4 }
+  it('v4 存档若只含当前已知蓝图，可降级读取并写回 v3；含未知蓝图仍拒绝', () => {
+    const legacyKnown = { ...baseState(), contentVersion: 4 }
+    const loaded = loadAndMigrate(legacyKnown)
+    expect(loaded.state?.contentVersion).toBe(CONTENT_VERSION)
+    expect(prepareImport(legacyKnown)?.contentVersion).toBe(CONTENT_VERSION)
+
+    const future = { ...baseState(), contentVersion: 4, activeBlueprintId: 'future-tower' }
+    expect(loadAndMigrate(future).state).toBeNull()
+    expect(prepareImport(future)).toBeNull()
+  })
+
+  it('导入/同步前置：含未知蓝图的更高内容版本返回 null，不覆盖本地', () => {
+    const future = { ...baseState(), contentVersion: 4, activeBlueprintId: 'future-tower' }
     expect(prepareImport(future)).toBeNull()
     expect(prepareImport(baseState())?.contentVersion).toBe(CONTENT_VERSION)
     expect(prepareImport({ ...baseState(), contentVersion: 2 })?.contentVersion).toBe(3)
@@ -139,8 +150,17 @@ describe('内容版本门（B1 兼容矩阵，v2 → v3）', () => {
     expect(v3WithV2.contentVersion).toBe(3)
   })
 
-  it('本地存储未来内容版本（v4）：needsUpgrade 且原始存档字节不被改写', async () => {
-    const future = JSON.stringify({ ...baseState(), contentVersion: 4 })
+  it('本地 v4 无未知蓝图可降级读取；含未知蓝图才 needsUpgrade 且不改写原始字节', async () => {
+    const known = JSON.stringify({ ...baseState(), contentVersion: 4 })
+    localStorage.setItem(STATE_KEY, known)
+    const downgraded = await createLocalStorageAdapter().load()
+    expect(downgraded.state?.contentVersion).toBe(CONTENT_VERSION)
+
+    const future = JSON.stringify({
+      ...baseState(),
+      contentVersion: 4,
+      activeBlueprintId: 'future-tower'
+    })
     localStorage.setItem(STATE_KEY, future)
     const res = await createLocalStorageAdapter().load()
     expect(res.state).toBeNull()

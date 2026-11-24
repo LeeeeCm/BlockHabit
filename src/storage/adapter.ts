@@ -1,7 +1,7 @@
 import { REPAIR_MAX } from '../logic/repairBricks'
 import type { AppState, DayClaim, DeletedDayClaim, ReminderLogEntry } from '../types'
 import { blueprintOrder } from '../logic/blueprints'
-import { CONTENT_VERSION, isFutureContentVersion } from '../logic/blueprints/manifest'
+import { CONTENT_VERSION, normalizeContentVersion } from '../logic/blueprints/manifest'
 import { normalizePetColor } from '../pet/types'
 
 export const STATE_KEY = 'blockhabit-state'
@@ -9,6 +9,26 @@ export const STATE_KEY = 'blockhabit-state'
 export const CORRUPT_BACKUP_KEY = 'blockhabit-state-corrupt-backup'
 export const BACKUP_KEY = 'blockhabit-backup-latest'
 export const SCHEMA_VERSION = 2
+
+/**
+ * v4 只追加过独立桌宠蓝图。若存档没有引用任何当前未知蓝图，数据语义与 v3 相同，
+ * 可以安全降级读取，避免旧安装包写过的 contentVersion=4 把整份本地数据挡在门外。
+ */
+function blocksContentVersion(v: Record<string, unknown>): boolean {
+  const version = normalizeContentVersion(v.contentVersion)
+  if (version <= CONTENT_VERSION) return false
+  if (version !== 4) return true
+  const ids: unknown[] = [v.activeBlueprintId]
+  for (const key of ['builds', 'completedBlueprintIds', 'showcasePlacements'] as const) {
+    const items = v[key]
+    if (!Array.isArray(items)) continue
+    for (const item of items) {
+      if (isRecord(item)) ids.push(item.blueprintId ?? item.id)
+      else ids.push(item)
+    }
+  }
+  return ids.some((id) => typeof id === 'string' && !isKnownBlueprintId(id))
+}
 
 export interface LoadResult {
   state: AppState | null
@@ -149,7 +169,7 @@ export function validateState(v: unknown): ValidateResult {
     return { ok: false, error: 'schema-version' }
   }
   if (v.schemaVersion > SCHEMA_VERSION) return { ok: false, error: 'schema-version' }
-  if (isFutureContentVersion(v.contentVersion)) return { ok: false, error: 'content-version' }
+  if (blocksContentVersion(v)) return { ok: false, error: 'content-version' }
   if (!Array.isArray(v.habits) || !v.habits.every(isValidHabitElement))
     return { ok: false, error: 'habits' }
   if (!Array.isArray(v.checkIns) || !v.checkIns.every(isValidCheckInElement))
@@ -304,7 +324,7 @@ export function loadAndMigrate(
 ): { state: AppState } | { state: null; needsUpgrade?: boolean } {
   if (!isRecord(v)) return { state: null }
   // B1 内容版本门：必须在 sanitize 之前拦截，否则未知 blueprint 会被静默清洗并落盘
-  if (isFutureContentVersion(v.contentVersion)) return { state: null, needsUpgrade: true }
+  if (blocksContentVersion(v)) return { state: null, needsUpgrade: true }
   let version =
     typeof v.schemaVersion === 'number' && Number.isInteger(v.schemaVersion) && v.schemaVersion >= 1
       ? v.schemaVersion
@@ -329,7 +349,7 @@ export function loadAndMigrate(
  */
 export function prepareImport(v: unknown): AppState | null {
   // B1：更高内容版本无法渲染，导入/同步都必须拒绝，不能清洗后落盘
-  if (isRecord(v) && isFutureContentVersion(v.contentVersion)) return null
+  if (isRecord(v) && blocksContentVersion(v)) return null
   if (isRecord(v) && v.schemaVersion === 1) {
     const check = validateState(migrateV1toV2(v))
     if (check.ok) return normalizeState(check.state)
