@@ -12,24 +12,60 @@ dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# 环境变量与本地配置（示例文件可入库）
+.env
+.env.*
+!.env.example
+
+# 测试 / 构建缓存
+coverage/
+.nyc_output/
+*.tsbuildinfo
+.vite/
+.cache/
+.turbo/
+.eslintcache
+
+# Tauri 生成物（src-tauri/.gitignore 也覆盖，这里兜底）
+src-tauri/target/
+src-tauri/gen/
+
+# 编辑器目录与文件
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+._*
+Thumbs.db
+Desktop.ini
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 .zcode/
+.claude/
+.cursor/
+.zed/
+.fleet/
+.history/
 
-# Local automation scratch & demo artifacts
+# 本地自动化临时文件与演示产物
 .tmp/
 .tmp-*
 .qoder/
 *.zip
 vite.log
+
+# 安装包与合并残留（构建产物默认在 target 下）
+*.msi
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.bak
+*.orig
+*.rej
 
 # 签名密钥材料（TAURI_SIGNING_PRIVATE_KEY 等）绝不入库 —— 私钥只放仓库外与 CI secrets
 *.key
