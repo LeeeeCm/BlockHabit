@@ -167,6 +167,21 @@
 }
 
 /* ---- 响应式页头（D-20261124-087）：窄窗口整组换行，绝不把中文挤成竖排 ---- */
+/* 四页统一标题排印（D-20261124-105）：同一字体族、字号、字重、行高与字距 */
+.page-title {
+  font-family: var(--font-body);
+  font-size: var(--fs-title);
+  font-weight: 700;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  margin: 0;
+  white-space: nowrap;
+}
+
+:root[lang='en'] .page-title {
+  letter-spacing: -0.025em;
+}
+
 .today-header {
   display: flex;
   justify-content: space-between;
@@ -185,6 +200,13 @@
 }
 .today-header-actions > * {
   flex-shrink: 0;
+}
+.today-header-actions > .icon-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
 }
 .today-header-pill {
   white-space: nowrap;

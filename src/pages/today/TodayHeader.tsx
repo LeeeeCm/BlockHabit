@@ -29,7 +29,7 @@ export function TodayHeader({
   const { lang, t } = useI18n()
   return (
     <div className="today-header">
-      <h1 className="today-header-title" style={{ fontSize: 'var(--fs-title)', margin: 0 }}>
+      <h1 className="today-header-title page-title">
         {t.common.monthDay(now.getMonth() + 1, now.getDate())}
         <span
           style={{

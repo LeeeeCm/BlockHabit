@@ -81,9 +81,7 @@ export default function Build() {
         }}
       >
         <div className="build-top-bar-main">
-          <span style={{ fontWeight: 700, fontSize: 'var(--fs-title)' }}>
-            {getBlueprintName(blueprint.id, lang)}
-          </span>
+          <span className="page-title">{getBlueprintName(blueprint.id, lang)}</span>
           <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-small)' }}>
             {t.build.blocksCount(placedCount, total)}
           </span>

@@ -208,33 +208,16 @@ textarea {
   color: var(--on-accent);
 }
 
-/* 全局包豪斯极简细滑滚动条：杜绝溢出圆角，轨隙内收 */
+/* 全项目无滚动条外观（D-20261124-105）：保留滚轮/触控板滚动，不绘制轨道与滑块。 */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-}
-::-webkit-scrollbar-track {
-  background: transparent !important;
-  margin: 16px 0;
-}
-::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--ink) 20%, transparent);
-  border-radius: var(--r-pill);
-  border: 1.5px solid transparent;
-  background-clip: padding-box;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--ink) 38%, transparent);
-  border: 1.5px solid transparent;
-  background-clip: padding-box;
-}
-::-webkit-scrollbar-corner {
-  background: transparent !important;
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 * {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--ink) 20%, transparent) transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 /* ==================== 键盘可达性（C2） ==================== */

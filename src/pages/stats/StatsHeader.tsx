@@ -18,14 +18,12 @@ export function StatsHeader({ t, grandTotalMinutes, repairBricks, onOpenMemorabi
       style={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         gap: 12
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
-        <h1 style={{ fontSize: 'var(--fs-title)', margin: 0, whiteSpace: 'nowrap' }}>
-          {t.stats.title}
-        </h1>
+        <h1 className="page-title">{t.stats.title}</h1>
         <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
           {t.stats.subtitle}
           {grandTotalMinutes > 0 && (

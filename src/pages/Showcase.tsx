@@ -186,14 +186,7 @@ export default function Showcase() {
             rowGap: 2
           }}
         >
-          <span
-            style={{
-              fontWeight: 700,
-              fontSize: 'var(--fs-title)',
-              whiteSpace: 'nowrap',
-              flexShrink: 0
-            }}
-          >
+          <span className="page-title" style={{ flexShrink: 0 }}>
             {t.showcase.title}
           </span>
           <span
