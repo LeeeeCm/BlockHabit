@@ -919,6 +919,15 @@
       "owner": "Claude Code",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261124-101-independent-pet-menu.md"
+    },
+    {
+      "id": "D-20261124-102",
+      "date": "2026-11-24",
+      "title": "今日页日期栏并入统一顶栏",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261124-102-today-top-bar.md"
     }
   ]
 }

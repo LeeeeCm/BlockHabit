@@ -343,118 +343,130 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
   }
 
   return (
-    <div
-      className="today-page-container"
-      style={{ padding: '24px 24px 80px', maxWidth: 720, margin: '0 auto' }}
-    >
-      <TodayHeader
-        now={now}
-        blueprintId={blueprint.id}
-        placedCount={placedCount}
-        total={total}
-        percent={percent}
-        metCount={metCount}
-        activeCount={active.length}
-        onCelebrate={onCelebrate}
-        onNewHabit={handleNewHabit}
-      />
-
-      {brief.show && <TodayBrief brief={brief} onStartFirst={handleStartFirst} />}
-
-      {focusStartHabit && (
-        <TodayFocusEntry
-          habit={focusStartHabit}
-          isMobile={isMobile}
-          onStart={() => handleStartFocus(focusStartHabit)}
-        />
-      )}
-      {hasAnyCheckIn && nudgeConsent === null && !nudgeEnabled && (
-        <EveningNudgeConsent onEnable={handleNudgeEnable} onDecline={handleNudgeDecline} />
-      )}
-
-      {categories.length > 0 && (
-        <TodayCategoryFilter
-          categories={categories}
-          activeHabits={active}
-          selectedCat={selectedCat}
-          onSelectAll={() => setSelectedCat(null)}
-          onToggleCategory={(category) =>
-            setSelectedCat((curr) => (curr === category ? null : category))
-          }
-        />
-      )}
-
-      {metCount === active.length && active.length > 0 && (
-        <TodayFullDayCard
-          claimed={dayClaims.some((c) => c.date === day)}
-          onClaim={handleClaimDay}
-          onCelebrate={onCelebrate}
-        />
-      )}
-      {echoEntry && (
-        <TodayEchoCapsule
-          note={echoEntry.note}
-          daysAgo={echoDaysAgo}
-          habitName={habits.find((h) => h.id === echoEntry.habitId)?.name || '—'}
-        />
-      )}
-
-      {activeReminders.length > 0 && (
-        <TodayReminderBanner reminders={activeReminders} onReopen={reopenReminders} />
-      )}
-
-      <div
-        style={{
-          height:
-            categories.length > 0 || (metCount === active.length && active.length > 0) ? 6 : 18
-        }}
-      />
-      {active.length === 0 ? (
-        <TodayEmptyState
-          blueprintId={blueprint.id}
-          onTemplatePick={handleTemplatePick}
-          onNewHabit={handleNewHabit}
-          onGoBuild={onGoBuild}
-        />
-      ) : (
-        <TodayHabitSections
-          grouped={grouped}
-          checkIns={checkIns}
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div className="page-top-bar today-top-bar">
+        <TodayHeader
           now={now}
-          day={day}
-          enableGentleDecay={enableGentleDecay}
-          onCheck={handleHabitCheck}
-          onNoteSaved={handleNoteSaved}
-          onEdit={handleEdit}
+          blueprintId={blueprint.id}
+          placedCount={placedCount}
+          total={total}
+          percent={percent}
+          metCount={metCount}
+          activeCount={active.length}
+          onCelebrate={onCelebrate}
+          onNewHabit={handleNewHabit}
         />
-      )}
-
-      {archived.length > 0 && (
-        <TodayArchiveSection
-          archived={archived}
-          showArchive={showArchive}
-          archDelete={archDelete}
-          onToggleArchive={() => setShowArchive((v) => !v)}
-          onRestore={restoreHabit}
-          onDeleteRequest={setArchDelete}
-          onCancelDelete={() => setArchDelete(null)}
-          onConfirmDelete={handleConfirmDeleteArchived}
-        />
-      )}
-
-      <TodayOverlays
-        dialogOpen={dialogOpen}
-        editing={editing}
-        toast={toast}
-        blueprint={blueprint}
-        dropModal={dropModal}
-        onCloseDialog={() => {
-          setDialogOpen(false)
-          setEditing(null)
+      </div>
+      <div
+        className="today-page-container"
+        style={{
+          padding: '24px 24px 80px',
+          maxWidth: 720,
+          width: '100%',
+          margin: '0 auto',
+          boxSizing: 'border-box',
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto'
         }}
-        onEngraved={() => showToast(t.reflections.engravedToast, true)}
-        onCloseDropModal={handleCloseDropModal}
-      />
+      >
+        {brief.show && <TodayBrief brief={brief} onStartFirst={handleStartFirst} />}
+
+        {focusStartHabit && (
+          <TodayFocusEntry
+            habit={focusStartHabit}
+            isMobile={isMobile}
+            onStart={() => handleStartFocus(focusStartHabit)}
+          />
+        )}
+        {hasAnyCheckIn && nudgeConsent === null && !nudgeEnabled && (
+          <EveningNudgeConsent onEnable={handleNudgeEnable} onDecline={handleNudgeDecline} />
+        )}
+
+        {categories.length > 0 && (
+          <TodayCategoryFilter
+            categories={categories}
+            activeHabits={active}
+            selectedCat={selectedCat}
+            onSelectAll={() => setSelectedCat(null)}
+            onToggleCategory={(category) =>
+              setSelectedCat((curr) => (curr === category ? null : category))
+            }
+          />
+        )}
+
+        {metCount === active.length && active.length > 0 && (
+          <TodayFullDayCard
+            claimed={dayClaims.some((c) => c.date === day)}
+            onClaim={handleClaimDay}
+            onCelebrate={onCelebrate}
+          />
+        )}
+        {echoEntry && (
+          <TodayEchoCapsule
+            note={echoEntry.note}
+            daysAgo={echoDaysAgo}
+            habitName={habits.find((h) => h.id === echoEntry.habitId)?.name || '—'}
+          />
+        )}
+
+        {activeReminders.length > 0 && (
+          <TodayReminderBanner reminders={activeReminders} onReopen={reopenReminders} />
+        )}
+
+        <div
+          style={{
+            height:
+              categories.length > 0 || (metCount === active.length && active.length > 0) ? 6 : 18
+          }}
+        />
+        {active.length === 0 ? (
+          <TodayEmptyState
+            blueprintId={blueprint.id}
+            onTemplatePick={handleTemplatePick}
+            onNewHabit={handleNewHabit}
+            onGoBuild={onGoBuild}
+          />
+        ) : (
+          <TodayHabitSections
+            grouped={grouped}
+            checkIns={checkIns}
+            now={now}
+            day={day}
+            enableGentleDecay={enableGentleDecay}
+            onCheck={handleHabitCheck}
+            onNoteSaved={handleNoteSaved}
+            onEdit={handleEdit}
+          />
+        )}
+
+        {archived.length > 0 && (
+          <TodayArchiveSection
+            archived={archived}
+            showArchive={showArchive}
+            archDelete={archDelete}
+            onToggleArchive={() => setShowArchive((v) => !v)}
+            onRestore={restoreHabit}
+            onDeleteRequest={setArchDelete}
+            onCancelDelete={() => setArchDelete(null)}
+            onConfirmDelete={handleConfirmDeleteArchived}
+          />
+        )}
+
+        <TodayOverlays
+          dialogOpen={dialogOpen}
+          editing={editing}
+          toast={toast}
+          blueprint={blueprint}
+          dropModal={dropModal}
+          onCloseDialog={() => {
+            setDialogOpen(false)
+            setEditing(null)
+          }}
+          onEngraved={() => showToast(t.reflections.engravedToast, true)}
+          onCloseDropModal={handleCloseDropModal}
+        />
+      </div>
     </div>
   )
 }

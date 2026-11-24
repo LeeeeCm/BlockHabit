@@ -29,12 +29,12 @@ export function TodayHeader({
   const { lang, t } = useI18n()
   return (
     <div className="today-header">
-      <h1 className="today-header-title" style={{ fontSize: 'var(--fs-hero)', margin: 0 }}>
+      <h1 className="today-header-title" style={{ fontSize: 'var(--fs-title)', margin: 0 }}>
         {t.common.monthDay(now.getMonth() + 1, now.getDate())}
         <span
           style={{
             color: 'var(--ink-2)',
-            fontSize: 'var(--fs-subhead)',
+            fontSize: 'var(--fs-small)',
             marginLeft: 10,
             fontWeight: 400
           }}
@@ -44,20 +44,10 @@ export function TodayHeader({
       </h1>
       <div className="today-header-actions">
         <button
-          className="btn ghost today-header-pill"
+          className="btn ghost today-header-pill block-action"
           onClick={() => {
             triggerHaptic('selection')
             onCelebrate?.()
-          }}
-          style={{
-            padding: '4px 11px',
-            fontSize: 'var(--fs-small)',
-            borderRadius: 999,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            border: '1px solid var(--line)',
-            background: 'var(--surface)'
           }}
           title={t.today.view3dModel}
         >
@@ -70,14 +60,8 @@ export function TodayHeader({
           </span>
         </button>
         <span
-          className="today-header-pill"
-          style={{
-            color: 'var(--ink-2)',
-            fontSize: 'var(--fs-body)',
-            border: '1px solid var(--line)',
-            borderRadius: 999,
-            padding: '4px 12px'
-          }}
+          className="today-header-pill block-action is-static"
+          style={{ color: 'var(--ink-2)' }}
         >
           {metCount} / {activeCount}
         </span>

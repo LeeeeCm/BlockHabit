@@ -173,6 +173,7 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  width: 100%;
 }
 .today-header-actions {
   display: flex;
