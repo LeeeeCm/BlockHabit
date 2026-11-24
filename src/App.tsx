@@ -9,7 +9,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { listen, emitTo } from '@tauri-apps/api/event'
 import { setPetVisible } from './platform/petWindow'
 import type { PetConfig } from './pet/types'
-import { normalizePetColor } from './pet/types'
+import { normalizePetColor, PET_MODELS, resolvePetModel } from './pet/types'
 import { initPersistence, useAppStore, forceFlush, isDemoMode } from './store/appStore'
 import { cacheAppearance } from './platform/appearance'
 import { pickAdapter } from './storage'
@@ -88,7 +88,10 @@ export default function App() {
   // D-20261124-091：桌宠可见性与配置由主窗驱动；pet 窗口只负责绘制与交互。
   const enablePet = useAppStore((s) => s.settings.enablePet !== false)
   const petSize = useAppStore((s) => s.settings.petSize ?? 'medium')
-  const petSkin = useAppStore((s) => s.settings.petSkin ?? 'block')
+  const petSkin = useAppStore((s) => s.settings.petSkin ?? s.settings.petModel ?? 'block')
+  const resolvedPetSkin = resolvePetModel(petSkin, builds)
+  const unlockedPetSkins = PET_MODELS.filter((model) => resolvePetModel(model, builds) === model)
+  const unlockedPetKey = unlockedPetSkins.join(',')
   const petRoam = useAppStore((s) => s.settings.petRoam !== false)
   const petColor = useAppStore((s) => s.settings.petColor)
   const completedCount = useAppStore((s) => s.completedBlueprintIds.length)
@@ -101,9 +104,10 @@ export default function App() {
     if (!inTauri || !enablePet) return
     const config: PetConfig = {
       size: petSize,
-      skin: petSkin,
+      skin: resolvedPetSkin,
       roam: petRoam,
       color: petColor,
+      unlocked: unlockedPetSkins,
       done: petDone,
       total: activeHabits.length,
       completed: completedCount
@@ -112,7 +116,17 @@ export default function App() {
     send()
     const late = window.setTimeout(send, 600)
     return () => window.clearTimeout(late)
-  }, [enablePet, petSize, petSkin, petRoam, petColor, petDone, activeHabits.length, completedCount])
+  }, [
+    enablePet,
+    petSize,
+    resolvedPetSkin,
+    unlockedPetKey,
+    petRoam,
+    petColor,
+    petDone,
+    activeHabits.length,
+    completedCount
+  ])
   useEffect(() => {
     if (!inTauri) return
     let disposed = false

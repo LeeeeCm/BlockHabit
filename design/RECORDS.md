@@ -116,5 +116,7 @@
 | D-20261124-095 | 2026-11-24 | 移除机器人桌宠形象 | approved | mini-widget, settings | LeeCM |
 | D-20261124-096 | 2026-11-24 | 正脸积木桌宠、落成形象与到点打卡气泡（v1 历史，已被 v2 取代） | approved | mini-widget, settings, build, gallery | LeeCM |
 | D-20261124-097 | 2026-11-24 | 桌宠在原窗口内无卡片外框（v1 历史，已被 v2 取代） | proposed | mini-widget | pending |
+| D-20261124-098 | 2026-11-24 | 旧桌宠蓝图解锁形象、待机动作与尺寸收敛 | approved | mini-widget, settings, gallery | LeeCM |
+| D-20261124-099 | 2026-11-24 | 图鉴缩略图修复：去除双形态叠加与白色底板并居中当前形态 | approved | gallery | LeeCM |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

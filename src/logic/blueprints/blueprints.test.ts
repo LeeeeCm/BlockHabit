@@ -112,7 +112,7 @@ describe('blueprint catalog', () => {
       'firestation',
       'watertower'
     ])
-    expect(Object.keys(blueprints)).toHaveLength(blueprintOrder.length)
+    expect(Object.keys(blueprints)).toEqual([...blueprintOrder, 'pet-cat', 'pet-bot'])
   })
 })
 

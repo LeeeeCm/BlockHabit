@@ -68,7 +68,7 @@ export function stepPetWalk(
   }
 }
 
-/** 下一次「开始走动 / 停下」的间隔：2.5–6 秒，避免机械节拍 */
+/** 下一次「开始走动 / 停下」的间隔：6–16 秒，让桌宠以待机动作为主 */
 export function nextMoveDelay(random: () => number = Math.random): number {
-  return 2500 + Math.round(random() * 3500)
+  return 6000 + Math.round(random() * 10000)
 }

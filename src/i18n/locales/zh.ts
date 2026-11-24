@@ -465,9 +465,10 @@ export const zh: TranslationSchema = {
     petSkinLabel: '形象',
     petSkinBlock: '积木',
     petSkinCat: '猫',
+    petSkinBot: '机器人',
     petColorLabel: '颜色',
     petColorTheme: '跟随主题',
-    petSkinHint: '机器人由积木拼成，会迈步走动。',
+    petSkinHint: '完成对应桌宠蓝图（方块猫 / 小机器人）后解锁该形象。',
     petSkinLocked: (count) => `完成 ${count} 座建筑后解锁`,
     petRoamLabel: '自主走动',
     petRoamOn: '开启',
@@ -554,7 +555,9 @@ export const zh: TranslationSchema = {
     bookshop: '旧书店',
     postoffice: '邮政所',
     firestation: '消防站',
-    watertower: '水塔'
+    watertower: '水塔',
+    'pet-cat': '方块猫',
+    'pet-bot': '小机器人'
   },
   tray: {
     tooltipDone: '今日打卡已全部搞定',
@@ -781,5 +784,5 @@ export const zh: TranslationSchema = {
     notificationBody: (name) => `「${name}」专注时间到，确认后落块`,
     moreSessions: (n) => `另有 ${n} 个专注`
   },
-  pet: { hint: '桌宠：双击打开主窗，右键打开桌宠设置，拖动可移动' }
+  pet: { hint: '桌宠：双击打开主窗，右键打开桌宠设置，拖动可移动', blueprints: '桌宠蓝图' }
 }

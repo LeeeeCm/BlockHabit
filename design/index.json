@@ -883,6 +883,24 @@
       "owner": "Claude Code",
       "reviewer": "pending",
       "file": "design/records/D-20261124-097-unframed-pet-v1.md"
+    },
+    {
+      "id": "D-20261124-098",
+      "date": "2026-11-24",
+      "title": "旧桌宠蓝图解锁形象、待机动作与尺寸收敛",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261124-098-pet-blueprint-unlock-idle.md"
+    },
+    {
+      "id": "D-20261124-099",
+      "date": "2026-11-24",
+      "title": "图鉴缩略图修复：去除双形态叠加与白色底板并居中当前形态",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261124-099-gallery-thumb-fix.md"
     }
   ]
 }

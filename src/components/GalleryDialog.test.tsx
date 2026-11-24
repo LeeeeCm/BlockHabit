@@ -2,7 +2,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GalleryDialog } from './GalleryDialog'
-import { blueprintOrder, blueprints } from '../logic/blueprints'
+import { blueprintCatalogIds, blueprintOrder, blueprints } from '../logic/blueprints'
 import { canSelectBlueprint, firstIncompleteIndex } from '../logic/blueprint'
 import { noBlockReason } from '../logic/blockHints'
 import { useAppStore } from '../store/appStore'
@@ -14,7 +14,7 @@ import { zh } from '../i18n/locales/zh'
  * 断言一律从 blueprintOrder.length 派生，v3 之后再加内容包不会假红。
  */
 
-const INSTALLED_TOTAL = 23
+const INSTALLED_TOTAL = 25
 const g = globalThis as unknown as {
   __galleryThumbProps?: Array<{ blueprintId: string; silhouette?: boolean }>
 }
@@ -69,12 +69,12 @@ afterEach(() => {
 })
 
 describe('图鉴动态总数（B1 / D-20261111-070）', () => {
-  it('标题与卡片数跟随 blueprintOrder 实际长度（当前安装包 23 座）', () => {
-    expect(blueprintOrder).toHaveLength(INSTALLED_TOTAL)
+  it('标题与卡片数跟随完整蓝图目录（当前安装包 25 座）', () => {
+    expect(blueprintCatalogIds).toHaveLength(INSTALLED_TOTAL)
     const view = renderGallery(() => {})
-    expect(view.title()).toContain(String(blueprintOrder.length))
-    expect(view.cards()).toHaveLength(blueprintOrder.length)
-    // 只有第一座可建，其余按顺序锁定
+    expect(view.title()).toContain(String(blueprintCatalogIds.length))
+    expect(view.cards()).toHaveLength(blueprintCatalogIds.length)
+    // 只有第一座主线可建，其余主线按顺序锁定；桌宠支线独立可选
     expect(view.lockedCards()).toHaveLength(blueprintOrder.length - 1)
     view.unmount()
   })
@@ -98,11 +98,14 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
       expect(card.querySelector('.gallery-name')?.textContent?.trim().length).toBeGreaterThan(0)
       expect(card.getAttribute('aria-disabled')).toBe('true')
     }
-    // 缩略图：除第 1 座外全部以剪影渲染
+    // 缩略图：主线除第 1 座外全部以剪影渲染
     const props = g.__galleryThumbProps ?? []
-    expect(props).toHaveLength(blueprintOrder.length)
-    expect(props.filter((p) => p.silhouette === true)).toHaveLength(blueprintOrder.length - 1)
-    expect(props[0].silhouette).toBe(false)
+    const byId = new Map(props.map((prop) => [prop.blueprintId, prop]))
+    expect(byId.size).toBe(blueprintCatalogIds.length)
+    expect([...byId.values()].filter((p) => p.silhouette === true)).toHaveLength(
+      blueprintOrder.length - 1
+    )
+    expect(byId.get(blueprintOrder[0])?.silhouette).toBe(false)
     view.unmount()
   })
 

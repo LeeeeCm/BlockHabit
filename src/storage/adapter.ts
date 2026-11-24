@@ -1,6 +1,6 @@
 import { REPAIR_MAX } from '../logic/repairBricks'
 import type { AppState, DayClaim, DeletedDayClaim, ReminderLogEntry } from '../types'
-import { blueprintOrder } from '../logic/blueprints'
+import { blueprintCatalogIds, blueprintOrder } from '../logic/blueprints'
 import { CONTENT_VERSION, normalizeContentVersion } from '../logic/blueprints/manifest'
 import { normalizePetColor } from '../pet/types'
 
@@ -62,7 +62,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
  * 存档里的 activeBlueprintId / builds[].blueprintId / completedBlueprintIds 都是外键，
  * 非法外键会让 getBlueprint 在渲染层抛错（整树卸载 → 白屏），且坏档会被立即落盘形成 crash loop。
  */
-const KNOWN_BLUEPRINT_IDS: ReadonlySet<string> = new Set(blueprintOrder)
+const KNOWN_BLUEPRINT_IDS: ReadonlySet<string> = new Set(blueprintCatalogIds)
 
 export function isKnownBlueprintId(id: unknown): id is string {
   return typeof id === 'string' && KNOWN_BLUEPRINT_IDS.has(id)
@@ -409,7 +409,12 @@ export function normalizeState(s: AppState): AppState {
         s.settings?.petSize === 'small' || s.settings?.petSize === 'large'
           ? s.settings.petSize
           : 'medium',
-      petSkin: s.settings?.petSkin === 'cat' ? 'cat' : 'block',
+      petSkin:
+        (s.settings?.petSkin ?? s.settings?.petModel) === 'cat'
+          ? 'cat'
+          : (s.settings?.petSkin ?? s.settings?.petModel) === 'bot'
+            ? 'bot'
+            : 'block',
       petRoam: s.settings?.petRoam !== false,
       petColor: normalizePetColor(s.settings?.petColor)
     },

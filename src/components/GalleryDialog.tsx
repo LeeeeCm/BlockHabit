@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
-import { blueprintOrder, getBlueprint } from '../logic/blueprints'
-import { canSelectBlueprint } from '../logic/blueprint'
+import {
+  blueprintCatalogIds,
+  blueprintOrder,
+  getBlueprint,
+  PET_BLUEPRINT_IDS
+} from '../logic/blueprints'
+import { blueprintProgress, canSelectBlueprint } from '../logic/blueprint'
 import { getBlueprintName, useI18n } from '../i18n'
 import { IconClose, IconNote } from './Icons'
 import { BlueprintThumb } from './BlueprintThumb'
@@ -48,7 +53,7 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
         >
           <div className="dialog-header">
             <h3 id="gallery-dialog-title">
-              {t.gallery.title} · {blueprintOrder.length}
+              {t.gallery.title} · {blueprintCatalogIds.length}
             </h3>
             <button
               className="icon-btn"
@@ -140,6 +145,60 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
                 )
               })}
             </div>
+
+            <section
+              aria-labelledby="gallery-pet-blueprints-title"
+              style={{ display: 'grid', gap: 8, marginTop: 4 }}
+            >
+              <h4
+                id="gallery-pet-blueprints-title"
+                style={{ margin: 0, fontSize: 'var(--fs-subhead)' }}
+              >
+                {t.pet.blueprints}
+              </h4>
+              <div className="gallery-grid">
+                {PET_BLUEPRINT_IDS.map((id) => {
+                  const bp = getBlueprint(id)
+                  const progress = blueprintProgress(builds, id)
+                  const done = progress.complete
+                  const building = !done && progress.placed > 0
+                  const bpName = getBlueprintName(id, lang)
+                  const status = done
+                    ? `${t.gallery.completed} · ${t.build.blocksCount(progress.total, progress.total)}`
+                    : building
+                      ? `${t.gallery.inProgress} · ${progress.placed}/${progress.total}`
+                      : `${t.build.startBuildBtn} · ${t.gallery.totalBlocks(progress.total)}`
+                  return (
+                    <div key={id} style={{ position: 'relative', minWidth: 0, display: 'flex' }}>
+                      <button
+                        className="gallery-card"
+                        onClick={() => handleSelect(id)}
+                        title={bpName}
+                        style={{ width: '100%' }}
+                      >
+                        <BlueprintThumb
+                          blueprint={bp}
+                          placedCount={building ? progress.placed : undefined}
+                        />
+                        <div className="gallery-name">{bpName}</div>
+                        <div
+                          className="gallery-status"
+                          style={{
+                            color: done
+                              ? 'var(--progress-green)'
+                              : building
+                                ? 'var(--progress-blue)'
+                                : 'var(--ink-2)'
+                          }}
+                        >
+                          {status}
+                        </div>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
           </div>
 
           <div className="dialog-footer">

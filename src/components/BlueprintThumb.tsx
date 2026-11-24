@@ -88,36 +88,27 @@ export function BlueprintThumb({
     if (blocks.length === 0 && !silhouette && placedCount === undefined) return
 
     const ink = inkFromDocument()
-    if (placedCount !== undefined && blocks.length < blueprint.blocks.length) {
-      // 建造中：先用极淡的完整轮廓提示「将要长成什么」，再把已落块画成实色
-      paintModelStage(ctx, {
-        blocks: blueprint.blocks,
-        palette: ghostPalette(ink),
-        viewport: { x: 0, y: 0, w: width, h: height },
-        pad: 12,
-        maxScale: 0.72,
-        spriteScale: 2,
-        skipGround: true,
-        ignoreBlockColor: true
-      })
-    }
-
-    const palette = silhouette ? silhouettePalette(ink) : paletteFromDocument()
-    // fit + 画家排序 + 地基全部复用 modelStage（与画报/相纸/年鉴同一套算法）
+    const buildingEmpty = placedCount !== undefined && blocks.length === 0
+    const stageBlocks = buildingEmpty ? blueprint.blocks : blocks
+    const showPlan = buildingEmpty
+    const palette = showPlan
+      ? ghostPalette(ink)
+      : silhouette
+        ? silhouettePalette(ink)
+        : paletteFromDocument()
+    // fit + 画家排序 + 地基全部复用 modelStage（与画报/相纸/年鉴同一套算法）。
+    // 建造中只按当前已落块取景与铺地基，避免完整蓝图轮廓与当前形态叠在一起、也避免模型偏左。
     paintModelStage(ctx, {
-      blocks,
-      // 地基与包围盒仍按完整蓝图：建造中只显示已落块，但不让舞台跟着缩水
-      groundBlocks: blueprint.blocks,
-      boundsBlocks: blueprint.blocks,
+      blocks: stageBlocks,
+      groundBlocks: stageBlocks,
+      boundsBlocks: stageBlocks,
       palette,
       viewport: { x: 0, y: 0, w: width, h: height },
       pad: 12,
       maxScale: 0.72,
       spriteScale: 2,
-      // 剪影态不画虚线地基：只看轮廓，不带「正在建造」的语义；
-      // 同时忽略建筑专属配色（否则扩展包的彩色块会泄露出来，剪影变成「灰模里混着彩色块」）。
-      skipGround: silhouette,
-      ignoreBlockColor: silhouette
+      skipGround: silhouette || showPlan,
+      ignoreBlockColor: silhouette || showPlan
     })
   }, [blueprint, theme, width, height, silhouette, placedCount])
 
@@ -127,9 +118,11 @@ export function BlueprintThumb({
       style={{
         width,
         height,
+        maxWidth: '100%',
+        margin: '0 auto',
         overflow: 'hidden',
         borderRadius: 'var(--r-sm)',
-        background: silhouette ? 'transparent' : 'var(--surface)'
+        background: 'transparent'
       }}
     >
       <canvas

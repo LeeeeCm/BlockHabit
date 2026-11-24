@@ -93,7 +93,7 @@ describe('silhouettePalette（纯函数）', () => {
 })
 
 describe('BlueprintThumb 剪影态', () => {
-  it('普通态：画布尺寸正确、外层底板为 surface、正常绘制', () => {
+  it('普通态：画布尺寸正确、外层保持透明、正常绘制', () => {
     const { container, canvas, unmount } = renderThumb(
       <BlueprintThumb blueprint={blueprints.plant} />
     )
@@ -101,7 +101,7 @@ describe('BlueprintThumb 剪影态', () => {
     expect(el.width).toBe(132)
     expect(el.height).toBe(92)
     expect((container.querySelector('.gallery-thumb') as HTMLElement).style.background).toBe(
-      'var(--surface)'
+      'transparent'
     )
     expect(el.style.background).toBe('transparent')
     expect(fake.calls.some((call) => call.name === 'fill')).toBe(true)
@@ -131,7 +131,7 @@ describe('BlueprintThumb 剪影态', () => {
     const canvases = Array.from(container.querySelectorAll('canvas'))
     const thumbs = Array.from(container.querySelectorAll('.gallery-thumb')) as HTMLElement[]
     expect(canvases).toHaveLength(2)
-    expect(thumbs[0].style.background).toBe('var(--surface)')
+    expect(thumbs[0].style.background).toBe('transparent')
     expect(thumbs[1].style.background).toBe('transparent')
     unmount()
   })

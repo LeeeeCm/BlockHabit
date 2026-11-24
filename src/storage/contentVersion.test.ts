@@ -32,11 +32,11 @@ function baseState(overrides: Partial<AppState> = {}): AppState {
   }
 }
 
-describe('内容版本 v3 与 manifest 一致性（D-20261111-070）', () => {
-  it('当前内容版本 = 3，manifest 三包递增且 v3 追加 5 座', () => {
-    expect(CONTENT_VERSION).toBe(3)
-    expect(CONTENT_PACKS.map((pack) => pack.id)).toEqual(['base', 'city-life', 'city-life-2'])
-    expect(CONTENT_PACKS.map((pack) => pack.version)).toEqual([1, 2, 3])
+describe('内容版本 v4 与 manifest 一致性（D-20261124-081）', () => {
+  it('当前内容版本 = 4，保留 v3 五座并注册独立支线', () => {
+    expect(CONTENT_VERSION).toBe(4)
+    expect(CONTENT_PACKS.map((pack) => pack.version)).toEqual([1, 2, 3, 4])
+    expect(CONTENT_PACKS[3].blueprintIds).toEqual(['pet-cat', 'pet-bot'])
     expect(CONTENT_PACKS[2].version).toBe(3)
     expect(CONTENT_PACKS[2].blueprintIds).toEqual([...(CONTENT_PACK_V3_IDS as string[])])
     expect(CONTENT_PACK_V3_IDS).toHaveLength(5)
@@ -49,33 +49,34 @@ describe('内容版本 v3 与 manifest 一致性（D-20261111-070）', () => {
     expect(normalizeContentVersion(2)).toBe(2)
     expect(normalizeContentVersion(3)).toBe(3)
     expect(isFutureContentVersion(CONTENT_VERSION + 1)).toBe(true)
-    expect(isFutureContentVersion(4)).toBe(true)
+    expect(isFutureContentVersion(5)).toBe(true)
+    expect(isFutureContentVersion(4)).toBe(false)
     expect(isFutureContentVersion(3)).toBe(false)
     expect(isFutureContentVersion(CONTENT_VERSION)).toBe(false)
   })
 })
 
-describe('内容版本门（B1 兼容矩阵，v2 → v3）', () => {
-  it('旧存档无 contentVersion：按 1 加载，保存后补写当前版本 3', () => {
+describe('内容版本门（B1 兼容矩阵，v3 → v4）', () => {
+  it('旧存档无 contentVersion：按 1 加载，保存后补写当前版本 4', () => {
     const loaded = loadAndMigrate(baseState())
-    expect(loaded.state?.contentVersion).toBe(3)
+    expect(loaded.state?.contentVersion).toBe(4)
     const saved = serializeState(loaded.state!)
-    expect(saved.contentVersion).toBe(3)
+    expect(saved.contentVersion).toBe(4)
   })
 
-  it('旧 v2 档（显式 contentVersion=2）：正常读入并升到 3，保存写 3', () => {
-    const loaded = loadAndMigrate({ ...baseState(), contentVersion: 2 })
+  it('旧 v3 档（显式 contentVersion=3）：正常读入并升到 4，保存写 4', () => {
+    const loaded = loadAndMigrate({ ...baseState(), contentVersion: 3 })
     expect(loaded.state).not.toBeNull()
-    expect(loaded.state?.contentVersion).toBe(3)
-    expect(serializeState(loaded.state!).contentVersion).toBe(3)
-    expect(prepareImport({ ...baseState(), contentVersion: 2 })?.contentVersion).toBe(3)
-    expect(normalizeState(baseState({ contentVersion: 2 })).contentVersion).toBe(3)
+    expect(loaded.state?.contentVersion).toBe(4)
+    expect(serializeState(loaded.state!).contentVersion).toBe(4)
+    expect(prepareImport({ ...baseState(), contentVersion: 3 })?.contentVersion).toBe(4)
+    expect(normalizeState(baseState({ contentVersion: 3 })).contentVersion).toBe(4)
   })
 
-  it('旧客户端 × 新存档（v4）：needsUpgrade，sanitize 不执行、未知蓝图数据不被清洗落盘', () => {
+  it('旧客户端 × 新存档（v5）：needsUpgrade，sanitize 不执行、未知蓝图数据不被清洗落盘', () => {
     const future = {
       ...baseState(),
-      contentVersion: 4,
+      contentVersion: 5,
       builds: [
         {
           id: 'b1',
@@ -96,22 +97,11 @@ describe('内容版本门（B1 兼容矩阵，v2 → v3）', () => {
     expect(sanitizeState(future)?.completedBlueprintIds).toEqual([])
   })
 
-  it('v4 存档若只含当前已知蓝图，可降级读取并写回 v3；含未知蓝图仍拒绝', () => {
-    const legacyKnown = { ...baseState(), contentVersion: 4 }
-    const loaded = loadAndMigrate(legacyKnown)
-    expect(loaded.state?.contentVersion).toBe(CONTENT_VERSION)
-    expect(prepareImport(legacyKnown)?.contentVersion).toBe(CONTENT_VERSION)
-
-    const future = { ...baseState(), contentVersion: 4, activeBlueprintId: 'future-tower' }
-    expect(loadAndMigrate(future).state).toBeNull()
-    expect(prepareImport(future)).toBeNull()
-  })
-
-  it('导入/同步前置：含未知蓝图的更高内容版本返回 null，不覆盖本地', () => {
-    const future = { ...baseState(), contentVersion: 4, activeBlueprintId: 'future-tower' }
+  it('导入/同步前置：更高内容版本（v5）返回 null，不覆盖本地', () => {
+    const future = { ...baseState(), contentVersion: 5 }
     expect(prepareImport(future)).toBeNull()
     expect(prepareImport(baseState())?.contentVersion).toBe(CONTENT_VERSION)
-    expect(prepareImport({ ...baseState(), contentVersion: 2 })?.contentVersion).toBe(3)
+    expect(prepareImport({ ...baseState(), contentVersion: 2 })?.contentVersion).toBe(4)
   })
 
   it('显式旧版本（contentVersion=1）读入后升为当前版本，保存写当前版本', () => {
@@ -132,8 +122,8 @@ describe('内容版本门（B1 兼容矩阵，v2 → v3）', () => {
   })
 
   it('双端合并：contentVersion 取较高值，不因旧端写低', () => {
-    const merged = mergeAppState(baseState({ contentVersion: 3 }), baseState({ contentVersion: 4 }))
-    expect(merged.contentVersion).toBe(4)
+    const merged = mergeAppState(baseState({ contentVersion: 4 }), baseState({ contentVersion: 5 }))
+    expect(merged.contentVersion).toBe(5)
     const mergedOld = mergeAppState(baseState({ contentVersion: CONTENT_VERSION }), baseState())
     expect(mergedOld.contentVersion).toBe(CONTENT_VERSION)
     // 双端都是显式旧版本时也不能把合并结果写低（真实路径已被 normalize，这里防御 API 误用）
@@ -142,30 +132,59 @@ describe('内容版本门（B1 兼容矩阵，v2 → v3）', () => {
       baseState({ contentVersion: 1 })
     )
     expect(bothOld.contentVersion).toBe(CONTENT_VERSION)
-    // v3 客户端与 v2 客户端合并：取 3，不能回落到 2
-    const v3WithV2 = mergeAppState(
-      baseState({ contentVersion: 3 }),
-      baseState({ contentVersion: 2 })
+    const v4WithV3 = mergeAppState(
+      baseState({ contentVersion: 4 }),
+      baseState({ contentVersion: 3 })
     )
-    expect(v3WithV2.contentVersion).toBe(3)
+    expect(v4WithV3.contentVersion).toBe(4)
   })
 
-  it('本地 v4 无未知蓝图可降级读取；含未知蓝图才 needsUpgrade 且不改写原始字节', async () => {
-    const known = JSON.stringify({ ...baseState(), contentVersion: 4 })
-    localStorage.setItem(STATE_KEY, known)
-    const downgraded = await createLocalStorageAdapter().load()
-    expect(downgraded.state?.contentVersion).toBe(CONTENT_VERSION)
-
-    const future = JSON.stringify({
-      ...baseState(),
-      contentVersion: 4,
-      activeBlueprintId: 'future-tower'
-    })
+  it('本地存储未来内容版本（v5）：needsUpgrade 且原始存档字节不被改写', async () => {
+    const future = JSON.stringify({ ...baseState(), contentVersion: 5 })
     localStorage.setItem(STATE_KEY, future)
     const res = await createLocalStorageAdapter().load()
     expect(res.state).toBeNull()
     expect(res.needsUpgrade).toBe(true)
     expect(localStorage.getItem(STATE_KEY)).toBe(future)
     localStorage.removeItem(STATE_KEY)
+  })
+})
+
+describe('桌宠蓝图存档', () => {
+  it('v4 的宠物外键在本地读取、导入和保存后保留，无需升级 schema', () => {
+    const saved = baseState({
+      contentVersion: 4,
+      activeBlueprintId: 'pet-cat',
+      completedBlueprintIds: ['pet-bot'],
+      builds: [
+        {
+          id: 'cat-part',
+          blueprintId: 'pet-cat',
+          index: 0,
+          placedAt: '2026-11-24T00:00:00.000Z',
+          fromHabitId: 'h1',
+          bonus: false
+        }
+      ],
+      settings: { theme: 'light', language: 'zh', petSkin: 'bot' }
+    })
+    const loaded = loadAndMigrate(saved).state
+    expect(loaded).not.toBeNull()
+    expect(loaded?.settings.petSkin).toBe('bot')
+    expect(prepareImport(saved)?.settings.petSkin).toBe('bot')
+    const legacy = baseState({
+      contentVersion: 3,
+      settings: { theme: 'light', language: 'zh', petModel: 'cat' }
+    })
+    expect(loadAndMigrate(legacy).state?.settings.petSkin).toBe('cat')
+  })
+
+  it('旧档或非法选择回退默认积木，不将未知字段当作解锁状态', () => {
+    const old = baseState({ contentVersion: 3 })
+    expect(loadAndMigrate(old).state?.settings.petSkin).toBe('block')
+    for (const value of ['pet-cat', 'toString', { model: 'cat' }, null]) {
+      const corrupted = { ...old, settings: { ...old.settings, petModel: value } }
+      expect(prepareImport(corrupted)?.settings.petSkin).toBe('block')
+    }
   })
 })

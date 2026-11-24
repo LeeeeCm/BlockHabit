@@ -147,7 +147,6 @@ export function SettingsDialog({ onClose, focusPet = false }: Props) {
       {/* 2. 桌宠：独立分组，右键桌宠直达 */}
       <PetSettingsGroup
         settings={settings}
-        completedCount={completed.length}
         t={t}
         onUpdateSettings={updateSettings}
       />

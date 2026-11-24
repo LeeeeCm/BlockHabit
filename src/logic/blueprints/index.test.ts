@@ -12,7 +12,7 @@ describe('blueprints 注册表', () => {
       expect(blueprints[id]).toBeDefined()
       expect(blueprints[id].id).toBe(id)
     }
-    expect(Object.keys(blueprints).sort()).toEqual([...blueprintOrder].sort())
+    expect(Object.keys(blueprints)).toEqual([...blueprintOrder, 'pet-cat', 'pet-bot'])
   })
 
   it('每座蓝图都有块，且同蓝图内坐标唯一（重复坐标会导致积木重叠）', () => {

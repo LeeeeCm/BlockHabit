@@ -44,8 +44,8 @@ describe('petMotion（D-20261124-088）', () => {
     expect(result.pos).toEqual({ x: 410, y: 500 })
   })
 
-  it('随机间隔落在 2.5–6 秒', () => {
-    expect(nextMoveDelay(() => 0)).toBe(2500)
-    expect(nextMoveDelay(() => 1)).toBe(6000)
+  it('随机间隔落在 6–16 秒', () => {
+    expect(nextMoveDelay(() => 0)).toBe(6000)
+    expect(nextMoveDelay(() => 1)).toBe(16000)
   })
 })

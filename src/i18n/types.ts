@@ -471,6 +471,7 @@ export interface TranslationSchema {
     petSkinLabel: string
     petSkinBlock: string
     petSkinCat: string
+    petSkinBot: string
     petColorLabel: string
     petColorTheme: string
     petSkinHint: string
@@ -775,5 +776,5 @@ export interface TranslationSchema {
     /** B4：多会话展示副行 */
     moreSessions: (n: number) => string
   }
-  pet: { hint: string }
+  pet: { hint: string; blueprints: string }
 }

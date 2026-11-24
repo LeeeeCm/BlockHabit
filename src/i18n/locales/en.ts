@@ -38,5 +38,8 @@ export const en: TranslationSchema = {
   archive,
   buildingArchive,
   focusCompanion,
-  pet: { hint: 'Pet: double-click to open the app, right-click for pet settings, drag to move' }
+  pet: {
+    hint: 'Pet: double-click to open the app, right-click for pet settings, drag to move',
+    blueprints: 'Pet blueprints'
+  }
 }

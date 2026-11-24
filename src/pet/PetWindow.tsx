@@ -10,8 +10,8 @@ import { listen, emitTo } from '@tauri-apps/api/event'
 import { useI18n } from '../i18n'
 import { paletteFromDocument, deriveShadingForColor } from '../render/isoColor'
 import { paintPet, type PetMood } from '../render/petCanvas'
-import { PET_REST_POSE, petHopPose } from '../render/petMotion'
-import { DEFAULT_PET_CONFIG, isPetSkinUnlocked, petSizeScale, type PetConfig } from './types'
+import { PET_REST_POSE, petHopPose, type PetPose } from '../render/petMotion'
+import { DEFAULT_PET_CONFIG, PET_MODELS, petSizeScale, type PetConfig } from './types'
 import {
   PET_SIZE,
   clampPetPosition,
@@ -129,6 +129,10 @@ export function PetWindow({ preview = false }: Props) {
     let mode: 'idle' | 'walk' = 'idle'
     let nextDecision = performance.now() + nextMoveDelay()
     let walkUntil = 0
+    let nextIdleAction = performance.now() + 3500 + Math.random() * 4500
+    let idleActionStart = 0
+    let idleActionKind: 'look' | 'stretch' | 'hop' = 'look'
+    let idleActionDirection: -1 | 1 = 1
     let nextBlink = performance.now() + 2200 + Math.random() * 2600
     let blinkUntil = 0
     let walkHopStart = 0
@@ -214,8 +218,7 @@ export function PetWindow({ preview = false }: Props) {
       const blink = now < blinkUntil ? 0 : 1
       const config = configRef.current
       const roam = config.roam !== false
-      const skin =
-        config.skin === 'cat' && isPetSkinUnlocked('cat', config.completed) ? 'cat' : 'block'
+      const skin = config.skin
 
       if (menuOpenRef.current) {
         if (mode === 'walk') {
@@ -229,9 +232,11 @@ export function PetWindow({ preview = false }: Props) {
       }
       if (!menuOpenRef.current && roam && mode === 'idle' && now >= nextDecision) {
         mode = 'walk'
-        walkUntil = now + 2200 + Math.random() * 2400
+        walkUntil = now + 1200 + Math.random() * 1200
         direction = Math.random() < 0.5 ? -1 : 1
         nextWalkHopAt = now
+        idleActionStart = 0
+        nextIdleAction = now + 5000 + Math.random() * 5000
       } else if (mode === 'walk' && now >= walkUntil && walkHopStart === 0) {
         mode = 'idle'
         nextDecision = now + nextMoveDelay()
@@ -263,6 +268,36 @@ export function PetWindow({ preview = false }: Props) {
         }
       }
 
+      if (menuOpenRef.current || mode === 'walk' || drag.active) {
+        idleActionStart = 0
+      } else {
+        if (idleActionStart > 0 && now - idleActionStart >= 900) idleActionStart = 0
+        if (idleActionStart === 0 && now >= nextIdleAction) {
+          const kinds: Array<'look' | 'stretch' | 'hop'> = ['look', 'stretch', 'hop']
+          idleActionKind = kinds[Math.floor(Math.random() * kinds.length)]
+          idleActionDirection = Math.random() < 0.5 ? -1 : 1
+          idleActionStart = now
+          nextIdleAction = now + 7000 + Math.random() * 6000
+        }
+      }
+
+      let idlePose: Readonly<PetPose> | null = null
+      if (idleActionStart > 0 && now - idleActionStart < 900) {
+        const t = (now - idleActionStart) / 900
+        const arc = Math.sin(Math.PI * t)
+        idlePose =
+          idleActionKind === 'look'
+            ? { ...PET_REST_POSE, turn: idleActionDirection * arc * 0.35 }
+            : idleActionKind === 'stretch'
+              ? {
+                  ...PET_REST_POSE,
+                  lift: arc * 2,
+                  scaleX: 1 - arc * 0.04,
+                  scaleY: 1 + arc * 0.07
+                }
+              : { ...PET_REST_POSE, lift: arc * 7 }
+      }
+
       const bumpHop =
         now < bumpUntilRef.current
           ? Math.sin(((bumpUntilRef.current - now) / 1000) * Math.PI) * 8
@@ -277,9 +312,14 @@ export function PetWindow({ preview = false }: Props) {
       renderer.clearRect(0, 0, PET_SIZE.w, PET_SIZE.h)
       const pose = (walkHopStart > 0 && now - walkHopStart < HOP_MS
         ? petHopPose(now - walkHopStart, walkHopDirection)
-        : null) ?? { ...PET_REST_POSE, lift: bumpHop }
+        : null) ??
+        idlePose ?? { ...PET_REST_POSE, lift: bumpHop }
       const visualPose = { ...pose, x: 0 }
-      const mood: PetMood = now < bumpUntilRef.current ? 'happy' : 'idle'
+      const mood: PetMood =
+        now < bumpUntilRef.current ||
+        (idleActionStart > 0 && idleActionKind === 'stretch' && now - idleActionStart < 900)
+          ? 'happy'
+          : 'idle'
       renderer.save()
       const sizeScale = petSizeScale(config.size)
       renderer.translate(PET_SIZE.w / 2, PET_SIZE.h)
@@ -480,22 +520,24 @@ export function PetWindow({ preview = false }: Props) {
           </div>
           <div className="pet-menu-label">{t.settings.petSkinLabel}</div>
           <div className="seg">
-            <button
-              className={config.skin === 'block' ? 'active' : ''}
-              onClick={() => changePref({ skin: 'block' })}
-            >
-              {t.settings.petSkinBlock}
-            </button>
-            <button
-              className={config.skin === 'cat' ? 'active' : ''}
-              disabled={!isPetSkinUnlocked('cat', config.completed)}
-              title={
-                isPetSkinUnlocked('cat', config.completed) ? undefined : t.settings.petSkinLocked(3)
-              }
-              onClick={() => changePref({ skin: 'cat' })}
-            >
-              {t.settings.petSkinCat}
-            </button>
+            {PET_MODELS.map((model) => {
+              const unlocked = config.unlocked?.includes(model) ?? model === 'block'
+              return (
+                <button
+                  key={model}
+                  className={config.skin === model ? 'active' : ''}
+                  disabled={!unlocked}
+                  title={unlocked ? undefined : t.settings.petSkinHint}
+                  onClick={() => changePref({ skin: model })}
+                >
+                  {model === 'cat'
+                    ? t.settings.petSkinCat
+                    : model === 'bot'
+                      ? t.settings.petSkinBot
+                      : t.settings.petSkinBlock}
+                </button>
+              )
+            })}
           </div>
           <div className="pet-menu-label">{t.settings.petRoamLabel}</div>
           <div className="seg">

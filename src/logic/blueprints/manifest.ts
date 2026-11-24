@@ -1,19 +1,20 @@
 /**
- * 蓝图注册表的内容版本（B1 / D-20261110-063 / D-20261111-070）。
+ * 蓝图注册表的内容版本（B1 / D-20261110-063 / D-20261111-070 / D-20261124-081）。
  *
  * schemaVersion 管「数据形状」，contentVersion 管「蓝图内容」。
  * 追加蓝图时只 +contentVersion，绝不升 schemaVersion：
  * 旧客户端必须在 sanitize 之前被门禁拦住，否则未知 blueprint 的
  * builds/completed 会被静默清洗并落盘（数据丢失）。
  */
-import { blueprintOrder } from './index'
+import { blueprintOrder, PET_BLUEPRINT_IDS } from './index'
 
 /**
  * 当前安装包内置的蓝图内容版本：
  * 1 = 基础 12 座；2 = 追加「城市与生活」6 座（treehouse/greenhouse/clocktower/bridge/observatory/library）；
- * 3 = 追加「城市与生活」续章 5 座（bakery/bookshop/postoffice/firestation/watertower）。
+ * 3 = 追加「城市与生活」续章 5 座（bakery/bookshop/postoffice/firestation/watertower）；
+ * 4 = 独立桌宠支线（pet-cat/pet-bot），不追加到主线顺序。
  */
-export const CONTENT_VERSION = 3
+export const CONTENT_VERSION = 4
 
 export interface ContentPack {
   id: string
@@ -67,6 +68,12 @@ export const CONTENT_PACKS: ContentPack[] = [
     version: 3,
     releasedAt: '2026-11-11',
     blueprintIds: [...CONTENT_PACK_V3_IDS]
+  },
+  {
+    id: 'desktop-pet',
+    version: 4,
+    releasedAt: '2026-11-24',
+    blueprintIds: [...PET_BLUEPRINT_IDS]
   }
 ]
 

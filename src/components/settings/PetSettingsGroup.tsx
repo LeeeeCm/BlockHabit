@@ -1,18 +1,21 @@
 import type { AppSettings } from '../../types'
 import type { TranslationSchema } from '../../i18n'
-import { PET_COLORS, isPetSkinUnlocked } from '../../pet/types'
+import { blueprintProgress } from '../../logic/blueprint'
+import { PET_MODELS, petBlueprintId } from '../../logic/petModels'
+import { PET_COLORS } from '../../pet/types'
+import { useAppStore } from '../../store/appStore'
 import { Group } from './Group'
 
 interface Props {
   settings: AppSettings
-  completedCount: number
   t: TranslationSchema
   onUpdateSettings: (patch: Partial<AppSettings>) => void
 }
 
-/** 桌宠设置分组（D-20261124-091/094）：开关 / 大小 / 形象 / 材质色 / 自主走动。 */
-export function PetSettingsGroup({ settings, completedCount, t, onUpdateSettings }: Props) {
-  const currentSkin = settings.petSkin ?? 'block'
+/** 桌宠设置分组（D-20261124-091/094/098）：开关 / 大小 / 蓝图形象 / 材质色 / 自主走动。 */
+export function PetSettingsGroup({ settings, t, onUpdateSettings }: Props) {
+  const builds = useAppStore((s) => s.builds)
+  const currentSkin = settings.petSkin ?? settings.petModel ?? 'block'
   return (
     <div id="pet-settings">
       <Group title={t.settings.petGroupTitle} collapsible defaultOpen>
@@ -59,22 +62,26 @@ export function PetSettingsGroup({ settings, completedCount, t, onUpdateSettings
         <div className="field" style={{ marginBottom: 12 }}>
           <label>{t.settings.petSkinLabel}</label>
           <div className="seg">
-            <button
-              className={currentSkin === 'block' ? 'active' : ''}
-              onClick={() => onUpdateSettings({ petSkin: 'block' })}
-            >
-              {t.settings.petSkinBlock}
-            </button>
-            <button
-              className={currentSkin === 'cat' ? 'active' : ''}
-              disabled={!isPetSkinUnlocked('cat', completedCount)}
-              title={
-                isPetSkinUnlocked('cat', completedCount) ? undefined : t.settings.petSkinLocked(3)
-              }
-              onClick={() => onUpdateSettings({ petSkin: 'cat' })}
-            >
-              {t.settings.petSkinCat}
-            </button>
+            {PET_MODELS.map((model) => {
+              const blueprintId = petBlueprintId(model)
+              const progress = blueprintId ? blueprintProgress(builds, blueprintId) : null
+              const unlocked = !progress || progress.complete
+              return (
+                <button
+                  key={model}
+                  className={currentSkin === model ? 'active' : ''}
+                  disabled={!unlocked}
+                  title={unlocked ? undefined : t.settings.petSkinHint}
+                  onClick={() => onUpdateSettings({ petSkin: model })}
+                >
+                  {model === 'cat'
+                    ? t.settings.petSkinCat
+                    : model === 'bot'
+                      ? t.settings.petSkinBot
+                      : t.settings.petSkinBlock}
+                </button>
+              )
+            })}
           </div>
           <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
             {t.settings.petSkinHint}

@@ -14,12 +14,12 @@ import { APPROVED_BLUEPRINT_COLORS } from './palette'
 
 /**
  * 内容包构建期校验：B1 / D-20261110-063（v2）+ D-20261111-067（逐座材质色）
- * + D-20261111-070（v3，城市与生活续章 5 座）。
+ * + D-20261111-070（v3，城市与生活续章 5 座）+ D-20261124-081（v4，桌宠支线）。
  *
  * 锁定的事：
- * - manifest 三包（base v1 / city-life v2 / city-life-2 v3）与注册表并集、顺序、版本一致；
+ * - manifest 四包与注册表并集、顺序、版本一致；v4 不进入主线；
  * - 基础 12 座 1385 块、v2 6 座 600 块、v3 5 座 500 块，全量 23 座 / 2485 块；
- * - 既有 18 座逐块与本轮起点 HEAD 一致（几何/顺序/块数/色值零改动，指纹锁定）；
+ * - 既有 23 座逐块几何/顺序/块数/色值零改动，指纹锁定；
  * - 新 5 座结构契约（80–120 块、4–12 层、坐标唯一、无完全悬空、z 有序、装饰克制）；
  * - 全部块色值都在 D-067 批准的 24 色材质调色板内；
  * - 解锁顺序自动跟随注册表（v2 全部落成后才解锁 v3）。
@@ -66,6 +66,7 @@ const BASE_ORDER = [
 ]
 
 const V2_ORDER = ['treehouse', 'greenhouse', 'clocktower', 'bridge', 'observatory', 'library']
+const V4_ORDER = ['pet-cat', 'pet-bot'] as const
 
 /** 基础 12 座的权威块数（D-067 配色只改 color 字段，几何/块数必须逐座不变） */
 const BASE_BLOCK_COUNTS: Record<string, number> = {
@@ -128,15 +129,29 @@ const OLD_18_FINGERPRINTS: Record<string, string> = {
   library: 'ba2282b4'
 }
 
+// v4 起点 HEAD ed27bdf 的 v3 逐块指纹。
+const V3_FINGERPRINTS: Record<string, string> = {
+  bakery: 'cb86dde2',
+  bookshop: '4beb70b5',
+  postoffice: '7e7902aa',
+  firestation: '02ff4815',
+  watertower: 'e823afbb'
+}
+
 const ZH = getTranslation('zh')
 const EN = getTranslation('en')
 
-describe('内容包 manifest（B1 / D-20261111-070）', () => {
-  it('CONTENT_VERSION = 3，包含 base(v1) / city-life(v2) / city-life-2(v3) 三个内容包', () => {
-    expect(CONTENT_VERSION).toBe(3)
-    expect(CONTENT_PACKS.map((pack) => pack.id)).toEqual(['base', 'city-life', 'city-life-2'])
-    expect(CONTENT_PACKS.map((pack) => pack.version)).toEqual([1, 2, 3])
-    expect(CONTENT_PACKS.map((pack) => pack.version).sort()).toEqual([1, 2, CONTENT_VERSION])
+describe('内容包 manifest（B1 / D-20261124-081）', () => {
+  it('CONTENT_VERSION = 4，桌宠为最后一个独立内容包', () => {
+    expect(CONTENT_VERSION).toBe(4)
+    expect(CONTENT_PACKS.map((pack) => pack.id)).toEqual([
+      'base',
+      'city-life',
+      'city-life-2',
+      'desktop-pet'
+    ])
+    expect(CONTENT_PACKS.map((pack) => pack.version)).toEqual([1, 2, 3, CONTENT_VERSION])
+    expect(CONTENT_PACKS[3].blueprintIds).toEqual(V4_ORDER)
   })
 
   it('内容包版本递增、发布日期合法、ids 唯一', () => {
@@ -151,8 +166,12 @@ describe('内容包 manifest（B1 / D-20261111-070）', () => {
     expect(new Set(allIds).size).toBe(allIds.length)
   })
 
-  it('内容包并集恰好等于 blueprintOrder（顺序也一致）', () => {
-    expect(CONTENT_PACKS.flatMap((pack) => pack.blueprintIds)).toEqual([...blueprintOrder])
+  it('内容包并集 = 主线 + 桌宠支线，不改变主线顺序', () => {
+    expect(CONTENT_PACKS.flatMap((pack) => pack.blueprintIds)).toEqual([
+      ...blueprintOrder,
+      ...V4_ORDER
+    ])
+    expect(CONTENT_PACKS.slice(0, 3).flatMap((pack) => pack.blueprintIds)).toEqual(blueprintOrder)
   })
 
   it('三个内容包分别对应权威 id 列表（v3 严格追加在 v2 之后）', () => {
@@ -221,9 +240,9 @@ describe('内容包 manifest（B1 / D-20261111-070）', () => {
 describe('蓝图注册表完备性', () => {
   it('order 内 id 唯一，全部注册且 id 与键一致（当前安装包 23 座）', () => {
     expect(new Set(blueprintOrder).size).toBe(blueprintOrder.length)
-    expect(Object.keys(blueprints)).toHaveLength(blueprintOrder.length)
+    expect(Object.keys(blueprints)).toEqual([...blueprintOrder, ...V4_ORDER])
     expect(blueprintOrder).toHaveLength(23)
-    for (const id of blueprintOrder) {
+    for (const id of [...blueprintOrder, ...V4_ORDER]) {
       expect(blueprints[id], `blueprint ${id} missing`).toBeDefined()
       expect(blueprints[id].id).toBe(id)
     }
@@ -242,14 +261,14 @@ describe('蓝图注册表完备性', () => {
   })
 
   it('容量表由注册表自动派生（每座容量 = blocks.length）', () => {
-    expect(Object.keys(BLUEPRINT_CAPACITY)).toHaveLength(blueprintOrder.length)
-    for (const id of blueprintOrder) {
+    expect(Object.keys(BLUEPRINT_CAPACITY)).toEqual([...blueprintOrder, ...V4_ORDER])
+    for (const id of [...blueprintOrder, ...V4_ORDER]) {
       expect(BLUEPRINT_CAPACITY[id], `capacity ${id}`).toBe(blueprints[id].blocks.length)
     }
   })
 
   it('每座蓝图都有中文与英文名称（i18n 已配齐，不是裸 id）', () => {
-    for (const id of blueprintOrder) {
+    for (const id of [...blueprintOrder, ...V4_ORDER]) {
       expect(ZH.blueprints[id], `zh name missing: ${id}`).toBeTruthy()
       expect(EN.blueprints[id], `en name missing: ${id}`).toBeTruthy()
       expect(ZH.blueprints[id]).not.toBe(id)
@@ -324,9 +343,10 @@ describe('内容包 v3 的 5 座结构（D-20261111-070）', () => {
     }
   })
 
-  it('v3 逐座块数为权威值 98/104/92/112/94（合计 500）', () => {
+  it('v3 逐座块数与 v4 起点的逐块指纹保持原样（合计 500）', () => {
     for (const id of CONTENT_PACK_V3_IDS) {
       expect(blueprints[id].blocks.length, `${id} 块数`).toBe(V3_BLOCK_COUNTS[id])
+      expect(fingerprint(blueprints[id].blocks), `${id} 指纹`).toBe(V3_FINGERPRINTS[id])
     }
     const total = CONTENT_PACK_V3_IDS.reduce((sum, id) => sum + blueprints[id].blocks.length, 0)
     expect(total).toBe(500)
@@ -376,10 +396,50 @@ describe('内容包 v3 的 5 座结构（D-20261111-070）', () => {
     }
   })
 
-  it('全量 23 座 / 2485 块（基础 1385 + v2 600 + v3 500）', () => {
+  it('主线 23 座 / 2485 块（基础 1385 + v2 600 + v3 500）', () => {
     const grandTotal = blueprintOrder.reduce((sum, id) => sum + blueprints[id].blocks.length, 0)
     expect(grandTotal).toBe(2485)
     expect(grandTotal).toBe(1385 + 600 + 500)
+  })
+})
+
+describe('内容包 v4 的桌宠蓝图', () => {
+  it.each([
+    ['pet-cat', 12],
+    ['pet-bot', 16]
+  ] as const)('%s 有 %i 个主题材质格点，每个新增格点由地面或已放置的块支撑', (id, capacity) => {
+    const blocks = blueprints[id]?.blocks
+    expect(blocks).toHaveLength(capacity)
+    const built = new Set<string>()
+    let layer = 0
+    for (const block of blocks) {
+      const key = `${block.x},${block.y},${block.z}`
+      expect(built.has(key)).toBe(false)
+      expect(block.z).toBeGreaterThanOrEqual(layer)
+      expect(isCompletelyFloating(block, built), key).toBe(false)
+      expect(block.color).toBeUndefined() // D-081：使用当前主题积木材质，不套 D-067 固定色
+      built.add(key)
+      layer = block.z
+    }
+  })
+
+  it('方块猫顶层为不相连的双耳，机器人中段为躯干两侧的短臂', () => {
+    const cat = blueprints['pet-cat']?.blocks
+    expect(cat).toBeDefined()
+    const ears = cat.filter((block) => block.z === Math.max(...cat.map((b) => b.z)))
+    expect(ears).toHaveLength(2)
+    expect(Math.abs(ears[0].x - ears[1].x) + Math.abs(ears[0].y - ears[1].y)).toBe(2)
+    expect(cat.some((block) => block.z === 1 && block.x > Math.max(...ears.map((b) => b.x)))).toBe(
+      true
+    )
+
+    const bot = blueprints['pet-bot']?.blocks
+    expect(bot).toBeDefined()
+    const shoulders = bot.filter((block) => block.z === 1)
+    const head = bot.filter((block) => block.z === 2)
+    expect(head).toHaveLength(4)
+    expect(Math.min(...shoulders.map((b) => b.x))).toBe(Math.min(...head.map((b) => b.x)) - 1)
+    expect(Math.max(...shoulders.map((b) => b.x))).toBe(Math.max(...head.map((b) => b.x)) + 1)
   })
 })
 

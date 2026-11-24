@@ -27,6 +27,7 @@ import {
   makePostofficeBlueprint,
   makeWatertowerBlueprint
 } from './generatorsV3'
+import { makePetBotBlueprint, makePetCatBlueprint } from './generatorsV4'
 
 export const plantBlueprint = makePlantBlueprint()
 export const coffeeBlueprint = makeCoffeeBlueprint()
@@ -53,7 +54,7 @@ export const bookshopBlueprint = makeBookshopBlueprint()
 export const postofficeBlueprint = makePostofficeBlueprint()
 export const firestationBlueprint = makeFirestationBlueprint()
 export const watertowerBlueprint = makeWatertowerBlueprint()
-/** 图鉴/解锁顺序（后者必须等前者落成） */
+/** 主线解锁顺序（后者必须等前者落成）；不包含桌宠。 */
 export const blueprintOrder: string[] = [
   'plant',
   'coffee',
@@ -82,6 +83,14 @@ export const blueprintOrder: string[] = [
   'watertower'
 ]
 
+/** D-20261124-081：支线可独立选择，但不影响主线或展台装饰门槛。 */
+export const PET_BLUEPRINT_IDS = ['pet-cat', 'pet-bot'] as const
+export const blueprintCatalogIds: readonly string[] = [...blueprintOrder, ...PET_BLUEPRINT_IDS]
+
+export function isPetBlueprintId(id: string): id is (typeof PET_BLUEPRINT_IDS)[number] {
+  return PET_BLUEPRINT_IDS.some((petId) => petId === id)
+}
+
 export const blueprints: Record<string, Blueprint> = {
   plant: plantBlueprint,
   coffee: coffeeBlueprint,
@@ -105,7 +114,14 @@ export const blueprints: Record<string, Blueprint> = {
   bookshop: bookshopBlueprint,
   postoffice: postofficeBlueprint,
   firestation: firestationBlueprint,
-  watertower: watertowerBlueprint
+  watertower: watertowerBlueprint,
+  'pet-cat': makePetCatBlueprint(),
+  'pet-bot': makePetBotBlueprint()
+}
+
+/** 已知蓝图的精确查询，不将未知 ID（含原型属性）误认作某一座。 */
+export function findBlueprint(id: string): Blueprint | undefined {
+  return Object.prototype.hasOwnProperty.call(blueprints, id) ? blueprints[id] : undefined
 }
 
 /**
@@ -114,7 +130,7 @@ export const blueprints: Record<string, Blueprint> = {
  * 因此回落第一座蓝图（plant），仅在控制台留一条告警便于定位脏数据。
  */
 export function getBlueprint(id: string): Blueprint {
-  const bp = blueprints[id]
+  const bp = findBlueprint(id)
   if (bp) return bp
   console.warn(`[blueprints] unknown blueprint: ${id}, falling back to ${blueprintOrder[0]}`)
   return blueprints[blueprintOrder[0]]
