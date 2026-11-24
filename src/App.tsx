@@ -9,6 +9,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { listen, emitTo } from '@tauri-apps/api/event'
 import { setPetVisible } from './platform/petWindow'
 import type { PetConfig } from './pet/types'
+import { normalizePetColor } from './pet/types'
 import { initPersistence, useAppStore, forceFlush, isDemoMode } from './store/appStore'
 import { cacheAppearance } from './platform/appearance'
 import { pickAdapter } from './storage'
@@ -89,6 +90,7 @@ export default function App() {
   const petSize = useAppStore((s) => s.settings.petSize ?? 'medium')
   const petSkin = useAppStore((s) => s.settings.petSkin ?? 'block')
   const petRoam = useAppStore((s) => s.settings.petRoam !== false)
+  const petColor = useAppStore((s) => s.settings.petColor)
   const completedCount = useAppStore((s) => s.completedBlueprintIds.length)
   const petDone = activeHabits.filter((h) => habitMetOnDay(h, checkIns, day)).length
   useEffect(() => {
@@ -101,6 +103,7 @@ export default function App() {
       size: petSize,
       skin: petSkin,
       roam: petRoam,
+      color: petColor,
       done: petDone,
       total: activeHabits.length,
       completed: completedCount
@@ -109,7 +112,7 @@ export default function App() {
     send()
     const late = window.setTimeout(send, 600)
     return () => window.clearTimeout(late)
-  }, [enablePet, petSize, petSkin, petRoam, petDone, activeHabits.length, completedCount])
+  }, [enablePet, petSize, petSkin, petRoam, petColor, petDone, activeHabits.length, completedCount])
   useEffect(() => {
     if (!inTauri) return
     let disposed = false
@@ -136,8 +139,10 @@ export default function App() {
       const patch: Partial<AppSettings> = {}
       if (payload.size === 'small' || payload.size === 'medium' || payload.size === 'large')
         patch.petSize = payload.size
-      if (payload.skin === 'block' || payload.skin === 'robot') patch.petSkin = payload.skin
+      if (payload.skin === 'block' || payload.skin === 'robot' || payload.skin === 'cat')
+        patch.petSkin = payload.skin
       if (typeof payload.roam === 'boolean') patch.petRoam = payload.roam
+      if (typeof payload.color === 'string') patch.petColor = normalizePetColor(payload.color)
       if (Object.keys(patch).length > 0) updateSettings(patch)
     })
     return () => {

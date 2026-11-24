@@ -838,6 +838,15 @@
       "owner": "Claude",
       "reviewer": "pending",
       "file": "design/records/D-20261124-093-settings-ia.md"
+    },
+    {
+      "id": "D-20261124-094",
+      "date": "2026-11-24",
+      "title": "桌宠材质色 DIY 与第三形象（猫）",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261124-094-pet-colors-models.md"
     }
   ]
 }

@@ -8,7 +8,7 @@ import {
 } from '@tauri-apps/api/window'
 import { listen, emitTo } from '@tauri-apps/api/event'
 import { useI18n } from '../i18n'
-import { paletteFromDocument } from '../render/isoColor'
+import { paletteFromDocument, deriveShadingForColor } from '../render/isoColor'
 import { paintPet, type PetMood } from '../render/petCanvas'
 import { PET_REST_POSE, petHopPose } from '../render/petMotion'
 import { DEFAULT_PET_CONFIG, isPetSkinUnlocked, petSizeScale, type PetConfig } from './types'
@@ -58,8 +58,8 @@ interface Props {
   preview?: boolean
 }
 
-const WALK_SPEED = 26 // 逻辑 px/s
-const MOVE_IPC_MS = 33 // 30fps 更新窗口位置，减少行走拖影
+const HOP_DISTANCE = 16 // 每次自主短跳的窗口位移
+const HOP_INTERVAL_MS = 520
 const PERSIST_EVERY_MS = 8000
 const DRAW_FPS_MS = 16
 const HOP_MS = 400
@@ -131,11 +131,11 @@ export function PetWindow({ preview = false }: Props) {
     let walkUntil = 0
     let nextBlink = performance.now() + 2200 + Math.random() * 2600
     let blinkUntil = 0
-    let hopStart = 0
     let walkHopStart = 0
     let walkHopDirection: -1 | 1 = 1
+    let walkFromX = 0
+    let walkToX = 0
     let nextWalkHopAt = 0
-    let lastMove = 0
     let lastPersist = 0
     let lastDraw = 0
     let disposed = false
@@ -177,6 +177,28 @@ export function PetWindow({ preview = false }: Props) {
       if (inTauri) savePetPosition(pos)
     }
 
+    // latest-wins：只保留最新位置，避免 60fps 位移请求在 IPC 队列里堆积
+    let pendingMove: { x: number; y: number } | null = null
+    let moving = false
+    async function flushMove() {
+      if (!win || moving) return
+      moving = true
+      try {
+        while (pendingMove) {
+          const next = pendingMove
+          pendingMove = null
+          await win.setPosition(new LogicalPosition(next.x, next.y)).catch(() => {})
+        }
+      } finally {
+        moving = false
+      }
+    }
+    function moveTo(x: number, y: number) {
+      if (!win) return
+      pendingMove = { x, y }
+      void flushMove()
+    }
+
     let frame = 0
     function tick(now: number) {
       if (disposed) return
@@ -193,7 +215,11 @@ export function PetWindow({ preview = false }: Props) {
       const config = configRef.current
       const roam = config.roam !== false
       const skin =
-        config.skin === 'robot' && isPetSkinUnlocked('robot', config.completed) ? 'bot' : 'block'
+        config.skin === 'cat' && isPetSkinUnlocked('cat', config.completed)
+          ? 'cat'
+          : config.skin === 'robot' && isPetSkinUnlocked('robot', config.completed)
+            ? 'bot'
+            : 'block'
 
       if (menuOpenRef.current) {
         if (mode === 'walk') {
@@ -210,31 +236,34 @@ export function PetWindow({ preview = false }: Props) {
         walkUntil = now + 2200 + Math.random() * 2400
         direction = Math.random() < 0.5 ? -1 : 1
         nextWalkHopAt = now
-      } else if (mode === 'walk' && now >= walkUntil) {
+      } else if (mode === 'walk' && now >= walkUntil && walkHopStart === 0) {
         mode = 'idle'
-        walkHopStart = 0
         nextDecision = now + nextMoveDelay()
       }
 
-      if (!menuOpenRef.current && mode === 'walk' && roam && !drag.active && now >= nextWalkHopAt) {
-        walkHopStart = now
-        walkHopDirection = direction
-        nextWalkHopAt = now + 520
-      }
-
       if (!menuOpenRef.current && mode === 'walk' && roam && !drag.active) {
-        const dt = Math.min(0.05, (now - lastMove) / 1000)
-        if (now - lastMove >= MOVE_IPC_MS) {
-          const step = stepPetWalk(pos, direction, WALK_SPEED * dt, area)
-          pos = step.pos
+        if (now >= nextWalkHopAt) {
+          const step = stepPetWalk(pos, direction, HOP_DISTANCE, area)
+          walkFromX = pos.x
+          walkToX = step.pos.x
+          walkHopDirection = direction
           direction = step.direction
-          lastMove = now
-          if (inTauri && win)
-            void win.setPosition(new LogicalPosition(pos.x, pos.y)).catch(() => {})
-          if (now - lastPersist >= PERSIST_EVERY_MS) {
-            lastPersist = now
-            void persist()
+          walkHopStart = now
+          nextWalkHopAt = now + HOP_INTERVAL_MS
+        }
+        if (walkHopStart > 0) {
+          const t = Math.min(1, (now - walkHopStart) / HOP_MS)
+          const eased = t * t * (3 - 2 * t)
+          pos = { ...pos, x: walkFromX + (walkToX - walkFromX) * eased }
+          if (inTauri) moveTo(pos.x, pos.y)
+          if (t >= 1) {
+            pos = { ...pos, x: walkToX }
+            walkHopStart = 0
           }
+        }
+        if (now - lastPersist >= PERSIST_EVERY_MS) {
+          lastPersist = now
+          void persist()
         }
       }
 
@@ -250,12 +279,10 @@ export function PetWindow({ preview = false }: Props) {
       const paletteNow = palette
       const renderer = ctx as CanvasRenderingContext2D
       renderer.clearRect(0, 0, PET_SIZE.w, PET_SIZE.h)
-      const pose = (hopStart > 0 && now - hopStart < HOP_MS
-        ? petHopPose(now - hopStart, direction)
-        : null) ??
-        (walkHopStart > 0 && now - walkHopStart < HOP_MS
-          ? petHopPose(now - walkHopStart, walkHopDirection)
-          : null) ?? { ...PET_REST_POSE, lift: bumpHop }
+      const pose = (walkHopStart > 0 && now - walkHopStart < HOP_MS
+        ? petHopPose(now - walkHopStart, walkHopDirection)
+        : null) ?? { ...PET_REST_POSE, lift: bumpHop }
+      const visualPose = { ...pose, x: 0 }
       const mood: PetMood = now < bumpUntilRef.current ? 'happy' : 'idle'
       renderer.save()
       const sizeScale = petSizeScale(config.size)
@@ -268,7 +295,8 @@ export function PetWindow({ preview = false }: Props) {
         model: skin,
         mood,
         palette: paletteNow,
-        pose,
+        shading: config.color ? deriveShadingForColor(config.color) : undefined,
+        pose: visualPose,
         blinking: blink === 0
       })
       renderer.restore()
@@ -302,7 +330,7 @@ export function PetWindow({ preview = false }: Props) {
       drag.moved = true
       const next = clampPetPosition({ x: drag.startWin.x + dx, y: drag.startWin.y + dy }, area)
       pos = next
-      if (inTauri && win) void win.setPosition(new LogicalPosition(pos.x, pos.y)).catch(() => {})
+      if (inTauri) moveTo(pos.x, pos.y)
     })
 
     canvas.addEventListener('pointerup', (event: PointerEvent) => {
@@ -315,10 +343,6 @@ export function PetWindow({ preview = false }: Props) {
         return
       }
       const now = performance.now()
-      // 点击左/右半区：朝对应方向短跳，跳中侧身、落地回正（旧版正面桌宠动作）。
-      const rect = canvas.getBoundingClientRect()
-      direction = event.clientX < rect.left + rect.width / 2 ? -1 : 1
-      hopStart = now
       if (now - lastClickAt < 320) {
         lastClickAt = 0
         void petOpenMain()
@@ -477,6 +501,16 @@ export function PetWindow({ preview = false }: Props) {
               onClick={() => changePref({ skin: 'robot' })}
             >
               {t.settings.petSkinRobot}
+            </button>
+            <button
+              className={config.skin === 'cat' ? 'active' : ''}
+              disabled={!isPetSkinUnlocked('cat', config.completed)}
+              title={
+                isPetSkinUnlocked('cat', config.completed) ? undefined : t.settings.petSkinLocked(3)
+              }
+              onClick={() => changePref({ skin: 'cat' })}
+            >
+              {t.settings.petSkinCat}
             </button>
           </div>
           <div className="pet-menu-label">{t.settings.petRoamLabel}</div>

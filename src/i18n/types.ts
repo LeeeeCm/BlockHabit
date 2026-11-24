@@ -471,6 +471,9 @@ export interface TranslationSchema {
     petSkinLabel: string
     petSkinBlock: string
     petSkinRobot: string
+    petSkinCat: string
+    petColorLabel: string
+    petColorTheme: string
     petSkinHint: string
     petSkinLocked: (count: number) => string
     petRoamLabel: string

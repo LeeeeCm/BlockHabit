@@ -166,8 +166,10 @@ export interface AppSettings {
   /** 透明悬浮桌宠（D-20261124-091）；缺省视为开启 */
   enablePet?: boolean
   petSize?: 'small' | 'medium' | 'large'
-  petSkin?: 'block' | 'robot'
+  petSkin?: 'block' | 'robot' | 'cat'
   petRoam?: boolean
+  /** 桌宠材质色；空/缺省跟随主题（值域见 PET_COLORS） */
+  petColor?: string
 }
 export interface AppState {
   schemaVersion: 2

@@ -2,6 +2,7 @@ import { REPAIR_MAX } from '../logic/repairBricks'
 import type { AppState, DayClaim, DeletedDayClaim, ReminderLogEntry } from '../types'
 import { blueprintOrder } from '../logic/blueprints'
 import { CONTENT_VERSION, isFutureContentVersion } from '../logic/blueprints/manifest'
+import { normalizePetColor } from '../pet/types'
 
 export const STATE_KEY = 'blockhabit-state'
 /** localStorage 路径的损坏档备份 key（Tauri 端为 .corrupt-backup 文件） */
@@ -388,8 +389,12 @@ export function normalizeState(s: AppState): AppState {
         s.settings?.petSize === 'small' || s.settings?.petSize === 'large'
           ? s.settings.petSize
           : 'medium',
-      petSkin: s.settings?.petSkin === 'robot' ? 'robot' : 'block',
-      petRoam: s.settings?.petRoam !== false
+      petSkin:
+        s.settings?.petSkin === 'robot' || s.settings?.petSkin === 'cat'
+          ? s.settings.petSkin
+          : 'block',
+      petRoam: s.settings?.petRoam !== false,
+      petColor: normalizePetColor(s.settings?.petColor)
     },
     dayClaims: Array.isArray(s.dayClaims)
       ? (s.dayClaims as unknown[]).flatMap((c) => {

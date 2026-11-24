@@ -21,6 +21,8 @@ interface PetFrame {
   palette: IsoPalette
   pose: Readonly<PetPose>
   blinking: boolean
+  /** 自定义材质色派生的三面明暗；缺省跟随主题 */
+  shading?: BlockShading
 }
 
 type FacetShades = [string, string]
@@ -51,8 +53,8 @@ function mixShade(from: string, to: string, amount: number): string {
   return `rgb(${start.map((channel, i) => Math.round(channel + (end[i] - channel) * amount)).join(',')})`
 }
 
-function petLighting(palette: IsoPalette, turn: number): PetLighting {
-  const brick = deriveShading(palette)
+function petLighting(palette: IsoPalette, turn: number, customShading?: BlockShading): PetLighting {
+  const brick = customShading ?? deriveShading(palette)
   // 右跳时正脸逐渐变成右侧暗面；只在原有两面材质之间插值，避免起跳闪色。
   const mix = Math.max(0, turn)
   const front: FacetShades = [
@@ -249,7 +251,7 @@ export function paintPet(ctx: CanvasRenderingContext2D, frame: PetFrame): void {
   )
   const liftRoom = Math.min(PEAK_HOP_LIFT, (floor - PAD) / scale - TURNED_BODY_HEIGHT)
   const geometry = projectPet(model, pose.turn)
-  const lighting = petLighting(palette, pose.turn)
+  const lighting = petLighting(palette, pose.turn, frame.shading)
   ctx.save()
   ctx.translate(width / 2 + pose.x * scale, floor)
   ctx.scale(scale, scale)
