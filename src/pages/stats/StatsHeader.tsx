@@ -22,14 +22,16 @@ export function StatsHeader({ t, grandTotalMinutes, repairBricks, onOpenMemorabi
         gap: 12
       }}
     >
-      <div>
-        <h1 style={{ fontSize: 'var(--fs-title)', margin: 0 }}>{t.stats.title}</h1>
-        <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
+        <h1 style={{ fontSize: 'var(--fs-title)', margin: 0, whiteSpace: 'nowrap' }}>
+          {t.stats.title}
+        </h1>
+        <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
           {t.stats.subtitle}
           {grandTotalMinutes > 0 && (
             <span> · {t.stats.focusHours((grandTotalMinutes / 60).toFixed(1))}</span>
           )}
-        </div>
+        </span>
       </div>
 
       <div

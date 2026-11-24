@@ -121,5 +121,6 @@
 | D-20261124-100 | 2026-11-24 | 三页顶栏高度统一、倒角方块动作与移除建造页夜灯 | approved | build, showcase, stats | LeeCM |
 | D-20261124-101 | 2026-11-24 | 桌宠右键面板改为独立透明窗，不移动桌宠 | approved | mini-widget | LeeCM |
 | D-20261124-102 | 2026-11-24 | 今日页日期栏并入统一顶栏 | approved | today | LeeCM |
+| D-20261124-103 | 2026-11-24 | 四页顶栏标题与说明排印统一 | approved | today, build, showcase, stats | LeeCM |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

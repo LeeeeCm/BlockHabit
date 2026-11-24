@@ -172,7 +172,7 @@ export default function Showcase() {
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           rowGap: 8,
-          padding: '14px 22px',
+          padding: '14px 20px',
           borderBottom: '1px solid var(--line)'
         }}
       >

@@ -928,6 +928,15 @@
       "owner": "Claude Code",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261124-102-today-top-bar.md"
+    },
+    {
+      "id": "D-20261124-103",
+      "date": "2026-11-24",
+      "title": "四页顶栏标题与说明排印统一",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261124-103-page-title-alignment.md"
     }
   ]
 }
