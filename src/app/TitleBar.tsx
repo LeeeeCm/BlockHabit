@@ -3,7 +3,6 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { listen } from '@tauri-apps/api/event'
 import { useI18n } from '../i18n'
 import {
-  IconMiniWidget,
   IconSettings,
   IconWinClose,
   IconWinMax,
@@ -16,12 +15,10 @@ import { inTauri } from './inTauri'
 /** 自定义窗口标题栏：拖拽区 + 设置 + 最小化/最大化/关闭（仅 Tauri 环境显示窗口按钮） */
 export function TitleBar({
   onSettings,
-  onToggleMini,
   onRequestClose
 }: {
   onSettings: () => void
-  onToggleMini: () => void
-  /** 关闭请求（Alt+F4 / 系统关闭 / 标题栏关闭）：由 App 决定是否先退出迷你模式 */
+  /** 关闭请求（Alt+F4 / 系统关闭 / 标题栏关闭）：由 App 决定是否先收进托盘 */
   onRequestClose: () => void
 }) {
   const { t } = useI18n()
@@ -77,9 +74,6 @@ export function TitleBar({
         </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <button className="icon-btn" title={t.titlebar.miniMode} onClick={onToggleMini}>
-          <IconMiniWidget size={18} />
-        </button>
         <button className="icon-btn" title={t.titlebar.settings} onClick={onSettings}>
           <IconSettings size={20} />
         </button>

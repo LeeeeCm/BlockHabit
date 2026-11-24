@@ -12,7 +12,8 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { useDialogA11y } from './useDialogA11y'
 import { useSyncController } from '../sync/SyncProvider'
 import { WebdavPanel } from './WebdavPanel'
-import { ArchiveBackupsPanel, ArchiveDataPanel } from './ArchiveDataPanel'
+import { ArchiveBackupsPanel, ArchiveDataPanel, DiagnosticsExportPanel } from './ArchiveDataPanel'
+import { HabitImportPanel } from './HabitImportPanel'
 import { AboutPanel } from './AboutPanel'
 import { Group } from './settings/Group'
 import { PreferencesGroup } from './settings/PreferencesGroup'
@@ -110,7 +111,7 @@ export function SettingsDialog({ onClose }: Props) {
 
   const bodyContent = (
     <>
-      {/* 1. 界面与感官偏好 */}
+      {/* 1. 通用：界面 / 声音 / 提醒 / 系统（同一组内分段，减少分类） */}
       <PreferencesGroup
         settings={settings}
         lang={lang}
@@ -119,11 +120,61 @@ export function SettingsDialog({ onClose }: Props) {
         onSetLanguage={setLanguage}
         onSetTheme={setTheme}
         onUpdateSettings={updateSettings}
-      />
+      >
+        <SoundGroup muted={muted} volume={volume} t={t} onUpdateSettings={updateSettings} bare />
+        {inTauri && (
+          <SystemGroup
+            settings={settings}
+            autostart={autostart}
+            t={t}
+            onToggleAutostart={toggleAutostart}
+            onUpdateSettings={updateSettings}
+            bare
+          />
+        )}
+      </PreferencesGroup>
 
-      <SoundGroup muted={muted} volume={volume} t={t} onUpdateSettings={updateSettings} />
+      {/* 2. 数据与同步：备份 / 导入 / 诊断 / 完整档案包 / WebDAV */}
+      <Group title={t.settings.groupData} collapsible defaultOpen={false}>
+        <ArchiveDataPanel onImportFile={doImport} />
+        <HabitImportPanel onToast={showMsg} />
+        <DiagnosticsExportPanel onToast={showMsg} />
+        {inTauri && (
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
+            <div
+              style={{
+                fontSize: 'var(--fs-caption)',
+                fontWeight: 700,
+                color: 'var(--ink-2)',
+                marginBottom: 8
+              }}
+            >
+              {t.settings.backupsTitle}
+            </div>
+            <ArchiveBackupsPanel onToast={showMsg} onRestoreCandidate={setImportCandidate} />
+          </div>
+        )}
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
+          <div
+            style={{
+              fontSize: 'var(--fs-caption)',
+              fontWeight: 700,
+              color: 'var(--ink-2)',
+              marginBottom: 8
+            }}
+          >
+            {t.settings.webdav.groupTitle}
+          </div>
+          <WebdavPanel sync={sync} onToast={showMsg} />
+        </div>
+      </Group>
 
-      {/* 2. 感官与氛围体验 (Apple HIG Ambience Panel) */}
+      {/* 3. 关于 */}
+      <Group title={t.settings.aboutTitle} collapsible defaultOpen={false}>
+        <AboutPanel />
+      </Group>
+
+      {/* 4. 实验室：视觉实验开关与页面提示 */}
       <LabGroup
         settings={settings}
         isMobile={isMobile}
@@ -132,39 +183,6 @@ export function SettingsDialog({ onClose }: Props) {
         onToast={showMsg}
       />
 
-      {/* 2. 系统与常驻 */}
-      {inTauri && (
-        <SystemGroup
-          settings={settings}
-          autostart={autostart}
-          t={t}
-          onToggleAutostart={toggleAutostart}
-        />
-      )}
-
-      {/* 3. 数据备份 */}
-      <Group title={t.settings.groupData} collapsible defaultOpen={false}>
-        <ArchiveDataPanel onImportFile={doImport} />
-      </Group>
-
-      {/* 3.05 备份与恢复（桌面端）：可见、可恢复的本地备份 */}
-      {inTauri && (
-        <Group title={t.settings.backupsTitle} collapsible defaultOpen={false}>
-          <ArchiveBackupsPanel onToast={showMsg} onRestoreCandidate={setImportCandidate} />
-        </Group>
-      )}
-
-      {/* 3.1 WebDAV 数据同步 */}
-      <Group title={t.settings.webdav.groupTitle} collapsible>
-        <WebdavPanel sync={sync} onToast={showMsg} />
-      </Group>
-
-      {/* 3.2 内容路线 / 关于（C2：D-20261110-063 §3.5.5） */}
-      <Group title={t.settings.aboutTitle} collapsible defaultOpen={false}>
-        <AboutPanel />
-      </Group>
-
-      {/* 4. 自律资产统计与快捷键 */}
       <SettingsFooter
         habits={habits}
         completedCount={completed.length}

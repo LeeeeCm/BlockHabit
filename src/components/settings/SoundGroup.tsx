@@ -7,12 +7,14 @@ interface Props {
   volume: number
   t: TranslationSchema
   onUpdateSettings: (patch: Partial<AppSettings>) => void
+  /** 作为「通用」组的子段渲染，不再单独成组 */
+  bare?: boolean
 }
 
-/** 声音分组（默认折叠）：音效开关与主音量。 */
-export function SoundGroup({ muted, volume, t, onUpdateSettings }: Props) {
-  return (
-    <Group title={t.settings.soundGroupTitle} collapsible defaultOpen={false}>
+/** 声音：音效开关与主音量。 */
+export function SoundGroup({ muted, volume, t, onUpdateSettings, bare = false }: Props) {
+  const content = (
+    <>
       <div className="field" style={{ marginBottom: 12 }}>
         <label>{t.settings.soundLabel}</label>
         <div className="seg">
@@ -65,6 +67,30 @@ export function SoundGroup({ muted, volume, t, onUpdateSettings }: Props) {
           </span>
         </div>
       </div>
+    </>
+  )
+
+  if (bare) {
+    return (
+      <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
+        <div
+          style={{
+            fontSize: 'var(--fs-caption)',
+            fontWeight: 700,
+            color: 'var(--ink-2)',
+            marginBottom: 8
+          }}
+        >
+          {t.settings.soundGroupTitle}
+        </div>
+        {content}
+      </div>
+    )
+  }
+
+  return (
+    <Group title={t.settings.soundGroupTitle} collapsible defaultOpen={false}>
+      {content}
     </Group>
   )
 }

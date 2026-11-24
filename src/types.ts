@@ -139,8 +139,6 @@ export type SoundMaterial = 'classic' | 'walnut' | 'crystal' | 'metal' | 'mute'
 export interface AppSettings {
   theme: Theme
   language: Language
-  /** 桌面悬浮微摆件开关 (仅桌面端支持小浮窗，移动端映射为 StandBy 待机钟) */
-  enableMiniWidget?: boolean
   /** 时段感知昼夜环境光照 (晨曦/正午/黄昏/夜灯平滑映射) */
   enableAmbientLighting?: boolean
   /** 抗断卡温和风化机制 (Gentle Decay: 晨雾休整期 vs 经典断卡清零) */
@@ -159,12 +157,10 @@ export interface AppSettings {
   eveningNudgeEnabled?: boolean
   /** 晚间收尾提醒时刻 "HH:mm"，默认 21:00 */
   eveningNudgeTime?: string
-  /** 迷你摆件尺寸档（D-20261110-059）：口袋 / 标准 / 展台 */
-  miniWidgetSize?: 'pocket' | 'standard' | 'display'
-  /** 迷你摆件是否置顶（默认关，避免打扰） */
-  miniWidgetAlwaysOnTop?: boolean
   /** 移动端陀螺仪重力微视差 (默认关闭，遵循 Apple 减弱动态无障碍规范) */
   enableGyroscope?: boolean
+  /** 全局快捷键唤起主窗并回到今日页（D-20261124-086；默认关，需用户显式开启） */
+  quickCheckInEnabled?: boolean
   /** 积木透视考古探针模式 (透视幽灵蓝图 + 琥珀色随笔高亮) */
   enableXRayInspection?: boolean
 }

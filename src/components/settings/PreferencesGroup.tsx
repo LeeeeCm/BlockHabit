@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { AppSettings, Language, Theme } from '../../types'
 import type { TranslationSchema } from '../../i18n'
 import { triggerHaptic } from '../../platform'
@@ -12,9 +13,11 @@ interface Props {
   onSetLanguage: (lang: Language) => void
   onSetTheme: (theme: Theme) => void
   onUpdateSettings: (patch: Partial<AppSettings>) => void
+  /** 同一组内的声音 / 系统子段（由 SettingsDialog 传入） */
+  children?: ReactNode
 }
 
-/** 界面与感官偏好分组（首屏组）：语言、主题、习惯提醒与晚间收尾提醒。 */
+/** 通用偏好分组：语言、主题、提醒、晚间收尾，以及声音 / 系统子段。 */
 export function PreferencesGroup({
   settings,
   lang,
@@ -22,10 +25,11 @@ export function PreferencesGroup({
   t,
   onSetLanguage,
   onSetTheme,
-  onUpdateSettings
+  onUpdateSettings,
+  children
 }: Props) {
   return (
-    <Group title={t.settings.groupPreferences}>
+    <Group title={t.settings.groupPreferences} collapsible defaultOpen>
       <div className="field" style={{ marginBottom: 12 }}>
         <label>{t.settings.languageLabel}</label>
         <div className="seg">
@@ -143,6 +147,7 @@ export function PreferencesGroup({
           {t.eveningNudge.settingsDesc} · {t.eveningNudge.settingsTimeNote}
         </div>
       </div>
+      {children}
     </Group>
   )
 }

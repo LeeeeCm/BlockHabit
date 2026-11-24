@@ -51,23 +51,10 @@ export const nav: TranslationSchema['nav'] = {
 
 export const titlebar: TranslationSchema['titlebar'] = {
   settings: 'Settings',
-  miniMode: 'Mini Desk Toy',
   minimize: 'Minimize',
   maximize: 'Maximize',
   restore: 'Restore',
   close: 'Close'
-}
-
-export const mini: TranslationSchema['mini'] = {
-  expandTooltip: 'Expand Window',
-  closeTooltip: 'Minimize',
-  toastQuickCheckIn: (name) => `+1 Block · ${name}`,
-  toastComplete: (name) => `"${name}" Completed!`,
-  allDone: 'All tasks completed for today',
-  habitCheckInTip: (name) => `Click to complete "${name}"`,
-  todayLabel: 'Today',
-  nextMilestone: (blueprint, remaining) => `${remaining} blocks to finish "${blueprint}"`,
-  doubleClickHint: 'Double-click the title to expand'
 }
 
 export const tray: TranslationSchema['tray'] = {

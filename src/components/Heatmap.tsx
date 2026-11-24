@@ -15,18 +15,18 @@ interface Props {
 }
 
 /**
- * 热图单元格底色：**灰阶点亮**（D-20261110-035 / B3）。
+ * 热图单元格底色：**完成绿**（D-20261124-090，人类要求）。
  *
- * 依据 design/AESTHETIC.md：「日历热图：近 13 周，用灰阶点亮，"全完成日"才允许满亮。」
- * 此前的绿→蓝色阶是第二套色相，与 A1「黑白灰为骨、唯一点缀色」相抵；绿色从此只保留给进度条。
+ * 取代 D-20261110-035 的灰阶方案：打卡成功的格子不再用墨色，改用状态绿 `--progress-green`；
+ * 部分完成按完成度递增绿色浓度，全完成日满亮。仍不引入第二套色相（蓝仍不参与热图）。
  */
 export function cellColor(ratio: number, future: boolean): string {
   if (future || ratio < 0) return 'transparent'
-  if (ratio >= 1) return 'var(--ink)' // 全完成日：满亮
+  if (ratio >= 1) return 'var(--progress-green)' // 全完成日：满亮绿
   if (ratio <= 0) return 'var(--line)' // 空：底板灰
-  // 部分完成：用墨色按比例叠在卡片底色上，深浅随完成度递增（两个主题都成立）
+  // 部分完成：用完成绿按比例叠在卡片底色上，深浅随完成度递增（两个主题都成立）
   const mix = Math.round(15 + ratio * 60)
-  return `color-mix(in srgb, var(--ink) ${mix}%, var(--surface))`
+  return `color-mix(in srgb, var(--progress-green) ${mix}%, var(--surface))`
 }
 
 /** 日历热图：列=周，行=周一..周日；圆角单元格，灰阶点亮、全完成日满亮 */

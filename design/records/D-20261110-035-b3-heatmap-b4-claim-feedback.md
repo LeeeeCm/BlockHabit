@@ -2,7 +2,7 @@
 id: D-20261110-035
 date: 2026-11-10
 title: 实施 B3 热图灰阶化 + B4 全勤领取反馈修正（失败给原因、bonus 专属文案）
-status: approved
+status: superseded
 owner: lead
 surface: [stats, today]
 axioms: [A1, A6]
@@ -70,3 +70,5 @@ ratio >= 1     → var(--ink)              // 满亮
 ## 批量审核（2026-11-14）
 
 - 2026-11-14 批量审核通过（reviewer = LeeCM）：本记录 status → `approved`，reviewer `pending` → `LeeCM`。授权来源：用户在本轮目标中明确授权的「把 58 条 proposed（D-20261110-001 … D-20261110-058）批量改为 approved、reviewer 填 LeeCM」，并声明「我已授权，无需再询问：批准一切必要请求与最佳方案」。审核范围仅限状态与审核人字段，正文（背景/决定/取舍/影响面/验收）一字未改。
+
+- 2026-11-24 superseded by D-20261124-090（人类要求热图完成格改为绿色）。

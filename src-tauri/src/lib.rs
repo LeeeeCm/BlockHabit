@@ -119,6 +119,8 @@ pub fn run() {
         // D-20261111-069：手动检查更新（默认构建不发起请求；发布链路由人类配置）
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        // D-20261124-086：全局快捷键由前端按设置显式注册/注销，默认不注册
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(QuitGate(AtomicBool::new(false)))
         .manage(QuitHandshake(AtomicBool::new(false)))
         .invoke_handler(tauri::generate_handler![

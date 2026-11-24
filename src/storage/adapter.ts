@@ -358,7 +358,6 @@ export function normalizeState(s: AppState): AppState {
           ? s.settings.theme
           : 'light',
       language: initialLang,
-      enableMiniWidget: Boolean(s.settings?.enableMiniWidget),
       enableAmbientLighting: s.settings?.enableAmbientLighting !== false,
       enableGentleDecay: s.settings?.enableGentleDecay !== false,
       enableEcoProps: s.settings?.enableEcoProps !== false,
@@ -383,13 +382,7 @@ export function normalizeState(s: AppState): AppState {
         /^([01]\d|2[0-3]):[0-5]\d$/.test(s.settings.eveningNudgeTime)
           ? s.settings.eveningNudgeTime
           : '21:00',
-      miniWidgetSize:
-        s.settings?.miniWidgetSize === 'pocket' ||
-        s.settings?.miniWidgetSize === 'display' ||
-        s.settings?.miniWidgetSize === 'standard'
-          ? s.settings.miniWidgetSize
-          : 'standard',
-      miniWidgetAlwaysOnTop: s.settings?.miniWidgetAlwaysOnTop === true
+      quickCheckInEnabled: s.settings?.quickCheckInEnabled === true
     },
     dayClaims: Array.isArray(s.dayClaims)
       ? (s.dayClaims as unknown[]).flatMap((c) => {

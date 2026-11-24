@@ -32,6 +32,8 @@ tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
 # 安装完成后非 Windows 平台需显式重启；Windows 由安装器默认重启（见 C4 报告）。
 tauri-plugin-process = "2"
+# D-20261124-086：全局快捷键唤起主窗并回到今日页（默认关，用户显式开启才注册）。
+tauri-plugin-global-shortcut = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

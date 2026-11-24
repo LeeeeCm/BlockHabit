@@ -38,6 +38,7 @@ applyCachedAppearance()
 const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 const isTrayMenu = inTauri && getCurrentWindow().label === 'tray-menu'
+
 if (isTrayMenu) {
   document.documentElement.dataset.win = 'tray-menu'
 } else {
@@ -58,8 +59,6 @@ if (import.meta.env.DEV) {
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <ErrorBoundary variant={isTrayMenu ? 'tray' : 'full'}>
     <React.StrictMode>
-      {/* D-20261115-074：同步控制器挂在应用级，启动/定时同步不再依赖设置页是否打开。
-          托盘菜单窗口（tray-menu）不挂：两个窗口同时自动同步会并发写同一份远端。 */}
       {isTrayMenu ? (
         <TrayMenu />
       ) : (

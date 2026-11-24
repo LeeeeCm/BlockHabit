@@ -8,15 +8,17 @@ import {
   paletteFromDocument,
   worldToScreen
 } from './iso'
+import { fitModelInto, measureModelBounds, type Rect } from './modelStage'
 import {
-  fitModelInto,
-  measureModelBounds,
-  readYearbookPalette,
+  FONT_NUM,
+  prepareCanvas,
+  readPrintPalette,
+  setFont,
   truncateToWidth,
-  waitForYearbookFonts,
+  waitForFonts,
   wrapTextToWidth,
-  type Rect
-} from './yearbookCanvas'
+  type PrintPalette
+} from './print/canvasKit'
 
 /**
  * 建筑档案卡画布（B3 / D-20261110-065）。
@@ -31,20 +33,6 @@ import {
 export const ARCHIVE_CARD = { width: 640, height: 880, dpr: 2 } as const
 /** 弹层里的等距大图预览（CSS 640×260 以内，按 2x 烘焙） */
 export const ARCHIVE_STAGE = { width: 640, height: 260, dpr: 2 } as const
-
-const FONT_SANS = '"Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
-const FONT_NUM = '"Rubik", "MiSans", sans-serif'
-
-type FontWeight = 400 | 500 | 600 | 700
-
-function setFont(
-  ctx: CanvasRenderingContext2D,
-  weight: FontWeight,
-  size: number,
-  family = FONT_SANS
-): void {
-  ctx.font = `${weight} ${size}px ${family}`
-}
 
 export function archivePngFileName(blueprintId: string): string {
   return `blockhabit-archive-${blueprintId}.png`
@@ -144,15 +132,12 @@ export async function drawArchiveStage(
   blueprint: Blueprint,
   bonusByIndex: boolean[]
 ): Promise<void> {
-  await waitForYearbookFonts()
+  await waitForFonts()
   const { width, height, dpr } = ARCHIVE_STAGE
-  canvas.width = width * dpr
-  canvas.height = height * dpr
-  const ctx = canvas.getContext('2d')
+  const ctx = prepareCanvas(canvas, width, height, dpr)
   if (!ctx) return
-  ctx.scale(dpr, dpr)
 
-  const palette = readYearbookPalette()
+  const palette = readPrintPalette()
   ctx.fillStyle = palette.bg
   ctx.fillRect(0, 0, width, height)
   drawIsoModel(ctx, blueprint, bonusByIndex, {
@@ -177,7 +162,7 @@ function drawMetricCell(
   rect: Rect,
   label: string,
   value: string,
-  palette: ReturnType<typeof readYearbookPalette>
+  palette: PrintPalette
 ): void {
   ctx.fillStyle = palette.surface
   ctx.beginPath()
@@ -200,17 +185,14 @@ export async function drawArchiveCard(
   canvas: HTMLCanvasElement,
   input: ArchiveCardInput
 ): Promise<void> {
-  await waitForYearbookFonts()
+  await waitForFonts()
 
   const { width, height, dpr } = ARCHIVE_CARD
-  canvas.width = width * dpr
-  canvas.height = height * dpr
-  const ctx = canvas.getContext('2d')
+  const ctx = prepareCanvas(canvas, width, height, dpr)
   if (!ctx) return
-  ctx.scale(dpr, dpr)
 
   const { archive, blueprint, blueprintName, t, lang } = input
-  const palette = readYearbookPalette()
+  const palette = readPrintPalette()
   const a = t.buildingArchive
   const M = 36
   const innerW = width - M * 2

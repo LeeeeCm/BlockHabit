@@ -48,7 +48,7 @@ describe('i18n system', () => {
       expect(t.nav.stats).toBeTruthy()
 
       expect(t.titlebar.settings).toBeTruthy()
-      expect(t.titlebar.miniMode).toBeTruthy()
+      expect(t.titlebar.settings).toBeTruthy()
 
       expect(t.settings.title).toBeTruthy()
       expect(t.settings.languageLabel).toBeTruthy()

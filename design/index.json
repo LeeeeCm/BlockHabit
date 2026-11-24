@@ -312,7 +312,7 @@
       "id": "D-20261110-035",
       "date": "2026-11-10",
       "title": "实施 B3 热图灰阶化 + B4 全勤领取反馈修正（失败给原因、bonus 专属文案）",
-      "status": "approved",
+      "status": "superseded",
       "owner": "lead",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261110-035-b3-heatmap-b4-claim-feedback.md"
@@ -528,7 +528,7 @@
       "id": "D-20261110-059",
       "date": "2026-11-10",
       "title": "桌面摆件三档形态（口袋/标准/展台）+ 置顶开关",
-      "status": "approved",
+      "status": "superseded",
       "owner": "lead",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261110-059-widget-tiers.md"
@@ -721,6 +721,123 @@
       "owner": "lead",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261115-080-remaining-oversized-files.md"
+    },
+    {
+      "id": "D-20261124-081",
+      "date": "2026-11-24",
+      "title": "清理零引用字体依赖与设计文档漂移（零可见变化）",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-081-cleanup-fonts-and-doc-drift.md"
+    },
+    {
+      "id": "D-20261124-082",
+      "date": "2026-11-24",
+      "title": "统计页按视图拆分与导出画布共享原语（零行为变化）",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-082-stats-and-export-convergence.md"
+    },
+    {
+      "id": "D-20261124-083",
+      "date": "2026-11-24",
+      "title": "设置收敛：摆件尺寸与置顶移入摆件标题栏",
+      "status": "superseded",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-083-mini-header-controls.md"
+    },
+    {
+      "id": "D-20261124-084",
+      "date": "2026-11-24",
+      "title": "纪念品中心：统计页收拢五个导出入口",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-084-memorabilia-hub.md"
+    },
+    {
+      "id": "D-20261124-085",
+      "date": "2026-11-24",
+      "title": "从其他应用导入习惯定义（CSV / JSON，预览后确认）",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-085-habit-import.md"
+    },
+    {
+      "id": "D-20261124-086",
+      "date": "2026-11-24",
+      "title": "全局快捷键唤起主窗并回到今日页",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-086-global-shortcut.md"
+    },
+    {
+      "id": "D-20261124-087",
+      "date": "2026-11-24",
+      "title": "窄窗口响应式页头与画布高度修复（不再逐字竖排 / 溢出）",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-087-responsive-headers.md"
+    },
+    {
+      "id": "D-20261124-088",
+      "date": "2026-11-24",
+      "title": "积木桌宠取代三档摆件（透明悬浮窗 / 自主走动 / 可拖拽）",
+      "status": "superseded",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-088-block-desktop-pet.md"
+    },
+    {
+      "id": "D-20261124-089",
+      "date": "2026-11-24",
+      "title": "自建一体化下拉选择，替换原生 select",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-089-integrated-select.md"
+    },
+    {
+      "id": "D-20261124-090",
+      "date": "2026-11-24",
+      "title": "统计页热图完成格由墨色改为完成绿",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-090-heatmap-green.md"
+    },
+    {
+      "id": "D-20261124-091",
+      "date": "2026-11-24",
+      "title": "桌宠 v2：可换形象/大小、右键设置、与打卡联动",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-091-pet-v2.md"
+    },
+    {
+      "id": "D-20261124-092",
+      "date": "2026-11-24",
+      "title": "图鉴缩略图修复：建造中显示当前形态 + 计划轮廓，图片不再顶到卡片边缘",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-092-gallery-thumb-fix.md"
+    },
+    {
+      "id": "D-20261124-093",
+      "date": "2026-11-24",
+      "title": "设置信息架构合并：5 组、全部可折叠、新增桌宠分组",
+      "status": "proposed",
+      "owner": "Claude",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-093-settings-ia.md"
     }
   ]
 }

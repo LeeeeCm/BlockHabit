@@ -2,7 +2,7 @@
 id: D-20261110-059
 date: 2026-11-10
 title: 桌面摆件三档形态（口袋/标准/展台）+ 置顶开关
-status: approved
+status: superseded
 owner: lead
 surface: [mini-widget, settings]
 axioms: [A2, A4, A5]
@@ -41,3 +41,4 @@ reviewer: LeeCM
 - 2026-11-10 实现（lead）：`src/platform/miniWindow.ts`（presets / clamp / layout，4 tests）、App.tsx（显式 setMinSize→setSize、位置钳制、退出恢复主窗尺寸与位置、置顶/尺寸即时生效、浏览器按预设居中预览）、MiniDeskToy 三档布局与 32px 命中、设置页尺寸/置顶 seg、capabilities 2 条；`miniWindow.test.ts` / `MiniDeskToy.test.tsx` 通过，Tauri release 构建通过。真窗口 100/125/150% 缩放与双屏为人工验收项（headless 无法验证）。
 - 2026-11-10 独立验证修复（verifier P2）：快捷打卡胶囊与展台清单行提升到 32px 命中区，preset footer 预算按真实内容修正（pocket 72 / standard 124 / display 170）；新增 `tauri://move` 400ms 节流监听，拖动后的摆件位置写入 `blockhabit.windowLayout.v1`，重启保留（P2-2）；补 pocket/display 两档组件测试。
 - 2026-11-11 人类确认（LeeCM）：状态 proposed → approved。
+- 2026-11-24 superseded by D-20261124-088（三档摆件由积木桌宠取代）。

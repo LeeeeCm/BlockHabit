@@ -335,20 +335,19 @@ describe('ArchiveBackupsPanel（备份与恢复）', () => {
 })
 
 describe('SettingsDialog 组合引用', () => {
-  it('WebDAV 组默认展开；数据安全组默认折叠，展开后挂载 ArchiveDataPanel', async () => {
+  it('数据与同步组默认折叠；展开后挂载备份与 WebDAV', async () => {
     // D-20261115-074：SettingsDialog 现在从应用级 <SyncProvider> 取同步控制器
     const { container, unmount } = render(
       <SyncProvider>
         <SettingsDialog onClose={vi.fn()} />
       </SyncProvider>
     )
-    expect(container.textContent).toContain('WebDAV 数据同步')
-    expect(container.textContent).toContain('服务商')
     expect(container.textContent).not.toContain('导出备份')
+    expect(container.textContent).not.toContain('WebDAV 数据同步')
 
     const titles = Array.from(container.querySelectorAll('.apple-group-title'))
     const dataTitle = titles.find((el) =>
-      (el.textContent ?? '').includes('数据安全')
+      (el.textContent ?? '').includes('数据与同步')
     ) as HTMLElement
     expect(dataTitle).toBeDefined()
     await act(async () => {
@@ -356,6 +355,8 @@ describe('SettingsDialog 组合引用', () => {
     })
     expect(container.textContent).toContain('导出备份')
     expect(container.textContent).toContain('完整档案包')
+    expect(container.textContent).toContain('WebDAV 数据同步')
+    expect(container.textContent).toContain('服务商')
     expect(container.textContent).toContain('完成')
     unmount()
   })

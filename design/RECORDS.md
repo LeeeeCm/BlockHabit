@@ -52,7 +52,7 @@
 | D-20261110-032 | 2026-11-10 | 实施 E4 第一步（颜色域拆出 isoColor.ts）+ F5 收尾（CHANGELOG） | approved | 全局 | LeeCM |
 | D-20261110-033 | 2026-11-10 | 实施 E4 二/三步：iso.ts 拆为 geometry/color/cube/ground，barrel 保接口 | approved | 全局 | LeeCM |
 | D-20261110-034 | 2026-11-10 | 实施 E4 收尾：ui.css 拆为 5 个按序入口，四页逐像素零差异 | approved | 全局 | LeeCM |
-| D-20261110-035 | 2026-11-10 | 实施 B3 热图灰阶化（回归 AESTHETIC）+ B4 领取反馈按结果分支 | approved | stats, today | LeeCM |
+| D-20261110-035 | 2026-11-10 | 实施 B3 热图灰阶化（回归 AESTHETIC）+ B4 领取反馈按结果分支 | superseded | stats, today | LeeCM |
 | D-20261110-036 | 2026-11-10 | 实施 D5 遗留：useTransient 收口 15 处瞬时提示，修掉重叠计时器 bug | approved | 全局 | LeeCM |
 | D-20261110-037 | 2026-11-10 | 自审计与审核摘要：核验 36 条记录声明，产出 REVIEW-QUEUE 与决策清单 | approved | 全局 | LeeCM |
 | D-20261110-038 | 2026-11-10 | 实施 F2 上半：全蓝图落成显式完成态 + 打卡不产块时说明原因 | approved | build, today | LeeCM |
@@ -76,7 +76,7 @@
 | D-20261110-056 | 2026-11-10 | 启动流畅：水合门 + 页面懒加载 + 空闲预取 | approved | global | LeeCM |
 | D-20261110-057 | 2026-11-10 | 渲染层性能实测与零视觉回归优化 | approved | build, showcase | LeeCM |
 | D-20261110-058 | 2026-11-10 | 竞品格局与差异化策略文档 | approved | — | LeeCM |
-| D-20261110-059 | 2026-11-10 | 桌面摆件三档形态（口袋/标准/展台）+ 置顶开关 | approved | mini-widget, settings | LeeCM |
+| D-20261110-059 | 2026-11-10 | 桌面摆件三档形态（口袋/标准/展台）+ 置顶开关 | superseded | mini-widget, settings | LeeCM |
 | D-20261110-060 | 2026-11-10 | 落成年鉴：按年汇总的年度回顾与可保存作品 | approved | stats, yearbook | LeeCM |
 | D-20261110-061 | 2026-11-10 | WebDAV 服务商预设 + 分步连接自检 | approved | settings | LeeCM |
 | D-20261110-062 | 2026-11-10 | 一键档案包：可读、可校验、可导入的本地档案馆 | approved | settings | LeeCM |
@@ -98,5 +98,18 @@
 | D-20261115-078 | 2026-11-15 | 仓库门面与供应链：Actions 升版 / SECURITY / CONTRIBUTING / Issue 模板 / Dependabot / CodeQL / 仓库元数据 | approved | — | LeeCM |
 | D-20261115-079 | 2026-11-15 | CodeQL 首次扫描 3 条告警处置：README 表格转义补反斜杠 / WebDAV 服务商识别改为解析 host | approved | settings, build | LeeCM |
 | D-20261115-080 | 2026-11-15 | 还清单文件 800 行工程债：纯拆分剩余 6 个超长文件（ShowcaseScene / BuildScene / appStore / App / HabitRow / archive.test） | approved | — | LeeCM |
+| D-20261124-081 | 2026-11-24 | 清理零引用字体依赖与设计文档漂移（零可见变化） | proposed | — | pending |
+| D-20261124-082 | 2026-11-24 | 统计页按视图拆分与导出画布共享原语（零行为变化） | proposed | stats, yearbook, building-archive, polaroid, monthly-poster | pending |
+| D-20261124-083 | 2026-11-24 | 设置收敛：摆件尺寸与置顶移入摆件标题栏 | superseded | mini-widget, settings | pending |
+| D-20261124-084 | 2026-11-24 | 纪念品中心：统计页收拢五个导出入口 | proposed | stats, yearbook, building-archive, polaroid, monthly-poster | pending |
+| D-20261124-085 | 2026-11-24 | 从其他应用导入习惯定义（CSV / JSON，预览后确认） | proposed | settings | pending |
+| D-20261124-086 | 2026-11-24 | 全局快捷键唤起主窗并回到今日页 | proposed | settings | pending |
+| D-20261124-087 | 2026-11-24 | 窄窗口响应式页头与画布高度修复（不再逐字竖排 / 溢出） | proposed | today, build, showcase, stats | pending |
+| D-20261124-088 | 2026-11-24 | 积木桌宠取代三档摆件（透明悬浮窗 / 自主走动 / 可拖拽） | superseded | mini-widget, settings, titlebar | pending |
+| D-20261124-089 | 2026-11-24 | 自建一体化下拉选择，替换原生 select | proposed | stats, gallery, settings | pending |
+| D-20261124-090 | 2026-11-24 | 统计页热图完成格由墨色改为完成绿 | proposed | stats | pending |
+| D-20261124-091 | 2026-11-24 | 桌宠 v2：可换形象/大小、右键设置、与打卡联动 | proposed | mini-widget, settings, titlebar | pending |
+| D-20261124-092 | 2026-11-24 | 图鉴缩略图修复：建造中显示当前形态 + 计划轮廓 | proposed | gallery | pending |
+| D-20261124-093 | 2026-11-24 | 设置信息架构合并：5 组、全部可折叠、新增桌宠分组 | proposed | settings | pending |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

@@ -77,7 +77,8 @@
 
 ## 7. bonus 积木、粒子、落成仪式、微生态
 
-- **bonus（连击奖励块）**：`drawCube({bonus:true})` 会在顶面描 `--accent / 1.5px` 边（iso.ts:672–677）。数据层已就位（store 全勤块 `bonus:true` appStore.ts:491；连击 7 天 `isStreakBonus` appStore.ts:467/519），但**所有调用点都没传 bonus**（BuildScene.tsx:301–309 faceOpts 无此键；ShowcaseScene.tsx:421–426、PolaroidModal.tsx:165–170、MonthlyPosterModal.tsx:195–201、BlueprintThumb 均无）。⇒ **奖励块目前外观与普通块完全一致，这是断线，不是设计取舍。**
+- **bonus（连击奖励块）**：B1/B5 后分两级，共用同一枚 `--accent`——连击里程碑单环 1.5px，全勤（`fromHabitId === '__day__'`）双环 2.4px + 内缩 1.1px（`render/isoCube.ts:419–432`）。数据层见 `store/appStore.ts`（连击 7 天 / 全勤块），渲染链路已接通：BuildScene（`render/buildscene/sceneDraw.ts:97–104` 传 `bonus` / `bonusTier`）、ShowcaseScene（`bonusByBlueprint`）、PolaroidModal、MonthlyPosterModal、BuildingArchiveCanvas 均按蓝图序位传入；图鉴缩略图 `BlueprintThumb` 刻意不显示奖励环。
+  > 2026-11-24 校准：此前本节写「所有调用点都没传 bonus」，该断线已在 B5 收尾时接回，旧结论作废。
 - 落成仪式（Build.tsx:250–299、311–344）：全屏 `color-mix(var(--bg) 82%)`；标题 26px / letter-spacing .04em；副标 14px ink-2；四按钮（奠基铭言 / 纪念相纸 / 下一个目标 / 关闭）；粒子 **36 片**，色板 `[--ink, --ink-2, --line, --accent]` 循环，尺寸 5–12px，时长 1.4–2.6s，随机 rotate + 下落 110vh / 340° 收尾。
 - 微生态植被（logic/eco.ts:9–15 + iso.ts:877–952）：阶段 **1 天萌芽 / 7 天小径 / 21 天树 / 100 天花园**；迷你积木 `{tileW:16, tileH:8, blockH:7}`；三套调色板 —— 绿 `#8fce8f/#57a457/#2f7d3a`（ink rgba(24,58,32,.55)）、石 `#d6d3d1/#a8a29e/#78716c`、花 `#f5b301/#d99e00/#b58500`；`back` 层画在积木前（两侧探出）、`front` 层画在积木后（站在建筑前）；要求 `blocks.length ≥ 2`，位置固定在 margin 环带（距积木中心 ≥1.4 格）。开关 `settings.enableEcoProps` 默认开（BuildScene.tsx:132）。
 

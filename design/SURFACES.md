@@ -12,6 +12,7 @@
 - **复用**：`.habit-grid/.habit-card`（HabitRow）、`.pill-action`、`.card`、`.echo-capsule-bar`、`.reminder-banner`、`.archive-*`、`.toast`。
 - **尺寸**：卡片双列 `gap:12px`（ui.css:441–445）、卡片 `min-height:172px` / 内距 `15px`；时段小标题 `12px + letter-spacing .14em`（Today.tsx:459–466）；空态卡 `padding:52px 24px` + 56×56 图标块（r18）。
 - **必须**：完成态只能由 `habitMetOnDay` 判定（Today.tsx:472–474，A6）；卡片点击=打卡、按钮点击 `stopPropagation`；元信息只用 `--ink-2`；页面只保留一个"+"入口。
+- **窄屏头部（D-20261124-087）**：`.today-header` 允许 `flex-wrap`，操作组 `.today-header-actions` 整组换行、`flex-shrink:0`；蓝图胶囊与完成计数 `white-space:nowrap`。移动布局下操作组占满一行、左对齐，「+」保持右端。
 - **专注入口（B4 / D-20261110-064）**：今日简报下方一条紧凑入口条（`data-testid="today-focus-entry"`，`1px --line` + `--surface` + `--r-md`），仅在「存在可开始的专注习惯（未完成、有目标时长）且当前没有任何专注会话」时出现；点击复用 `timerStore.start` 并在成功 toast「专注中」；`aria-label` 含习惯名与目标时长；移动端最小高度 ≥48px；不新增颜色。
 - **例外**：全勤卡用 `--accent@7%/45%` 底色（Today.tsx:294–295，A1③ 的既有例外）；空态图标底也用 accent 14%（415）——**属越界，见 TOKENS §7**。
 
@@ -22,15 +23,18 @@
 - **复用**：`BuildScene`、`.btn.ghost/.primary`、`.brick-inspect-popover`、`GalleryDialog/PolaroidModal/FoundationNoteDialog`。
 - **尺寸**：顶栏 `14px 20px` + `border-bottom:1px solid var(--line)`（Build.tsx:51–61）；按钮统一 `padding:7px 12px; font-size:13`；进度 6px 高、`border-radius:999`。
 - **必须**：画布占满剩余高度且不产生滚动；旋转只重绘、不重播动画；**不在这里新增文字按钮以外的装饰**（顶栏已 5 个控件，达上限）；X-Ray 开关必须与设置默认态区分（本会话态 vs `settings.enableXRayInspection`）。
+- **窄屏顶栏（D-20261124-087）**：顶栏拆为 `.build-top-bar-main`（名称 / 块数 / 进度）与 `.build-top-bar-actions`（铭言 / 相纸 / 光照 / 透视 / 图鉴）；窄宽时 actions 整行落到第二行，按钮与文字 `white-space:nowrap`；画布容器 `min-height:0 + overflow:hidden`，底部地基说明必须留在 tab bar 之上。
 - **例外**：旋转控件浮层带 `boxShadow: 0 2px 8px rgba(0,0,0,.06)`（Build.tsx:153）——唯一在画布上允许的阴影。
 
 ## 3. 统计页 Stats.tsx
 
 - **用途**：手账目录 —— 指标热图 + 手账长廊两种视图。
-- **结构**：容器（`28px 24px 80px; max-width:680`，Stats.tsx:160）→ 页头（h1 **20px** + 13 周副标 + 专注累计）→ 右侧 [月度画报] + 修复砖徽章 → `.apple-segmented` 双视图 → 回声胶囊 → 指标视图（每习惯一张 card：热图 + 名称/频率 + 4 个数值 + 近期随笔）或手账视图（检索卡 + 习惯下拉 + 心境 chip + 卡片列表 + 加载更多）。
+- **结构**：容器（`28px 24px 80px; max-width:680`，Stats.tsx:160）→ 页头（h1 **20px** + 13 周副标 + 专注累计）→ 右侧 [纪念品] + 修复砖徽章 → `.apple-segmented` 双视图 → 回声胶囊 → 指标视图（每习惯一张 card：热图 + 名称/频率 + 4 个数值 + 近期随笔）或手账视图（检索卡 + 习惯下拉 + 心境 chip + 卡片列表 + 加载更多）。
 - **复用**：`Heatmap`、`.apple-segmented`、`.card`、`.micro-mood-chip`、`.chronicle-card`、`ConfirmDialog/MonthlyPosterModal`。
 - **尺寸**：习惯卡 `padding:16px 18px; margin-bottom:14px`；热图 `cell:13 / weeks:13`，间距 `max(3, round(cell×0.22))`、圆角 `max(4, round(cell×0.28))`（Heatmap.tsx:29–31、89）。
-- **必须**：热图颜色只走灰阶点亮（`--ink` 按完成度叠在 `--surface` 上，全完成日满亮），绿色只保留给进度条；不得出现第二套色阶（D-20261110-035）；格子必须是 `<button>` 且带 aria-label（补签可达性，Heatmap.tsx:79–85）；补签只允许过去 7 天且需二次确认。
+- **必须**：热图颜色只走完成绿（`--progress-green` 按完成度叠在 `--surface` 上，全完成日满亮；D-20261124-090 取代 D-035 的灰阶），蓝色不参与热图；格子必须是 `<button>` 且带 aria-label（补签可达性，Heatmap.tsx:79–85）；补签只允许过去 7 天且需二次确认。
+- **导出入口（D-20261124-084）**：页头只保留一个「纪念品」胶囊，打开 `MemorabiliaDialog`；月度画报 / 年鉴 / 建筑档案 / 拍立得 / 完整档案包都从该弹层进入，不再在页头并排两个按钮。
+- **窄屏页头（D-20261124-087）**：`.stats-header` 允许换行，操作组 `.stats-header-actions` 整组换行、`flex-shrink:0`；移动布局下操作组占满一行、左对齐，360px 下「纪念品 / 修复积木」不得溢出。
 - **例外**：修复砖徽章与回声胶囊用 accent（Stats.tsx:209、244–245）——越界。
 
 ## 4. 展台 Showcase.tsx + render/ShowcaseScene.tsx
@@ -41,6 +45,7 @@
 - **复用**：`ShowcaseScene`（26×26 网格、slabH 12）、`.btn.ghost`、`.toast`。
 - **尺寸**：顶栏 `14px 22px` + 1px 底边；计数胶囊 `3px 12px` + 999 圆角；自动排列按钮 `4px 12px; font-size:12`；装饰工具按钮移动端 ≥44px。
 - **必须**：落位必须过 `canPlaceModel`（AABB 无重叠 + 不出界，装饰模式下按会话旋转计算）；非法落位画红虚线脚印 + `haptic('warning')`；满位要 toast（`fullHint`）而不是静默覆盖；装饰模式入口不得在未全落成时出现。
+- **窄屏（D-20261124-087）**：顶栏 `flex-wrap`，标题 `white-space:nowrap`，hint 可整段换行；画布容器 `min-height:0 + overflow:hidden`，不得溢出到 tab bar 之后。
 - **例外**：拖拽提示图标、自动排列图标用 accent（Showcase.tsx:61、74）——越界。
 
 ## 5. 图鉴弹窗 GalleryDialog.tsx
@@ -49,17 +54,21 @@
 - **结构**：`.overlay > .dialog`（宽 **500**）→ `.dialog-header`（标题 + 总数 + 关闭）→ `.dialog-body > .gallery-grid`（**3 列**）→ 每卡：`BlueprintThumb` 缩略图 + 名称 14px/600 + 状态 11.5px → `.dialog-footer`（关闭）。
 - **尺寸**：`gap:10px`、卡片 `padding:14px 12px`（ui.css:570–586）；锁定态 `opacity:.5` 且 hover 不动。
 - **必须**：解锁顺序 = `blueprintOrder`（logic/blueprints/index.ts:30–43），前一座未落成才锁；锁定态不加锁图标（用状态行表达）。
+- **缩略图（D-20261124-092）**：缩略图 132×92、外层 `.gallery-thumb` 裁剪；建造中只画已落块（`placedCount`），并叠一层极淡完整轮廓提示计划形态；fit `pad=12 / maxScale=0.72`，高模型不得顶到卡片边。
 - **例外**：无。
 
 ## 6. 设置弹窗 SettingsDialog.tsx
 
-- **用途**：偏好 / 系统 / 数据 / WebDAV / 内容路线（关于）/ 实验 六组。
-- **结构**：桌面 `.dialog`（宽 **480**）· 移动 `BottomSheet` → `.dialog-body` 内分组（SettingsDialog 已拆出 `WebdavPanel` / `ArchiveDataPanel` / `AboutPanel`）：界面偏好（语言/主题/快捷键/音效/音量）· 系统集成 · 数据安全（导出/导入/备份/诊断包）· WebDAV（含冒烟自检）· **内容路线（关于）** · 实验室（进阶开关，默认折叠）→ `.dialog-footer` 常驻「完成」。
+- **用途**：通用 / 数据与同步 / 关于 / 实验室 **四组**，全部可折叠。
+- **结构**：桌面 `.dialog`（宽 **480**）· 移动 `BottomSheet` → `.dialog-body` 内分组：**通用**（语言/主题/提醒/晚间收尾 + 声音子段 + 系统子段：开机自启 / 全局快捷键）· **数据与同步**（导出/导入、习惯导入、诊断包、备份、WebDAV）· **关于**（内容路线/版本）· **实验室**（进阶视觉开关与页面提示）→ `.dialog-footer` 常驻「完成」。
 - **内容路线（C2 / D-20261110-063 §3.5.5）**：只展示事实 —— 当前内置蓝图数与积木数（从 `blueprintOrder`/manifest 动态计算，禁止硬编码）、当前 contentVersion、年度免费扩建节奏（随安装包内置、不联网下载、不额外收费）、跨设备升级说明（更高内容版本会让旧设备拒绝读取并暂停保存）、本地优先与无遥测承诺。**不得写死未来内容包日期**；文案 zh/en 齐全，数值随内容版本自动更新。
 - **版本与更新（D-20261111-069）**：内容路线组内一行「版本与更新」——当前版本 + 检查更新按钮；状态机 idle/checking/up-to-date/available/error；**只有用户点击才联网**，无启动自动检查、无静默下载；发布链路未配置时按钮禁用并如实说明（不得出现点了没反应的按钮）；取消只忽略迟到结果（插件无 abort API，UI 不得误报失败）；不新增颜色/控件类型。
 - **尺寸**：`.apple-group` = `ink@2.5%` 底 + `1px --line` + `--r-md` + `14px 16px` + `gap:10px`（ui.css:334–343）；组标题 `11px/700 + uppercase + letter-spacing .05em`（345–352）；每行 `.field` `margin-bottom:12px`。
 - **必须**：所有开关必须来自 `settings.*` 且写回 store；关闭态文案不得出现"未实现占位"（历史上出现过幽灵开关）；组内每行一个决策，不叠加说明文字超过 2 行。
-- **例外**：WebDAV 组出现在系统集成之后，语义上属"数据"，位置为历史遗留（不阻塞，改版时并入数据组）；内容路线组紧随数据组之后，信息型内容不参与开关决策。
+- **摆件控制（D-20261124-091，重建中）**：桌宠分组与代码不在当前提交；设置里暂时没有桌宠入口。
+- **习惯导入（D-20261124-085）**：数据安全组内、导出/导入备份之后新增「从其他应用导入习惯」：CSV/JSON → 预览可导入/跳过数量 → 用户确认后才写入；只导入习惯定义，不导入历史打卡。
+- **全局快捷键（D-20261124-086）**：系统集成组新增「全局快捷键唤起」，默认关；开启后 `Ctrl/⌘+Alt+H` 显示主窗、取消最小化、聚焦并回到今日页；注册失败回滚开关并提示。
+- **例外**：无（WebDAV 已并入「数据与同步」组）。
 
 ## 7. 习惯弹窗 HabitDialog.tsx
 
@@ -102,12 +111,15 @@
 - **必须**：背景 transparent（不能画圆角矩形底）；hover 反色（ink 底 / bg 字）；"退出"hover 用 `--danger`。
 - **例外**：无。
 
-## 12. 迷你悬浮摆件 MiniDeskToy.tsx
+## 12. 积木桌宠 PetWindow（**重建中，当前代码未实现**；设计规格见 D-20261124-091，草稿在 `.pet-wip/`）
 
-- **用途**：常驻桌面的 260×380 小窗（App.tsx:249），一键打卡。
-- **结构**：外框 r-md + `0 12px 36px rgba(0,0,0,.18)` → 顶栏（拖拽区 logo 16px + 标题 13px + 展开/关闭 24px 键）→ 3D 区（flex 1）→ 底栏（进度 11px 文本 + 3.5px 进度条 + 待办胶囊 ≤3 个）。
-- **必须**：拖拽区必须 `data-tauri-drag-region`；关闭=隐藏窗口而非退出；手动退出要写回 `enableMiniWidget:false`（App.tsx:261–264）。
-- **例外**：进度条 3.5px（其余表面 5–6px），尺寸压缩属合理例外。
+- **用途**：常驻桌面的积木角色；会呼吸、眨眼、走动；与今日打卡进度联动；双击唤起主窗，右键打开桌宠设置。
+- **窗口**：160×180 逻辑像素，`transparent`、`decorations:false`、`alwaysOnTop`、`skipTaskbar`、`shadow:false`、`resizable:false`、`focus:false`、不可见启动。
+- **形象**：`block` 单块积木（无脚，脸在积木上，走路弹跳）与 `robot` 积木机器人（头/身体/双臂/双腿，走路迈腿）；都由 `drawCube` 堆成，眼睛与嘴只用 `--ink`。
+- **自定义**：大小 小/中/大（角色缩放 0.85/1/1.15）；形象积木 / 机器人（完成 1 座建筑解锁）；自主走动开关。右键打开设置里的桌宠分组。
+- **联动**：主窗通过 `pet-config` 事件同步今日 `done/total`；完成数增加时跳一下并显示 2.6s 的 `done/total` 气泡。
+- **动效**：idle 呼吸 + 随机眨眼；walk 左右移动并碰工作区边缘反弹；点击跳跃；拖动改位置。
+- **必须**：位置按当前显示器工作区钳制并存设备本地 `windowLayout.pet`（旧 `mini` 位置迁移）；不抢主窗焦点；不做逐像素穿透——窗口仅 160×180，透明边缘仍会拦截该小方块内的点击（v1 已知限制）；开关默认关。
 
 ## 13. 移动端 BottomSheet.tsx / BottomTabBar.tsx
 
@@ -161,7 +173,7 @@
 
 > 以下是对既有表面规格的**增补**；§3 / §6 / §12 的旧描述保留为历史快照，不删除。所有新表面沿用既有令牌、圆角与 1px 线，不新增色相 / 阴影档位。
 
-### 5.1 迷你摆件三档（mini-widget + settings）
+### 5.1 迷你摆件三档（**superseded by D-20261124-088**，仅历史留存）
 - 尺寸（逻辑像素，含边框）：口袋 220×150（header 34 / footer 72 / 3D ≥36；1 个快捷打卡）；标准 280×400（34 / 124；3 个快捷打卡）；展台 420×560（36 / 170；3D + 今日清单 ≤5 行，行高 32）。footer 按 32px 命中区修正（2026-11-10 独立验证 P2-1）。
 - 结构：32px 头部按钮（置顶 / 展开 / 关闭）+ 双击拖拽区展开主窗；3D 区 flex 1；底栏按档位切换信息密度（口袋：里程碑 + 1 胶囊；标准：蓝图名 + 进度 + 3 胶囊；展台：进度 + 今日清单）。
 - 必须：Tauri 下窗口尺寸 = 预设；进入前显式 `setMinSize` → `setSize`，退出 `setMinSize(900×600)` 并恢复主窗尺寸/位置；置顶默认**关**；位置存设备本地 `blockhabit.windowLayout.v1` 并按当前显示器工作区钳制；浏览器预览按预设尺寸居中模拟（仅开发期）。
@@ -184,7 +196,7 @@
 - 弹层：`.dialog` 宽 680；顶部建筑名 + 第 N 座 / 共 N 座 + 落成日期；中部等距大图舞台（640×260@2x，`--bg` 底）；数据格（积木/耗时/投入最多/全勤日/奖励块）；关键块时间线（首、25%、50%、75%、末，按钮可展开当天随笔/心境/星标）；底部奠基石铭言内联编辑 + [拍立得][保存档案卡][关闭]。
 - 画布：档案卡 640×880 逻辑、@2x 导出 1280×1760；颜色全从 `getComputedStyle` 令牌读取，导出前 `await document.fonts.ready`。
 - 必须：落成日必须 = `max(placedAt)`；第 N 座按落成时间而非 `completedBlueprintIds` 顺序；`fromHabitId` 统计投入最多习惯；旧档缺失不伪造日期（显示「不可考」）；Esc/焦点圈闭复用 `useDialogA11y`；不新增持久化字段。
-### 5.4 设置页摆件尺寸 / 置顶（settings）
+### 5.4 设置页摆件尺寸 / 置顶（**superseded by D-20261124-088**，仅历史留存）
 - 位置：实验室组「常驻悬浮摆件」行之后；尺寸 seg（口袋 / 标准 / 展台）+ 置顶 seg（开启 / 关闭），各配一行 `--fs-caption` 说明。
 - 必须：默认 `standard` + 置顶关；使用中变更尺寸/置顶即时应用到当前窗口；设置值随存档同步（设备偏好）。
 
@@ -195,7 +207,7 @@
 - 浏览器：不落盘，直接下载单 ZIP（STORE+CRC32；`CompressionStream` 可用时文本可选 DEFLATE），文件名 `BlockHabit-Archive-<ISO>.zip`。
 - 必须：state.json 必须能经 `prepareImport` round-trip；manifest/checksums/实际文件三者一致；**不含 WebDAV 凭据**；新窗口/并发导出有 busy 闸；不新增颜色。
 
-### 5.7 专注陪伴（mini-widget，D-20261110-064）
+### 5.7 专注陪伴（**摆件面板部分 superseded by D-20261124-088**；专注会话本身保留于今日页）
 - 触发：今日页专注习惯开始计时后，摆件检测到活动会话（设备本地 `blockhabit.focusSessions.v1`，绝对时间）。
 - 面板：摆件底栏切换为专注面板 —— 习惯名 + 相位文案（专注中 / 时间到，确认后落块）+ 剩余 `mm:ss` + 静态环形进度（`--ink` 描边，无循环动画）+ 主按钮 [确认落块]（ready 时）/ [再等 5 分钟]（最多 2 次）+ [放弃]（二次确认）。
 - 三档：口袋只保留倒计时 + 主按钮（32px）；标准显示环形 + 两个按钮；展台增加一行诚实提示。三档均不裁切，英文两行完整。
@@ -206,3 +218,11 @@
 - 图鉴：锁定卡使用 `BlueprintThumb` 的 `silhouette` 模式——只用 `--ink` 透明度派生灰阶、透明底、忽略建筑自定义色、不画虚线地基；卡片不再整体压暗，名字与「待解锁」保持可读；已完成/当前建筑视觉不变。
 - 解锁：完成基础 12 座后自动指向扩展包第一座，其余按 `blueprintOrder` 顺序解锁；旧 12 座数据与视觉零改动。
 - 必须：内容版本门（`contentVersion=2`）先于 sanitize；旧客户端读新档只能 needsUpgrade，不得静默清洗；图鉴 18 卡可滚动，底部关闭按钮固定。
+
+## 15. 纪念品中心 MemorabiliaDialog（D-20261124-084）
+
+- **用途**：统计页唯一的导出入口，聚合月度画报 / 落成年鉴 / 建筑档案 / 拍立得 / 完整档案包。
+- **结构**：`.overlay > .dialog`（宽 **560**）→ `.dialog-header`（标题 + 关闭）→ `.dialog-body`：一行说明 → 2 列自适应卡片（画报 / 年鉴）→「建筑档案与相纸」：已落成建筑下拉 + [打开档案][拍立得] → `.field` 内嵌 `ArchiveExportPanel` → `.dialog-footer`（关闭）。
+- **嵌套**：月度画报 / 年鉴 / 建筑档案 / 拍立得直接复用既有弹层；任一下级打开时，纪念品中心让出 Esc / 焦点圈闭。层级：本弹层 `z-index:110`，档案卡 115，相纸与画报/年鉴 120。
+- **必须**：只列已落成建筑；空态如实显示「还没有落成的建筑」，不出现选择框、不生成假条目；不新增画布、不新增持久化字段、不新增颜色；移动端走 `BottomSheet`。
+- **例外**：无。

@@ -5,10 +5,29 @@ import { formatPeakHour } from '../logic/yearbook'
 import { blueprints } from '../logic/blueprints'
 import { paletteFromDocument, withAlpha, type IsoPalette } from './iso'
 import { paintModelStage, type Rect } from './modelStage'
+import {
+  FONT_NUM,
+  prepareCanvas,
+  readPrintPalette,
+  setFont,
+  truncateToWidth,
+  waitForFonts,
+  wrapTextToWidth,
+  type PrintPalette
+} from './print/canvasKit'
 
 // 等距模型 measure/fit 已抽到 render/modelStage（B2）；这里保持既有导出路径可用
 export { fitModelInto, measureModelBounds } from './modelStage'
 export type { ModelBounds, ModelFit, ModelPadding, Rect } from './modelStage'
+
+// 导出画布共享原语已抽到 render/print/canvasKit（D-20261124-082）；保持既有导出路径可用
+export {
+  readPrintPalette as readYearbookPalette,
+  truncateToWidth,
+  waitForFonts as waitForYearbookFonts,
+  wrapTextToWidth
+}
+export type YearbookPalette = PrintPalette
 
 /**
  * 落成年鉴画布（D-20261110-060）。
@@ -29,36 +48,6 @@ export const YEARBOOK_CANVAS = { width: 720, height: 1200, dpr: 2 } as const
 export const YEARBOOK_MAX_BUILDINGS = 6
 /** 单页总上限（两列 × 6） */
 export const YEARBOOK_MAX_BUILDINGS_TOTAL = YEARBOOK_MAX_BUILDINGS * 2
-
-const FONT_SANS = '"Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
-const FONT_NUM = '"Rubik", "MiSans", sans-serif'
-
-/** 年鉴用主题色快照（只含纸/墨/线/点缀，不引入新色相） */
-export interface YearbookPalette {
-  bg: string
-  surface: string
-  ink: string
-  ink2: string
-  line: string
-  accent: string
-}
-
-/** 从 document 的 CSS 变量读取当前主题；缺变量时回退到纸白主题令牌值（与画报一致的做法） */
-export function readYearbookPalette(doc: Document = document): YearbookPalette {
-  const style = doc?.defaultView?.getComputedStyle?.(doc.documentElement)
-  const read = (name: string, fallback: string): string => {
-    const value = style?.getPropertyValue(name).trim()
-    return value ? value : fallback
-  }
-  return {
-    bg: read('--bg', '#fafafa'),
-    surface: read('--surface', '#ffffff'),
-    ink: read('--ink', '#0a0a0a'),
-    ink2: read('--ink-2', '#6b6b6b'),
-    line: read('--line', '#e8e8e8'),
-    accent: read('--accent', '#f5b301')
-  }
-}
 
 export interface YearbookLayout {
   width: number
@@ -212,61 +201,9 @@ export function buildingRowRects(area: Rect, count: number): BuildingRowLayout[]
   return buildingGridRects(area, count, 1)
 }
 
-/** 单行文本按宽度截断（超出补 ...） */
-export function truncateToWidth(
-  ctx: Pick<CanvasRenderingContext2D, 'measureText'>,
-  text: string,
-  maxWidth: number
-): string {
-  if (maxWidth <= 0) return ''
-  if (ctx.measureText(text).width <= maxWidth) return text
-  let out = text
-  while (out.length > 1 && ctx.measureText(out + '...').width > maxWidth) out = out.slice(0, -1)
-  return out.length < text.length ? out + '...' : out
-}
-
-/** 多行文本折行（按字符宽度折，末行超宽截断） */
-export function wrapTextToWidth(
-  ctx: Pick<CanvasRenderingContext2D, 'measureText'>,
-  text: string,
-  maxWidth: number,
-  maxLines = 2
-): string[] {
-  const lines: string[] = []
-  let rest = text
-  while (rest.length > 0 && lines.length < maxLines) {
-    if (ctx.measureText(rest).width <= maxWidth) {
-      lines.push(rest)
-      rest = ''
-      break
-    }
-    let cut = rest.length
-    while (cut > 1 && ctx.measureText(rest.slice(0, cut)).width > maxWidth) cut--
-    const space = rest.lastIndexOf(' ', cut)
-    if (space > 0 && space > cut * 0.6) cut = space
-    if (lines.length === maxLines - 1) {
-      lines.push(truncateToWidth(ctx, rest, maxWidth))
-      rest = ''
-      break
-    }
-    lines.push(rest.slice(0, cut).trimEnd())
-    rest = rest.slice(cut).trimStart()
-  }
-  return lines
-}
-
 /* ---------------- 绘制原语 ---------------- */
 
-type FontWeight = 400 | 500 | 600 | 700
-
-function setFont(
-  ctx: CanvasRenderingContext2D,
-  weight: FontWeight,
-  size: number,
-  family = FONT_SANS
-): void {
-  ctx.font = `${weight} ${size}px ${family}`
-}
+/* truncateToWidth / wrapTextToWidth / setFont / waitForFonts 已抽到 print/canvasKit（D-20261124-082） */
 
 function drawRule(
   ctx: CanvasRenderingContext2D,
@@ -645,20 +582,7 @@ function drawFooter(
   ctx.textAlign = 'left'
 }
 
-/** 绘制前等待字体就绪 + 一帧（避免 CJK 掉字/字重回退） */
-export async function waitForYearbookFonts(doc: Document | undefined = document): Promise<void> {
-  const fonts = (doc as (Document & { fonts?: FontFaceSet }) | undefined)?.fonts
-  if (fonts?.ready) {
-    try {
-      await fonts.ready
-    } catch {
-      // 字体加载失败时用回退字族继续绘制，不阻塞导出
-    }
-  }
-  if (typeof requestAnimationFrame === 'function') {
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-  }
-}
+/* waitForYearbookFonts 已抽到 print/canvasKit（D-20261124-082），顶部以别名 re-export */
 
 export interface YearbookDrawOptions {
   model: YearbookModel
@@ -672,14 +596,11 @@ export async function drawYearbook(
   canvas: HTMLCanvasElement,
   options: YearbookDrawOptions
 ): Promise<void> {
-  await waitForYearbookFonts()
+  await waitForFonts()
 
   const { width, height, dpr } = YEARBOOK_CANVAS
-  canvas.width = width * dpr
-  canvas.height = height * dpr
-  const ctx = canvas.getContext('2d')
+  const ctx = prepareCanvas(canvas, width, height, dpr)
   if (!ctx) return
-  ctx.scale(dpr, dpr)
 
   const { model, palette, t, lang } = options
   const visibleCount = Math.min(model.buildings.length, YEARBOOK_MAX_BUILDINGS_TOTAL)

@@ -103,7 +103,11 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
                         opacity: locked ? 1 : undefined
                       }}
                     >
-                      <BlueprintThumb blueprint={bp} silhouette={locked} />
+                      <BlueprintThumb
+                        blueprint={bp}
+                        silhouette={locked}
+                        placedCount={building ? placed : undefined}
+                      />
                       <div className="gallery-name">{bpName}</div>
                       <div className="gallery-status" style={{ color: status.color }}>
                         {status.label}

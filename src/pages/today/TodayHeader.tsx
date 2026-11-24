@@ -28,8 +28,8 @@ export function TodayHeader({
 }: Props) {
   const { lang, t } = useI18n()
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <h1 style={{ fontSize: 'var(--fs-hero)', margin: 0 }}>
+    <div className="today-header">
+      <h1 className="today-header-title" style={{ fontSize: 'var(--fs-hero)', margin: 0 }}>
         {t.common.monthDay(now.getMonth() + 1, now.getDate())}
         <span
           style={{
@@ -42,9 +42,9 @@ export function TodayHeader({
           {t.common.weekdayLabel(t.common.weekdays[now.getDay()])}
         </span>
       </h1>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div className="today-header-actions">
         <button
-          className="btn ghost"
+          className="btn ghost today-header-pill"
           onClick={() => {
             triggerHaptic('selection')
             onCelebrate?.()
@@ -70,6 +70,7 @@ export function TodayHeader({
           </span>
         </button>
         <span
+          className="today-header-pill"
           style={{
             color: 'var(--ink-2)',
             fontSize: 'var(--fs-body)',

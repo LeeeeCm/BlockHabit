@@ -17,7 +17,6 @@ describe('全量创新特性单元与边界测试 (Innovations Test Suite)', () 
       settings: {
         theme: 'light',
         language: 'zh',
-        enableMiniWidget: false,
         enableAmbientLighting: true,
         enableGentleDecay: true,
         enableEcoProps: true,

@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { blueprints } from '../logic/blueprints'
 import { clearCubeSpriteCache } from '../render/iso'
-import { BlueprintThumb, silhouettePalette } from './BlueprintThumb'
+import { BlueprintThumb, silhouettePalette, thumbBlocks } from './BlueprintThumb'
 
 /** B1：图鉴锁定态剪影 —— 单色（--ink 派生）+ 不压暗名字的缩略图。 */
 
@@ -93,12 +93,17 @@ describe('silhouettePalette（纯函数）', () => {
 })
 
 describe('BlueprintThumb 剪影态', () => {
-  it('普通态：画布尺寸正确、背景为 surface、不传 silhouette 时正常绘制', () => {
-    const { canvas, unmount } = renderThumb(<BlueprintThumb blueprint={blueprints.plant} />)
+  it('普通态：画布尺寸正确、外层底板为 surface、正常绘制', () => {
+    const { container, canvas, unmount } = renderThumb(
+      <BlueprintThumb blueprint={blueprints.plant} />
+    )
     const el = canvas()
     expect(el.width).toBe(132)
     expect(el.height).toBe(92)
-    expect(el.style.background).toBe('var(--surface)')
+    expect((container.querySelector('.gallery-thumb') as HTMLElement).style.background).toBe(
+      'var(--surface)'
+    )
+    expect(el.style.background).toBe('transparent')
     expect(fake.calls.some((call) => call.name === 'fill')).toBe(true)
     expect(fake.calls.some((call) => call.name === 'clearRect')).toBe(true)
     unmount()
@@ -124,9 +129,17 @@ describe('BlueprintThumb 剪影态', () => {
       </>
     )
     const canvases = Array.from(container.querySelectorAll('canvas'))
+    const thumbs = Array.from(container.querySelectorAll('.gallery-thumb')) as HTMLElement[]
     expect(canvases).toHaveLength(2)
-    expect(canvases[0].style.background).toBe('var(--surface)')
-    expect(canvases[1].style.background).toBe('transparent')
+    expect(thumbs[0].style.background).toBe('var(--surface)')
+    expect(thumbs[1].style.background).toBe('transparent')
     unmount()
+  })
+
+  it('建造中只画已落块前缀，地基仍按完整蓝图', () => {
+    expect(thumbBlocks(blueprints.plant, 4)).toHaveLength(4)
+    expect(thumbBlocks(blueprints.plant, 0)).toHaveLength(0)
+    expect(thumbBlocks(blueprints.plant, 9999)).toHaveLength(blueprints.plant.blocks.length)
+    expect(thumbBlocks(blueprints.plant)).toHaveLength(blueprints.plant.blocks.length)
   })
 })

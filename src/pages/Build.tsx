@@ -76,119 +76,125 @@ export default function Build() {
           flex: 'none',
           display: 'flex',
           alignItems: 'center',
-          gap: 14,
+          flexWrap: 'wrap',
+          columnGap: 14,
+          rowGap: 8,
           padding: '14px 20px',
           borderBottom: '1px solid var(--line)'
         }}
       >
-        <span style={{ fontWeight: 700, fontSize: 'var(--fs-title)' }}>
-          {getBlueprintName(blueprint.id, lang)}
-        </span>
-        <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-body)' }}>
-          {t.build.blocksCount(placedCount, total)}
-        </span>
-        <div
-          style={{
-            flex: 1,
-            height: 6,
-            background: 'var(--line)',
-            maxWidth: 260,
-            borderRadius: 999
-          }}
-        >
+        <div className="build-top-bar-main">
+          <span style={{ fontWeight: 700, fontSize: 'var(--fs-title)' }}>
+            {getBlueprintName(blueprint.id, lang)}
+          </span>
+          <span style={{ color: 'var(--ink-2)', fontSize: 'var(--fs-body)' }}>
+            {t.build.blocksCount(placedCount, total)}
+          </span>
           <div
             style={{
-              width: `${progressRatio * 100}%`,
-              height: '100%',
-              background: complete ? 'var(--progress-green)' : 'var(--ink)',
-              borderRadius: 999,
-              transition: 'width var(--dur-xl) var(--ease-bounce)'
+              flex: 1,
+              height: 6,
+              background: 'var(--line)',
+              maxWidth: 260,
+              borderRadius: 999
             }}
-          />
-        </div>
-        {complete && (
-          <>
-            <button
-              className="btn ghost"
-              style={{ padding: '7px 12px', fontSize: 'var(--fs-body)' }}
-              onClick={() => setFoundationModalOpen(true)}
-              title={t.reflections.foundationModalTitle}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <IconFoundation size={15} style={{ flexShrink: 0 }} />
-                <span>{foundationNote ? t.build.dedication : t.build.dedicate}</span>
-              </span>
-            </button>
-            <button
-              className="btn ghost"
-              style={{ padding: '7px 12px', fontSize: 'var(--fs-body)' }}
-              onClick={() => setPolaroidOpen(true)}
-              title={t.build.polaroidBtn}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <IconCamera size={15} />
-                {t.build.polaroidBtn}
-              </span>
-            </button>
-          </>
-        )}
-        {enableAmbientLighting && (
-          <span
-            className="btn ghost"
-            style={{
-              padding: '7px 12px',
-              fontSize: 'var(--fs-body)',
-              borderRadius: 999,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              cursor: 'default'
-            }}
-            title={t.build.ambientHint}
           >
-            <span
+            <div
               style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: 'var(--accent)',
-                flexShrink: 0
+                width: `${progressRatio * 100}%`,
+                height: '100%',
+                background: complete ? 'var(--progress-green)' : 'var(--ink)',
+                borderRadius: 999,
+                transition: 'width var(--dur-xl) var(--ease-bounce)'
               }}
             />
-            {period === 'dawn'
-              ? t.build.ambientDawn
-              : period === 'dusk'
-                ? t.build.ambientDusk
-                : period === 'night'
-                  ? t.build.ambientNight
-                  : t.build.ambientNoon}
-          </span>
-        )}
-        <button
-          className={`btn ${xrayMode ? 'primary' : 'ghost'}`}
-          style={{ padding: '7px 12px', fontSize: 'var(--fs-body)', borderRadius: 999 }}
-          onClick={() => {
-            triggerHaptic('selection')
-            setXrayMode((v) => !v)
-          }}
-          title={t.build.xray.toggleTooltip}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <IconEcho size={15} style={{ color: xrayMode ? 'var(--accent)' : 'currentColor' }} />
-            <span>{t.build.xray.btn}</span>
-          </span>
-        </button>
-        <button
-          className="btn ghost"
-          style={{ padding: '7px 14px', fontSize: 'var(--fs-body)' }}
-          onClick={() => setGalleryOpen(true)}
-          title={t.build.galleryBtn}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <IconGallery size={16} />
-            {t.build.galleryBtn}
-          </span>
-        </button>
+          </div>
+        </div>
+        <div className="build-top-bar-actions">
+          {complete && (
+            <>
+              <button
+                className="btn ghost"
+                style={{ padding: '7px 12px', fontSize: 'var(--fs-body)' }}
+                onClick={() => setFoundationModalOpen(true)}
+                title={t.reflections.foundationModalTitle}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <IconFoundation size={15} style={{ flexShrink: 0 }} />
+                  <span>{foundationNote ? t.build.dedication : t.build.dedicate}</span>
+                </span>
+              </button>
+              <button
+                className="btn ghost"
+                style={{ padding: '7px 12px', fontSize: 'var(--fs-body)' }}
+                onClick={() => setPolaroidOpen(true)}
+                title={t.build.polaroidBtn}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <IconCamera size={15} />
+                  {t.build.polaroidBtn}
+                </span>
+              </button>
+            </>
+          )}
+          {enableAmbientLighting && (
+            <span
+              className="btn ghost"
+              style={{
+                padding: '7px 12px',
+                fontSize: 'var(--fs-body)',
+                borderRadius: 999,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                cursor: 'default'
+              }}
+              title={t.build.ambientHint}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: 'var(--accent)',
+                  flexShrink: 0
+                }}
+              />
+              {period === 'dawn'
+                ? t.build.ambientDawn
+                : period === 'dusk'
+                  ? t.build.ambientDusk
+                  : period === 'night'
+                    ? t.build.ambientNight
+                    : t.build.ambientNoon}
+            </span>
+          )}
+          <button
+            className={`btn ${xrayMode ? 'primary' : 'ghost'}`}
+            style={{ padding: '7px 12px', fontSize: 'var(--fs-body)', borderRadius: 999 }}
+            onClick={() => {
+              triggerHaptic('selection')
+              setXrayMode((v) => !v)
+            }}
+            title={t.build.xray.toggleTooltip}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <IconEcho size={15} style={{ color: xrayMode ? 'var(--accent)' : 'currentColor' }} />
+              <span>{t.build.xray.btn}</span>
+            </span>
+          </button>
+          <button
+            className="btn ghost"
+            style={{ padding: '7px 14px', fontSize: 'var(--fs-body)' }}
+            onClick={() => setGalleryOpen(true)}
+            title={t.build.galleryBtn}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <IconGallery size={16} />
+              {t.build.galleryBtn}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* F2：全部蓝图落成 —— 在顶栏下方常驻一行说明，而不是静默无反应 */}
@@ -207,7 +213,7 @@ export default function Build() {
         </div>
       )}
 
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div style={{ flex: 1, position: 'relative', minHeight: 0, overflow: 'hidden' }}>
         <div
           style={{
             position: 'absolute',

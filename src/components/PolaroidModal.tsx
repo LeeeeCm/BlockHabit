@@ -4,6 +4,7 @@ import type { Blueprint, MicroMood } from '../types'
 import { useAppStore } from '../store/appStore'
 import { DEFAULT_ISO_CONFIG } from '../render/iso'
 import { paintModelStage } from '../render/modelStage'
+import { readCssVar, truncateToWidth } from '../render/print/canvasKit'
 import { completionDateOfBuilds } from '../logic/buildingArchive'
 import { getBlueprintName, useI18n } from '../i18n'
 import { IconCamera, IconClose, IconFlip } from './Icons'
@@ -13,13 +14,6 @@ import { useDialogA11y } from './useDialogA11y'
 interface Props {
   blueprint: Blueprint
   onClose: () => void
-}
-
-/** 画布绘制用：读取主题 CSS 变量（星标色跟随唯一点缀色 --accent） */
-function cssVar(name: string, fallback: string): string {
-  if (typeof document === 'undefined') return fallback
-  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-  return v || fallback
 }
 
 /**
@@ -143,13 +137,10 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       if (foundationNote) {
         ctx.fillStyle = '#b45309'
         ctx.font = 'italic 500 12.5px "Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
-        let fText = `“${foundationNote}”`
-        if (ctx.measureText(fText).width > photoW - 100) {
-          while (fText.length > 4 && ctx.measureText(fText + '...').width > photoW - 100) {
-            fText = fText.slice(0, -1)
-          }
-          fText += '...'
-        }
+        const fText = truncateToWidth(ctx, `“${foundationNote}”`, photoW - 100, {
+          minLength: 4,
+          ensureEllipsis: true
+        })
         ctx.fillText(fText, photoX, photoY + photoH + 56)
 
         ctx.fillStyle = '#64748b'
@@ -216,14 +207,11 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
       ctx.font = 'italic 500 12.5px "Rubik", "AlimamaShuHeiTi", "MiSans", sans-serif'
       const defaultDedication = t.polaroid.defaultDedication
       const rawDedication = `“${foundationNote || defaultDedication}”`
-      let quoteStr = rawDedication
       const maxStampW = W - 110
-      if (ctx.measureText(quoteStr).width > maxStampW) {
-        while (quoteStr.length > 4 && ctx.measureText(quoteStr + '...').width > maxStampW) {
-          quoteStr = quoteStr.slice(0, -1)
-        }
-        quoteStr += '...'
-      }
+      const quoteStr = truncateToWidth(ctx, rawDedication, maxStampW, {
+        minLength: 4,
+        ensureEllipsis: true
+      })
       ctx.fillText(quoteStr, 48, stampY + 42)
 
       const listStartY = 168
@@ -245,7 +233,7 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
           // 节点圆圈
           ctx.beginPath()
           ctx.arc(48, itemY + 8, 4, 0, Math.PI * 2)
-          ctx.fillStyle = entry.starred ? cssVar('--accent', '#f5b301') : '#a8a29e'
+          ctx.fillStyle = entry.starred ? readCssVar('--accent', '#f5b301') : '#a8a29e'
           ctx.fill()
 
           // 标题行：日期 + 习惯 + 心境
@@ -264,14 +252,11 @@ export function PolaroidModal({ blueprint, onClose }: Props) {
           // 随笔正文
           ctx.fillStyle = '#292524'
           ctx.font = '400 12px "Rubik", "MiSans", sans-serif'
-          let nText = entry.note || ''
           const maxNoteW = W - 110
-          if (ctx.measureText(nText).width > maxNoteW) {
-            while (nText.length > 3 && ctx.measureText(nText + '...').width > maxNoteW) {
-              nText = nText.slice(0, -1)
-            }
-            nText += '...'
-          }
+          const nText = truncateToWidth(ctx, entry.note || '', maxNoteW, {
+            minLength: 3,
+            ensureEllipsis: true
+          })
           ctx.fillText(`“${nText}”`, 62, itemY + 28)
         })
       } else {

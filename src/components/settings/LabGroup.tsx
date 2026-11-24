@@ -2,8 +2,6 @@ import type { AppSettings } from '../../types'
 import type { TranslationSchema } from '../../i18n'
 import { triggerHaptic } from '../../platform'
 import { resetGuideTips } from '../../platform/guideTips'
-import { MINI_SIZE_ORDER } from '../../platform/miniWindow'
-import { DiagnosticsExportPanel } from '../ArchiveDataPanel'
 import { Group } from './Group'
 
 interface Props {
@@ -200,100 +198,7 @@ export function LabGroup({ settings, isMobile, t, onUpdateSettings, onToast }: P
             {t.settings.gyroscopeHint}
           </div>
         </div>
-      ) : (
-        <>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label>{t.settings.miniWidgetLabel}</label>
-            <div className="seg">
-              <button
-                type="button"
-                className={Boolean(settings.enableMiniWidget) ? 'active' : ''}
-                onClick={() => {
-                  triggerHaptic('selection')
-                  onUpdateSettings({ enableMiniWidget: true })
-                }}
-              >
-                {t.settings.miniWidgetOn}
-              </button>
-              <button
-                type="button"
-                className={!settings.enableMiniWidget ? 'active' : ''}
-                onClick={() => {
-                  triggerHaptic('selection')
-                  onUpdateSettings({ enableMiniWidget: false })
-                }}
-              >
-                {t.settings.miniWidgetOff}
-              </button>
-            </div>
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
-              {t.settings.miniWidgetHint}
-            </div>
-          </div>
-
-          {/* D-20261110-059：三档尺寸 + 置顶 */}
-          <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
-            <label>{t.settings.miniSizeLabel}</label>
-            <div className="seg">
-              {MINI_SIZE_ORDER.map((size) => {
-                const label =
-                  size === 'pocket'
-                    ? t.settings.miniSizePocket
-                    : size === 'display'
-                      ? t.settings.miniSizeDisplay
-                      : t.settings.miniSizeStandard
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    className={(settings.miniWidgetSize ?? 'standard') === size ? 'active' : ''}
-                    onClick={() => {
-                      triggerHaptic('selection')
-                      onUpdateSettings({ miniWidgetSize: size })
-                    }}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
-              {t.settings.miniSizeHint}
-            </div>
-          </div>
-
-          <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
-            <label>{t.settings.miniAlwaysOnTopLabel}</label>
-            <div className="seg">
-              <button
-                type="button"
-                className={settings.miniWidgetAlwaysOnTop === true ? 'active' : ''}
-                onClick={() => {
-                  triggerHaptic('selection')
-                  onUpdateSettings({ miniWidgetAlwaysOnTop: true })
-                }}
-              >
-                {t.settings.miniAlwaysOnTopOn}
-              </button>
-              <button
-                type="button"
-                className={settings.miniWidgetAlwaysOnTop !== true ? 'active' : ''}
-                onClick={() => {
-                  triggerHaptic('selection')
-                  onUpdateSettings({ miniWidgetAlwaysOnTop: false })
-                }}
-              >
-                {t.settings.miniAlwaysOnTopOff}
-              </button>
-            </div>
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
-              {t.settings.miniAlwaysOnTopHint}
-            </div>
-          </div>
-        </>
-      )}
-
-      <DiagnosticsExportPanel onToast={onToast} />
+      ) : null}
 
       {/* D-20261110-054 页面提示：清空已读，三页首访提示重新出现一次 */}
       <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>

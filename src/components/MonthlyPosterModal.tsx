@@ -4,6 +4,7 @@ import { useAppStore } from '../store/appStore'
 import { getBlueprint } from '../logic/blueprints'
 import { DEFAULT_ISO_CONFIG, paletteFromDocument } from '../render/iso'
 import { paintModelStage } from '../render/modelStage'
+import { prepareCanvas, readCssVar, truncateToWidth } from '../render/print/canvasKit'
 import { getBlueprintName, useI18n } from '../i18n'
 import { dateKey } from '../logic/dates'
 import { dayCompletionRatio } from '../logic/checkin'
@@ -56,8 +57,6 @@ export function MonthlyPosterModal({ onClose }: Props) {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
 
     const dimMap = {
       '4:5': { W: 600, H: 750 },
@@ -65,9 +64,8 @@ export function MonthlyPosterModal({ onClose }: Props) {
       '1:1': { W: 600, H: 600 }
     }
     const { W, H } = dimMap[aspectRatio]
-    canvas.width = W * 2
-    canvas.height = H * 2
-    ctx.scale(2, 2)
+    const ctx = prepareCanvas(canvas, W, H, 2)
+    if (!ctx) return
     const now = new Date()
     const year = now.getFullYear()
     const month = now.getMonth() + 1
@@ -76,14 +74,13 @@ export function MonthlyPosterModal({ onClose }: Props) {
     const daysInMonth = new Date(year, month, 0).getDate()
 
     // 读取当前主题 CSS 变量色彩
-    const style = getComputedStyle(document.documentElement)
-    const colorBg = style.getPropertyValue('--bg').trim() || '#f7f4ee'
-    const colorSurface = style.getPropertyValue('--surface').trim() || '#ffffff'
-    const colorInk = style.getPropertyValue('--ink').trim() || '#292524'
-    const colorInk2 = style.getPropertyValue('--ink-2').trim() || '#78716c'
-    const colorLine = style.getPropertyValue('--line').trim() || '#e7e2d7'
-    const colorAccent = style.getPropertyValue('--accent').trim() || '#c25e3e'
-    const colorGreen = style.getPropertyValue('--progress-green').trim() || '#3a835b'
+    const colorBg = readCssVar('--bg', '#f7f4ee')
+    const colorSurface = readCssVar('--surface', '#ffffff')
+    const colorInk = readCssVar('--ink', '#292524')
+    const colorInk2 = readCssVar('--ink-2', '#78716c')
+    const colorLine = readCssVar('--line', '#e7e2d7')
+    const colorAccent = readCssVar('--accent', '#c25e3e')
+    const colorGreen = readCssVar('--progress-green', '#3a835b')
 
     // 1. 画报底纸
     ctx.fillStyle = colorBg
@@ -314,13 +311,10 @@ export function MonthlyPosterModal({ onClose }: Props) {
     const defaultQuote = t.poster.defaultQuote
     const quoteText = currentNote ? `“${currentNote.note}”` : defaultQuote
     const maxQuoteW = innerW - 170
-    let displayQuote = quoteText
-    if (ctx.measureText(displayQuote).width > maxQuoteW) {
-      while (displayQuote.length > 3 && ctx.measureText(displayQuote + '...').width > maxQuoteW) {
-        displayQuote = displayQuote.slice(0, -1)
-      }
-      displayQuote += '...'
-    }
+    const displayQuote = truncateToWidth(ctx, quoteText, maxQuoteW, {
+      minLength: 3,
+      ensureEllipsis: true
+    })
     ctx.fillText(displayQuote, margin, footerY + 22)
 
     ctx.fillStyle = colorInk2

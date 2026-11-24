@@ -97,3 +97,25 @@ body {
   transform: scale(0.94);
   transition: transform var(--dur-2xs) var(--ease-out);
 }
+
+/* ---- 窄屏页头：控件整体落到下一行，左对齐（D-20261124-087） ---- */
+.mobile-app-root .today-header,
+.mobile-app-root .stats-header {
+  align-items: flex-start;
+}
+.mobile-app-root .today-header-actions,
+.mobile-app-root .stats-header-actions {
+  width: 100%;
+  margin-left: 0;
+}
+.mobile-app-root .today-header-actions > .icon-btn {
+  margin-left: auto;
+}
+.mobile-app-root .build-top-bar-main {
+  flex-basis: 100%;
+}
+.mobile-app-root .build-top-bar-actions {
+  width: 100%;
+  margin-left: 0;
+  justify-content: flex-start;
+}

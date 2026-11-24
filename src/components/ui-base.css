@@ -165,3 +165,81 @@
     min-height: 44px;
   }
 }
+
+/* ---- 响应式页头（D-20261124-087）：窄窗口整组换行，绝不把中文挤成竖排 ---- */
+.today-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.today-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.today-header-actions > * {
+  flex-shrink: 0;
+}
+.today-header-pill {
+  white-space: nowrap;
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.stats-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.stats-header-actions > * {
+  flex-shrink: 0;
+}
+.stats-header-pill {
+  white-space: nowrap;
+}
+
+.build-top-bar-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.build-top-bar-main > span {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.build-top-bar-main > div {
+  min-width: 80px;
+}
+.build-top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.build-top-bar-actions > * {
+  flex-shrink: 0;
+}
+.build-top-bar-actions .btn {
+  white-space: nowrap;
+}
+.showcase-top-bar .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}

@@ -176,8 +176,26 @@ export default function Showcase() {
           borderBottom: '1px solid var(--line)'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
-          <span style={{ fontWeight: 700, fontSize: 'var(--fs-title)' }}>{t.showcase.title}</span>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 10,
+            minWidth: 0,
+            flexWrap: 'wrap',
+            rowGap: 2
+          }}
+        >
+          <span
+            style={{
+              fontWeight: 700,
+              fontSize: 'var(--fs-title)',
+              whiteSpace: 'nowrap',
+              flexShrink: 0
+            }}
+          >
+            {t.showcase.title}
+          </span>
           <span
             style={{
               fontSize: 'var(--fs-small)',
@@ -254,7 +272,15 @@ export default function Showcase() {
       </div>
 
       {/* 2.5D 展台沙盘画布 */}
-      <div style={{ flex: 1, position: 'relative', background: 'var(--bg)' }}>
+      <div
+        style={{
+          flex: 1,
+          position: 'relative',
+          minHeight: 0,
+          overflow: 'hidden',
+          background: 'var(--bg)'
+        }}
+      >
         <ShowcaseScene
           placements={showcasePlacements}
           blueprintsMap={blueprints}

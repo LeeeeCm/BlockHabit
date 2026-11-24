@@ -45,7 +45,6 @@ export function defaultState(): AppState {
     settings: {
       theme: 'light',
       language: initialLang,
-      enableMiniWidget: false,
       enableAmbientLighting: true,
       enableGentleDecay: true,
       enableEcoProps: true,
@@ -55,8 +54,7 @@ export function defaultState(): AppState {
       volume: 100,
       eveningNudgeEnabled: false,
       eveningNudgeTime: '21:00',
-      miniWidgetSize: 'standard',
-      miniWidgetAlwaysOnTop: false,
+      quickCheckInEnabled: false,
       enableGyroscope: false,
       enableXRayInspection: false
     },

@@ -38,7 +38,6 @@ export interface TranslationSchema {
   }
   titlebar: {
     settings: string
-    miniMode: string
     minimize: string
     maximize: string
     restore: string
@@ -206,6 +205,14 @@ export interface TranslationSchema {
     exportReflection: string
     posterTooltip: string
     posterBtn: string
+    memorabiliaBtn: string
+    memorabiliaTitle: string
+    memorabiliaSubtitle: string
+    memorabiliaBuildings: string
+    memorabiliaPick: string
+    memorabiliaNoBuildings: string
+    memorabiliaOpenArchive: string
+    memorabiliaOpenPolaroid: string
     tabMetrics: string
     tabChronicle: string
     metric: {
@@ -372,11 +379,22 @@ export interface TranslationSchema {
     soundOn: string
     soundOff: string
     autostartLabel: string
+    quickCheckInLabel: string
+    quickCheckInHint: string
+    quickCheckInFailed: string
     autostartOn: string
     autostartOff: string
     dataLabel: string
     exportJson: string
     importJson: string
+    habitImportLabel: string
+    habitImportHint: string
+    habitImportChoose: string
+    habitImportFormat: string
+    habitImportSummary: (importable: number, skipped: number) => string
+    habitImportConfirm: (count: number) => string
+    habitImportDone: (count: number, skipped: number) => string
+    habitImportError: string
     /** F3 备份与恢复 */
     backupsTitle: string
     backupNow: string
@@ -472,20 +490,8 @@ export interface TranslationSchema {
     gyroscopeOn: string
     gyroscopeOff: string
     gyroscopeHint: string
-    miniWidgetLabel: string
-    miniWidgetOn: string
-    miniWidgetOff: string
-    miniWidgetHint: string
-    /** D-20261110-059：摆件尺寸与置顶 */
-    miniSizeLabel: string
-    miniSizePocket: string
-    miniSizeStandard: string
-    miniSizeDisplay: string
-    miniSizeHint: string
-    miniAlwaysOnTopLabel: string
-    miniAlwaysOnTopOn: string
-    miniAlwaysOnTopOff: string
-    miniAlwaysOnTopHint: string
+    toggleOn: string
+    toggleOff: string
     xrayDefaultLabel: string
     xrayDefaultOn: string
     xrayDefaultOff: string
@@ -494,18 +500,6 @@ export interface TranslationSchema {
     reminderToggleOn: string
     reminderToggleOff: string
     reminderToggleHint: string
-  }
-  mini: {
-    expandTooltip: string
-    closeTooltip: string
-    toastQuickCheckIn: (name: string) => string
-    toastComplete: (name: string) => string
-    allDone: string
-    habitCheckInTip: (name: string) => string
-    /** D-20261110-059：三档摆件共用文案 */
-    todayLabel: string
-    nextMilestone: (blueprint: string, remaining: number) => string
-    doubleClickHint: string
   }
   /** 习惯到点提醒 */
   reminder: {
