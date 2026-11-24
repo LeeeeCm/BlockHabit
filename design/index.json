@@ -973,6 +973,15 @@
       "owner": "Claude Code",
       "reviewer": "pending",
       "file": "design/records/D-20261124-107-gallery-pets-first.md"
+    },
+    {
+      "id": "D-20261124-108",
+      "date": "2026-11-24",
+      "title": "习惯弹窗「更多设置」与首个选填字段的间距对齐",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-108-habit-more-settings-gap.md"
     }
   ]
 }

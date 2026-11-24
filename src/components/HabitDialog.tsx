@@ -437,7 +437,8 @@ export function HabitDialog({ habit, onClose }: Props) {
           padding: '8px 12px',
           borderRadius: 'var(--r-md)',
           fontSize: 'var(--fs-small)',
-          color: 'var(--ink-2)'
+          color: 'var(--ink-2)',
+          marginBottom: 16
         }}
       >
         <span>{moreOpen ? t.habitDialog.fewerSettings : t.habitDialog.moreSettings}</span>
