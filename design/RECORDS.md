@@ -98,6 +98,7 @@
 | D-20261115-078 | 2026-11-15 | 仓库门面与供应链：Actions 升版 / SECURITY / CONTRIBUTING / Issue 模板 / Dependabot / CodeQL / 仓库元数据 | approved | — | LeeCM |
 | D-20261115-079 | 2026-11-15 | CodeQL 首次扫描 3 条告警处置：README 表格转义补反斜杠 / WebDAV 服务商识别改为解析 host | approved | settings, build | LeeCM |
 | D-20261115-080 | 2026-11-15 | 还清单文件 800 行工程债：纯拆分剩余 6 个超长文件（ShowcaseScene / BuildScene / appStore / App / HabitRow / archive.test） | approved | — | LeeCM |
+| D-20261119-001 | 2026-11-19 | Apple HIG 与 Google M3 轻量化交互与动效精修：触控板原生滚动分流、零字族跳变、Grid 0fr/1fr 抽屉、等宽数字与快捷视角复位 | proposed | global, today, build, stats, settings | pending |
 | D-20261124-081 | 2026-11-24 | 清理零引用字体依赖与设计文档漂移（零可见变化） | proposed | — | pending |
 | D-20261124-082 | 2026-11-24 | 统计页按视图拆分与导出画布共享原语（零行为变化） | proposed | stats, yearbook, building-archive, polaroid, monthly-poster | pending |
 | D-20261124-083 | 2026-11-24 | 设置收敛：摆件尺寸与置顶移入摆件标题栏 | superseded | mini-widget, settings | pending |
@@ -113,5 +114,7 @@
 | D-20261124-093 | 2026-11-24 | 设置信息架构合并：5 组、全部可折叠、新增桌宠分组 | proposed | settings | pending |
 | D-20261124-094 | 2026-11-24 | 桌宠材质色 DIY 与第三形象（猫） | approved | mini-widget, settings | LeeCM |
 | D-20261124-095 | 2026-11-24 | 移除机器人桌宠形象 | approved | mini-widget, settings | LeeCM |
+| D-20261124-096 | 2026-11-24 | 正脸积木桌宠、落成形象与到点打卡气泡（v1 历史，已被 v2 取代） | approved | mini-widget, settings, build, gallery | LeeCM |
+| D-20261124-097 | 2026-11-24 | 桌宠在原窗口内无卡片外框（v1 历史，已被 v2 取代） | proposed | mini-widget | pending |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。
