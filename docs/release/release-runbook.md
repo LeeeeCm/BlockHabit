@@ -2,6 +2,7 @@
 
 > **状态：2026-11-14 起已配置完毕，可重复发布。** 一次性配置（§1）已全部完成，
 > 0.2.1 由 `.github/workflows/release.yml` 出签名包并上传 `latest.json`。
+> 0.2.4 起增加 macOS 实验性构建（§2.2）：以 pre-release 发布，不影响 Windows `latest.json`。
 > 本文件从「待人类配置的手册」转为「每次都照做的发布流程 + 故障排查」。
 >
 > 已完成的一次性配置（留档）：
@@ -107,6 +108,21 @@ gh run watch $runId --exit-status
 - tag 由 workflow 钉在**触发时的提交**上，发布期间继续 push 不会造成 tag 漂移。
 - 发布后自检：`npm run release:check -- --version $ver --download`（13 项，含 .sha256 资产与 sha256 实测）。
 
+### 2.2 macOS 实验性构建（0.2.4 起）
+
+macOS 构建独立于 Windows 签名链路，输出 universal 未签名 DMG：
+
+```powershell
+gh workflow run release-macos.yml --ref main -f version=0.2.4 -f "notes=..."
+$runId = (gh run list --workflow 'Release (macOS)' -L 1 --json databaseId | ConvertFrom-Json)[0].databaseId
+gh run watch $runId --exit-status
+```
+
+- 运行在 `macos-latest`，构建 `universal-apple-darwin` 的 `.dmg` 与 `.sha256`；不设置 `VITE_UPDATER_ENABLED`，应用内更新在 macOS 上保持关闭。
+- Release tag 为 `vX.Y.Z-macos`，**标记为 pre-release**，因此 `/releases/latest/download/latest.json` 仍指向 Windows 正式 release，不会被 macOS 条目顶掉。
+- 未签名 / 未公证：首次打开需在 Finder 中右键 → 打开；尚未经过与 Windows 同等的真机验收。
+- 发布后整理：只保留最新 Windows（latest）与 macOS（pre-release）各一条；旧 release 用 `gh release delete <tag> --yes` 删除，`git tag` 保留以维持版本历史。
+
 ## 3. 回滚与故障
 
 - **不自动降级**：回滚只能发布更高版本（例如 0.2.2）修复；旧版本不会自动回退。
@@ -137,3 +153,5 @@ gh run watch $runId --exit-status
 | 9 | v0.2.2 发布（含 .sha256 + 流水线自检） | ✅ 2026-11-15 已发布；tag → `da20cb6`，release:check 13/13（见发布报告 §15） |
 | 10 | CodeQL / SECURITY.md / CONTRIBUTING.md / Dependabot | ✅ 2026-11-15 已落地（D-20261115-078），首次扫描见发布报告 §15 |
 | 11 | v0.2.3 发布（剩余 6 文件拆分 + 0.2.2 后运行时修复随版） | ✅ 2026-11-15 已发布；tag → `f374812`，release:check 13/13（见发布报告 §16） |
+| 12 | v0.2.4 发布（Windows latest + macOS pre-release） | ✅ 2026-11-25 已发布；tag → `c3b6683`，Windows release:check 12/12，macOS 为未签名 universal DMG（§2.2） |
+| 13 | GitHub Release 整理 | ✅ 2026-11-25 只保留 v0.2.4（latest）与 v0.2.4-macos（pre-release）；v0.2.1–v0.2.3 release 资产已删除，git tag 保留 |
