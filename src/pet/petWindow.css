@@ -5,3 +5,49 @@ html[data-win='pet'] #root {
   margin: 0;
   overflow: hidden;
 }
+
+.pet-menu {
+  box-sizing: border-box;
+  margin-left: 4px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: auto;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  font-size: var(--fs-small);
+}
+
+.pet-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--fs-body);
+}
+
+.pet-menu-head .btn {
+  min-height: 28px;
+  padding: 2px 8px;
+}
+
+.pet-menu-label {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+}
+
+.pet-menu .seg {
+  display: flex;
+}
+
+.pet-menu .seg button {
+  flex: 1;
+  min-height: 30px;
+  font-size: var(--fs-caption);
+  padding: 2px 4px;
+}

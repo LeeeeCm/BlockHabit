@@ -1,6 +1,12 @@
-import { useEffect, useRef } from 'react'
-import { currentMonitor, getCurrentWindow, LogicalPosition } from '@tauri-apps/api/window'
-import { listen } from '@tauri-apps/api/event'
+import { useEffect, useRef, useState } from 'react'
+import {
+  currentMonitor,
+  getCurrentWindow,
+  LogicalPosition,
+  LogicalSize,
+  PhysicalPosition
+} from '@tauri-apps/api/window'
+import { listen, emitTo } from '@tauri-apps/api/event'
 import { useI18n } from '../i18n'
 import { paletteFromDocument } from '../render/isoColor'
 import { paintPet, type PetMood } from '../render/petCanvas'
@@ -52,10 +58,13 @@ interface Props {
   preview?: boolean
 }
 
-const WALK_SPEED = 22 // 逻辑 px/s
-const MOVE_IPC_MS = 50 // 20fps 更新窗口位置
+const WALK_SPEED = 26 // 逻辑 px/s
+const MOVE_IPC_MS = 33 // 30fps 更新窗口位置，减少行走拖影
+const PERSIST_EVERY_MS = 8000
 const DRAW_FPS_MS = 16
 const HOP_MS = 400
+const MENU_W = 236
+const MENU_H = 300
 
 /**
  * 积木桌宠窗口（D-20261124-088）。
@@ -69,6 +78,11 @@ export function PetWindow({ preview = false }: Props) {
   const { t } = useI18n()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const configRef = useRef<PetConfig>(DEFAULT_PET_CONFIG)
+  const [config, setConfig] = useState<PetConfig>(DEFAULT_PET_CONFIG)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuOpenRef = useRef(false)
+  menuOpenRef.current = menuOpen
+  const anchorRef = useRef<{ x: number; y: number } | null>(null)
   const prevDoneRef = useRef(0)
   const bumpUntilRef = useRef(0)
   const bubbleUntilRef = useRef(0)
@@ -81,6 +95,7 @@ export function PetWindow({ preview = false }: Props) {
       const config = event.payload
       if (!config || disposed) return
       configRef.current = config
+      setConfig(config)
       if (config.total > 0 && config.done > prevDoneRef.current) {
         const now = performance.now()
         bumpUntilRef.current = now + 1000
@@ -121,8 +136,17 @@ export function PetWindow({ preview = false }: Props) {
     let walkHopDirection: -1 | 1 = 1
     let nextWalkHopAt = 0
     let lastMove = 0
+    let lastPersist = 0
     let lastDraw = 0
     let disposed = false
+    let palette = paletteFromDocument()
+    const themeObserver = new MutationObserver(() => {
+      palette = paletteFromDocument()
+    })
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    })
 
     const drag = {
       active: false,
@@ -171,11 +195,17 @@ export function PetWindow({ preview = false }: Props) {
       const skin =
         config.skin === 'robot' && isPetSkinUnlocked('robot', config.completed) ? 'bot' : 'block'
 
-      if (!roam && mode === 'walk') {
+      if (menuOpenRef.current) {
+        if (mode === 'walk') {
+          mode = 'idle'
+          walkHopStart = 0
+          nextDecision = now + nextMoveDelay()
+        }
+      } else if (!roam && mode === 'walk') {
         mode = 'idle'
         nextDecision = now + nextMoveDelay()
       }
-      if (roam && mode === 'idle' && now >= nextDecision) {
+      if (!menuOpenRef.current && roam && mode === 'idle' && now >= nextDecision) {
         mode = 'walk'
         walkUntil = now + 2200 + Math.random() * 2400
         direction = Math.random() < 0.5 ? -1 : 1
@@ -186,13 +216,13 @@ export function PetWindow({ preview = false }: Props) {
         nextDecision = now + nextMoveDelay()
       }
 
-      if (mode === 'walk' && roam && !drag.active && now >= nextWalkHopAt) {
+      if (!menuOpenRef.current && mode === 'walk' && roam && !drag.active && now >= nextWalkHopAt) {
         walkHopStart = now
         walkHopDirection = direction
         nextWalkHopAt = now + 520
       }
 
-      if (mode === 'walk' && roam && !drag.active) {
+      if (!menuOpenRef.current && mode === 'walk' && roam && !drag.active) {
         const dt = Math.min(0.05, (now - lastMove) / 1000)
         if (now - lastMove >= MOVE_IPC_MS) {
           const step = stepPetWalk(pos, direction, WALK_SPEED * dt, area)
@@ -201,7 +231,10 @@ export function PetWindow({ preview = false }: Props) {
           lastMove = now
           if (inTauri && win)
             void win.setPosition(new LogicalPosition(pos.x, pos.y)).catch(() => {})
-          if (now % 2000 < MOVE_IPC_MS) void persist()
+          if (now - lastPersist >= PERSIST_EVERY_MS) {
+            lastPersist = now
+            void persist()
+          }
         }
       }
 
@@ -214,7 +247,7 @@ export function PetWindow({ preview = false }: Props) {
           ? { text: bubbleTextRef.current, alpha: 1 }
           : undefined
 
-      const palette = paletteFromDocument()
+      const paletteNow = palette
       const renderer = ctx as CanvasRenderingContext2D
       renderer.clearRect(0, 0, PET_SIZE.w, PET_SIZE.h)
       const pose = (hopStart > 0 && now - hopStart < HOP_MS
@@ -234,16 +267,16 @@ export function PetWindow({ preview = false }: Props) {
         height: PET_SIZE.h,
         model: skin,
         mood,
-        palette,
+        palette: paletteNow,
         pose,
         blinking: blink === 0
       })
       renderer.restore()
-      if (bubble) drawBubble(renderer, PET_SIZE.w, bubble.text, bubble.alpha, palette)
+      if (bubble) drawBubble(renderer, PET_SIZE.w, bubble.text, bubble.alpha, paletteNow)
     }
 
     canvas.addEventListener('pointerdown', (event: PointerEvent) => {
-      if (event.button !== 0) return
+      if (event.button !== 0 || menuOpenRef.current) return
       drag.active = true
       drag.moved = false
       drag.startScreenX = event.screenX
@@ -296,16 +329,68 @@ export function PetWindow({ preview = false }: Props) {
 
     canvas.addEventListener('contextmenu', (event) => {
       event.preventDefault()
-      void petOpenSettings()
+      setMenuOpen((open) => !open)
     })
 
     frame = requestAnimationFrame(tick)
     return () => {
       disposed = true
+      themeObserver.disconnect()
       cancelAnimationFrame(frame)
       void persist()
     }
   }, [preview])
+
+  useEffect(() => {
+    if (preview || !isTauriRuntime()) return
+    let disposed = false
+    const win = getCurrentWindow()
+    void (async () => {
+      try {
+        if (menuOpen) {
+          if (anchorRef.current) return
+          const pos = await win.outerPosition()
+          anchorRef.current = { x: pos.x, y: pos.y }
+          const monitor = await currentMonitor().catch(() => null)
+          const scale = (await win.scaleFactor().catch(() => 1)) || 1
+          let x = pos.x / scale
+          let y = pos.y / scale
+          if (monitor) {
+            const f = monitor.scaleFactor || 1
+            const area = {
+              x: monitor.workArea.position.x / f,
+              y: monitor.workArea.position.y / f,
+              width: monitor.workArea.size.width / f,
+              height: monitor.workArea.size.height / f
+            }
+            const w = PET_SIZE.w + MENU_W
+            x = Math.min(Math.max(x, area.x + 8), area.x + area.width - w - 8)
+            y = Math.min(Math.max(y, area.y + 8), area.y + area.height - MENU_H - 8)
+          }
+          if (disposed) return
+          await win.setSize(new LogicalSize(PET_SIZE.w + MENU_W, MENU_H))
+          await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)))
+        } else if (anchorRef.current) {
+          const anchor = anchorRef.current
+          anchorRef.current = null
+          await win.setSize(new LogicalSize(PET_SIZE.w, PET_SIZE.h))
+          await win.setPosition(new PhysicalPosition(anchor.x, anchor.y))
+        }
+      } catch {
+        anchorRef.current = null
+      }
+    })()
+    return () => {
+      disposed = true
+    }
+  }, [menuOpen, preview])
+
+  function changePref(patch: Partial<PetConfig>) {
+    const next = { ...configRef.current, ...patch }
+    configRef.current = next
+    setConfig(next)
+    void emitTo('main', 'pet-pref', patch).catch(() => {})
+  }
 
   return (
     <div
@@ -313,14 +398,14 @@ export function PetWindow({ preview = false }: Props) {
         width: '100vw',
         height: '100vh',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
         background: preview ? 'var(--bg)' : 'transparent',
         overflow: 'hidden',
         userSelect: 'none'
       }}
     >
-      <div style={{ width: PET_SIZE.w, height: PET_SIZE.h, overflow: 'hidden' }}>
+      <div style={{ width: PET_SIZE.w, height: PET_SIZE.h, flexShrink: 0, overflow: 'hidden' }}>
         <canvas
           ref={canvasRef}
           role="img"
@@ -335,6 +420,82 @@ export function PetWindow({ preview = false }: Props) {
           }}
         />
       </div>
+      {menuOpen && (
+        <div
+          className="pet-menu"
+          role="dialog"
+          aria-label={t.settings.petGroupTitle}
+          style={{ width: MENU_W, height: MENU_H }}
+        >
+          <div className="pet-menu-head">
+            <strong>{t.settings.petGroupTitle}</strong>
+            <button className="btn ghost" onClick={() => setMenuOpen(false)}>
+              {t.common.close}
+            </button>
+          </div>
+          <button
+            className="btn primary"
+            onClick={() => {
+              setMenuOpen(false)
+              void petOpenSettings()
+            }}
+          >
+            {t.titlebar.settings}
+          </button>
+          <div className="pet-menu-label">{t.settings.petSizeLabel}</div>
+          <div className="seg">
+            {(['small', 'medium', 'large'] as const).map((size) => (
+              <button
+                key={size}
+                className={config.size === size ? 'active' : ''}
+                onClick={() => changePref({ size })}
+              >
+                {size === 'small'
+                  ? t.settings.petSizeSmall
+                  : size === 'large'
+                    ? t.settings.petSizeLarge
+                    : t.settings.petSizeMedium}
+              </button>
+            ))}
+          </div>
+          <div className="pet-menu-label">{t.settings.petSkinLabel}</div>
+          <div className="seg">
+            <button
+              className={config.skin === 'block' ? 'active' : ''}
+              onClick={() => changePref({ skin: 'block' })}
+            >
+              {t.settings.petSkinBlock}
+            </button>
+            <button
+              className={config.skin === 'robot' ? 'active' : ''}
+              disabled={!isPetSkinUnlocked('robot', config.completed)}
+              title={
+                isPetSkinUnlocked('robot', config.completed)
+                  ? undefined
+                  : t.settings.petSkinLocked(1)
+              }
+              onClick={() => changePref({ skin: 'robot' })}
+            >
+              {t.settings.petSkinRobot}
+            </button>
+          </div>
+          <div className="pet-menu-label">{t.settings.petRoamLabel}</div>
+          <div className="seg">
+            <button
+              className={config.roam ? 'active' : ''}
+              onClick={() => changePref({ roam: true })}
+            >
+              {t.settings.petRoamOn}
+            </button>
+            <button
+              className={!config.roam ? 'active' : ''}
+              onClick={() => changePref({ roam: false })}
+            >
+              {t.settings.petRoamOff}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

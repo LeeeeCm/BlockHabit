@@ -59,7 +59,8 @@ function petLighting(palette: IsoPalette, turn: number): PetLighting {
     mixShade(brick.leftA, brick.rightA, mix),
     mixShade(brick.leftB, brick.rightB, mix)
   ]
-  const faceTone = mixShade(...front, 0.5)
+  const faceTone = mixShade(brick.leftA, brick.leftB, 0.5)
+  // 脸墨色按静止正面决定，跳转过程中不随侧面明暗重新选色，避免黑白翻转。
   const faceInk =
     contrastRatio(palette.ink, faceTone) >= contrastRatio(brick.topA, faceTone)
       ? palette.ink

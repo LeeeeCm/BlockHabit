@@ -32,6 +32,7 @@ import { BottomTabBar, type MobileTab } from './components/BottomTabBar'
 import { habitMetOnDay } from './logic/checkin'
 import { useTodayKey } from './logic/useTodayKey'
 import { registerQuickCheckIn, unregisterQuickCheckIn } from './platform/globalShortcut'
+import type { AppSettings } from './types'
 
 type Tab = MobileTab
 
@@ -126,6 +127,23 @@ export default function App() {
       void unlisten.then((fn) => fn()).catch(() => {})
     }
   }, [])
+  // 桌宠悬浮面板改动偏好：只接受已知字段，避免跨窗口事件改写其它设置。
+  useEffect(() => {
+    if (!inTauri) return
+    const unlisten = listen<Record<string, unknown>>('pet-pref', (event) => {
+      const payload = event.payload
+      if (!payload || typeof payload !== 'object') return
+      const patch: Partial<AppSettings> = {}
+      if (payload.size === 'small' || payload.size === 'medium' || payload.size === 'large')
+        patch.petSize = payload.size
+      if (payload.skin === 'block' || payload.skin === 'robot') patch.petSkin = payload.skin
+      if (typeof payload.roam === 'boolean') patch.petRoam = payload.roam
+      if (Object.keys(patch).length > 0) updateSettings(patch)
+    })
+    return () => {
+      void unlisten.then((fn) => fn()).catch(() => {})
+    }
+  }, [updateSettings])
 
   // D-20261124-086：全局快捷键（默认关）。注册失败时回滚设置并如实提示。
   const quickCheckInEnabled = useAppStore((s) => s.settings.quickCheckInEnabled === true)
