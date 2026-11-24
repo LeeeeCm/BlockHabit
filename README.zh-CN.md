@@ -1,0 +1,346 @@
+# BlockHabit
+
+> **把坚持变成一座看得见的建筑。** 极简黑白风格的桌面习惯打卡应用：每次有效打卡掉落一块 2.5D 等距积木，按蓝图逐块拼成建筑。
+
+<p align="center">
+  <img src="src/assets/logo.svg" width="88" alt="BlockHabit logo" />
+</p>
+
+<p align="center"><sub><a href="README.md">English</a> · <strong>简体中文</strong></sub></p>
+
+<p align="center">
+  <a href="https://github.com/LeeeeCm/BlockHabit/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LeeeeCm/BlockHabit/actions/workflows/ci.yml/badge.svg" /></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-111111" /></a>
+  <img alt="Windows" src="https://img.shields.io/badge/platform-Windows%2010%2F11-111111" />
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-experimental-111111" />
+  <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-111111" />
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-111111" />
+</p>
+
+BlockHabit 是一个**本地优先、无账号、无遥测**的 Windows 桌面习惯应用（另提供实验性 macOS 构建）。它不把坚持变成分数或待办列表，而是把每一天变成一块积木：**打卡 → 落块 → 建筑长高**。应用还附带一只常驻桌面的透明积木桌宠，用短跳、待机动作和打卡气泡陪你完成今天。
+
+---
+
+## 目录
+
+- [为什么是 BlockHabit](#为什么是-blockhabit)
+- [功能详解](#功能详解)
+  - [习惯与打卡](#1-习惯与打卡)
+  - [积木、蓝图与建筑](#2-积木蓝图与建筑)
+  - [桌面桌宠](#3-桌面桌宠)
+  - [今日 / 建造 / 展台 / 统计](#4-今日--建造--展台--统计)
+  - [提醒、专注与晚间收尾](#5-提醒专注与晚间收尾)
+  - [数据、同步与备份](#6-数据同步与备份)
+  - [设置、主题与无障碍](#7-设置主题与无障碍)
+- [技术栈](#技术栈)
+- [仓库结构](#仓库结构)
+- [快速开始](#快速开始)
+- [常用命令](#常用命令)
+- [质量门禁与测试](#质量门禁与测试)
+- [构建与发布](#构建与发布)
+- [数据位置与版本门](#数据位置与版本门)
+- [快捷键](#快捷键)
+- [设计系统与协作规则](#设计系统与协作规则)
+- [常见问题](#常见问题)
+- [已知限制](#已知限制)
+- [许可证](#许可证)
+
+---
+
+## 为什么是 BlockHabit
+
+- **看得见的坚持**：连击、热图之外，还有一个真正会「长起来」的等距积木建筑。
+- **不替你打卡**：所有提醒、专注气泡和桌宠交互都只在你确认后写入；没有自动完成，没有伪造进度。
+- **本地优先**：数据保存在你自己的机器上；无账号、无云端依赖、无遥测上传。
+- **克制的视觉**：黑白灰为骨，唯一主题点缀色为魂；圆润积木、1px 细线、四套主题。
+- **可以带走的记忆**：JSON 存档、月度画报、落成年鉴、建筑档案、拍立得与完整档案包，全部本地生成。
+
+## 功能详解
+
+### 1. 习惯与打卡
+
+- **三种习惯形态**
+  - `instant`：一次点击完成。
+  - `focus`：专注计时，到点后由你确认落块，可延长 5 分钟（最多 2 次）或放弃。
+  - `counter`：量化累积，例如喝水 250 ml / 阅读 20 页，单次只记录一个配置步进。
+- **三种频率**：每天、每周 N 次、自定义星期；周频卡片显示本周完成数/目标次数，今日打卡即计入完成；休息日不制造「未完成」。
+- **规则唯一来源**：是否达标只由 `habitMetOnDay` 判定；周配额、计数目标、休息日豁免都在纯逻辑层单测覆盖。
+- **安全撤销**：撤销打卡需要确认，打卡记录以墓碑形式保留，避免同步时被旧设备复活。
+- **修复积木**：漏打卡的日期可用修复积木补上；连击每满 30 天额外奖励修复积木，月度额度与连击奖励独立。
+- **分类、置顶、归档、随笔与心境**：今日页按时段分组，支持分类筛选、打卡随笔、微状态心境和精选铭文。
+- **模板起步**：首启空态提供喝水 / 阅读 / 走动 / 早睡 / 记账等一键模板，直接创建真实习惯。
+- **导入**：既有完整存档导入，也支持 CSV / JSON 习惯清单导入（先预览校验，再确认写入）。
+
+### 2. 积木、蓝图与建筑
+
+- **有效打卡即落块**：每次有效打卡掉落一块积木；连击每满 7 天，下一块带主题点缀色描边。
+- **25 个等距模型**
+
+  | 内容包 | 数量 | 块数 |
+  |---|---|---:|---:|
+  | 基础建筑（v1） | 12 | 1385 |
+  | 城市与生活（v2） | 6 | 600 |
+  | 城市与生活续章（v3） | 5 | 500 |
+  | 桌宠支线（v4：pet-cat / pet-bot） | 2 | 28 |
+  | **合计** | **25** | **2513** |
+
+- **主线顺序解锁**：23 座主线按顺序推进；桌宠蓝图是独立支线，可直接开始建造，不阻塞主线。
+- **建造视图**：Canvas 2D 圆润积木、顶部凸点、三面明暗、接触阴影、虚线地基；支持缩放、平移与视角复位。
+- **落块动画**：慢落 → 着地压扁 → 回弹；落成时播放一次性仪式。
+- **图鉴**：以「桌宠蓝图 / 建筑蓝图」两个二级分组呈现，桌宠组默认置顶；实时等距缩略图；锁定态用剪影，建造中只显示当前已落块并居中，不叠加完整幽灵形态，也不额外铺白色底板。
+- **展台**：把落成建筑摆到 26×26 沙盘上，支持拖动、旋转与微生态植被；全部落成后解锁自由装饰模式。
+- **长期记录**：落成仪式、奠基石铭言、建筑档案（关键块时间线 / 随笔 / 心境）、拍立得、月度画报与落成年鉴。
+- **数据诚实**：删除数据会级联回收积木、连击与全勤；撤销后不保留「视觉上的完成」。
+
+### 3. 桌面桌宠
+
+桌宠是独立于主窗口的透明置顶小窗（**96×128**），窗口按角色外沿收紧并保留跳跃/气泡空间，不会用大片透明区域挡住下层应用：
+
+- **积木形象**：默认积木；`pet-cat`（方块猫）与 `pet-bot`（小机器人）必须先把对应桌宠蓝图建完，才会在桌宠设置与右键面板中解锁。
+- **颜色 DIY**：跟随主题，或从 6 个已批准材质色中选择（石、浅、陶土、暖黄、天蓝、苔绿）；不接受任意 hex，保持主题纪律。
+- **自由行动**：待机为主，偶发张望、伸懒腰、原地小跳；自主走动时按方向短跳，碰到屏幕边缘换向。频率有意放慢，不会一直来回走。
+- **尺寸切换**：小 / 中 / 大三档只缩放角色，**脚底位置保持不动**。
+- **独立右键面板**：在桌宠旁打开独立 `pet-menu` 透明窗（236×360），优先放右侧，越界自动翻到左侧；打开期间桌宠暂停，面板关闭后恢复。面板与设置页共享同一套大小 / 形象 / 自主走动。
+- **交互**：拖动改位置；双击打开主窗；右键打开面板；不响应点击跳跃，避免误触。
+- **打卡联动**：主窗通过 `pet-config` 同步今日完成数；完成数增加时桌宠跳一下并显示短暂气泡，不自动写入打卡。
+- **定位**：位置只存设备本地，按当前显示器工作区钳制；不进入同步存档。
+
+### 4. 今日 / 建造 / 展台 / 统计
+
+四个页面共用统一顶栏规格：64px 高、14×20 内距、16px 标题、12px 说明。
+
+- **今日**：日期与星期、当前蓝图进度、今日完成数；问候简报、专注入口、提醒横幅、习惯分组、分类筛选、打卡随笔与归档。
+- **建造**：模型画布、进度、图鉴、透视考古、视角复位、奠基铭言、相纸与落成仪式。
+- **展台**：已落成模型沙盘、拖动排列、旋转、植被重排与陈列数量；自动排列与装饰模式。
+- **统计**：当前 / 最长连击、总次数、13 周热图、打卡随笔手账、纪念品中心、修复积木、月度画报与落成年鉴。
+
+### 5. 提醒、专注与晚间收尾
+
+- **习惯提醒**：按起止时间提醒；截止前 30 分钟有 due-soon 提醒；贪睡 10 分钟、最多 3 次；可通过当天「跳过」静默。
+- **专注会话**：以绝对时间保存，应用隐藏 / 重开不暂停；到点只进入「待确认」，确认后才落块，绝不自动完成。
+- **晚间收尾**：首次打卡后可选择开启每天一次的收尾提醒，只说还剩几件，不评价用户。
+- **系统通知**：应用运行中（含窗口隐藏 / 托盘）可发原生通知；应用完全退出后不提醒。
+
+### 6. 数据、同步与备份
+
+- **本地存储**：桌面端写入 Tauri `appDataDir/blockhabit.json`；浏览器回退到 localStorage；无账号、无遥测。
+- **完整存档导入 / 导出**：JSON 格式，导入前严格校验；覆盖导入前自动备份。
+- **习惯清单导入**：CSV / JSON 预览后确认，不直接覆盖既有习惯。
+- **备份**：覆盖导入前自动留档（保留 5 份）；手动快照单独保留 5 份；设置页可查看、恢复并打开数据目录。
+- **WebDAV 同步**：可选，不是主路径；支持自动同步与手动立即同步；打卡墓碑防止撤销记录被旧设备复活。
+- **密码安全**：桌面端「记住密码」使用系统凭据管理器（Windows Credential Manager），配置与存档中不保存明文；关闭后删除已有条目。
+- **内容版本门**：`contentVersion = 4`；旧客户端遇到更高版本时拒绝读取并挂起保存，不会静默清洗新数据。
+
+### 7. 设置、主题与无障碍
+
+设置采用 5 个可折叠分组，减少分类噪音：
+
+1. **通用**：主题、语言、声音、提醒、系统集成、快捷键。
+2. **桌宠**：显示 / 隐藏、大小、蓝图解锁形象、材质色、自主走动。
+3. **数据与同步**：导出 / 导入、完整档案包、备份、WebDAV。
+4. **内容路线**（关于）：内置内容数量、版本检查与更新说明。
+5. **实验室**：时段光照、温和风化、微生态、透视考古、音色、陀螺仪等实验开关。
+
+- **四套主题**：纸白、墨黑、燕麦陶土、北欧雾灰；主题只改无彩度阶与唯一主题点缀色。
+- **双语**：中文 / English 完整覆盖，所有用户可见文案走 `src/i18n/`。
+- **无障碍**：键盘焦点、ARIA 名称、减弱动态、触控目标（移动端实验路径）均有明确实现与测试。
+
+## 技术栈
+
+| 层 | 技术 |
+|---|---|
+| 桌面壳 | Tauri 2（Rust） |
+| UI | React 19 + TypeScript + Vite |
+| 状态 | zustand |
+| 渲染 | 手写 Canvas 2D 等距渲染（无 3D 引擎） |
+| 测试 | Vitest + jsdom |
+| 存储 | Tauri fs / localStorage 的 StorageAdapter 抽象 |
+| 同步 | WebDAV（可选） |
+| 发布 | GitHub Actions + Tauri 安装包 + minisign |
+
+## 仓库结构
+
+```text
+src/
+├─ logic/            纯逻辑：打卡规则、连击、蓝图、修复砖、专注状态机、导入
+│  └─ blueprints/    25 个模型的程序化几何与内容版本 manifest
+├─ render/           等距投影、积木三面着色、建造/展台场景、导出画布
+├─ pet/              独立透明桌宠窗口与右键面板
+├─ platform/         窗口、通知、快捷键、存储适配、桌宠定位
+├─ storage/          存档读取/迁移/版本门、备份、档案包
+├─ store/            zustand 全局状态 + 防抖持久化 + 同步合并
+├─ sync/             WebDAV 同步控制器与合并策略
+├─ pages/            今日 / 建造 / 展台 / 统计（含子视图）
+├─ components/       图标、表单、图鉴、弹窗、热图、纪念品中心
+├─ i18n/             中英双语 schema 与文案
+├─ theme.css         四主题设计令牌
+└─ assets/           Logo 与本地品牌资产
+
+src-tauri/           Rust 桌面壳、托盘、窗口命令、capability 配置
+design/              设计中枢：公理、令牌、美术、表面、文案、追加式设计记录
+docs/superpowers/    历史规格与实施计划（只读时间快照）
+docs/release/        发布手册、真机验收与候选报告
+scripts/             design:check / check:versions / release:check
+```
+
+## 快速开始
+
+### 环境要求
+
+- **Windows 10 / 11**（桌面端正式目标）
+- **macOS**（实验性未签名 universal 构建，暂不提供正式支持）
+- **Node.js 22+** 与 npm
+- **Rust stable** 与 **Visual Studio Build Tools（MSVC / Windows SDK）**
+- WebView2（Windows 11 通常已内置）
+
+```powershell
+git clone https://github.com/LeeeeCm/BlockHabit.git
+cd BlockHabit
+npm ci
+```
+
+### 浏览器预览
+
+```powershell
+npm run dev
+# http://localhost:1420
+```
+
+浏览器预览适合看 UI 与交互；WebDAV / 原生通知 / 托盘 / 透明桌宠窗口需使用桌面端。
+
+### 桌面开发
+
+```powershell
+npm run tauri dev
+```
+
+首次 Rust 编译约 3–10 分钟。Git Bash 下若 `cargo` 命中了 coreutils 的 `link`，把 MSVC 的 `link.exe` 目录放到 PATH 最前：
+
+```bash
+export PATH="/c/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/<ver>/bin/Hostx64/x64:$HOME/.cargo/bin:$PATH"
+```
+
+## 常用命令
+
+| 命令 | 作用 |
+|---|---|
+| `npm run dev` | Vite 浏览器预览（端口 1420） |
+| `npm run tauri dev` | 启动 Tauri 桌面窗口 |
+| `npm test` | Vitest 全量单元 / 组件测试 |
+| `npx tsc --noEmit` | TypeScript 类型检查 |
+| `npm run build` | 类型检查 + 生产前端构建 |
+| `npm run tauri build` | 生成 Windows 安装包（`src-tauri/target/release/bundle/`） |
+| `npm run design:check` | 设计台账一致性 + 未审批删除检测 |
+| `npm run check:versions` | 三处构建版本号一致性（CI 门禁） |
+| `npm run format:check` | Prettier 格式检查 |
+| `npm run release:check` | 发布产物与 tag 自检 |
+
+## 质量门禁与测试
+
+CI（`.github/workflows/ci.yml`）在 push 到 `main` 与所有 PR 上执行：
+
+1. `npm run check:versions`
+2. `npx tsc --noEmit`
+3. `npm test`
+4. `npm run design:check`
+5. `npm run format:check`
+6. `npm run build`
+
+本地提交前至少运行：
+
+```powershell
+npx tsc --noEmit
+npm test
+npm run design:check
+```
+
+纯逻辑（`src/logic/**`）必须由 Vitest 覆盖；修 bug 先写失败用例再修复，不允许通过修改测试让流程变绿。
+
+## 构建与发布
+
+```powershell
+npm run tauri build
+```
+
+产物：
+
+- 可执行文件：`src-tauri/target/release/blockhabit.exe`
+- 安装包 / 便携包：`src-tauri/target/release/bundle/`
+- 发布流程：`.github/workflows/release.yml`（手动触发，版本号必须与 `package.json` / `tauri.conf.json` / `Cargo.toml` 一致）
+- macOS 实验性构建：`.github/workflows/release-macos.yml` 生成未签名 universal DMG，并以预发布（`vX.Y.Z-macos`）发布，避免影响 Windows 的 `latest.json` 更新通道
+
+发布链路使用 GitHub Releases + minisign 签名；更新检查是**手动**入口，不做启动自动检查、后台轮询或静默下载。签名私钥只放 CI secrets，绝不入库。
+
+## 数据位置与版本门
+
+- **桌面端**：`%APPDATA%\com.blockhabit.app\blockhabit.json`
+- **macOS**：`~/Library/Application Support/com.blockhabit.app/blockhabit.json`
+- **浏览器预览**：localStorage
+- **备份**：同目录自动备份 / 手动快照；设置页可打开数据目录
+- **档案包**：导出 README + manifest + 数据 JSON + 校验清单 + 落成建筑透明图，不包含 WebDAV 凭据
+- **同步冲突**：以打卡墓碑、完成态重算与字段级合并为准；不要用旧设备覆盖新内容
+- **升级保留数据**：0.2.4 不改变 `schemaVersion`、`contentVersion` 与 app identifier；覆盖安装不会删除 `appDataDir` 中的本地存档，0.2.3 存档可原样读取。
+- **内容版本**：`contentVersion = 4`。旧客户端读取更高版本时拒绝加载并挂起保存，避免静默清洗未知蓝图。
+
+## 快捷键
+
+- `1` / `2` / `3` / `4`：切换今日 / 建造 / 展台 / 统计（输入框聚焦或弹窗打开时不触发）
+- `Ctrl/Cmd + N`：新建习惯
+- `Esc`：关闭当前弹窗
+- `Ctrl/Cmd + Enter`：在奠基铭言、建筑档案等编辑弹窗内确认
+- `Ctrl + Alt + H`：全局唤起 BlockHabit 并回到今日页（默认关闭，需在设置中开启；可能被其他应用占用）
+
+## 设计系统与协作规则
+
+**唯一设计入口：[`design/README.md`](design/README.md)**。改任何用户可见的颜色、字体、圆角、间距、图标、布局、动效、文案、建筑数据或品牌资产之前，先读设计公理与对应规范。
+
+- **设计公理**：黑白灰为骨、唯一主题点缀色、一切皆圆润积木、2.5D 等距、1px 细线、物理感动效、数据诚实、本地优先。
+- **记录先于代码**：先在 `design/records/` 新建设计记录（`status: proposed`），审核通过后再实现。
+- **追加式记录**：`design/` 下任何文件、章节、记录不得删除；淘汰用 `deprecated` / `superseded`，物理删除必须先走 `design/APPROVALS.md`。
+- **工程规则**：见 [`AGENTS.md`](AGENTS.md)。不要引入 UI 组件库、不要伪造数据、不要绕过校验脚本。
+- **自检**：`npm run design:check` 检查台账一致性、状态机与未审批删除。
+
+### 历史规格（只读时间快照）
+
+- `docs/superpowers/specs/2026-08-22-blockhabit-design.md`
+- `docs/superpowers/plans/2026-08-22-blockhabit.md`
+- `docs/superpowers/specs/2026-09-30-blockhabit-optimization-design.md`
+- `docs/superpowers/specs/2026-10-03-blockhabit-ux-review-fixes.md`
+- `docs/superpowers/specs/2026-11-10-blockhabit-design-hub-design.md`
+- `docs/release/release-runbook.md` / `docs/release/real-device-acceptance.md`
+
+## 常见问题
+
+### 浏览器预览里 WebDAV 连接失败？
+
+浏览器受跨域限制，Nextcloud 等服务通常不返回所需 CORS 头；设置页会明确提示在桌面端重试。桌面端通过 Tauri 原生 HTTP 通道连接。
+
+### 为什么应用退出后没有提醒？
+
+提醒依赖应用进程存活；完全退出后不会唤醒。可开启开机自启缓解。
+
+### 打卡后没有新积木？
+
+可能已达内容上限、当前蓝图已落成，或该次打卡被判定为重复 / 周配额已满。应用会给出明确文字反馈，不会静默吞掉。
+
+### 桌宠为什么没有出现？
+
+桌宠默认开启；若被隐藏，可在设置 → 桌宠重新显示。首次启动如果窗口尚未就绪，应用会自动重试显示。
+
+### 桌宠蓝图在哪里？
+
+图鉴底部有独立「桌宠蓝图」分区；完成 `pet-cat` / `pet-bot` 后，对应形象才会在桌宠设置和右键面板中可选。
+
+## 已知限制
+
+- **移动端为实验状态**：保留响应式布局与触摸手势，但没有正式构建目标，也未持续投入开发。
+- **macOS 为实验状态**：未签名 universal 构建以预发布形式提供，未做代码签名 / 公证，也未经过与 Windows 同等的真机验收；在建立 macOS 更新通道前，应用内更新保持关闭。
+- **Windows 关机 / 注销不保证最后一次防抖设置落盘**：关键动作（打卡 / 撤销 / 领取 / 导入）立即落盘；非关键设置的防抖窗口可能丢失。
+- **提醒依赖进程存活**：应用退出后不提醒。
+- **不自动更新**：更新检查为手动入口，且需要用户确认。
+- **内容上限**：25 座蓝图共 2513 块；全部建成后不再掉落新积木，应用会明确告知而不是静默处理。
+- **浏览器预览能力有限**：WebDAV、原生通知、托盘、透明桌宠窗口与窗口拖拽只在桌面端完整可用。
+
+## 许可证
+
+[MIT](LICENSE)

@@ -1,193 +1,198 @@
 # BlockHabit
 
-> **把坚持变成一座看得见的建筑。** 极简黑白风格的桌面习惯打卡应用：每次有效打卡掉落一块 2.5D 等距积木，按蓝图逐块拼成建筑。
+> **Turn consistency into a building you can see.** A minimal black-and-white desktop habit tracker: every valid check-in drops a 2.5D isometric brick, and the bricks assemble a blueprint piece by piece.
 
 <p align="center">
   <img src="src/assets/logo.svg" width="88" alt="BlockHabit logo" />
 </p>
 
+<p align="center"><sub><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></sub></p>
+
 <p align="center">
   <a href="https://github.com/LeeeeCm/BlockHabit/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LeeeeCm/BlockHabit/actions/workflows/ci.yml/badge.svg" /></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-111111" /></a>
   <img alt="Windows" src="https://img.shields.io/badge/platform-Windows%2010%2F11-111111" />
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-experimental-111111" />
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-111111" />
   <img alt="React 19" src="https://img.shields.io/badge/React-19-111111" />
 </p>
 
-BlockHabit 是一个**本地优先、无账号、无遥测**的 Windows 桌面习惯应用。它不把坚持变成分数或待办列表，而是把每一天变成一块积木：**打卡 → 落块 → 建筑长高**。应用还附带一只常驻桌面的透明积木桌宠，用短跳、待机动作和打卡气泡陪你完成今天。
+BlockHabit is a **local-first, account-free, telemetry-free** desktop habit app for Windows, with an experimental macOS build. It does not turn consistency into a score or another to-do list; it turns each day into a brick: **check in → drop a brick → the building grows**. A transparent brick pet also lives on your desktop, keeping you company with short hops, idle animations, and check-in bubbles.
 
 ---
 
-## 目录
+## Contents
 
-- [为什么是 BlockHabit](#为什么是-blockhabit)
-- [功能详解](#功能详解)
-  - [习惯与打卡](#1-习惯与打卡)
-  - [积木、蓝图与建筑](#2-积木蓝图与建筑)
-  - [桌面桌宠](#3-桌面桌宠)
-  - [今日 / 建造 / 展台 / 统计](#4-今日--建造--展台--统计)
-  - [提醒、专注与晚间收尾](#5-提醒专注与晚间收尾)
-  - [数据、同步与备份](#6-数据同步与备份)
-  - [设置、主题与无障碍](#7-设置主题与无障碍)
-- [技术栈](#技术栈)
-- [仓库结构](#仓库结构)
-- [快速开始](#快速开始)
-- [常用命令](#常用命令)
-- [质量门禁与测试](#质量门禁与测试)
-- [构建与发布](#构建与发布)
-- [数据位置与版本门](#数据位置与版本门)
-- [快捷键](#快捷键)
-- [设计系统与协作规则](#设计系统与协作规则)
-- [常见问题](#常见问题)
-- [已知限制](#已知限制)
-- [许可证](#许可证)
+- [Why BlockHabit](#why-blockhabit)
+- [Features](#features)
+  - [1. Habits & check-ins](#1-habits--check-ins)
+  - [2. Bricks, blueprints & buildings](#2-bricks-blueprints--buildings)
+  - [3. Desktop pet](#3-desktop-pet)
+  - [4. Today / Build / Showcase / Stats](#4-today--build--showcase--stats)
+  - [5. Reminders, focus & evening wrap-up](#5-reminders-focus--evening-wrap-up)
+  - [6. Data, sync & backup](#6-data-sync--backup)
+  - [7. Settings, themes & accessibility](#7-settings-themes--accessibility)
+- [Tech stack](#tech-stack)
+- [Repository layout](#repository-layout)
+- [Getting started](#getting-started)
+- [Common commands](#common-commands)
+- [Quality gates & tests](#quality-gates--tests)
+- [Build & release](#build--release)
+- [Data location & version gate](#data-location--version-gate)
+- [Keyboard shortcuts](#keyboard-shortcuts)
+- [Design system & collaboration rules](#design-system--collaboration-rules)
+- [FAQ](#faq)
+- [Known limitations](#known-limitations)
+- [License](#license)
 
 ---
 
-## 为什么是 BlockHabit
+## Why BlockHabit
 
-- **看得见的坚持**：连击、热图之外，还有一个真正会「长起来」的等距积木建筑。
-- **不替你打卡**：所有提醒、专注气泡和桌宠交互都只在你确认后写入；没有自动完成，没有伪造进度。
-- **本地优先**：数据保存在你自己的机器上；无账号、无云端依赖、无遥测上传。
-- **克制的视觉**：黑白灰为骨，唯一主题点缀色为魂；圆润积木、1px 细线、四套主题。
-- **可以带走的记忆**：JSON 存档、月度画报、落成年鉴、建筑档案、拍立得与完整档案包，全部本地生成。
+- **Consistency you can see**: Beyond streaks and heatmaps, there is an isometric brick building that actually grows.
+- **It never checks in for you**: Reminders, focus bubbles, and pet interactions only write after you confirm. No auto-completion, no fake progress.
+- **Local-first**: Your data stays on your own machine. No account, no cloud dependency, no telemetry upload.
+- **Restrained visuals**: Black, white, and gray as the bones; one theme accent as the soul. Rounded bricks, 1px lines, four themes.
+- **Memories you can take with you**: JSON saves, monthly posters, completion yearbooks, building archives, polaroids, and full archive packages, all generated locally.
 
-## 功能详解
+## Features
 
-### 1. 习惯与打卡
+### 1. Habits & check-ins
 
-- **三种习惯形态**
-  - `instant`：一次点击完成。
-  - `focus`：专注计时，到点后由你确认落块，可延长 5 分钟（最多 2 次）或放弃。
-  - `counter`：量化累积，例如喝水 250 ml / 阅读 20 页，单次只记录一个配置步进。
-- **三种频率**：每天、每周 N 次、自定义星期；休息日不制造「未完成」。
-- **规则唯一来源**：是否达标只由 `habitMetOnDay` 判定；周配额、计数目标、休息日豁免都在纯逻辑层单测覆盖。
-- **安全撤销**：撤销打卡需要确认，打卡记录以墓碑形式保留，避免同步时被旧设备复活。
-- **修复积木**：漏打卡的日期可用修复积木补上；连击每满 30 天额外奖励修复积木，月度额度与连击奖励独立。
-- **分类、置顶、归档、随笔与心境**：今日页按时段分组，支持分类筛选、打卡随笔、微状态心境和精选铭文。
-- **模板起步**：首启空态提供喝水 / 阅读 / 走动 / 早睡 / 记账等一键模板，直接创建真实习惯。
-- **导入**：既有完整存档导入，也支持 CSV / JSON 习惯清单导入（先预览校验，再确认写入）。
+- **Three habit kinds**
+  - `instant`: one click to complete.
+  - `focus`: a focus timer; when it ends, you confirm the brick. You can extend by 5 minutes (up to twice) or give up.
+  - `counter`: accumulate a quantity, such as 250 ml of water or 20 pages read; each step records one configured increment.
+- **Three frequencies**: daily, N times per week, or custom weekdays. Weekly cards show this week's completed/target count; today's check-in counts immediately. Rest days never create a false "missed" state.
+- **Single source of truth**: whether a habit is met is decided only by `habitMetOnDay`. Weekly quotas, counter targets, and rest-day exemptions are covered by pure-logic unit tests.
+- **Safe undo**: Undoing a check-in requires confirmation. Check-ins are tombstoned, so an old device cannot resurrect them during sync.
+- **Repair bricks**: Missed dates can be repaired with repair bricks. Every 30 days of streak grants an extra repair brick; the monthly allowance and streak rewards are independent.
+- **Categories, pinning, archive, notes & moods**: The Today page groups habits by time of day and supports category filters, check-in notes, micro-mood capsules, and starred inscriptions.
+- **Templates**: The first-run empty state offers one-tap templates for water, reading, walking, early sleep, and expense logging; they create real habits.
+- **Import**: Import a full save, or import habit definitions from CSV/JSON after a preview and validation step.
 
-### 2. 积木、蓝图与建筑
+### 2. Bricks, blueprints & buildings
 
-- **有效打卡即落块**：每次有效打卡掉落一块积木；连击每满 7 天，下一块带主题点缀色描边。
-- **25 个等距模型**
+- **Valid check-in, one brick**: Every valid check-in drops a brick. Every 7 days of streak, the next brick carries a theme-accent outline.
+- **25 isometric models**
 
-  | 内容包 | 数量 | 块数 |
+  | Content pack | Count | Blocks |
   |---|---|---:|---:|
-  | 基础建筑（v1） | 12 | 1385 |
-  | 城市与生活（v2） | 6 | 600 |
-  | 城市与生活续章（v3） | 5 | 500 |
-  | 桌宠支线（v4：pet-cat / pet-bot） | 2 | 28 |
-  | **合计** | **25** | **2513** |
+  | Base buildings (v1) | 12 | 1385 |
+  | City & Life (v2) | 6 | 600 |
+  | City & Life, continued (v3) | 5 | 500 |
+  | Pet side builds (v4: pet-cat / pet-bot) | 2 | 28 |
+  | **Total** | **25** | **2513** |
 
-- **主线顺序解锁**：23 座主线按顺序推进；桌宠蓝图是独立支线，可直接开始建造，不阻塞主线。
-- **建造视图**：Canvas 2D 圆润积木、顶部凸点、三面明暗、接触阴影、虚线地基；支持缩放、平移与视角复位。
-- **落块动画**：慢落 → 着地压扁 → 回弹；落成时播放一次性仪式。
-- **图鉴**：以「桌宠蓝图 / 建筑蓝图」两个二级分组呈现，桌宠组默认置顶；实时等距缩略图；锁定态用剪影，建造中只显示当前已落块并居中，不叠加完整幽灵形态，也不额外铺白色底板。
-- **展台**：把落成建筑摆到 26×26 沙盘上，支持拖动、旋转与微生态植被；全部落成后解锁自由装饰模式。
-- **长期记录**：落成仪式、奠基石铭言、建筑档案（关键块时间线 / 随笔 / 心境）、拍立得、月度画报与落成年鉴。
-- **数据诚实**：删除数据会级联回收积木、连击与全勤；撤销后不保留「视觉上的完成」。
+- **Main-line unlock order**: 23 main-line buildings progress in order. Pet blueprints are a separate side line and can be started directly without blocking the main line.
+- **Build view**: Canvas 2D rounded bricks, top studs, three-face shading, contact shadows, and a dashed foundation. Zoom, pan, and reset the camera.
+- **Drop animation**: Slow fall → squash on impact → rebound. A one-shot ceremony plays when a building is completed.
+- **Gallery**: Two second-level groups, "Pet blueprints" and "Building blueprints"; the pet group is pinned to the top. Real-time isometric thumbnails; locked entries use silhouettes, while in-progress entries show only the currently placed bricks, centered, without an overlaid ghost or a white backing plate.
+- **Showcase**: Place completed buildings on a 26×26 sandbox with drag, rotation, and micro-ecosystem greenery. Completing every blueprint unlocks free decoration mode.
+- **Long-term records**: Completion ceremonies, foundation inscriptions, building archives (key brick timeline / notes / moods), polaroids, monthly posters, and completion yearbooks.
+- **Data honesty**: Deleting data cascades to bricks, streaks, and all-clear rewards. Undo never leaves a "visual completion" behind.
 
-### 3. 桌面桌宠
+### 3. Desktop pet
 
-桌宠是独立于主窗口的透明置顶小窗（**96×128**），窗口按角色外沿收紧并保留跳跃/气泡空间，不会用大片透明区域挡住下层应用：
+The pet is a separate transparent, always-on-top window (**96×128**) tightened to the character's silhouette, with room for hops and bubbles, so it does not cover the apps below with a large transparent area:
 
-- **积木形象**：默认积木；`pet-cat`（方块猫）与 `pet-bot`（小机器人）必须先把对应桌宠蓝图建完，才会在桌宠设置与右键面板中解锁。
-- **颜色 DIY**：跟随主题，或从 6 个已批准材质色中选择（石、浅、陶土、暖黄、天蓝、苔绿）；不接受任意 hex，保持主题纪律。
-- **自由行动**：待机为主，偶发张望、伸懒腰、原地小跳；自主走动时按方向短跳，碰到屏幕边缘换向。频率有意放慢，不会一直来回走。
-- **尺寸切换**：小 / 中 / 大三档只缩放角色，**脚底位置保持不动**。
-- **独立右键面板**：在桌宠旁打开独立 `pet-menu` 透明窗（236×360），优先放右侧，越界自动翻到左侧；打开期间桌宠暂停，面板关闭后恢复。面板与设置页共享同一套大小 / 形象 / 自主走动。
-- **交互**：拖动改位置；双击打开主窗；右键打开面板；不响应点击跳跃，避免误触。
-- **打卡联动**：主窗通过 `pet-config` 同步今日完成数；完成数增加时桌宠跳一下并显示短暂气泡，不自动写入打卡。
-- **定位**：位置只存设备本地，按当前显示器工作区钳制；不进入同步存档。
+- **Brick characters**: Block by default. `pet-cat` (block cat) and `pet-bot` (little robot) unlock in pet settings and the right-click panel only after their pet blueprints are completed.
+- **DIY colors**: Follow the theme, or choose from six approved material colors (stone, light, terracotta, warm yellow, sky blue, moss green). Arbitrary hex values are not accepted, preserving theme discipline.
+- **Free movement**: Mostly idle, with occasional looks around, stretches, and small hops. When roaming, it hops in its facing direction and turns at screen edges. The cadence is intentionally slow, so it does not pace back and forth constantly.
+- **Size switching**: Small / medium / large scale only the character; the **feet stay anchored**.
+- **Independent right-click panel**: Opens a separate transparent `pet-menu` window (236×360) beside the pet, preferring the right side and flipping to the left when out of bounds. The pet pauses while the panel is open and resumes when it closes. The panel and the settings page share the same size / character / roaming state.
+- **Interaction**: Drag to move; double-click to open the main window; right-click for the panel. Clicks do not make it jump, avoiding accidental triggers.
+- **Check-in sync**: The main window syncs today's completion count via `pet-config`. When the count increases, the pet hops once and shows a brief bubble; it never writes a check-in automatically.
+- **Position**: Stored only on the local device and clamped to the current monitor's work area; never enters the synced save.
 
-### 4. 今日 / 建造 / 展台 / 统计
+### 4. Today / Build / Showcase / Stats
 
-四个页面共用统一顶栏规格：64px 高、14×20 内距、16px 标题、12px 说明。
+All four pages share the same top-bar spec: 64px tall, 14×20 padding, 16px title, 12px description.
 
-- **今日**：日期与星期、当前蓝图进度、今日完成数；问候简报、专注入口、提醒横幅、习惯分组、分类筛选、打卡随笔与归档。
-- **建造**：模型画布、进度、图鉴、透视考古、视角复位、奠基铭言、相纸与落成仪式。
-- **展台**：已落成模型沙盘、拖动排列、旋转、植被重排与陈列数量；自动排列与装饰模式。
-- **统计**：当前 / 最长连击、总次数、13 周热图、打卡随笔手账、纪念品中心、修复积木、月度画报与落成年鉴。
+- **Today**: Date and weekday, current blueprint progress, today's completion count; greeting brief, focus entry, reminder banner, habit groups, category filters, check-in notes, and archive.
+- **Build**: Model canvas, progress, gallery, X-ray archaeology, camera reset, foundation inscription, polaroid, and completion ceremony.
+- **Showcase**: Completed-model sandbox, drag arrangement, rotation, greenery reshuffling, and display count; auto-arrange and decoration mode.
+- **Stats**: Current / best streak, total check-ins, 13-week heatmap, check-in note journal, memorabilia center, repair bricks, monthly posters, and completion yearbook.
 
-### 5. 提醒、专注与晚间收尾
+### 5. Reminders, focus & evening wrap-up
 
-- **习惯提醒**：按起止时间提醒；截止前 30 分钟有 due-soon 提醒；贪睡 10 分钟、最多 3 次；可通过当天「跳过」静默。
-- **专注会话**：以绝对时间保存，应用隐藏 / 重开不暂停；到点只进入「待确认」，确认后才落块，绝不自动完成。
-- **晚间收尾**：首次打卡后可选择开启每天一次的收尾提醒，只说还剩几件，不评价用户。
-- **系统通知**：应用运行中（含窗口隐藏 / 托盘）可发原生通知；应用完全退出后不提醒。
+- **Habit reminders**: Reminders by start/end time; a due-soon reminder 30 minutes before the deadline; snooze for 10 minutes, up to 3 times; "skip today" silences it for the day.
+- **Focus sessions**: Stored as absolute time, so hiding or reopening the app does not pause them. When time is up, the session enters "awaiting confirmation"; the brick drops only after you confirm. It never auto-completes.
+- **Evening wrap-up**: After your first check-in, you can opt into a once-a-day wrap-up reminder. It only says how many items remain and does not judge you.
+- **System notifications**: Native notifications while the app is running (including when the window is hidden or in the tray). No reminders after the app fully exits.
 
-### 6. 数据、同步与备份
+### 6. Data, sync & backup
 
-- **本地存储**：桌面端写入 Tauri `appDataDir/blockhabit.json`；浏览器回退到 localStorage；无账号、无遥测。
-- **完整存档导入 / 导出**：JSON 格式，导入前严格校验；覆盖导入前自动备份。
-- **习惯清单导入**：CSV / JSON 预览后确认，不直接覆盖既有习惯。
-- **备份**：覆盖导入前自动留档（保留 5 份）；手动快照单独保留 5 份；设置页可查看、恢复并打开数据目录。
-- **WebDAV 同步**：可选，不是主路径；支持自动同步与手动立即同步；打卡墓碑防止撤销记录被旧设备复活。
-- **密码安全**：桌面端「记住密码」使用系统凭据管理器（Windows Credential Manager），配置与存档中不保存明文；关闭后删除已有条目。
-- **内容版本门**：`contentVersion = 4`；旧客户端遇到更高版本时拒绝读取并挂起保存，不会静默清洗新数据。
+- **Local storage**: The desktop app writes to Tauri's `appDataDir/blockhabit.json`; the browser falls back to localStorage. No account, no telemetry.
+- **Full save import/export**: JSON, strictly validated before import; overwriting imports create an automatic backup first.
+- **Habit definition import**: CSV/JSON preview, then confirm; existing habits are not overwritten directly.
+- **Backups**: Automatic backup before overwriting imports (5 kept); manual snapshots kept separately (5 kept); the settings page can inspect, restore, and open the data folder.
+- **WebDAV sync**: Optional, never the main path. Supports automatic and manual sync. Check-in tombstones prevent an old device from resurrecting undone check-ins.
+- **Password security**: On desktop, "remember password" uses the OS credential manager (Windows Credential Manager); no plaintext is stored in settings or the save. Turning it off deletes the existing entry.
+- **Content version gate**: `contentVersion = 4`. Older clients refuse to read newer data and suspend saving instead of silently cleaning unknown data.
+- **Upgrade safety**: 0.2.4 keeps `schemaVersion = 2`, `contentVersion = 4`, and the `com.blockhabit.app` identifier unchanged. Installing the update preserves the local save in `appDataDir`, and 0.2.3 saves load as-is.
 
-### 7. 设置、主题与无障碍
+### 7. Settings, themes & accessibility
 
-设置采用 5 个可折叠分组，减少分类噪音：
+Settings use 5 collapsible groups to reduce noise:
 
-1. **通用**：主题、语言、声音、提醒、系统集成、快捷键。
-2. **桌宠**：显示 / 隐藏、大小、蓝图解锁形象、材质色、自主走动。
-3. **数据与同步**：导出 / 导入、完整档案包、备份、WebDAV。
-4. **内容路线**（关于）：内置内容数量、版本检查与更新说明。
-5. **实验室**：时段光照、温和风化、微生态、透视考古、音色、陀螺仪等实验开关。
+1. **General**: theme, language, sound, reminders, system integration, shortcuts.
+2. **Pet**: show/hide, size, blueprint-unlocked characters, material color, free roaming.
+3. **Data & sync**: export/import, full archive package, backups, WebDAV.
+4. **Content roadmap** (About): built-in content counts, version check, and update notes.
+5. **Lab**: time-of-day lighting, gentle decay, micro-ecosystem, X-ray archaeology, sound material, gyroscope, and other experimental switches.
 
-- **四套主题**：纸白、墨黑、燕麦陶土、北欧雾灰；主题只改无彩度阶与唯一主题点缀色。
-- **双语**：中文 / English 完整覆盖，所有用户可见文案走 `src/i18n/`。
-- **无障碍**：键盘焦点、ARIA 名称、减弱动态、触控目标（移动端实验路径）均有明确实现与测试。
+- **Four themes**: Paper White, Ink Black, Oat Terracotta, Nordic Fog. Themes only change the neutral scale and the single theme accent.
+- **Bilingual**: Full Chinese / English coverage; every user-visible string goes through `src/i18n/`.
+- **Accessibility**: Keyboard focus, ARIA names, reduced motion, and touch targets (experimental mobile path) are implemented and tested.
 
-## 技术栈
+## Tech stack
 
-| 层 | 技术 |
+| Layer | Technology |
 |---|---|
-| 桌面壳 | Tauri 2（Rust） |
+| Desktop shell | Tauri 2 (Rust) |
 | UI | React 19 + TypeScript + Vite |
-| 状态 | zustand |
-| 渲染 | 手写 Canvas 2D 等距渲染（无 3D 引擎） |
-| 测试 | Vitest + jsdom |
-| 存储 | Tauri fs / localStorage 的 StorageAdapter 抽象 |
-| 同步 | WebDAV（可选） |
-| 发布 | GitHub Actions + Tauri 安装包 + minisign |
+| State | zustand |
+| Rendering | Hand-written Canvas 2D isometric renderer (no 3D engine) |
+| Testing | Vitest + jsdom |
+| Storage | StorageAdapter abstraction over Tauri fs / localStorage |
+| Sync | WebDAV (optional) |
+| Release | GitHub Actions + Tauri installers + minisign |
 
-## 仓库结构
+## Repository layout
 
 ```text
 src/
-├─ logic/            纯逻辑：打卡规则、连击、蓝图、修复砖、专注状态机、导入
-│  └─ blueprints/    25 个模型的程序化几何与内容版本 manifest
-├─ render/           等距投影、积木三面着色、建造/展台场景、导出画布
-├─ pet/              独立透明桌宠窗口与右键面板
-├─ platform/         窗口、通知、快捷键、存储适配、桌宠定位
-├─ storage/          存档读取/迁移/版本门、备份、档案包
-├─ store/            zustand 全局状态 + 防抖持久化 + 同步合并
-├─ sync/             WebDAV 同步控制器与合并策略
-├─ pages/            今日 / 建造 / 展台 / 统计（含子视图）
-├─ components/       图标、表单、图鉴、弹窗、热图、纪念品中心
-├─ i18n/             中英双语 schema 与文案
-├─ theme.css         四主题设计令牌
-└─ assets/           Logo 与本地品牌资产
+├─ logic/            Pure logic: check-in rules, streaks, blueprints, repair bricks, focus state machine, import
+│  └─ blueprints/    Procedural geometry and content-version manifest for 25 models
+├─ render/           Isometric projection, three-face brick shading, build/showcase scenes, export canvases
+├─ pet/              Separate transparent pet window and right-click panel
+├─ platform/         Windows, notifications, shortcuts, storage adapters, pet positioning
+├─ storage/          Save load/migration/version gate, backups, archive packages
+├─ store/            zustand global state + debounced persistence + sync merge
+├─ sync/             WebDAV sync controller and merge strategy
+├─ pages/            Today / Build / Showcase / Stats (including subviews)
+├─ components/       Icons, forms, gallery, dialogs, heatmap, memorabilia center
+├─ i18n/             Chinese/English schema and strings
+├─ theme.css         Four-theme design tokens
+└─ assets/           Logo and local brand assets
 
-src-tauri/           Rust 桌面壳、托盘、窗口命令、capability 配置
-design/              设计中枢：公理、令牌、美术、表面、文案、追加式设计记录
-docs/superpowers/    历史规格与实施计划（只读时间快照）
-docs/release/        发布手册、真机验收与候选报告
+src-tauri/           Rust desktop shell, tray, window commands, capability config
+design/              Design hub: axioms, tokens, art, surfaces, voice, append-only design records
+docs/superpowers/    Historical specs and implementation plans (read-only snapshots)
+docs/release/        Release runbook, real-device acceptance, candidate reports
 scripts/             design:check / check:versions / release:check
 ```
 
-## 快速开始
+## Getting started
 
-### 环境要求
+### Requirements
 
-- **Windows 10 / 11**（桌面端为唯一正式目标）
-- **Node.js 22+** 与 npm
-- **Rust stable** 与 **Visual Studio Build Tools（MSVC / Windows SDK）**
-- WebView2（Windows 11 通常已内置）
+- **Windows 10 / 11** (the official desktop target)
+- **macOS** (experimental unsigned universal build; no official support yet)
+- **Node.js 22+** and npm
+- **Rust stable** and **Visual Studio Build Tools (MSVC / Windows SDK)**
+- WebView2 (usually included with Windows 11)
 
 ```powershell
 git clone https://github.com/LeeeeCm/BlockHabit.git
@@ -195,45 +200,45 @@ cd BlockHabit
 npm ci
 ```
 
-### 浏览器预览
+### Browser preview
 
 ```powershell
 npm run dev
 # http://localhost:1420
 ```
 
-浏览器预览适合看 UI 与交互；WebDAV / 原生通知 / 托盘 / 透明桌宠窗口需使用桌面端。
+The browser preview is good for UI and interaction work. WebDAV, native notifications, the tray, and the transparent pet window require the desktop build.
 
-### 桌面开发
+### Desktop development
 
 ```powershell
 npm run tauri dev
 ```
 
-首次 Rust 编译约 3–10 分钟。Git Bash 下若 `cargo` 命中了 coreutils 的 `link`，把 MSVC 的 `link.exe` 目录放到 PATH 最前：
+The first Rust build takes about 3–10 minutes. On Git Bash, if `cargo` picks up coreutils' `link`, put the MSVC `link.exe` directory first in PATH:
 
 ```bash
 export PATH="/c/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/<ver>/bin/Hostx64/x64:$HOME/.cargo/bin:$PATH"
 ```
 
-## 常用命令
+## Common commands
 
-| 命令 | 作用 |
+| Command | Purpose |
 |---|---|
-| `npm run dev` | Vite 浏览器预览（端口 1420） |
-| `npm run tauri dev` | 启动 Tauri 桌面窗口 |
-| `npm test` | Vitest 全量单元 / 组件测试 |
-| `npx tsc --noEmit` | TypeScript 类型检查 |
-| `npm run build` | 类型检查 + 生产前端构建 |
-| `npm run tauri build` | 生成 Windows 安装包（`src-tauri/target/release/bundle/`） |
-| `npm run design:check` | 设计台账一致性 + 未审批删除检测 |
-| `npm run check:versions` | 三处构建版本号一致性（CI 门禁） |
-| `npm run format:check` | Prettier 格式检查 |
-| `npm run release:check` | 发布产物与 tag 自检 |
+| `npm run dev` | Vite browser preview (port 1420) |
+| `npm run tauri dev` | Start the Tauri desktop window |
+| `npm test` | Full Vitest unit / component suite |
+| `npx tsc --noEmit` | TypeScript type check |
+| `npm run build` | Type check + production frontend build |
+| `npm run tauri build` | Build the Windows installer (`src-tauri/target/release/bundle/`) |
+| `npm run design:check` | Design ledger consistency + unapproved deletion detection |
+| `npm run check:versions` | Build version consistency across three files (CI gate) |
+| `npm run format:check` | Prettier format check |
+| `npm run release:check` | Release artifact and tag self-check |
 
-## 质量门禁与测试
+## Quality gates & tests
 
-CI（`.github/workflows/ci.yml`）在 push 到 `main` 与所有 PR 上执行：
+CI (`.github/workflows/ci.yml`) runs on every push to `main` and every PR:
 
 1. `npm run check:versions`
 2. `npx tsc --noEmit`
@@ -242,7 +247,7 @@ CI（`.github/workflows/ci.yml`）在 push 到 `main` 与所有 PR 上执行：
 5. `npm run format:check`
 6. `npm run build`
 
-本地提交前至少运行：
+Before committing locally, run at least:
 
 ```powershell
 npx tsc --noEmit
@@ -250,50 +255,53 @@ npm test
 npm run design:check
 ```
 
-纯逻辑（`src/logic/**`）必须由 Vitest 覆盖；修 bug 先写失败用例再修复，不允许通过修改测试让流程变绿。
+Pure logic (`src/logic/**`) must be covered by Vitest. For bug fixes, write a failing test first, then fix it; never make the pipeline green by changing tests.
 
-## 构建与发布
+## Build & release
 
 ```powershell
 npm run tauri build
 ```
 
-产物：
+Outputs:
 
-- 可执行文件：`src-tauri/target/release/blockhabit.exe`
-- 安装包 / 便携包：`src-tauri/target/release/bundle/`
-- 发布流程：`.github/workflows/release.yml`（手动触发，版本号必须与 `package.json` / `tauri.conf.json` / `Cargo.toml` 一致）
+- Executable: `src-tauri/target/release/blockhabit.exe`
+- Installers / portable bundles: `src-tauri/target/release/bundle/`
+- Release flow: `.github/workflows/release.yml` (manual trigger; the version must match `package.json` / `tauri.conf.json` / `Cargo.toml`)
+- macOS experimental build: `.github/workflows/release-macos.yml` builds an unsigned universal DMG and publishes it as a pre-release (`vX.Y.Z-macos`), so the Windows `latest.json` updater channel stays intact
 
-发布链路使用 GitHub Releases + minisign 签名；更新检查是**手动**入口，不做启动自动检查、后台轮询或静默下载。签名私钥只放 CI secrets，绝不入库。
+The release pipeline uses GitHub Releases + minisign signatures. Update checks are **manual**: no automatic check on startup, no background polling, no silent download. The signing private key lives only in CI secrets and is never committed.
 
-## 数据位置与版本门
+## Data location & version gate
 
-- **桌面端**：`%APPDATA%\com.blockhabit.app\blockhabit.json`
-- **浏览器预览**：localStorage
-- **备份**：同目录自动备份 / 手动快照；设置页可打开数据目录
-- **档案包**：导出 README + manifest + 数据 JSON + 校验清单 + 落成建筑透明图，不包含 WebDAV 凭据
-- **同步冲突**：以打卡墓碑、完成态重算与字段级合并为准；不要用旧设备覆盖新内容
-- **内容版本**：`contentVersion = 4`。旧客户端读取更高版本时拒绝加载并挂起保存，避免静默清洗未知蓝图。
+- **Desktop**: `%APPDATA%\com.blockhabit.app\blockhabit.json`
+- **macOS**: `~/Library/Application Support/com.blockhabit.app/blockhabit.json`
+- **Browser preview**: localStorage
+- **Backups**: automatic backups / manual snapshots in the same directory; the settings page can open the data folder
+- **Archive package**: README + manifest + data JSON + checksums + transparent images of completed buildings; WebDAV credentials are never included
+- **Sync conflicts**: check-in tombstones, completion recalculation, and field-level merge are authoritative; do not overwrite newer content from an old device
+- **Upgrades keep your data**: 0.2.4 keeps `schemaVersion`, `contentVersion`, and the app identifier unchanged; installing over an existing app does not remove the local save in `appDataDir`, and 0.2.3 saves load as-is
+- **Content version**: `contentVersion = 4`. An older client refuses to load a newer version and suspends saving, preventing silent cleanup of unknown blueprints
 
-## 快捷键
+## Keyboard shortcuts
 
-- `1` / `2` / `3` / `4`：切换今日 / 建造 / 展台 / 统计（输入框聚焦或弹窗打开时不触发）
-- `Ctrl/Cmd + N`：新建习惯
-- `Esc`：关闭当前弹窗
-- `Ctrl/Cmd + Enter`：在奠基铭言、建筑档案等编辑弹窗内确认
-- `Ctrl + Alt + H`：全局唤起 BlockHabit 并回到今日页（默认关闭，需在设置中开启；可能被其他应用占用）
+- `1` / `2` / `3` / `4`: switch between Today / Build / Showcase / Stats (disabled while an input is focused or a dialog is open)
+- `Ctrl/Cmd + N`: create a habit
+- `Esc`: close the current dialog
+- `Ctrl/Cmd + Enter`: confirm inside editing dialogs such as foundation inscriptions and building archives
+- `Ctrl + Alt + H`: globally summon BlockHabit and return to Today (off by default; enable it in Settings; may conflict with other apps)
 
-## 设计系统与协作规则
+## Design system & collaboration rules
 
-**唯一设计入口：[`design/README.md`](design/README.md)**。改任何用户可见的颜色、字体、圆角、间距、图标、布局、动效、文案、建筑数据或品牌资产之前，先读设计公理与对应规范。
+**The single design entry point is [`design/README.md`](design/README.md).** Before changing any user-visible color, font, radius, spacing, icon, layout, motion, copy, building data, or brand asset, read the design axioms and the relevant specification first.
 
-- **设计公理**：黑白灰为骨、唯一主题点缀色、一切皆圆润积木、2.5D 等距、1px 细线、物理感动效、数据诚实、本地优先。
-- **记录先于代码**：先在 `design/records/` 新建设计记录（`status: proposed`），审核通过后再实现。
-- **追加式记录**：`design/` 下任何文件、章节、记录不得删除；淘汰用 `deprecated` / `superseded`，物理删除必须先走 `design/APPROVALS.md`。
-- **工程规则**：见 [`AGENTS.md`](AGENTS.md)。不要引入 UI 组件库、不要伪造数据、不要绕过校验脚本。
-- **自检**：`npm run design:check` 检查台账一致性、状态机与未审批删除。
+- **Design axioms**: black/white/gray as the bones, one theme accent, everything is a rounded brick, 2.5D isometric, 1px lines, physical-feeling motion, data honesty, local-first.
+- **Record before code**: create a design record in `design/records/` (`status: proposed`) before implementing; implement only after review.
+- **Append-only records**: no file, section, or record under `design/` may be deleted. Retire with `deprecated` / `superseded`; physical deletion must go through `design/APPROVALS.md`.
+- **Engineering rules**: see [`AGENTS.md`](AGENTS.md). Do not introduce UI component libraries, fake data, or bypass verification scripts.
+- **Self-check**: `npm run design:check` validates ledger consistency, the status machine, and unapproved deletions.
 
-### 历史规格（只读时间快照）
+### Historical specs (read-only snapshots)
 
 - `docs/superpowers/specs/2026-08-22-blockhabit-design.md`
 - `docs/superpowers/plans/2026-08-22-blockhabit.md`
@@ -302,37 +310,38 @@ npm run tauri build
 - `docs/superpowers/specs/2026-11-10-blockhabit-design-hub-design.md`
 - `docs/release/release-runbook.md` / `docs/release/real-device-acceptance.md`
 
-## 常见问题
+## FAQ
 
-### 浏览器预览里 WebDAV 连接失败？
+### WebDAV fails in the browser preview?
 
-浏览器受跨域限制，Nextcloud 等服务通常不返回所需 CORS 头；设置页会明确提示在桌面端重试。桌面端通过 Tauri 原生 HTTP 通道连接。
+Browsers enforce cross-origin restrictions, and services such as Nextcloud usually do not return the required CORS headers. The settings page explicitly tells you to retry on desktop, where BlockHabit uses Tauri's native HTTP channel.
 
-### 为什么应用退出后没有提醒？
+### Why are there no reminders after the app exits?
 
-提醒依赖应用进程存活；完全退出后不会唤醒。可开启开机自启缓解。
+Reminders depend on the app process being alive; they do not wake a fully exited app. Enabling launch at startup can mitigate this.
 
-### 打卡后没有新积木？
+### Why did no new brick drop after a check-in?
 
-可能已达内容上限、当前蓝图已落成，或该次打卡被判定为重复 / 周配额已满。应用会给出明确文字反馈，不会静默吞掉。
+The content limit may be reached, the current blueprint may already be complete, or the check-in may be a duplicate / weekly quota full. The app gives explicit feedback instead of silently swallowing it.
 
-### 桌宠为什么没有出现？
+### Why is the pet not visible?
 
-桌宠默认开启；若被隐藏，可在设置 → 桌宠重新显示。首次启动如果窗口尚未就绪，应用会自动重试显示。
+The pet is enabled by default. If it was hidden, re-enable it in Settings → Pet. On first launch, if the window is not ready yet, the app automatically retries showing it.
 
-### 桌宠蓝图在哪里？
+### Where are the pet blueprints?
 
-图鉴底部有独立「桌宠蓝图」分区；完成 `pet-cat` / `pet-bot` 后，对应形象才会在桌宠设置和右键面板中可选。
+There is a separate "Pet blueprints" section at the bottom of the gallery. After completing `pet-cat` / `pet-bot`, the corresponding character becomes selectable in pet settings and the right-click panel.
 
-## 已知限制
+## Known limitations
 
-- **移动端为实验状态**：保留响应式布局与触摸手势，但没有正式构建目标，也未持续投入开发。
-- **Windows 关机 / 注销不保证最后一次防抖设置落盘**：关键动作（打卡 / 撤销 / 领取 / 导入）立即落盘；非关键设置的防抖窗口可能丢失。
-- **提醒依赖进程存活**：应用退出后不提醒。
-- **不自动更新**：更新检查为手动入口，且需要用户确认。
-- **内容上限**：25 座蓝图共 2513 块；全部建成后不再掉落新积木，应用会明确告知而不是静默处理。
-- **浏览器预览能力有限**：WebDAV、原生通知、托盘、透明桌宠窗口与窗口拖拽只在桌面端完整可用。
+- **Mobile is experimental**: Responsive layout and touch gestures are kept, but there is no official build target and no ongoing development.
+- **macOS is experimental**: the unsigned universal build is published as a pre-release; it has no code signing / notarization and has not gone through the same real-device acceptance as Windows. The in-app updater is disabled there until a macOS update channel exists.
+- **Windows shutdown / sign-out does not guarantee the last debounced settings write**: Critical actions (check-in / undo / claim / import) flush immediately; non-critical settings may lose the debounce window.
+- **Reminders depend on a running process**: No reminders after the app exits.
+- **No automatic updates**: Update checks are manual and require user confirmation.
+- **Content limit**: 25 blueprints, 2513 blocks total; once everything is built, no new bricks drop. The app says so explicitly instead of failing silently.
+- **Limited browser preview**: WebDAV, native notifications, the tray, the transparent pet window, and window dragging are fully available only on desktop.
 
-## 许可证
+## License
 
 [MIT](LICENSE)
