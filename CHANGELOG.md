@@ -3,6 +3,35 @@
 本项目遵循「每次改动都能追到一条设计记录」的约定：每条变更下方的 `D-YYYYMMDD-NNN` 指向
 `design/records/` 里对应的记录（含背景、方案、取舍与验收证据）。
 
+## [0.2.4] — 2026-11-25（第十五轮：周频完成态 / 倒角方块 / 桌宠胶囊眼）
+
+### 周频习惯今日打卡完成态（D-20261125-110 approved）
+
+- 周频习惯的今日达标改为「今日有效打卡或本周配额已满」；卡片显示「每周 X/Y 次」，今日打卡立即计入今日简报/顶栏完成数，配额满后本周剩余日期保持完成态。
+- 配额满但今日无打卡时保持完成态且不可撤销；休息日主动打卡仍可撤销；专注计时中达成配额保留「放弃」入口；无目标值 counter 统一按目标 1 判定。
+- 热图/年鉴/全勤判定同步口径；年鉴历史完成率改用 `habitActiveOnDay` 筛选，归档习惯在归档前的日期仍计入。
+- 新增 checkin / dayclaim / yearbook / 专注回归测试。
+
+### 全站胶囊改为倒角方块（D-20261125-111 approved）
+
+- 新增 `--r-xs: 6px`；按钮/分段项 10px、小徽章/标签 6px、toast/分段外框 14px；全站清除 `999px` 与 `var(--r-pill)` 引用，`--r-pill` 令牌保留但退役。
+- 圆形 `50%` 图标按钮保持不变。
+
+### 桌宠眼睛改为竖向胶囊（D-20261125-113 approved；D-20261125-112 superseded）
+
+- 桌宠常态眼睛由椭圆改为竖向胶囊（`roundRect`，约 2:1），block / cat 均已截图核对。
+
+### 升级与文档
+
+- `schemaVersion = 2`、`contentVersion = 4`、app identifier `com.blockhabit.app` 均未变；0.2.3 本地存档在 0.2.4 原样读取，新增回归测试覆盖完整存档字段。
+- README 默认英文，中文版移至 `README.zh-CN.md`；两版均补充「周频本周进度」「升级保留数据」与 macOS 实验性构建说明。
+- 版本号 0.2.3 → 0.2.4（package.json / package-lock / tauri.conf / Cargo.toml / Cargo.lock）。
+
+### 发布
+
+- 新增 `.github/workflows/release-macos.yml`：macOS universal 未签名 DMG，以预发布 `vX.Y.Z-macos` 发布；Windows release 继续持有 `latest.json` 更新通道。
+- 发布后整理：只保留 0.2.4 Windows（latest）与 0.2.4 macOS（pre-release）两个 GitHub Release；旧的 v0.2.1–v0.2.3 release 资产删除，git tag 保留。
+
 ## [Unreleased] — 2026-11-24
 
 ### 清理：零引用字体依赖 + 文档漂移（D-20261124-081 proposed）

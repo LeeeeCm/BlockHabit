@@ -1,0 +1,108 @@
+name: Release (macOS)
+
+# Experimental macOS build: unsigned universal DMG, updater disabled.
+#
+# The release is created as a pre-release so it never becomes GitHub's "Latest"
+# release; the Windows release keeps `/releases/latest/download/latest.json`
+# working for the in-app updater. Run this workflow before or after the Windows
+# release; the pre-release flag keeps the Windows updater endpoint stable.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号（x.y.z，必须与 package.json / tauri.conf.json / Cargo.toml 一致）'
+        required: true
+      notes:
+        description: '发布说明（写入 GitHub Release，可空）'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release-macos:
+    runs-on: macos-latest
+    env:
+      RELEASE_TAG: v${{ inputs.version }}-macos
+      RELEASE_NOTES: ${{ inputs.notes }}
+      VERSION: ${{ inputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Gates
+        run: |
+          npx tsc --noEmit
+          npm test
+          npm run design:check
+          npm run check:versions
+          npm run format:check
+
+      - name: Verify version input matches build files
+        run: |
+          node -e '
+            const v = require("./package.json").version
+            if (v !== process.env.VERSION) {
+              console.error(`版本不一致：package.json=${v}，输入=${process.env.VERSION}`)
+              process.exit(1)
+            }
+          '
+
+      - name: Add universal macOS Rust targets
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      # No VITE_UPDATER_ENABLED=1: the macOS build deliberately keeps the in-app
+      # updater disabled until a macOS update channel exists.
+      - name: Build unsigned universal DMG
+        run: npm run tauri build -- --target universal-apple-darwin --bundles dmg
+
+      - name: Locate DMG and write sha256
+        id: artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          DMG="$(find src-tauri/target/universal-apple-darwin/release/bundle/dmg -name '*.dmg' -print -quit)"
+          if [ -z "$DMG" ]; then
+            echo "未找到 macOS DMG"
+            exit 1
+          fi
+          SHA_FILE="$DMG.sha256"
+          shasum -a 256 "$DMG" | awk -v name="$(basename "$DMG")" '{print $1 "  " name}' > "$SHA_FILE"
+          echo "dmg=$DMG" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update macOS pre-release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > release-notes-macos.md <<EOF
+          Experimental macOS build (unsigned universal DMG).
+
+          If macOS blocks the first launch, right-click the app in Finder and choose Open.
+
+          ${RELEASE_NOTES}
+          EOF
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "${{ steps.artifacts.outputs.dmg }}" "${{ steps.artifacts.outputs.sha256 }}" --clobber
+            gh release edit "$RELEASE_TAG" --title "BlockHabit ${VERSION} (macOS)" --notes-file release-notes-macos.md --prerelease
+          else
+            gh release create "$RELEASE_TAG" \
+              "${{ steps.artifacts.outputs.dmg }}" \
+              "${{ steps.artifacts.outputs.sha256 }}" \
+              --target "$GITHUB_SHA" \
+              --title "BlockHabit ${VERSION} (macOS)" \
+              --notes-file release-notes-macos.md \
+              --prerelease
+          fi

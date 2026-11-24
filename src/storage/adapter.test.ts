@@ -61,6 +61,42 @@ describe('localStorage adapter', () => {
     expect(loaded!.activeBlueprintId).toBe('castle')
   })
 
+  it('0.2.3 存档在 0.2.4 升级后原样保留（schemaVersion/contentVersion 未变）', async () => {
+    const legacy: AppState = {
+      ...validState(),
+      contentVersion: 4,
+      settings: { theme: 'dark', language: 'en', soundMuted: true, petSkin: 'cat' },
+      dayClaims: [
+        {
+          date: '2026-08-22',
+          claimedAt: '2026-08-22T21:00:00.000Z',
+          blockId: 'b2',
+          blueprintId: 'castle'
+        }
+      ],
+      deletedDayClaims: [{ date: '2026-08-21', deletedAt: '2026-08-21T21:00:00.000Z' }],
+      repairBricks: 2,
+      showcasePlacements: [{ blueprintId: 'castle', gridX: 1, gridY: 2 }],
+      foundationNotes: { castle: 'Keep going' },
+      reminderLog: { h1: { date: '2026-08-22', action: 'skipped' } }
+    }
+    localStorage.setItem(STATE_KEY, JSON.stringify(legacy))
+
+    const loaded = (await createLocalStorageAdapter().load()).state
+    expect(loaded).not.toBeNull()
+    expect(loaded!.habits).toEqual(legacy.habits)
+    expect(loaded!.checkIns).toEqual(legacy.checkIns)
+    expect(loaded!.builds).toEqual(legacy.builds)
+    expect(loaded!.dayClaims).toEqual(legacy.dayClaims)
+    expect(loaded!.deletedDayClaims).toEqual(legacy.deletedDayClaims)
+    expect(loaded!.repairBricks).toBe(2)
+    expect(loaded!.showcasePlacements).toEqual(legacy.showcasePlacements)
+    expect(loaded!.foundationNotes).toEqual(legacy.foundationNotes)
+    expect(loaded!.reminderLog).toEqual(legacy.reminderLog)
+    expect(loaded!.settings.theme).toBe('dark')
+    expect(loaded!.settings.petSkin).toBe('cat')
+  })
+
   it('returns null on corrupt json and backs up raw content', async () => {
     localStorage.setItem(STATE_KEY, '{oops')
     const a = createLocalStorageAdapter()
