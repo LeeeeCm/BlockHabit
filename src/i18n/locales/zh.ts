@@ -267,10 +267,13 @@ export const zh: TranslationSchema = {
   },
   gallery: {
     title: '模型图鉴',
+    buildingsTitle: '建筑蓝图',
     completed: '已落成',
     inProgress: '建造中',
     locked: '待解锁',
     completePreviousFirst: '请完成上一个积木拼装任务',
+    pinPet: '桌宠蓝图置顶',
+    unpinPet: '取消置顶',
     totalBlocks: (total) => `共 ${total} 块`
   },
   polaroid: {

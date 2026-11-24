@@ -6,6 +6,7 @@ import { blueprintCatalogIds, blueprintOrder, blueprints } from '../logic/bluepr
 import { canSelectBlueprint, firstIncompleteIndex } from '../logic/blueprint'
 import { noBlockReason } from '../logic/blockHints'
 import { useAppStore } from '../store/appStore'
+import { GALLERY_PET_FIRST_KEY } from '../platform/galleryPrefs'
 import { zh } from '../i18n/locales/zh'
 
 /**
@@ -52,6 +53,10 @@ function renderGallery(onClose: () => void) {
     cards: () => Array.from(container.querySelectorAll<HTMLButtonElement>('.gallery-card')),
     lockedCards: () =>
       Array.from(container.querySelectorAll<HTMLButtonElement>('.gallery-card.locked')),
+    sections: () =>
+      Array.from(container.querySelectorAll<HTMLElement>('[data-gallery-section]')).map(
+        (section) => section.dataset.gallerySection
+      ),
     unmount: () => {
       act(() => root.unmount())
       container.remove()
@@ -60,6 +65,7 @@ function renderGallery(onClose: () => void) {
 }
 
 beforeEach(() => {
+  localStorage.clear()
   g.__galleryThumbProps = []
   setState()
 })
@@ -88,6 +94,39 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
     expect(first.textContent).toContain(zh.gallery.totalBlocks(total))
     expect(first.textContent).not.toContain(`${total} / ${total}`)
     view.unmount()
+  })
+
+  it('建筑蓝图与桌宠蓝图各有二级标题，桌宠可置顶并记住选择', () => {
+    const view = renderGallery(() => {})
+    expect(view.container.querySelector('#gallery-buildings-title')?.textContent).toBe(
+      zh.gallery.buildingsTitle
+    )
+    expect(view.container.querySelector('#gallery-pet-blueprints-title')?.textContent).toBe(
+      zh.pet.blueprints
+    )
+    expect(view.sections()).toEqual(['buildings', 'pets'])
+
+    const pin = view.container.querySelector<HTMLButtonElement>('.gallery-pin')
+    expect(pin).not.toBeNull()
+    expect(pin?.getAttribute('aria-pressed')).toBe('false')
+    const body = view.container.querySelector<HTMLElement>('.dialog-body')
+    if (body) body.scrollTop = 220
+    act(() => pin?.click())
+    expect(view.sections()).toEqual(['pets', 'buildings'])
+    expect(body?.scrollTop).toBe(0)
+    const pinned = view.container.querySelector<HTMLButtonElement>('.gallery-pin')
+    expect(pinned?.getAttribute('aria-pressed')).toBe('true')
+    expect(localStorage.getItem(GALLERY_PET_FIRST_KEY)).toBe('1')
+    view.unmount()
+
+    // 重开图鉴仍保持置顶；取消置顶后回到建筑蓝图在前
+    const reopened = renderGallery(() => {})
+    expect(reopened.sections()).toEqual(['pets', 'buildings'])
+    const unpin = reopened.container.querySelector<HTMLButtonElement>('.gallery-pin')
+    act(() => unpin?.click())
+    expect(reopened.sections()).toEqual(['buildings', 'pets'])
+    expect(localStorage.getItem(GALLERY_PET_FIRST_KEY)).toBe('0')
+    reopened.unmount()
   })
 
   it('首座解锁、其余锁定：缩略图剪影渲染且名字保持可读', () => {

@@ -955,6 +955,15 @@
       "owner": "Claude Code",
       "reviewer": "pending",
       "file": "design/records/D-20261124-105-header-scrollbar-unify.md"
+    },
+    {
+      "id": "D-20261124-106",
+      "date": "2026-11-24",
+      "title": "模型图鉴分组标题与桌宠蓝图可置顶",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-106-gallery-sections-pin.md"
     }
   ]
 }

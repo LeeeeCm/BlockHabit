@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
 import {
@@ -9,12 +9,13 @@ import {
 } from '../logic/blueprints'
 import { blueprintProgress, canSelectBlueprint } from '../logic/blueprint'
 import { getBlueprintName, useI18n } from '../i18n'
-import { IconClose, IconNote } from './Icons'
+import { IconClose, IconNote, IconPin } from './Icons'
 import { BlueprintThumb } from './BlueprintThumb'
 import { BuildingArchiveModal } from './BuildingArchiveModal'
 import { triggerHaptic } from '../platform'
+import { loadPetBlueprintsFirst, savePetBlueprintsFirst } from '../platform/galleryPrefs'
 import { useDialogA11y } from './useDialogA11y'
-/** 模型图鉴：按顺序解锁，前一座未落成时后一座不可选 */
+/** 模型图鉴：建筑蓝图按顺序解锁；桌宠蓝图作为独立支线，可置顶。 */
 export function GalleryDialog({ onClose }: { onClose: () => void }) {
   const { lang, t } = useI18n()
   const builds = useAppStore((s) => s.builds)
@@ -23,6 +24,8 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
   const choose = useAppStore((s) => s.chooseBlueprint)
   const [toast, showToast] = useTransient<string>(2200)
   const [archiveId, setArchiveId] = useState<string | null>(null)
+  const [petFirst, setPetFirst] = useState(loadPetBlueprintsFirst)
+  const bodyRef = useRef<HTMLDivElement>(null)
   // 档案卡叠在图鉴之上：档案打开时让出 Esc/焦点，避免一次 Esc 连关两层
   const { ref: dialogRef } = useDialogA11y({ open: true, onClose, enabled: archiveId === null })
 
@@ -34,6 +37,168 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
     choose(id)
     onClose()
   }
+
+  function togglePetFirst() {
+    triggerHaptic('selection')
+    const next = !petFirst
+    // 置顶/取消置顶会整体换组：把滚动位置带回顶部，避免用户停在原来的中段。
+    if (bodyRef.current) bodyRef.current.scrollTop = 0
+    setPetFirst(next)
+    savePetBlueprintsFirst(next)
+  }
+
+  const buildingSection = (
+    <section
+      className="gallery-section"
+      aria-labelledby="gallery-buildings-title"
+      data-gallery-section="buildings"
+    >
+      <div className="gallery-section-head">
+        <div className="gallery-section-heading">
+          <h4 id="gallery-buildings-title" className="gallery-section-title">
+            {t.gallery.buildingsTitle}
+          </h4>
+          <span className="gallery-section-count">{blueprintOrder.length}</span>
+        </div>
+      </div>
+      <div className="gallery-grid">
+        {blueprintOrder.map((id) => {
+          const bp = getBlueprint(id)
+          const placed = builds.filter((b) => b.blueprintId === id).length
+          const done = completed.includes(id)
+          const building = id === activeId && !done
+          const unlocked = canSelectBlueprint(id, completed)
+          const locked = !unlocked
+          const bpName = getBlueprintName(id, lang)
+          const status = done
+            ? {
+                label: `${t.gallery.completed} · ${t.build.blocksCount(bp.blocks.length, bp.blocks.length)}`,
+                color: 'var(--progress-green)'
+              }
+            : building
+              ? {
+                  label: `${t.gallery.inProgress} · ${placed}/${bp.blocks.length}`,
+                  color: 'var(--progress-blue)'
+                }
+              : unlocked
+                ? {
+                    label: `${t.build.startBuildBtn} · ${t.gallery.totalBlocks(bp.blocks.length)}`,
+                    color: 'var(--ink-2)'
+                  }
+                : { label: t.gallery.locked, color: 'var(--ink-2)' }
+          return (
+            <div key={id} style={{ position: 'relative', minWidth: 0, display: 'flex' }}>
+              <button
+                className={`gallery-card${locked ? ' locked' : ''}`}
+                onClick={() => handleSelect(id)}
+                title={unlocked ? bpName : t.gallery.completePreviousFirst}
+                aria-disabled={locked}
+                style={{
+                  width: '100%',
+                  paddingBottom: done ? 34 : undefined,
+                  // .gallery-card.locked 的 opacity:.5 会把「名字」也压暗；
+                  // B1：锁定信息由剪影表达，名字必须保持可读（inline 覆盖 CSS 类）。
+                  opacity: locked ? 1 : undefined
+                }}
+              >
+                <BlueprintThumb
+                  blueprint={bp}
+                  silhouette={locked}
+                  placedCount={building ? placed : undefined}
+                />
+                <div className="gallery-name">{bpName}</div>
+                <div className="gallery-status" style={{ color: status.color }}>
+                  {status.label}
+                </div>
+              </button>
+              {done && (
+                <button
+                  type="button"
+                  className="pill-action"
+                  onClick={() => {
+                    triggerHaptic('selection')
+                    setArchiveId(id)
+                  }}
+                  title={`${bpName} · ${t.buildingArchive.title}`}
+                  aria-label={`${bpName} · ${t.buildingArchive.title}`}
+                  style={{
+                    position: 'absolute',
+                    right: 8,
+                    bottom: 8,
+                    padding: '3px 9px',
+                    fontSize: 'var(--fs-caption)',
+                    gap: 4
+                  }}
+                >
+                  <IconNote size={11} style={{ flexShrink: 0 }} />
+                  <span>{t.buildingArchive.entry}</span>
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+
+  const petSection = (
+    <section
+      className="gallery-section"
+      aria-labelledby="gallery-pet-blueprints-title"
+      data-gallery-section="pets"
+    >
+      <div className="gallery-section-head">
+        <div className="gallery-section-heading">
+          <h4 id="gallery-pet-blueprints-title" className="gallery-section-title">
+            {t.pet.blueprints}
+          </h4>
+          <span className="gallery-section-count">{PET_BLUEPRINT_IDS.length}</span>
+        </div>
+      </div>
+      <div className="gallery-grid">
+        {PET_BLUEPRINT_IDS.map((id) => {
+          const bp = getBlueprint(id)
+          const progress = blueprintProgress(builds, id)
+          const done = progress.complete
+          const building = !done && progress.placed > 0
+          const bpName = getBlueprintName(id, lang)
+          const status = done
+            ? `${t.gallery.completed} · ${t.build.blocksCount(progress.total, progress.total)}`
+            : building
+              ? `${t.gallery.inProgress} · ${progress.placed}/${progress.total}`
+              : `${t.build.startBuildBtn} · ${t.gallery.totalBlocks(progress.total)}`
+          return (
+            <div key={id} style={{ position: 'relative', minWidth: 0, display: 'flex' }}>
+              <button
+                className="gallery-card"
+                onClick={() => handleSelect(id)}
+                title={bpName}
+                style={{ width: '100%' }}
+              >
+                <BlueprintThumb
+                  blueprint={bp}
+                  placedCount={building ? progress.placed : undefined}
+                />
+                <div className="gallery-name">{bpName}</div>
+                <div
+                  className="gallery-status"
+                  style={{
+                    color: done
+                      ? 'var(--progress-green)'
+                      : building
+                        ? 'var(--progress-blue)'
+                        : 'var(--ink-2)'
+                  }}
+                >
+                  {status}
+                </div>
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
 
   return (
     <>
@@ -55,150 +220,45 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
             <h3 id="gallery-dialog-title">
               {t.gallery.title} · {blueprintCatalogIds.length}
             </h3>
-            <button
-              className="icon-btn"
-              onClick={() => {
-                triggerHaptic('light')
-                onClose()
-              }}
-              title={t.common.close}
-            >
-              <IconClose size={18} />
-            </button>
+            <div className="gallery-header-actions">
+              <button
+                type="button"
+                className="gallery-pin"
+                aria-pressed={petFirst}
+                onClick={togglePetFirst}
+                title={petFirst ? t.gallery.unpinPet : t.gallery.pinPet}
+                aria-label={petFirst ? t.gallery.unpinPet : t.gallery.pinPet}
+              >
+                <IconPin size={13} pinned={petFirst} />
+                <span>{petFirst ? t.gallery.unpinPet : t.gallery.pinPet}</span>
+              </button>
+              <button
+                className="icon-btn"
+                onClick={() => {
+                  triggerHaptic('light')
+                  onClose()
+                }}
+                title={t.common.close}
+              >
+                <IconClose size={18} />
+              </button>
+            </div>
           </div>
 
-          <div className="dialog-body">
-            <div className="gallery-grid">
-              {blueprintOrder.map((id) => {
-                const bp = getBlueprint(id)
-                const placed = builds.filter((b) => b.blueprintId === id).length
-                const done = completed.includes(id)
-                const building = id === activeId && !done
-                const unlocked = canSelectBlueprint(id, completed)
-                const locked = !unlocked
-                const bpName = getBlueprintName(id, lang)
-                const status = done
-                  ? {
-                      label: `${t.gallery.completed} · ${t.build.blocksCount(bp.blocks.length, bp.blocks.length)}`,
-                      color: 'var(--progress-green)'
-                    }
-                  : building
-                    ? {
-                        label: `${t.gallery.inProgress} · ${placed}/${bp.blocks.length}`,
-                        color: 'var(--progress-blue)'
-                      }
-                    : unlocked
-                      ? {
-                          label: `${t.build.startBuildBtn} · ${t.gallery.totalBlocks(bp.blocks.length)}`,
-                          color: 'var(--ink-2)'
-                        }
-                      : { label: t.gallery.locked, color: 'var(--ink-2)' }
-                return (
-                  <div key={id} style={{ position: 'relative', minWidth: 0, display: 'flex' }}>
-                    <button
-                      className={`gallery-card${locked ? ' locked' : ''}`}
-                      onClick={() => handleSelect(id)}
-                      title={unlocked ? bpName : t.gallery.completePreviousFirst}
-                      aria-disabled={locked}
-                      style={{
-                        width: '100%',
-                        paddingBottom: done ? 34 : undefined,
-                        // .gallery-card.locked 的 opacity:.5 会把「名字」也压暗；
-                        // B1：锁定信息由剪影表达，名字必须保持可读（inline 覆盖 CSS 类）。
-                        opacity: locked ? 1 : undefined
-                      }}
-                    >
-                      <BlueprintThumb
-                        blueprint={bp}
-                        silhouette={locked}
-                        placedCount={building ? placed : undefined}
-                      />
-                      <div className="gallery-name">{bpName}</div>
-                      <div className="gallery-status" style={{ color: status.color }}>
-                        {status.label}
-                      </div>
-                    </button>
-                    {done && (
-                      <button
-                        type="button"
-                        className="pill-action"
-                        onClick={() => {
-                          triggerHaptic('selection')
-                          setArchiveId(id)
-                        }}
-                        title={`${bpName} · ${t.buildingArchive.title}`}
-                        aria-label={`${bpName} · ${t.buildingArchive.title}`}
-                        style={{
-                          position: 'absolute',
-                          right: 8,
-                          bottom: 8,
-                          padding: '3px 9px',
-                          fontSize: 'var(--fs-caption)',
-                          gap: 4
-                        }}
-                      >
-                        <IconNote size={11} style={{ flexShrink: 0 }} />
-                        <span>{t.buildingArchive.entry}</span>
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
+          <div className="dialog-body" ref={bodyRef}>
+            <div className="gallery-sections">
+              {petFirst ? (
+                <>
+                  {petSection}
+                  {buildingSection}
+                </>
+              ) : (
+                <>
+                  {buildingSection}
+                  {petSection}
+                </>
+              )}
             </div>
-
-            <section
-              aria-labelledby="gallery-pet-blueprints-title"
-              style={{ display: 'grid', gap: 8, marginTop: 4 }}
-            >
-              <h4
-                id="gallery-pet-blueprints-title"
-                style={{ margin: 0, fontSize: 'var(--fs-subhead)' }}
-              >
-                {t.pet.blueprints}
-              </h4>
-              <div className="gallery-grid">
-                {PET_BLUEPRINT_IDS.map((id) => {
-                  const bp = getBlueprint(id)
-                  const progress = blueprintProgress(builds, id)
-                  const done = progress.complete
-                  const building = !done && progress.placed > 0
-                  const bpName = getBlueprintName(id, lang)
-                  const status = done
-                    ? `${t.gallery.completed} · ${t.build.blocksCount(progress.total, progress.total)}`
-                    : building
-                      ? `${t.gallery.inProgress} · ${progress.placed}/${progress.total}`
-                      : `${t.build.startBuildBtn} · ${t.gallery.totalBlocks(progress.total)}`
-                  return (
-                    <div key={id} style={{ position: 'relative', minWidth: 0, display: 'flex' }}>
-                      <button
-                        className="gallery-card"
-                        onClick={() => handleSelect(id)}
-                        title={bpName}
-                        style={{ width: '100%' }}
-                      >
-                        <BlueprintThumb
-                          blueprint={bp}
-                          placedCount={building ? progress.placed : undefined}
-                        />
-                        <div className="gallery-name">{bpName}</div>
-                        <div
-                          className="gallery-status"
-                          style={{
-                            color: done
-                              ? 'var(--progress-green)'
-                              : building
-                                ? 'var(--progress-blue)'
-                                : 'var(--ink-2)'
-                          }}
-                        >
-                          {status}
-                        </div>
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            </section>
           </div>
 
           <div className="dialog-footer">

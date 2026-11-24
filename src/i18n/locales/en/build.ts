@@ -48,10 +48,13 @@ export const showcase: TranslationSchema['showcase'] = {
 
 export const gallery: TranslationSchema['gallery'] = {
   title: 'Blueprint Gallery',
+  buildingsTitle: 'Building blueprints',
   completed: 'Completed',
   inProgress: 'In Progress',
   locked: 'Locked',
   completePreviousFirst: 'Please complete the previous building first',
+  pinPet: 'Pin pet blueprints',
+  unpinPet: 'Unpin pets',
   totalBlocks: (total) => `${total} blocks`
 }
 
