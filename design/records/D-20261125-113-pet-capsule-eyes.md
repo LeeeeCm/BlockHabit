@@ -2,13 +2,13 @@
 id: D-20261125-113
 date: 2026-11-25
 title: 桌宠眼睛改为竖向胶囊，取代椭圆方案
-status: proposed
+status: approved
 owner: Claude Code
 surface: [mini-widget]
 axioms: [A3]
 files: [src/render/petCanvas.ts]
 supersedes: [D-20261125-112]
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -45,3 +45,4 @@ reviewer: pending
 
 - 2026-11-25 created（Claude Code），按用户澄清将椭圆改为竖向胶囊。
 - 2026-11-25 verified（Claude Code）：`?pet-preview` 默认 block/medium 与动态渲染 cat 均确认为竖向胶囊；未发现与嘴部重叠。
+- 2026-11-25 approved（LeeCM），设计记录通过人工审核。

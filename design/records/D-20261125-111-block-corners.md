@@ -2,13 +2,13 @@
 id: D-20261125-111
 date: 2026-11-25
 title: 退役全圆胶囊，按钮与徽章统一为倒角方块
-status: proposed
+status: approved
 owner: Claude Code
 surface: [global, today, build, stats, settings, gallery, mini-widget]
 axioms: [A2, A4]
 files: [src/theme.css, design/TOKENS.md, src/components/ui-cards.css, src/components/ui-drop.css, src/components/ui-misc.css, src/components/ui-overlay.css, src/components/ArchiveDataPanel.tsx, src/components/BlockDropModal.tsx, src/components/BottomTabBar.tsx, src/components/BrickInspectPopover.tsx, src/components/BuildingArchiveModal.tsx, src/components/EveningNudgeConsent.tsx, src/components/ErrorBoundary.tsx, src/components/GuideTip.tsx, src/components/HabitDialog.tsx, src/components/habitrow/HabitReflectionSection.tsx, src/components/habitrow/HabitRowFooter.tsx, src/components/MemorabiliaDialog.tsx, src/components/TodayBrief.tsx, src/pages/Build.tsx, src/pages/stats/StatsChronicleView.tsx, src/pages/today/TodayEmptyState.tsx, src/pages/today/TodayFullDayCard.tsx, src/components/ErrorBoundary.test.tsx]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -46,3 +46,4 @@ reviewer: pending
 ## 变更履历
 
 - 2026-11-25 created（Claude Code），按用户要求将全站胶囊控件改为倒角方块。
+- 2026-11-25 approved（LeeCM），设计记录通过人工审核。

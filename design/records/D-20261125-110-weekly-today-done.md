@@ -2,13 +2,13 @@
 id: D-20261125-110
 date: 2026-11-25
 title: 周频习惯今日打卡即显示完成，卡片频率改为本周完成数/目标
-status: proposed
+status: approved
 owner: Claude Code
 surface: [today, stats]
 axioms: [A1, A6]
 files: [src/logic/checkin.ts, src/logic/yearbook.ts, src/pages/today/TodayHabitSections.tsx, src/components/HabitRow.tsx, src/components/habitrow/HabitRowHeader.tsx, src/components/habitrow/HabitRowFooter.tsx, src/components/habitrow/HabitFocusSection.tsx, src/components/habitrow/helpers.ts, src/components/habitrow/helpers.test.ts, src/components/HabitRow.focus.test.tsx, src/i18n/types.ts, src/i18n/locales/zh.ts, src/i18n/locales/en/today.ts, src/logic/checkin.test.ts, src/logic/dayclaim.test.ts, src/logic/yearbook.test.ts]
 supersedes: []
-reviewer: pending
+reviewer: LeeCM
 ---
 
 ## 背景与问题
@@ -48,3 +48,4 @@ reviewer: pending
 
 - 2026-11-25 created（Claude Code），按用户反馈修复周频今日打卡不可见。
 - 2026-11-25 revised（Claude Code）：复查补正休息日主动打卡可撤销、专注会话取消入口、无目标值 counter 按 1 判定、年鉴归档习惯历史口径，并补对应单测。
+- 2026-11-25 approved（LeeCM），设计记录通过人工审核。
