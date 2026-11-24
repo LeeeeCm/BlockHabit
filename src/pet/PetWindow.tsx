@@ -379,7 +379,13 @@ export function PetWindow({ preview = false }: Props) {
 
     canvas.addEventListener('contextmenu', (event) => {
       event.preventDefault()
-      void togglePetMenu().then((visible) => setMenuOpen(visible))
+      // 先本地暂停，避免面板 IPC 返回前桌宠又多跳一步。
+      menuOpenRef.current = true
+      setMenuOpen(true)
+      void togglePetMenu().then((visible) => {
+        menuOpenRef.current = visible
+        setMenuOpen(visible)
+      })
     })
 
     frame = requestAnimationFrame(tick)

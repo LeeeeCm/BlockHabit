@@ -54,7 +54,7 @@
         "label": "pet-menu",
         "title": "",
         "width": 236,
-        "height": 300,
+        "height": 360,
         "resizable": false,
         "decorations": false,
         "visible": false,
