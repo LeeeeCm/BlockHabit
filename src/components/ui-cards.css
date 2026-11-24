@@ -183,51 +183,6 @@
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
-.gallery-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.gallery-pin {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 28px;
-  padding: 3px 9px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: var(--surface);
-  color: var(--ink-2);
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  white-space: nowrap;
-  transition:
-    background var(--dur-xs) var(--ease-default),
-    border-color var(--dur-xs) var(--ease-default),
-    color var(--dur-xs) var(--ease-default),
-    transform var(--dur-xs) var(--ease-default);
-}
-.gallery-pin:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-.gallery-pin[aria-pressed='true'] {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--bg);
-}
-.gallery-pin:active {
-  transform: scale(0.96);
-}
-/* 窄窗口只留图钉，标题仍由 aria-label / title 提供可读名称 */
-@media (max-width: 480px) {
-  .gallery-pin span {
-    display: none;
-  }
-  .gallery-pin {
-    padding: 3px 7px;
-  }
-}
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

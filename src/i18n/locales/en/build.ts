@@ -53,8 +53,6 @@ export const gallery: TranslationSchema['gallery'] = {
   inProgress: 'In Progress',
   locked: 'Locked',
   completePreviousFirst: 'Please complete the previous building first',
-  pinPet: 'Pin pet blueprints',
-  unpinPet: 'Unpin pets',
   totalBlocks: (total) => `${total} blocks`
 }
 

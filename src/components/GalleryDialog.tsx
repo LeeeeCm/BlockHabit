@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
 import {
@@ -9,13 +9,12 @@ import {
 } from '../logic/blueprints'
 import { blueprintProgress, canSelectBlueprint } from '../logic/blueprint'
 import { getBlueprintName, useI18n } from '../i18n'
-import { IconClose, IconNote, IconPin } from './Icons'
+import { IconClose, IconNote } from './Icons'
 import { BlueprintThumb } from './BlueprintThumb'
 import { BuildingArchiveModal } from './BuildingArchiveModal'
 import { triggerHaptic } from '../platform'
-import { loadPetBlueprintsFirst, savePetBlueprintsFirst } from '../platform/galleryPrefs'
 import { useDialogA11y } from './useDialogA11y'
-/** 模型图鉴：建筑蓝图按顺序解锁；桌宠蓝图作为独立支线，可置顶。 */
+/** 模型图鉴：建筑蓝图按顺序解锁；桌宠蓝图作为独立支线默认置顶。 */
 export function GalleryDialog({ onClose }: { onClose: () => void }) {
   const { lang, t } = useI18n()
   const builds = useAppStore((s) => s.builds)
@@ -24,8 +23,6 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
   const choose = useAppStore((s) => s.chooseBlueprint)
   const [toast, showToast] = useTransient<string>(2200)
   const [archiveId, setArchiveId] = useState<string | null>(null)
-  const [petFirst, setPetFirst] = useState(loadPetBlueprintsFirst)
-  const bodyRef = useRef<HTMLDivElement>(null)
   // 档案卡叠在图鉴之上：档案打开时让出 Esc/焦点，避免一次 Esc 连关两层
   const { ref: dialogRef } = useDialogA11y({ open: true, onClose, enabled: archiveId === null })
 
@@ -36,15 +33,6 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
     }
     choose(id)
     onClose()
-  }
-
-  function togglePetFirst() {
-    triggerHaptic('selection')
-    const next = !petFirst
-    // 置顶/取消置顶会整体换组：把滚动位置带回顶部，避免用户停在原来的中段。
-    if (bodyRef.current) bodyRef.current.scrollTop = 0
-    setPetFirst(next)
-    savePetBlueprintsFirst(next)
   }
 
   const buildingSection = (
@@ -220,44 +208,22 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
             <h3 id="gallery-dialog-title">
               {t.gallery.title} · {blueprintCatalogIds.length}
             </h3>
-            <div className="gallery-header-actions">
-              <button
-                type="button"
-                className="gallery-pin"
-                aria-pressed={petFirst}
-                onClick={togglePetFirst}
-                title={petFirst ? t.gallery.unpinPet : t.gallery.pinPet}
-                aria-label={petFirst ? t.gallery.unpinPet : t.gallery.pinPet}
-              >
-                <IconPin size={13} pinned={petFirst} />
-                <span>{petFirst ? t.gallery.unpinPet : t.gallery.pinPet}</span>
-              </button>
-              <button
-                className="icon-btn"
-                onClick={() => {
-                  triggerHaptic('light')
-                  onClose()
-                }}
-                title={t.common.close}
-              >
-                <IconClose size={18} />
-              </button>
-            </div>
+            <button
+              className="icon-btn"
+              onClick={() => {
+                triggerHaptic('light')
+                onClose()
+              }}
+              title={t.common.close}
+            >
+              <IconClose size={18} />
+            </button>
           </div>
 
-          <div className="dialog-body" ref={bodyRef}>
+          <div className="dialog-body">
             <div className="gallery-sections">
-              {petFirst ? (
-                <>
-                  {petSection}
-                  {buildingSection}
-                </>
-              ) : (
-                <>
-                  {buildingSection}
-                  {petSection}
-                </>
-              )}
+              {petSection}
+              {buildingSection}
             </div>
           </div>
 

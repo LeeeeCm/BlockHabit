@@ -960,10 +960,19 @@
       "id": "D-20261124-106",
       "date": "2026-11-24",
       "title": "模型图鉴分组标题与桌宠蓝图可置顶",
-      "status": "proposed",
+      "status": "superseded",
       "owner": "Claude Code",
       "reviewer": "pending",
       "file": "design/records/D-20261124-106-gallery-sections-pin.md"
+    },
+    {
+      "id": "D-20261124-107",
+      "date": "2026-11-24",
+      "title": "桌宠蓝图在图鉴中默认置顶（取代按钮方案）",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261124-107-gallery-pets-first.md"
     }
   ]
 }

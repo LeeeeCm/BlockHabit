@@ -124,6 +124,7 @@
 | D-20261124-103 | 2026-11-24 | 四页顶栏标题与说明排印统一 | approved | today, build, showcase, stats | LeeCM |
 | D-20261124-104 | 2026-11-24 | 桌宠窗口收紧到角色外沿，减少透明死区 | proposed | mini-widget | pending |
 | D-20261124-105 | 2026-11-24 | 四页顶栏齐高齐位、统计标题归位与全项目隐藏滚动条 | proposed | global, today, stats | pending |
-| D-20261124-106 | 2026-11-24 | 模型图鉴分组标题与桌宠蓝图可置顶 | proposed | gallery | pending |
+| D-20261124-106 | 2026-11-24 | 模型图鉴分组标题与桌宠蓝图可置顶 | superseded | gallery | pending |
+| D-20261124-107 | 2026-11-24 | 桌宠蓝图在图鉴中默认置顶（取代按钮方案） | proposed | gallery | pending |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

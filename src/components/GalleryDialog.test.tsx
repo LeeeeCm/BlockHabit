@@ -2,11 +2,15 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GalleryDialog } from './GalleryDialog'
-import { blueprintCatalogIds, blueprintOrder, blueprints } from '../logic/blueprints'
+import {
+  blueprintCatalogIds,
+  blueprintOrder,
+  blueprints,
+  PET_BLUEPRINT_IDS
+} from '../logic/blueprints'
 import { canSelectBlueprint, firstIncompleteIndex } from '../logic/blueprint'
 import { noBlockReason } from '../logic/blockHints'
 import { useAppStore } from '../store/appStore'
-import { GALLERY_PET_FIRST_KEY } from '../platform/galleryPrefs'
 import { zh } from '../i18n/locales/zh'
 
 /**
@@ -51,6 +55,12 @@ function renderGallery(onClose: () => void) {
     container,
     title: () => container.querySelector('#gallery-dialog-title')?.textContent ?? '',
     cards: () => Array.from(container.querySelectorAll<HTMLButtonElement>('.gallery-card')),
+    buildingCards: () =>
+      Array.from(
+        container.querySelectorAll<HTMLButtonElement>(
+          '[data-gallery-section="buildings"] .gallery-card'
+        )
+      ),
     lockedCards: () =>
       Array.from(container.querySelectorAll<HTMLButtonElement>('.gallery-card.locked')),
     sections: () =>
@@ -65,7 +75,6 @@ function renderGallery(onClose: () => void) {
 }
 
 beforeEach(() => {
-  localStorage.clear()
   g.__galleryThumbProps = []
   setState()
 })
@@ -88,7 +97,7 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
   it('未开始的可建造卡片显示总块数，不把容量读成进度（P3）', () => {
     setState({ activeBlueprintId: blueprintOrder[1] })
     const view = renderGallery(() => {})
-    const first = view.cards()[0]
+    const first = view.buildingCards()[0]
     const total = blueprints[blueprintOrder[0]].blocks.length
     expect(first.textContent).toContain(zh.build.startBuildBtn)
     expect(first.textContent).toContain(zh.gallery.totalBlocks(total))
@@ -96,7 +105,7 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
     view.unmount()
   })
 
-  it('建筑蓝图与桌宠蓝图各有二级标题，桌宠可置顶并记住选择', () => {
+  it('桌宠蓝图默认置顶，建筑蓝图在后，两组各有二级标题', () => {
     const view = renderGallery(() => {})
     expect(view.container.querySelector('#gallery-buildings-title')?.textContent).toBe(
       zh.gallery.buildingsTitle
@@ -104,29 +113,14 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
     expect(view.container.querySelector('#gallery-pet-blueprints-title')?.textContent).toBe(
       zh.pet.blueprints
     )
-    expect(view.sections()).toEqual(['buildings', 'pets'])
-
-    const pin = view.container.querySelector<HTMLButtonElement>('.gallery-pin')
-    expect(pin).not.toBeNull()
-    expect(pin?.getAttribute('aria-pressed')).toBe('false')
-    const body = view.container.querySelector<HTMLElement>('.dialog-body')
-    if (body) body.scrollTop = 220
-    act(() => pin?.click())
     expect(view.sections()).toEqual(['pets', 'buildings'])
-    expect(body?.scrollTop).toBe(0)
-    const pinned = view.container.querySelector<HTMLButtonElement>('.gallery-pin')
-    expect(pinned?.getAttribute('aria-pressed')).toBe('true')
-    expect(localStorage.getItem(GALLERY_PET_FIRST_KEY)).toBe('1')
-    view.unmount()
+    expect(view.container.querySelector('.gallery-pin')).toBeNull()
+    expect(view.cards()).toHaveLength(blueprintCatalogIds.length)
 
-    // 重开图鉴仍保持置顶；取消置顶后回到建筑蓝图在前
-    const reopened = renderGallery(() => {})
-    expect(reopened.sections()).toEqual(['pets', 'buildings'])
-    const unpin = reopened.container.querySelector<HTMLButtonElement>('.gallery-pin')
-    act(() => unpin?.click())
-    expect(reopened.sections()).toEqual(['buildings', 'pets'])
-    expect(localStorage.getItem(GALLERY_PET_FIRST_KEY)).toBe('0')
-    reopened.unmount()
+    const sections = view.container.querySelectorAll<HTMLElement>('[data-gallery-section]')
+    expect(sections[0].querySelectorAll('.gallery-card')).toHaveLength(PET_BLUEPRINT_IDS.length)
+    expect(sections[1].querySelectorAll('.gallery-card')).toHaveLength(blueprintOrder.length)
+    view.unmount()
   })
 
   it('首座解锁、其余锁定：缩略图剪影渲染且名字保持可读', () => {
@@ -160,7 +154,7 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
     expect(canSelectBlueprint(blueprintOrder[doneCount + 1], completed)).toBe(false)
     expect(firstIncompleteIndex(completed)).toBe(doneCount)
 
-    const lastCard = view.cards()[blueprintOrder.length - 1]
+    const lastCard = view.buildingCards()[blueprintOrder.length - 1]
     act(() => lastCard.click())
     expect(onClose).not.toHaveBeenCalled()
     expect(view.container.textContent).toContain(zh.gallery.completePreviousFirst)

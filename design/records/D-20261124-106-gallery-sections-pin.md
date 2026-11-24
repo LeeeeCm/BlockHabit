@@ -2,7 +2,7 @@
 id: D-20261124-106
 date: 2026-11-24
 title: 模型图鉴分组标题与桌宠蓝图可置顶
-status: proposed
+status: superseded
 owner: Claude Code
 surface: [gallery]
 axioms: [A2, A4]
@@ -51,3 +51,4 @@ reviewer: pending
 
 - 2026-11-24 created（Claude Code），按用户要求增加二级标题与桌宠蓝图置顶。
 - 2026-11-24 verified（Claude Code）：CDP 实测默认 `buildings → pets`、标题为「建筑蓝图 23 / 桌宠蓝图 2」、25 张卡片；点击顶栏「桌宠置顶」后变为 `pets → buildings`、`aria-pressed=true`、localStorage 记 `1`，重开保持；取消后恢复。375px 窄视口下按钮收为 29px 图钉，`aria-label` 仍为完整名称；弹窗主体 `offsetWidth-clientWidth=0`。
+- 2026-11-24 superseded by D-20261124-107（Claude Code）：用户明确不要按钮，要求桌宠蓝图默认置顶；按钮、localStorage 偏好与相关样式全部撤下。
