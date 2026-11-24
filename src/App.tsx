@@ -98,7 +98,10 @@ export default function App() {
   const petDone = activeHabits.filter((h) => habitMetOnDay(h, checkIns, day)).length
   useEffect(() => {
     if (!inTauri) return
+    // 窗口由 Tauri 配置创建；个别启动时序下首个 invoke 可能早于 pet 窗口就绪，补一次重试。
     void setPetVisible(enablePet)
+    const retry = window.setTimeout(() => void setPetVisible(enablePet), 800)
+    return () => window.clearTimeout(retry)
   }, [enablePet])
   useEffect(() => {
     if (!inTauri || !enablePet) return
