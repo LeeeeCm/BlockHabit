@@ -164,7 +164,7 @@ export default function Showcase() {
       {toast && <div className="toast">{toast}</div>}
       {/* 顶部标题与陈列统计 */}
       <div
-        className="showcase-top-bar"
+        className="showcase-top-bar page-top-bar"
         style={{
           flex: 'none',
           display: 'flex',
@@ -235,16 +235,8 @@ export default function Showcase() {
 
           {!decorationMode && showcasePlacements.length > 0 && (
             <button
-              className="btn ghost"
+              className="btn ghost block-action"
               onClick={handleAutoArrange}
-              style={{
-                fontSize: 'var(--fs-small)',
-                padding: '4px 12px',
-                borderRadius: 999,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5
-              }}
               title={t.showcase.autoArrange}
             >
               <IconSparkle size={12} style={{ color: 'var(--accent)' }} />
@@ -252,19 +244,7 @@ export default function Showcase() {
             </button>
           )}
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: 'var(--surface)',
-              border: '1px solid var(--line)',
-              borderRadius: 999,
-              padding: '3px 12px',
-              fontSize: 'var(--fs-small)',
-              fontWeight: 600
-            }}
-          >
+          <div className="block-action is-static" style={{ fontWeight: 600 }}>
             <span style={{ color: 'var(--progress-green)' }}>●</span>
             <span>{t.showcase.countDisplay(showcasePlacements.length)}</span>
           </div>

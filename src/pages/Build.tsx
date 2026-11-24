@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../store/appStore'
-import { getTimePeriod } from '../render/iso'
 import { blueprintOrder, blueprints, getBlueprint } from '../logic/blueprints'
 import { getBlueprintName, useI18n } from '../i18n'
 import { BuildScene } from '../render/BuildScene'
@@ -42,8 +41,6 @@ export default function Build() {
   // 透视考古默认态来自设置（enableXRayInspection），页内切换只影响本会话
   const xrayDefault = useAppStore((s) => s.settings.enableXRayInspection === true)
   const [xrayMode, setXrayMode] = useState(xrayDefault)
-  const enableAmbientLighting = useAppStore((s) => s.settings.enableAmbientLighting !== false)
-  const period = getTimePeriod()
   // 页面提示（D-20261110-054）：首次进入且已有积木时出现一次；挂载即标记已读，避免不点就永远重复
   const [showGuideTip, setShowGuideTip] = useState(() => !hasSeenTip('build'))
   const guideTipVisible = showGuideTip && placedCount >= 1
@@ -71,7 +68,7 @@ export default function Build() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <div
-        className="build-top-bar"
+        className="build-top-bar page-top-bar"
         style={{
           flex: 'none',
           display: 'flex',
@@ -137,41 +134,8 @@ export default function Build() {
               </button>
             </>
           )}
-          {enableAmbientLighting && (
-            <span
-              className="btn ghost"
-              style={{
-                padding: '7px 12px',
-                fontSize: 'var(--fs-body)',
-                borderRadius: 999,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                cursor: 'default'
-              }}
-              title={t.build.ambientHint}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: 'var(--accent)',
-                  flexShrink: 0
-                }}
-              />
-              {period === 'dawn'
-                ? t.build.ambientDawn
-                : period === 'dusk'
-                  ? t.build.ambientDusk
-                  : period === 'night'
-                    ? t.build.ambientNight
-                    : t.build.ambientNoon}
-            </span>
-          )}
           <button
-            className={`btn ${xrayMode ? 'primary' : 'ghost'}`}
-            style={{ padding: '7px 12px', fontSize: 'var(--fs-body)', borderRadius: 999 }}
+            className={`btn ${xrayMode ? 'primary' : 'ghost'} block-action`}
             onClick={() => {
               triggerHaptic('selection')
               setXrayMode((v) => !v)
@@ -184,8 +148,7 @@ export default function Build() {
             </span>
           </button>
           <button
-            className="btn ghost"
-            style={{ padding: '7px 14px', fontSize: 'var(--fs-body)' }}
+            className="btn ghost block-action"
             onClick={() => setGalleryOpen(true)}
             title={t.build.galleryBtn}
           >

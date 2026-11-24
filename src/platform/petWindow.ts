@@ -39,3 +39,22 @@ export async function petOpenSettings(): Promise<void> {
     // 主窗已被关闭时忽略
   }
 }
+
+/** 右键桌宠：在桌宠旁显示/隐藏独立面板窗，不移动桌宠窗口 */
+export async function togglePetMenu(): Promise<boolean> {
+  if (!isTauriRuntime()) return false
+  try {
+    return Boolean(await invoke('toggle_pet_menu'))
+  } catch {
+    return false
+  }
+}
+
+export async function setPetMenuVisible(visible: boolean): Promise<void> {
+  if (!isTauriRuntime()) return
+  try {
+    await invoke('set_pet_menu_visible', { visible })
+  } catch {
+    // 面板窗口不存在时忽略
+  }
+}

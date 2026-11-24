@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import { TrayMenu } from './components/TrayMenu'
 import { PetWindow } from './pet/PetWindow'
+import { PetMenuWindow } from './pet/PetMenuWindow'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { initSmoothScroll } from './platform/smoothScroll'
@@ -41,6 +42,7 @@ const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 const windowLabel = inTauri ? getCurrentWindow().label : ''
 const isTrayMenu = windowLabel === 'tray-menu'
 const isPet = windowLabel === 'pet'
+const isPetMenu = windowLabel === 'pet-menu'
 const petPreview =
   !inTauri &&
   typeof location !== 'undefined' &&
@@ -50,6 +52,8 @@ if (isTrayMenu) {
   document.documentElement.dataset.win = 'tray-menu'
 } else if (isPet || petPreview) {
   document.documentElement.dataset.win = 'pet'
+} else if (isPetMenu) {
+  document.documentElement.dataset.win = 'pet-menu'
 } else {
   initSmoothScroll()
 }
@@ -72,6 +76,8 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <TrayMenu />
       ) : isPet || petPreview ? (
         <PetWindow preview={petPreview} />
+      ) : isPetMenu ? (
+        <PetMenuWindow />
       ) : (
         <SyncProvider>
           <App />

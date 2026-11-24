@@ -118,5 +118,7 @@
 | D-20261124-097 | 2026-11-24 | 桌宠在原窗口内无卡片外框（v1 历史，已被 v2 取代） | proposed | mini-widget | pending |
 | D-20261124-098 | 2026-11-24 | 旧桌宠蓝图解锁形象、待机动作与尺寸收敛 | approved | mini-widget, settings, gallery | LeeCM |
 | D-20261124-099 | 2026-11-24 | 图鉴缩略图修复：去除双形态叠加与白色底板并居中当前形态 | approved | gallery | LeeCM |
+| D-20261124-100 | 2026-11-24 | 三页顶栏高度统一、倒角方块动作与移除建造页夜灯 | approved | build, showcase, stats | LeeCM |
+| D-20261124-101 | 2026-11-24 | 桌宠右键面板改为独立透明窗，不移动桌宠 | approved | mini-widget | LeeCM |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

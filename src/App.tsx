@@ -115,7 +115,10 @@ export default function App() {
       total: activeHabits.length,
       completed: completedCount
     }
-    const send = () => void emitTo('pet', 'pet-config', config).catch(() => {})
+    const send = () => {
+      void emitTo('pet', 'pet-config', config).catch(() => {})
+      void emitTo('pet-menu', 'pet-config', config).catch(() => {})
+    }
     send()
     const late = window.setTimeout(send, 600)
     return () => window.clearTimeout(late)

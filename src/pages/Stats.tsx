@@ -172,116 +172,128 @@ export default function Stats() {
   }
 
   return (
-    <div
-      className="stats-page-container"
-      style={{ padding: '28px 24px 80px', maxWidth: 680, margin: '0 auto' }}
-    >
-      <StatsHeader
-        t={t}
-        grandTotalMinutes={grandTotalMinutes}
-        repairBricks={repairBricks}
-        onOpenMemorabilia={() => setMemorabiliaOpen(true)}
-      />
-
-      {/* 苹果风格分段视图控制器 */}
-      <div className="apple-segmented" style={{ marginBottom: 18 }}>
-        <button
-          type="button"
-          className={`apple-segmented-item${viewMode === 'metrics' ? ' active' : ''}`}
-          onClick={() => {
-            triggerHaptic('selection')
-            setViewMode('metrics')
-          }}
-        >
-          <IconStats size={14} />
-          <span>{t.stats.tabMetrics}</span>
-        </button>
-        <button
-          type="button"
-          className={`apple-segmented-item${viewMode === 'chronicle' ? ' active' : ''}`}
-          onClick={() => {
-            triggerHaptic('selection')
-            setViewMode('chronicle')
-          }}
-        >
-          <IconNote size={14} />
-          <span>{t.stats.tabChronicle}</span>
-        </button>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div className="page-top-bar stats-top-bar">
+        <StatsHeader
+          t={t}
+          grandTotalMinutes={grandTotalMinutes}
+          repairBricks={repairBricks}
+          onOpenMemorabilia={() => setMemorabiliaOpen(true)}
+        />
       </div>
+      <div
+        className="stats-page-container"
+        style={{
+          padding: '24px 24px 80px',
+          maxWidth: 680,
+          width: '100%',
+          margin: '0 auto',
+          boxSizing: 'border-box',
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto'
+        }}
+      >
+        {/* 苹果风格分段视图控制器 */}
+        <div className="apple-segmented" style={{ marginBottom: 18 }}>
+          <button
+            type="button"
+            className={`apple-segmented-item${viewMode === 'metrics' ? ' active' : ''}`}
+            onClick={() => {
+              triggerHaptic('selection')
+              setViewMode('metrics')
+            }}
+          >
+            <IconStats size={14} />
+            <span>{t.stats.tabMetrics}</span>
+          </button>
+          <button
+            type="button"
+            className={`apple-segmented-item${viewMode === 'chronicle' ? ' active' : ''}`}
+            onClick={() => {
+              triggerHaptic('selection')
+              setViewMode('chronicle')
+            }}
+          >
+            <IconNote size={14} />
+            <span>{t.stats.tabChronicle}</span>
+          </button>
+        </div>
 
-      <StatsEchoCapsule t={t} echoEntry={echoEntry} echoDaysAgo={echoDaysAgo} habits={habits} />
+        <StatsEchoCapsule t={t} echoEntry={echoEntry} echoDaysAgo={echoDaysAgo} habits={habits} />
 
-      {/* D-20261110-054：首次进入说明热图灰阶与点击行为 */}
-      {guideTipVisible && (
-        <GuideTip
-          variant="inline"
-          title={t.guide.statsTitle}
-          body={t.guide.statsBody}
-          dismissLabel={t.guide.gotIt}
-          onDismiss={() => setShowGuideTip(false)}
-        />
-      )}
+        {/* D-20261110-054：首次进入说明热图灰阶与点击行为 */}
+        {guideTipVisible && (
+          <GuideTip
+            variant="inline"
+            title={t.guide.statsTitle}
+            body={t.guide.statsBody}
+            dismissLabel={t.guide.gotIt}
+            onDismiss={() => setShowGuideTip(false)}
+          />
+        )}
 
-      {viewMode === 'metrics' ? (
-        <StatsMetricsView
-          t={t}
-          habits={habits}
-          checkIns={checkIns}
-          rows={rows}
-          today={today}
-          repairBricks={repairBricks}
-          onRequestRepair={setRepairTarget}
-          onRefreshRepair={refreshRepairAllowance}
-          onToast={showToast}
-        />
-      ) : (
-        <StatsChronicleView
-          t={t}
-          habits={habits}
-          active={active}
-          items={chronicleItems}
-          searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
-          filterHabitId={filterHabitId}
-          onFilterHabitIdChange={setFilterHabitId}
-          filterMood={filterMood}
-          onFilterMoodChange={setFilterMood}
-          onlyStarred={onlyStarred}
-          onToggleOnlyStarred={() => setOnlyStarred((v) => !v)}
-          visibleCount={visibleCount}
-          onLoadMore={() => setVisibleCount((prev) => prev + 25)}
-          onExportMarkdown={handleExportMarkdown}
-          onToggleStar={toggleCheckInStar}
-        />
-      )}
+        {viewMode === 'metrics' ? (
+          <StatsMetricsView
+            t={t}
+            habits={habits}
+            checkIns={checkIns}
+            rows={rows}
+            today={today}
+            repairBricks={repairBricks}
+            onRequestRepair={setRepairTarget}
+            onRefreshRepair={refreshRepairAllowance}
+            onToast={showToast}
+          />
+        ) : (
+          <StatsChronicleView
+            t={t}
+            habits={habits}
+            active={active}
+            items={chronicleItems}
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+            filterHabitId={filterHabitId}
+            onFilterHabitIdChange={setFilterHabitId}
+            filterMood={filterMood}
+            onFilterMoodChange={setFilterMood}
+            onlyStarred={onlyStarred}
+            onToggleOnlyStarred={() => setOnlyStarred((v) => !v)}
+            visibleCount={visibleCount}
+            onLoadMore={() => setVisibleCount((prev) => prev + 25)}
+            onExportMarkdown={handleExportMarkdown}
+            onToggleStar={toggleCheckInStar}
+          />
+        )}
 
-      {repairTarget && (
-        <StatsRepairDialog
-          t={t}
-          target={repairTarget}
-          repairBricks={repairBricks}
-          onCancel={() => setRepairTarget(null)}
-          onConfirm={() => {
-            const res = useRepairBrick(repairTarget.habitId, repairTarget.date)
-            if (res.ok) {
-              showToast(t.stats.repairSuccessToast(repairTarget.habitName), 2500)
-            } else {
-              const reasonToast: Record<string, string> = {
-                'no-bricks': t.stats.repairNoBricksToast,
-                already: t.stats.repairAlreadyToast,
-                'no-habit': t.stats.repairNoHabitToast,
-                archived: t.stats.repairArchivedToast,
-                future: t.stats.repairFutureToast,
-                'before-creation': t.stats.repairBeforeCreationToast
+        {repairTarget && (
+          <StatsRepairDialog
+            t={t}
+            target={repairTarget}
+            repairBricks={repairBricks}
+            onCancel={() => setRepairTarget(null)}
+            onConfirm={() => {
+              const res = useRepairBrick(repairTarget.habitId, repairTarget.date)
+              if (res.ok) {
+                showToast(t.stats.repairSuccessToast(repairTarget.habitName), 2500)
+              } else {
+                const reasonToast: Record<string, string> = {
+                  'no-bricks': t.stats.repairNoBricksToast,
+                  already: t.stats.repairAlreadyToast,
+                  'no-habit': t.stats.repairNoHabitToast,
+                  archived: t.stats.repairArchivedToast,
+                  future: t.stats.repairFutureToast,
+                  'before-creation': t.stats.repairBeforeCreationToast
+                }
+                showToast(reasonToast[res.reason ?? ''] ?? t.stats.repairFailToast, 2500)
               }
-              showToast(reasonToast[res.reason ?? ''] ?? t.stats.repairFailToast, 2500)
-            }
-          }}
-        />
-      )}
+            }}
+          />
+        )}
 
-      {toast && <div className="toast">{toast}</div>}
-      {memorabiliaOpen && <MemorabiliaDialog onClose={() => setMemorabiliaOpen(false)} />}
+        {toast && <div className="toast">{toast}</div>}
+        {memorabiliaOpen && <MemorabiliaDialog onClose={() => setMemorabiliaOpen(false)} />}
+      </div>
     </div>
   )
 }

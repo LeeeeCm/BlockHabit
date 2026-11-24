@@ -1,17 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  currentMonitor,
-  getCurrentWindow,
-  LogicalPosition,
-  LogicalSize,
-  PhysicalPosition
-} from '@tauri-apps/api/window'
-import { listen, emitTo } from '@tauri-apps/api/event'
+import { currentMonitor, getCurrentWindow, LogicalPosition } from '@tauri-apps/api/window'
+import { listen } from '@tauri-apps/api/event'
 import { useI18n } from '../i18n'
 import { paletteFromDocument, deriveShadingForColor } from '../render/isoColor'
-import { paintPet, type PetMood } from '../render/petCanvas'
+import { paintPet, petStageFloor, type PetMood } from '../render/petCanvas'
 import { PET_REST_POSE, petHopPose, type PetPose } from '../render/petMotion'
-import { DEFAULT_PET_CONFIG, PET_MODELS, petSizeScale, type PetConfig } from './types'
+import { DEFAULT_PET_CONFIG, petSizeScale, type PetConfig } from './types'
 import {
   PET_SIZE,
   clampPetPosition,
@@ -22,7 +16,7 @@ import {
   type PetWorkArea
 } from '../platform/petMotion'
 import { loadPetPosition, savePetPosition } from '../platform/windowLayout'
-import { isTauriRuntime, petOpenMain, petOpenSettings } from '../platform/petWindow'
+import { isTauriRuntime, petOpenMain, togglePetMenu } from '../platform/petWindow'
 import './petWindow.css'
 
 function drawBubble(
@@ -63,8 +57,6 @@ const HOP_INTERVAL_MS = 520
 const PERSIST_EVERY_MS = 8000
 const DRAW_FPS_MS = 16
 const HOP_MS = 400
-const MENU_W = 236
-const MENU_H = 300
 
 /**
  * 积木桌宠窗口（D-20261124-088）。
@@ -78,11 +70,9 @@ export function PetWindow({ preview = false }: Props) {
   const { t } = useI18n()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const configRef = useRef<PetConfig>(DEFAULT_PET_CONFIG)
-  const [config, setConfig] = useState<PetConfig>(DEFAULT_PET_CONFIG)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuOpenRef = useRef(false)
   menuOpenRef.current = menuOpen
-  const anchorRef = useRef<{ x: number; y: number } | null>(null)
   const prevDoneRef = useRef(0)
   const bumpUntilRef = useRef(0)
   const bubbleUntilRef = useRef(0)
@@ -95,7 +85,6 @@ export function PetWindow({ preview = false }: Props) {
       const config = event.payload
       if (!config || disposed) return
       configRef.current = config
-      setConfig(config)
       if (config.total > 0 && config.done > prevDoneRef.current) {
         const now = performance.now()
         bumpUntilRef.current = now + 1000
@@ -322,9 +311,10 @@ export function PetWindow({ preview = false }: Props) {
           : 'idle'
       renderer.save()
       const sizeScale = petSizeScale(config.size)
-      renderer.translate(PET_SIZE.w / 2, PET_SIZE.h)
+      const floor = petStageFloor(PET_SIZE.w, PET_SIZE.h)
+      renderer.translate(PET_SIZE.w / 2, floor)
       renderer.scale(sizeScale, sizeScale)
-      renderer.translate(-PET_SIZE.w / 2, -PET_SIZE.h)
+      renderer.translate(-PET_SIZE.w / 2, -floor)
       paintPet(renderer, {
         width: PET_SIZE.w,
         height: PET_SIZE.h,
@@ -389,7 +379,7 @@ export function PetWindow({ preview = false }: Props) {
 
     canvas.addEventListener('contextmenu', (event) => {
       event.preventDefault()
-      setMenuOpen((open) => !open)
+      void togglePetMenu().then((visible) => setMenuOpen(visible))
     })
 
     frame = requestAnimationFrame(tick)
@@ -404,53 +394,14 @@ export function PetWindow({ preview = false }: Props) {
   useEffect(() => {
     if (preview || !isTauriRuntime()) return
     let disposed = false
-    const win = getCurrentWindow()
-    void (async () => {
-      try {
-        if (menuOpen) {
-          if (anchorRef.current) return
-          const pos = await win.outerPosition()
-          anchorRef.current = { x: pos.x, y: pos.y }
-          const monitor = await currentMonitor().catch(() => null)
-          const scale = (await win.scaleFactor().catch(() => 1)) || 1
-          let x = pos.x / scale
-          let y = pos.y / scale
-          if (monitor) {
-            const f = monitor.scaleFactor || 1
-            const area = {
-              x: monitor.workArea.position.x / f,
-              y: monitor.workArea.position.y / f,
-              width: monitor.workArea.size.width / f,
-              height: monitor.workArea.size.height / f
-            }
-            const w = PET_SIZE.w + MENU_W
-            x = Math.min(Math.max(x, area.x + 8), area.x + area.width - w - 8)
-            y = Math.min(Math.max(y, area.y + 8), area.y + area.height - MENU_H - 8)
-          }
-          if (disposed) return
-          await win.setSize(new LogicalSize(PET_SIZE.w + MENU_W, MENU_H))
-          await win.setPosition(new LogicalPosition(Math.round(x), Math.round(y)))
-        } else if (anchorRef.current) {
-          const anchor = anchorRef.current
-          anchorRef.current = null
-          await win.setSize(new LogicalSize(PET_SIZE.w, PET_SIZE.h))
-          await win.setPosition(new PhysicalPosition(anchor.x, anchor.y))
-        }
-      } catch {
-        anchorRef.current = null
-      }
-    })()
+    const unlisten = listen<boolean>('pet-menu-state', (event) => {
+      if (!disposed) setMenuOpen(Boolean(event.payload))
+    })
     return () => {
       disposed = true
+      void unlisten.then((fn) => fn()).catch(() => {})
     }
-  }, [menuOpen, preview])
-
-  function changePref(patch: Partial<PetConfig>) {
-    const next = { ...configRef.current, ...patch }
-    configRef.current = next
-    setConfig(next)
-    void emitTo('main', 'pet-pref', patch).catch(() => {})
-  }
+  }, [preview])
 
   return (
     <div
@@ -480,82 +431,6 @@ export function PetWindow({ preview = false }: Props) {
           }}
         />
       </div>
-      {menuOpen && (
-        <div
-          className="pet-menu"
-          role="dialog"
-          aria-label={t.settings.petGroupTitle}
-          style={{ width: MENU_W, height: MENU_H }}
-        >
-          <div className="pet-menu-head">
-            <strong>{t.settings.petGroupTitle}</strong>
-            <button className="btn ghost" onClick={() => setMenuOpen(false)}>
-              {t.common.close}
-            </button>
-          </div>
-          <button
-            className="btn primary"
-            onClick={() => {
-              setMenuOpen(false)
-              void petOpenSettings()
-            }}
-          >
-            {t.titlebar.settings}
-          </button>
-          <div className="pet-menu-label">{t.settings.petSizeLabel}</div>
-          <div className="seg">
-            {(['small', 'medium', 'large'] as const).map((size) => (
-              <button
-                key={size}
-                className={config.size === size ? 'active' : ''}
-                onClick={() => changePref({ size })}
-              >
-                {size === 'small'
-                  ? t.settings.petSizeSmall
-                  : size === 'large'
-                    ? t.settings.petSizeLarge
-                    : t.settings.petSizeMedium}
-              </button>
-            ))}
-          </div>
-          <div className="pet-menu-label">{t.settings.petSkinLabel}</div>
-          <div className="seg">
-            {PET_MODELS.map((model) => {
-              const unlocked = config.unlocked?.includes(model) ?? model === 'block'
-              return (
-                <button
-                  key={model}
-                  className={config.skin === model ? 'active' : ''}
-                  disabled={!unlocked}
-                  title={unlocked ? undefined : t.settings.petSkinHint}
-                  onClick={() => changePref({ skin: model })}
-                >
-                  {model === 'cat'
-                    ? t.settings.petSkinCat
-                    : model === 'bot'
-                      ? t.settings.petSkinBot
-                      : t.settings.petSkinBlock}
-                </button>
-              )
-            })}
-          </div>
-          <div className="pet-menu-label">{t.settings.petRoamLabel}</div>
-          <div className="seg">
-            <button
-              className={config.roam ? 'active' : ''}
-              onClick={() => changePref({ roam: true })}
-            >
-              {t.settings.petRoamOn}
-            </button>
-            <button
-              className={!config.roam ? 'active' : ''}
-              onClick={() => changePref({ roam: false })}
-            >
-              {t.settings.petRoamOff}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

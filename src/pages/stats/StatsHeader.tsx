@@ -23,8 +23,8 @@ export function StatsHeader({ t, grandTotalMinutes, repairBricks, onOpenMemorabi
       }}
     >
       <div>
-        <h1 style={{ fontSize: 'var(--fs-display)', margin: '0 0 6px' }}>{t.stats.title}</h1>
-        <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)', marginBottom: 18 }}>
+        <h1 style={{ fontSize: 'var(--fs-title)', margin: 0 }}>{t.stats.title}</h1>
+        <div style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
           {t.stats.subtitle}
           {grandTotalMinutes > 0 && (
             <span> · {t.stats.focusHours((grandTotalMinutes / 60).toFixed(1))}</span>
@@ -37,16 +37,7 @@ export function StatsHeader({ t, grandTotalMinutes, repairBricks, onOpenMemorabi
         style={{ display: 'flex', alignItems: 'center', gap: 8 }}
       >
         <button
-          className="btn ghost stats-header-pill"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 5,
-            padding: '4px 12px',
-            fontSize: 'var(--fs-small)',
-            borderRadius: 999,
-            flexShrink: 0
-          }}
+          className="btn ghost stats-header-pill block-action"
           onClick={() => {
             triggerHaptic('light')
             onOpenMemorabilia()
@@ -58,19 +49,8 @@ export function StatsHeader({ t, grandTotalMinutes, repairBricks, onOpenMemorabi
         </button>
 
         <div
-          className="stats-header-pill"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'var(--surface)',
-            border: '1px solid var(--line)',
-            borderRadius: 999,
-            padding: '4px 12px',
-            fontSize: 'var(--fs-small)',
-            fontWeight: 600,
-            flexShrink: 0
-          }}
+          className="stats-header-pill block-action is-static"
+          style={{ fontWeight: 600 }}
           title={t.stats.repairBricksTooltip}
         >
           <IconRepair size={13} style={{ color: 'var(--accent)' }} />

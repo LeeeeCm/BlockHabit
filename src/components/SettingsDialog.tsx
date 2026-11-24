@@ -145,11 +145,7 @@ export function SettingsDialog({ onClose, focusPet = false }: Props) {
       </PreferencesGroup>
 
       {/* 2. 桌宠：独立分组，右键桌宠直达 */}
-      <PetSettingsGroup
-        settings={settings}
-        t={t}
-        onUpdateSettings={updateSettings}
-      />
+      <PetSettingsGroup settings={settings} t={t} onUpdateSettings={updateSettings} />
 
       {/* 3. 数据与同步：备份 / 导入 / 诊断 / 完整档案包 / WebDAV */}
       <Group title={t.settings.groupData} collapsible defaultOpen={false}>

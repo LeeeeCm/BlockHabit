@@ -73,6 +73,59 @@ fn pet_open_main(app: AppHandle) {
     show_main(&app);
 }
 
+/// 桌宠右键：独立面板窗，尽量放在桌宠右侧，放不下翻到左侧；不移动桌宠本身。
+#[tauri::command]
+fn toggle_pet_menu(app: AppHandle) -> bool {
+    use tauri::Emitter;
+    let Some(menu) = app.get_webview_window("pet-menu") else {
+        return false;
+    };
+    if menu.is_visible().unwrap_or(false) {
+        let _ = menu.hide();
+        let _ = app.emit_to("pet", "pet-menu-state", false);
+        return false;
+    }
+    if let Some(pet) = app.get_webview_window("pet") {
+        let scale = pet.scale_factor().unwrap_or(1.0);
+        let gap = 8.0 * scale;
+        if let (Ok(pet_pos), Ok(pet_size), Ok(menu_size)) =
+            (pet.outer_position(), pet.outer_size(), menu.outer_size())
+        {
+            let mut x = pet_pos.x + pet_size.width as i32 + gap as i32;
+            let mut y = pet_pos.y;
+            if let Ok(Some(monitor)) = pet.current_monitor() {
+                let area = monitor.work_area();
+                let right = area.position.x + area.size.width as i32;
+                let bottom = area.position.y + area.size.height as i32;
+                if x + menu_size.width as i32 > right {
+                    x = pet_pos.x - menu_size.width as i32 - gap as i32;
+                }
+                y = y.min(bottom - menu_size.height as i32 - gap as i32);
+                y = y.max(area.position.y + gap as i32);
+            }
+            let _ = menu.set_position(PhysicalPosition::new(x, y));
+        }
+    }
+    let _ = menu.show();
+    let _ = menu.set_focus();
+    let _ = app.emit_to("pet", "pet-menu-state", true);
+    true
+}
+
+#[tauri::command]
+fn set_pet_menu_visible(app: AppHandle, visible: bool) {
+    use tauri::Emitter;
+    if let Some(menu) = app.get_webview_window("pet-menu") {
+        if visible {
+            let _ = menu.show();
+            let _ = menu.set_focus();
+        } else {
+            let _ = menu.hide();
+        }
+    }
+    let _ = app.emit_to("pet", "pet-menu-state", visible);
+}
+
 /// 桌宠右键：唤起主窗并请求打开设置里的桌宠分组
 #[tauri::command]
 fn pet_open_settings(app: AppHandle) {
@@ -155,6 +208,8 @@ pub fn run() {
             tray_menu,
             set_pet_visible,
             pet_open_main,
+            toggle_pet_menu,
+            set_pet_menu_visible,
             pet_open_settings,
             confirm_quit,
             credentials::credential_available,

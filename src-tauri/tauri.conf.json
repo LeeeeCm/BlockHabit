@@ -49,6 +49,21 @@
         "shadow": false,
         "focus": false,
         "backgroundColor": "#00000000"
+      },
+      {
+        "label": "pet-menu",
+        "title": "",
+        "width": 236,
+        "height": 300,
+        "resizable": false,
+        "decorations": false,
+        "visible": false,
+        "skipTaskbar": true,
+        "alwaysOnTop": true,
+        "transparent": true,
+        "shadow": false,
+        "focus": false,
+        "backgroundColor": "#00000000"
       }
     ],
     "security": {

@@ -901,6 +901,24 @@
       "owner": "Claude Code",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261124-099-gallery-thumb-fix.md"
+    },
+    {
+      "id": "D-20261124-100",
+      "date": "2026-11-24",
+      "title": "三页顶栏高度统一、倒角方块动作与移除建造页夜灯",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261124-100-top-bar-block-actions.md"
+    },
+    {
+      "id": "D-20261124-101",
+      "date": "2026-11-24",
+      "title": "桌宠右键面板改为独立透明窗，不移动桌宠",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261124-101-independent-pet-menu.md"
     }
   ]
 }

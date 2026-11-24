@@ -237,6 +237,20 @@ function paintPart(
 }
 
 /** 小窗只为短跳预留最少上升空间；宽松画布保留完整幅度，整段不重取景。 */
+/** 桌宠脚底/接地线的屏幕 y；缩放角色时以它为锚点，底部位置不变。 */
+export function petStageFloor(width: number, height: number): number {
+  const scale = Math.min(
+    MAX_STAGE_SCALE,
+    (width - PAD * 2) / (2 * tileW),
+    (height - PAD * 2) / (TURNED_BODY_HEIGHT + FLOOR_ROOM + MIN_HOP_LIFT)
+  )
+  if (scale <= 0) return height
+  return Math.max(
+    PAD + (TURNED_BODY_HEIGHT + MIN_HOP_LIFT) * scale,
+    (height + (blockH + STUD_H) * scale) / 2
+  )
+}
+
 export function paintPet(ctx: CanvasRenderingContext2D, frame: PetFrame): void {
   const { width, height, pose, palette, model } = frame
   const scale = Math.min(
@@ -245,10 +259,7 @@ export function paintPet(ctx: CanvasRenderingContext2D, frame: PetFrame): void {
     (height - PAD * 2) / (TURNED_BODY_HEIGHT + FLOOR_ROOM + MIN_HOP_LIFT)
   )
   if (scale <= 0) return
-  const floor = Math.max(
-    PAD + (TURNED_BODY_HEIGHT + MIN_HOP_LIFT) * scale,
-    (height + (blockH + STUD_H) * scale) / 2
-  )
+  const floor = petStageFloor(width, height)
   const liftRoom = Math.min(PEAK_HOP_LIFT, (floor - PAD) / scale - TURNED_BODY_HEIGHT)
   const geometry = projectPet(model, pose.turn)
   const lighting = petLighting(palette, pose.turn, frame.shading)

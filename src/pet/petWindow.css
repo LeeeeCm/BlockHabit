@@ -1,9 +1,26 @@
 html[data-win='pet'],
 html[data-win='pet'] body,
-html[data-win='pet'] #root {
+html[data-win='pet'] #root,
+html[data-win='pet-menu'],
+html[data-win='pet-menu'] body,
+html[data-win='pet-menu'] #root {
   background: transparent !important;
   margin: 0;
   overflow: hidden;
+}
+
+.pet-menu-window {
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.pet-menu-window .pet-menu {
+  width: 100%;
+  height: 100%;
+  margin: 0;
 }
 
 .pet-menu {
