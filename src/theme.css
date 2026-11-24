@@ -55,11 +55,12 @@
   --font-body: 'Rubik', 'AlimamaShuHeiTi', 'MiSans', -apple-system, BlinkMacSystemFont, sans-serif;
 
   font-family: var(--font-body);
-  /* 圆角体系 */
+  /* 圆角体系（D-20261125-111：胶囊退役，控件改用倒角方块） */
+  --r-xs: 6px;
   --r-sm: 10px;
   --r-md: 14px;
   --r-lg: 20px;
-  --r-pill: 999px;
+  --r-pill: 999px; /* 已退役：仅保留令牌，UI 不再引用 */
 
   font-family: var(--font-body);
   font-size: var(--fs-title);

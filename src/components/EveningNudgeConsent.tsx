@@ -51,14 +51,14 @@ export function EveningNudgeConsent({
         <button
           className="btn primary"
           onClick={onEnable}
-          style={{ padding: '6px 14px', fontSize: 'var(--fs-small)', borderRadius: 999 }}
+          style={{ padding: '6px 14px', fontSize: 'var(--fs-small)', borderRadius: 'var(--r-sm)' }}
         >
           {t.eveningNudge.consentEnable}
         </button>
         <button
           className="btn ghost"
           onClick={onDecline}
-          style={{ padding: '6px 14px', fontSize: 'var(--fs-small)', borderRadius: 999 }}
+          style={{ padding: '6px 14px', fontSize: 'var(--fs-small)', borderRadius: 'var(--r-sm)' }}
         >
           {t.eveningNudge.consentLater}
         </button>

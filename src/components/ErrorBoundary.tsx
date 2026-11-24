@@ -22,7 +22,7 @@ interface ErrorFallbackProps {
  * 崩溃兜底界面（A4 稳定性兜底）。
  *
  * 视觉纪律（AGENTS §3 硬约束 1 + design/README.md A1–A4）：
- * - 只用现有令牌 var(--bg/--surface/--ink/--ink-2/--line/--r-md/--r-lg/--r-pill)；
+ * - 只用现有令牌 var(--bg/--surface/--ink/--ink-2/--line/--r-xs/--r-sm/--r-md/--r-lg)；
  * - 一块黑白卡片 + 1px 细线 + 胶囊按钮，不新增颜色 / 阴影 / 圆角档位 / 字体 / 动效；
  * - 文案全部走 i18n（useI18n 的 t.errorBoundary.*），zh/en 同步。
  */
@@ -119,7 +119,7 @@ function ErrorFallback({ variant }: ErrorFallbackProps) {
             data-testid="error-boundary-reload"
             className="btn primary"
             style={{
-              borderRadius: 'var(--r-pill)',
+              borderRadius: 'var(--r-sm)',
               fontSize: isTray ? 10.5 : 13.5,
               lineHeight: isTray ? 1.2 : undefined,
               padding: isTray ? '4px 9px' : undefined
@@ -133,7 +133,7 @@ function ErrorFallback({ variant }: ErrorFallbackProps) {
             data-testid="error-boundary-export"
             className="btn ghost"
             style={{
-              borderRadius: 'var(--r-pill)',
+              borderRadius: 'var(--r-sm)',
               fontSize: isTray ? 10.5 : 13.5,
               lineHeight: isTray ? 1.2 : undefined,
               padding: isTray ? '4px 9px' : undefined

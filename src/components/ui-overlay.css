@@ -231,7 +231,7 @@
   color: var(--bg);
   padding: 10px 24px;
   font-size: var(--fs-subhead);
-  border-radius: var(--r-pill);
+  border-radius: var(--r-md);
   z-index: 100;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
   animation: toast-in var(--dur-md) var(--ease-bounce);

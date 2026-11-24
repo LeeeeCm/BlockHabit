@@ -115,7 +115,7 @@ export function TodayEmptyState({ blueprintId, onTemplatePick, onNewHabit, onGoB
           className="btn primary"
           style={{
             padding: '8px 20px',
-            borderRadius: 999,
+            borderRadius: 'var(--r-sm)',
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
@@ -132,7 +132,7 @@ export function TodayEmptyState({ blueprintId, onTemplatePick, onNewHabit, onGoB
         {onGoBuild && (
           <button
             className="btn ghost"
-            style={{ padding: '8px 18px', borderRadius: 999, fontSize: 'var(--fs-body)' }}
+            style={{ padding: '8px 18px', borderRadius: 'var(--r-sm)', fontSize: 'var(--fs-body)' }}
             onClick={() => {
               triggerHaptic('selection')
               onGoBuild?.()

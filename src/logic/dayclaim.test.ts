@@ -37,6 +37,11 @@ describe('canClaimDay（每日全任务完成才掉一块积木）', () => {
     expect(canClaimDay([daily, weekly2], cs, [], '2026-08-22').ok).toBe(true)
   })
 
+  it('weekly habit checked in today counts as done before quota', () => {
+    const cs = [ci('h1', '2026-08-22'), ci('h2', '2026-08-22')]
+    expect(canClaimDay([daily, weekly2], cs, [], '2026-08-22').ok).toBe(true)
+  })
+
   it('all done → ok', () => {
     const daily2 = { ...daily, id: 'h3' }
     const cs = [ci('h1', '2026-08-22'), ci('h3', '2026-08-22')]

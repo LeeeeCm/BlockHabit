@@ -96,7 +96,11 @@ export function TodayFullDayCard({ claimed, onClaim, onCelebrate }: Props) {
           {onCelebrate && (
             <button
               className="btn ghost"
-              style={{ padding: '5px 12px', fontSize: 'var(--fs-small)', borderRadius: 999 }}
+              style={{
+                padding: '5px 12px',
+                fontSize: 'var(--fs-small)',
+                borderRadius: 'var(--r-sm)'
+              }}
               onClick={() => {
                 triggerHaptic('selection')
                 onCelebrate()

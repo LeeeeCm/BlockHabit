@@ -13,6 +13,8 @@ interface Props {
   t: TranslationSchema
   isMobile: boolean
   done: boolean
+  /** 周配额已满、今日未打卡：显示完成但不可撤销 */
+  doneByQuotaOnly: boolean
   running: boolean
   ended: boolean
   missed: boolean
@@ -32,6 +34,7 @@ export function HabitRowHeader({
   t,
   isMobile,
   done,
+  doneByQuotaOnly,
   running,
   ended,
   missed,
@@ -50,9 +53,12 @@ export function HabitRowHeader({
       <button
         className="status-btn"
         onClick={onStatusClick}
+        aria-disabled={doneByQuotaOnly || undefined}
         title={
           done
-            ? t.today.undoTooltip
+            ? doneByQuotaOnly
+              ? t.today.weekQuotaMet
+              : t.today.undoTooltip
             : isRestDay
               ? t.today.restDay
               : missed

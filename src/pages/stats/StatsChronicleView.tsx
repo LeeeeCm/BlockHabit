@@ -206,7 +206,7 @@ export function StatsChronicleView({
                           style={{
                             fontSize: 'var(--fs-caption)',
                             padding: '2px 8px',
-                            borderRadius: 999,
+                            borderRadius: 'var(--r-xs)',
                             background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
                             color: 'var(--ink)',
                             fontWeight: 600,

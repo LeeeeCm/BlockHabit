@@ -64,6 +64,8 @@ export const zh: TranslationSchema = {
     freqWeekends: '周末',
     freqCustom: (days) => `周${days.join('、')}`,
     freqWeekly: (times) => `每周 ${times} 次`,
+    freqWeeklyProgress: (done, times) => `每周 ${done}/${times} 次`,
+    weekQuotaMet: '本周已达标',
     instantCheckIn: '瞬时打卡',
     targetMinutes: (min) => `${min} 分钟`,
     focus: '专注',

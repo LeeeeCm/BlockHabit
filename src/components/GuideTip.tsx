@@ -72,7 +72,7 @@ export function GuideTip({
           type="button"
           className="btn ghost"
           onClick={onDismiss}
-          style={{ padding: '3px 12px', fontSize: 'var(--fs-small)', borderRadius: 999 }}
+          style={{ padding: '3px 12px', fontSize: 'var(--fs-small)', borderRadius: 'var(--r-sm)' }}
         >
           {dismissLabel}
         </button>

@@ -390,13 +390,14 @@ function buildCheckInIndex(checkIns: CheckIn[]): CheckInIndex {
 /** 与 habitMetOnDay 同语义的索引版（weekly/counter/custom 全部覆盖） */
 function habitMetWithIndex(habit: Habit, index: CheckInIndex, day: string): boolean {
   if (habit.frequency.type === 'custom' && !isHabitDueOnDay(habit, day)) return true
-  if (habit.kind === 'counter' && habit.targetValue) {
-    return (index.dayValues.get(habit.id)?.get(day) ?? 0) >= habit.targetValue
+  if (habit.kind === 'counter') {
+    return (index.dayValues.get(habit.id)?.get(day) ?? 0) >= (habit.targetValue ?? 1)
   }
   if (habit.frequency.type === 'daily' || habit.frequency.type === 'custom') {
     return index.dates.get(habit.id)?.has(day) === true
   }
   if (habit.frequency.type === 'weekly') {
+    if (index.dates.get(habit.id)?.has(day) === true) return true
     const weekKey = dateKey(weekStart(parseKey(day)))
     return (index.weekCounts.get(habit.id)?.get(weekKey) ?? 0) >= habit.frequency.times
   }
@@ -404,7 +405,7 @@ function habitMetWithIndex(habit: Habit, index: CheckInIndex, day: string): bool
 }
 
 function dayRatioWithIndex(habits: Habit[], index: CheckInIndex, day: string): number {
-  const active = habits.filter((h) => !h.archivedAt && habitActiveOnDay(h, day))
+  const active = habits.filter((h) => habitActiveOnDay(h, day))
   if (active.length === 0) return -1
   const met = active.filter((h) => habitMetWithIndex(h, index, day)).length
   return met / active.length

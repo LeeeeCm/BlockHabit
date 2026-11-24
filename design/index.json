@@ -991,6 +991,42 @@
       "owner": "Claude Code",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261124-109-page-scroll-full-width.md"
+    },
+    {
+      "id": "D-20261125-110",
+      "date": "2026-11-25",
+      "title": "周频习惯今日打卡即显示完成，卡片频率改为本周完成数/目标",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261125-110-weekly-today-done.md"
+    },
+    {
+      "id": "D-20261125-111",
+      "date": "2026-11-25",
+      "title": "退役全圆胶囊，按钮与徽章统一为倒角方块",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261125-111-block-corners.md"
+    },
+    {
+      "id": "D-20261125-112",
+      "date": "2026-11-25",
+      "title": "桌宠眼睛改为纵向长椭圆，避免小尺寸缩成圆点",
+      "status": "superseded",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261125-112-pet-oval-eyes.md"
+    },
+    {
+      "id": "D-20261125-113",
+      "date": "2026-11-25",
+      "title": "桌宠眼睛改为竖向胶囊，取代椭圆方案",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261125-113-pet-capsule-eyes.md"
     }
   ]
 }

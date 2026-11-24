@@ -35,7 +35,7 @@ function FieldLabel({
           style={{
             fontSize: 'var(--fs-caption)',
             border: '1px solid var(--line)',
-            borderRadius: 999,
+            borderRadius: 'var(--r-xs)',
             padding: '1px 7px',
             color: 'var(--ink-2)'
           }}
@@ -343,7 +343,11 @@ export function HabitDialog({ habit, onClose }: Props) {
               <button
                 type="button"
                 className="btn ghost"
-                style={{ fontSize: 'var(--fs-small)', padding: '3px 8px', borderRadius: 999 }}
+                style={{
+                  fontSize: 'var(--fs-small)',
+                  padding: '3px 8px',
+                  borderRadius: 'var(--r-sm)'
+                }}
                 onClick={() => setCustomDays([1, 2, 3, 4, 5])}
               >
                 {t.habitDialog.selectWorkdays}
@@ -351,7 +355,11 @@ export function HabitDialog({ habit, onClose }: Props) {
               <button
                 type="button"
                 className="btn ghost"
-                style={{ fontSize: 'var(--fs-small)', padding: '3px 8px', borderRadius: 999 }}
+                style={{
+                  fontSize: 'var(--fs-small)',
+                  padding: '3px 8px',
+                  borderRadius: 'var(--r-sm)'
+                }}
                 onClick={() => setCustomDays([6, 7])}
               >
                 {t.habitDialog.selectWeekends}
@@ -359,7 +367,11 @@ export function HabitDialog({ habit, onClose }: Props) {
               <button
                 type="button"
                 className="btn ghost"
-                style={{ fontSize: 'var(--fs-small)', padding: '3px 8px', borderRadius: 999 }}
+                style={{
+                  fontSize: 'var(--fs-small)',
+                  padding: '3px 8px',
+                  borderRadius: 'var(--r-sm)'
+                }}
                 onClick={() => setCustomDays([1, 2, 3, 4, 5, 6, 7])}
               >
                 {t.habitDialog.selectAll}
@@ -538,7 +550,7 @@ export function HabitDialog({ habit, onClose }: Props) {
                         style={{
                           fontSize: 'var(--fs-caption)',
                           padding: '2px 8px',
-                          borderRadius: 999
+                          borderRadius: 'var(--r-sm)'
                         }}
                         title={t.common.cancel}
                         onClick={() => setRemEnd(null)}
@@ -553,7 +565,7 @@ export function HabitDialog({ habit, onClose }: Props) {
                       style={{
                         fontSize: 'var(--fs-small)',
                         padding: '3px 10px',
-                        borderRadius: 999
+                        borderRadius: 'var(--r-sm)'
                       }}
                       onClick={() => setRemEnd(plusMinutes(remStart, 90))}
                     >

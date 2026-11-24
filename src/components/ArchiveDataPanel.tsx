@@ -187,7 +187,7 @@ export function ArchiveBackupsPanel({ onToast, onRestoreCandidate }: BackupsPane
                   style={{
                     fontSize: 'var(--fs-caption)',
                     padding: '1px 6px',
-                    borderRadius: 999,
+                    borderRadius: 'var(--r-xs)',
                     background: 'color-mix(in srgb, var(--ink) 7%, transparent)'
                   }}
                 >

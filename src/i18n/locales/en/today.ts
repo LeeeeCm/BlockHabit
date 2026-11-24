@@ -26,6 +26,8 @@ export const today: TranslationSchema['today'] = {
   freqWeekends: 'Weekends',
   freqCustom: (days) => `${days.join(', ')}`,
   freqWeekly: (times) => `${times}x / week`,
+  freqWeeklyProgress: (done, times) => `${done}/${times}x / week`,
+  weekQuotaMet: 'Weekly goal met',
   instantCheckIn: 'Instant',
   targetMinutes: (min) => `${min} min`,
   focus: 'Focus',

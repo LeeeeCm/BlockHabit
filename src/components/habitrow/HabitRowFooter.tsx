@@ -3,13 +3,22 @@ import type { TranslationSchema } from '../../i18n'
 interface Props {
   t: TranslationSchema
   done: boolean
+  /** 周配额已满、今日未打卡：显示完成但不可撤销 */
+  doneByQuotaOnly: boolean
   isRestDay: boolean
   streak: number
   onPillClick: (e: React.MouseEvent) => void
 }
 
-/** 卡片底部：完成/休整/待打卡胶囊 + 当前连击。 */
-export function HabitRowFooter({ t, done, isRestDay, streak, onPillClick }: Props) {
+/** 卡片底部：完成/休整/待打卡徽章 + 当前连击。 */
+export function HabitRowFooter({
+  t,
+  done,
+  doneByQuotaOnly,
+  isRestDay,
+  streak,
+  onPillClick
+}: Props) {
   return (
     <div
       style={{
@@ -24,7 +33,7 @@ export function HabitRowFooter({ t, done, isRestDay, streak, onPillClick }: Prop
       <span
         style={{
           fontSize: 'var(--fs-small)',
-          borderRadius: 999,
+          borderRadius: 'var(--r-xs)',
           padding: '3px 11px',
           color: done ? 'var(--accent-ink)' : 'var(--ink-2)',
           background: done
@@ -33,10 +42,18 @@ export function HabitRowFooter({ t, done, isRestDay, streak, onPillClick }: Prop
               ? 'color-mix(in srgb, var(--ink) 4%, transparent)'
               : 'var(--bg)',
           border: done ? 'none' : '1px solid var(--line)',
-          cursor: done ? 'pointer' : 'default'
+          cursor: done && !doneByQuotaOnly ? 'pointer' : 'default'
         }}
         onClick={onPillClick}
-        title={done ? t.today.undoTooltip : isRestDay ? t.today.restDay : undefined}
+        title={
+          done
+            ? doneByQuotaOnly
+              ? t.today.weekQuotaMet
+              : t.today.undoTooltip
+            : isRestDay
+              ? t.today.restDay
+              : undefined
+        }
       >
         {done ? t.today.completedPill : isRestDay ? t.today.restDay : t.today.checkInTooltip}
       </span>

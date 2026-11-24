@@ -57,7 +57,7 @@ export function BrickInspectPopover({ block, containerWidth, containerHeight }: 
               style={{
                 fontSize: 'var(--fs-caption)',
                 padding: '2px 6px',
-                borderRadius: 999,
+                borderRadius: 'var(--r-xs)',
                 background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
                 color: 'var(--ink)',
                 fontWeight: 600,

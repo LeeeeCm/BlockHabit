@@ -161,8 +161,9 @@ function paintEyes(
       if (mood === 'happy') ctx.quadraticCurveTo(x, y - rx * 1.7, x + rx, y)
       else ctx.lineTo(x + rx, y)
     } else {
-      ctx.moveTo(x + rx, y)
-      ctx.ellipse(x, y, rx, radius * 1.2, 0, 0, 2 * Math.PI)
+      const ry = radius * 2
+      // 竖向胶囊：上下端半圆、左右直边，不再是圆点或椭圆
+      ctx.roundRect(x - rx, y - ry, rx * 2, ry * 2, rx)
     }
   }
   if (eyesAsLines) ctx.stroke()

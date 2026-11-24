@@ -168,7 +168,7 @@ export function BottomTabBar({
                   bottom: 2,
                   width: 14,
                   height: 2.5,
-                  borderRadius: 999,
+                  borderRadius: 'var(--r-xs)',
                   background: 'var(--accent)',
                   transition: 'width var(--dur-md) var(--ease-default)'
                 }}

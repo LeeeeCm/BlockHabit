@@ -89,7 +89,7 @@ export function TodayBrief({
           onClick={onStartFirst}
           style={{
             padding: '7px 16px',
-            borderRadius: 999,
+            borderRadius: 'var(--r-sm)',
             fontSize: 'var(--fs-body)',
             display: 'inline-flex',
             alignItems: 'center',

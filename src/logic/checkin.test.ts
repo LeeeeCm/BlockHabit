@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { canCheckIn, weekCountFor, habitMetOnDay, isDayComplete } from './checkin'
+import { canCheckIn, weekCountFor, habitMetOnDay, habitDoneOnDay, isDayComplete } from './checkin'
 import type { Habit, CheckIn } from '../types'
 
 const daily: Habit = {
@@ -12,6 +12,12 @@ const weekly3: Habit = {
   id: 'h2',
   name: '健身',
   frequency: { type: 'weekly', times: 3 },
+  createdAt: '2026-08-01T00:00:00.000Z'
+}
+const weekdays: Habit = {
+  id: 'h4',
+  name: '上班',
+  frequency: { type: 'custom', days: [1, 2, 3, 4, 5] },
   createdAt: '2026-08-01T00:00:00.000Z'
 }
 
@@ -117,6 +123,63 @@ describe('weekCountFor', () => {
   })
 })
 
+describe('habitMetOnDay（周频）', () => {
+  it('today check-in counts as met even before weekly quota', () => {
+    const cs = [ci('h2', '2026-08-17')]
+    expect(habitMetOnDay(weekly3, cs, '2026-08-17')).toBe(true)
+    // 同周未打卡的另一天仍是未完成
+    expect(habitMetOnDay(weekly3, cs, '2026-08-18')).toBe(false)
+  })
+
+  it('week quota met keeps remaining days completed', () => {
+    const cs = [ci('h2', '2026-08-17'), ci('h2', '2026-08-18'), ci('h2', '2026-08-19')]
+    expect(habitMetOnDay(weekly3, cs, '2026-08-22')).toBe(true)
+  })
+
+  it('deleted check-in does not count today', () => {
+    const deleted = {
+      ...ci('h2', '2026-08-17'),
+      deletedAt: '2026-08-17T13:00:00.000Z'
+    }
+    expect(habitMetOnDay(weekly3, [deleted], '2026-08-17')).toBe(false)
+  })
+
+  it('counter without targetValue uses 1 instead of weekly quota', () => {
+    const counter: Habit = {
+      id: 'h5',
+      name: '喝水',
+      kind: 'counter',
+      frequency: { type: 'weekly', times: 3 },
+      createdAt: '2026-08-01T00:00:00.000Z'
+    }
+    const zero = { ...ci('h5', '2026-08-17'), value: 0 }
+    expect(habitMetOnDay(counter, [zero], '2026-08-17')).toBe(false)
+    const one = { ...ci('h5', '2026-08-17'), value: 1 }
+    expect(habitMetOnDay(counter, [one], '2026-08-17')).toBe(true)
+  })
+})
+
+describe('habitDoneOnDay（今日卡片完成态）', () => {
+  it('自定义休息日无打卡 → 免战、不算完成', () => {
+    expect(habitDoneOnDay(weekdays, [], '2026-08-22')).toBe(false)
+  })
+
+  it('自定义休息日主动打卡 → 完成且可撤销', () => {
+    expect(habitDoneOnDay(weekdays, [ci('h4', '2026-08-22')], '2026-08-22')).toBe(true)
+  })
+
+  it('自定义执行日仍按当天打卡判定', () => {
+    expect(habitDoneOnDay(weekdays, [], '2026-08-17')).toBe(false)
+    expect(habitDoneOnDay(weekdays, [ci('h4', '2026-08-17')], '2026-08-17')).toBe(true)
+  })
+
+  it('周频：今日打卡或本周配额满都算完成', () => {
+    expect(habitDoneOnDay(weekly3, [ci('h2', '2026-08-17')], '2026-08-17')).toBe(true)
+    const quota = [ci('h2', '2026-08-17'), ci('h2', '2026-08-18'), ci('h2', '2026-08-19')]
+    expect(habitDoneOnDay(weekly3, quota, '2026-08-22')).toBe(true)
+  })
+})
+
 describe('isDayComplete', () => {
   it('true when every active habit met', () => {
     const habits = [daily, weekly3]
@@ -141,6 +204,11 @@ describe('isDayComplete', () => {
       ci('h2', '2026-08-18'),
       ci('h2', '2026-08-19')
     ]
+    expect(isDayComplete([daily, weekly3], cs, '2026-08-22')).toBe(true)
+  })
+
+  it("weekly habit met by today's check-in alone", () => {
+    const cs = [ci('h1', '2026-08-22'), ci('h2', '2026-08-22')]
     expect(isDayComplete([daily, weekly3], cs, '2026-08-22')).toBe(true)
   })
 

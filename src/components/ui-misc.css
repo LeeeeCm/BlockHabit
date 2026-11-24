@@ -33,7 +33,7 @@
   align-items: center;
   background: color-mix(in srgb, var(--ink) 6%, transparent);
   padding: 3px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-md);
   border: 1px solid color-mix(in srgb, var(--ink) 5%, transparent);
   gap: 2px;
 }
@@ -46,7 +46,7 @@
   font-size: var(--fs-body);
   font-weight: 500;
   color: var(--ink-2);
-  border-radius: var(--r-pill);
+  border-radius: var(--r-sm);
   border: none;
   background: transparent;
   cursor: pointer;
@@ -270,7 +270,7 @@
   font-weight: 700;
   color: var(--danger);
   border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
-  border-radius: 999px;
+  border-radius: var(--r-xs);
   padding: 1px 8px;
 }
 .reminder-item-actions {

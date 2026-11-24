@@ -85,13 +85,13 @@ describe('ErrorBoundary 崩溃兜底', () => {
     expect(reloadButton.textContent).toBe(translations.zh.errorBoundary.reload)
     expect(exportButton.textContent).toBe(translations.zh.errorBoundary.export)
 
-    // 复用既有按钮类名与既有胶囊圆角令牌：不新增颜色 / 阴影 / 圆角档位
+    // 复用既有按钮类名与圆角令牌：不新增颜色 / 阴影 / 圆角档位
     expect(reloadButton.className).toContain('btn')
     expect(reloadButton.className).toContain('primary')
     expect(exportButton.className).toContain('btn')
     expect(exportButton.className).toContain('ghost')
-    expect(reloadButton.style.borderRadius).toBe('var(--r-pill)')
-    expect(exportButton.style.borderRadius).toBe('var(--r-pill)')
+    expect(reloadButton.style.borderRadius).toBe('var(--r-sm)')
+    expect(exportButton.style.borderRadius).toBe('var(--r-sm)')
   })
 
   it('reloads the page when the reload button is clicked', () => {

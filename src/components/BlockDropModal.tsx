@@ -136,7 +136,7 @@ export function BlockDropModal({
                 color: 'var(--accent-ink)',
                 background: 'var(--accent)',
                 padding: '2px 8px',
-                borderRadius: 999,
+                borderRadius: 'var(--r-xs)',
                 flexShrink: 0
               }}
             >
@@ -166,7 +166,7 @@ export function BlockDropModal({
             style={{
               padding: '4px 12px',
               fontSize: 'var(--fs-small)',
-              borderRadius: 999,
+              borderRadius: 'var(--r-sm)',
               flexShrink: 0,
               marginLeft: 12
             }}
@@ -314,7 +314,7 @@ export function BlockDropModal({
             style={{
               height: 6,
               background: 'var(--line)',
-              borderRadius: 999,
+              borderRadius: 'var(--r-xs)',
               overflow: 'hidden'
             }}
           >
@@ -323,7 +323,7 @@ export function BlockDropModal({
                 width: `${progressPercent}%`,
                 height: '100%',
                 background: complete ? 'var(--progress-green)' : 'var(--ink)',
-                borderRadius: 999,
+                borderRadius: 'var(--r-xs)',
                 transition: 'width var(--dur-xl) var(--ease-default)'
               }}
             />

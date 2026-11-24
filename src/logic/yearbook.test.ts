@@ -235,6 +235,31 @@ describe('闰年与月度完成度', () => {
     expect(days[0].future).toBe(false)
   })
 
+  it('周频习惯打卡当天计入完成比例（周配额未满也计入）', () => {
+    const habit = makeHabit('h1', { frequency: { type: 'weekly', times: 3 } })
+    const model = buildYearbook(
+      makeState({ habits: [habit], checkIns: [makeCheckIn('c1', 'h1', '2026-02-02')] }),
+      2026,
+      new Date(2026, 2, 1, 12, 0, 0)
+    )
+    const days = model.months[1].days
+    expect(days[1].ratio).toBe(1) // 2-02 打卡当天
+    expect(days[2].ratio).toBe(0) // 2-03 未打卡且周配额未满
+  })
+
+  it('归档习惯在归档前的历史完成率仍计入（与 dayCompletionRatio 一致）', () => {
+    const habit = makeHabit('h1', {
+      frequency: { type: 'weekly', times: 3 },
+      archivedAt: atLocal('2026-03-01', 12)
+    })
+    const model = buildYearbook(
+      makeState({ habits: [habit], checkIns: [makeCheckIn('c1', 'h1', '2026-02-02')] }),
+      2026,
+      new Date(2026, 2, 10, 12, 0, 0)
+    )
+    expect(model.months[1].days[1].ratio).toBe(1)
+  })
+
   it('月份打卡数与全勤标记来自事实', () => {
     const state = makeState({
       habits: [makeHabit('h1')],

@@ -91,7 +91,7 @@ export default function Build() {
               height: 6,
               background: 'var(--line)',
               maxWidth: 260,
-              borderRadius: 999
+              borderRadius: 'var(--r-xs)'
             }}
           >
             <div
@@ -99,7 +99,7 @@ export default function Build() {
                 width: `${progressRatio * 100}%`,
                 height: '100%',
                 background: complete ? 'var(--progress-green)' : 'var(--ink)',
-                borderRadius: 999,
+                borderRadius: 'var(--r-xs)',
                 transition: 'width var(--dur-xl) var(--ease-bounce)'
               }}
             />
@@ -185,7 +185,7 @@ export default function Build() {
             gap: 2,
             background: 'var(--surface)',
             padding: '3px 8px',
-            borderRadius: 999,
+            borderRadius: 'var(--r-md)',
             border: '1px solid var(--line)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             zIndex: 5
@@ -195,7 +195,7 @@ export default function Build() {
             className="icon-btn"
             onClick={() => setRotation((r) => (r - 1 + 4) % 4)}
             title={t.build.rotCcw}
-            style={{ width: 28, height: 28, borderRadius: 999 }}
+            style={{ width: 28, height: 28, borderRadius: 'var(--r-xs)' }}
           >
             <IconRotateCcw size={15} />
           </button>
@@ -215,7 +215,7 @@ export default function Build() {
             className="icon-btn"
             onClick={() => setRotation((r) => (r + 1) % 4)}
             title={t.build.rotCw}
-            style={{ width: 28, height: 28, borderRadius: 999 }}
+            style={{ width: 28, height: 28, borderRadius: 'var(--r-xs)' }}
           >
             <IconRotateCw size={15} />
           </button>
@@ -340,7 +340,7 @@ export default function Build() {
                     alignItems: 'center',
                     gap: 6,
                     padding: '5px 12px',
-                    borderRadius: 999,
+                    borderRadius: 'var(--r-xs)',
                     fontSize: 'var(--fs-small)',
                     color: 'var(--ink-2)',
                     background: 'color-mix(in srgb, var(--ink) 6%, transparent)'

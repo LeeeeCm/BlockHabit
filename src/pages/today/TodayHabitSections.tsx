@@ -1,7 +1,7 @@
 import { HabitRow } from '../../components/HabitRow'
 import { useI18n } from '../../i18n'
 import { currentStreakWithResilience } from '../../logic/streak'
-import { habitMetOnDay } from '../../logic/checkin'
+import { habitDoneOnDay } from '../../logic/checkin'
 import type { CheckIn, CheckInResult, Habit, HabitPeriod } from '../../types'
 import { PERIOD_ORDER } from './todayUtils'
 
@@ -46,10 +46,8 @@ export function TodayHabitSections({
         <div className="habit-grid">
           {list.map((h) => {
             const streakInfo = currentStreakWithResilience(h, checkIns, now, enableGentleDecay)
-            // 完成态 = 今日有打卡 且 达标（counter 未满目标不亮绿勾；周频达标但今日未打卡不算完成）
-            const doneToday =
-              checkIns.some((c) => !c.deletedAt && c.habitId === h.id && c.date === day) &&
-              habitMetOnDay(h, checkIns, day)
+            // 完成态 = 规则达标（周频：今日打卡或本周配额满；counter 未满目标不亮绿勾）；休息日无打卡时保持免战
+            const doneToday = habitDoneOnDay(h, checkIns, day)
             return (
               <HabitRow
                 key={h.id}

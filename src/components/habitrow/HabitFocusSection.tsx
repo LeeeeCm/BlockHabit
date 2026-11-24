@@ -4,6 +4,8 @@ import { fmtRemaining } from './helpers'
 interface Props {
   t: TranslationSchema
   isMobile: boolean
+  /** 卡片已达标（如周配额满）：只保留取消计时的入口，不再显示完成按钮 */
+  done: boolean
   running: boolean
   ended: boolean
   showFocusStart: boolean
@@ -26,6 +28,7 @@ interface Props {
 export function HabitFocusSection({
   t,
   isMobile,
+  done,
   running,
   ended,
   showFocusStart,
@@ -72,7 +75,7 @@ export function HabitFocusSection({
             </div>
 
             <div style={{ display: 'flex', gap: 6 }}>
-              {progressRatio >= 0.8 ? (
+              {!done && progressRatio >= 0.8 ? (
                 <button
                   className="pill-action success"
                   style={
@@ -83,7 +86,7 @@ export function HabitFocusSection({
                 >
                   {t.common.complete}
                 </button>
-              ) : progressRatio >= 0.2 ? (
+              ) : !done && progressRatio >= 0.2 ? (
                 <button
                   className="pill-action"
                   style={
@@ -107,7 +110,7 @@ export function HabitFocusSection({
             </div>
           </div>
 
-          {showEarlyConfirm && (
+          {showEarlyConfirm && !done && (
             <div
               style={{
                 marginTop: 8,
@@ -165,17 +168,28 @@ export function HabitFocusSection({
           >
             {t.today.timingTooltip}
           </span>
-          <button
-            className="pill-action success"
-            onClick={onEndedComplete}
-            style={{
-              background: 'var(--progress-green)',
-              color: 'var(--surface)',
-              ...(isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined)
-            }}
-          >
-            {t.common.complete}
-          </button>
+          {done ? (
+            <button
+              className="pill-action danger"
+              onClick={onCancelTimer}
+              title={t.today.cancelTimer}
+              style={isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined}
+            >
+              {t.today.cancelTimer}
+            </button>
+          ) : (
+            <button
+              className="pill-action success"
+              onClick={onEndedComplete}
+              style={{
+                background: 'var(--progress-green)',
+                color: 'var(--surface)',
+                ...(isMobile ? { minWidth: 44, minHeight: 44, padding: '10px 14px' } : undefined)
+              }}
+            >
+              {t.common.complete}
+            </button>
+          )}
         </div>
       )}
       {showFocusStart && (

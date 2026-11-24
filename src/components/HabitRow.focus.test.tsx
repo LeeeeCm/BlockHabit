@@ -29,12 +29,12 @@ const focusHabit: Habit = {
 
 const zh = getTranslation('zh')
 
-function renderRow() {
+function renderRow(done = false) {
   const container = document.createElement('div')
   document.body.appendChild(container)
   const root = createRoot(container)
   act(() => {
-    root.render(<HabitRow habit={focusHabit} done={false} streak={0} day={DAY} onCheck={vi.fn()} />)
+    root.render(<HabitRow habit={focusHabit} done={done} streak={0} day={DAY} onCheck={vi.fn()} />)
   })
   return {
     container,
@@ -126,5 +126,17 @@ describe('HabitRow 专注会话同步（B4 回归）', () => {
     const second = renderRow()
     expect(second.container.textContent).toContain(zh.today.timingTooltip)
     second.unmount()
+  })
+
+  it('卡片已达标但会话仍在运行：保留取消入口，不显示完成按钮', () => {
+    useTimerStore.getState().start(focusHabit.id, TARGET_MINUTES * MINUTE)
+    vi.setSystemTime(BASE_MS + 5 * MINUTE)
+
+    const { container, unmount } = renderRow(true)
+    const buttons = [...container.querySelectorAll('button')]
+    expect(container.textContent).toContain(zh.today.focusedMinutes(5))
+    expect(buttons.some((b) => b.textContent === zh.today.cancelTimer)).toBe(true)
+    expect(buttons.some((b) => b.textContent === zh.common.complete)).toBe(false)
+    unmount()
   })
 })

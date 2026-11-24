@@ -34,7 +34,7 @@ const CARD_STYLE: CSSProperties = {
 const SMALL_BTN: CSSProperties = {
   padding: '5px 12px',
   fontSize: 'var(--fs-small)',
-  borderRadius: 999
+  borderRadius: 'var(--r-sm)'
 }
 
 /**

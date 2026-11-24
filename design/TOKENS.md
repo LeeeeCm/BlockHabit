@@ -30,7 +30,7 @@
 
 ## 2. 圆角体系（theme.css:40–43）
 
-`--r-sm: 10px` / `--r-md: 14px` / `--r-lg: 20px` / `--r-pill: 999px`
+`--r-xs: 6px` / `--r-sm: 10px` / `--r-md: 14px` / `--r-lg: 20px` / `--r-pill: 999px（已退役）`
 
 | 用途 | 档位 | 来源 |
 |---|---|---|
@@ -38,8 +38,11 @@
 | 普通按钮 / 输入框 / .seg 容器 | `--r-sm` | ui.css:115、286、302 |
 | 卡片 .card / .habit-card / .apple-group | `--r-md` | ui.css:433、462、337 |
 | 弹窗 .dialog / .drop-modal | `--r-lg` | ui.css:175、781 |
-| 胶囊按钮 .pill-action / .toast / 徽章 | `--r-pill` | ui.css:517、384、849 |
+| 小徽章 / 标签 / 状态胶囊 / 线状指示器（≤28px） | `--r-xs` | D-20261125-111 |
+| 胶囊按钮 .pill-action / .toast / 徽章（**已退役**） | ~~`--r-pill`~~ | 令牌保留，UI 不再引用；见 D-20261125-111 |
 | BottomSheet 顶角 / 移动端 tab 项 | `--r-lg` / 14px | BottomSheet.tsx:124–125、BottomTabBar.tsx:134 |
+
+> D-20261125-111 起全站胶囊退役：按钮/分段项用 `--r-sm`，小徽章与标签用 `--r-xs`，toast 与分段外框用 `--r-md`。`--r-pill` 仅保留令牌定义，不再有界面引用。
 
 硬编码例外（**不是新档位，禁止扩散**）：窗口按钮 9px（ui.css:44）、托盘卡片 16px（ui.css:620）、`.fab` 16px（死类，见 §8）、`.card-action` / `.seg button` 8px（ui.css:495、310）、时间步进器 6px（ui.css:1120）、提醒积木 5px（ui.css:1163）。
 
@@ -125,7 +128,7 @@
 |---|---|
 | `var(--bg/surface/ink/ink-2/line/accent/accent-ink/overlay/danger/progress-*/block-*)` | 任何裸 hex / rgb() 写进 UI（画布与蓝图配色除外，见 ART.md） |
 | 半透明派生 `color-mix(in srgb, var(--ink) N%, transparent)` | 新增第二套琥珀 / 绿 / 红 / 蓝 |
-| 圆角只取 `--r-sm/md/lg/pill` | 自造 13px / 18px / 7px 圆角 |
+| 圆角只取 `--r-xs/sm/md/lg`（`--r-pill` 已退役） | 自造 13px / 18px / 7px 圆角 |
 | 字号取 §4 阶梯 | 12.8 / 17.5 / 11.2 这类中间值 |
 | `--progress-green`=完成、`--progress-blue`=进行中、`--danger`=删除 | 用 `--accent` 表达状态、用绿色表达「成功按钮」 |
 | 移动端触控 ≥44×44 | 40px 以下可点区域（.icon-btn 38px 仅限桌面） |

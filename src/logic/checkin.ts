@@ -38,21 +38,36 @@ export function isHabitDueOnDay(habit: Habit, day: string): boolean {
   return true
 }
 
-/** 某习惯在指定日期是否达标（日频=当天有打卡；周频=本周配额已满；自定义频次=休息日免战/执行日有打卡；量化型=累计数值达到目标） */
+/** 某习惯在指定日期是否达标（日频=当天有打卡；周频=当天有打卡或本周配额已满；自定义频次=休息日免战/执行日有打卡；量化型=累计数值达到目标） */
 export function habitMetOnDay(habit: Habit, checkIns: CheckIn[], day: string): boolean {
   if (habit.frequency.type === 'custom' && !isHabitDueOnDay(habit, day)) {
     return true // 休息日豁免达标
   }
-  if (habit.kind === 'counter' && habit.targetValue) {
-    return dayCounterValue(checkIns, habit.id, day) >= habit.targetValue
+  if (habit.kind === 'counter') {
+    return dayCounterValue(checkIns, habit.id, day) >= (habit.targetValue ?? 1)
   }
   if (habit.frequency.type === 'daily' || habit.frequency.type === 'custom') {
     return dayCheckInsFor(checkIns, habit.id, day).length > 0
   }
   if (habit.frequency.type === 'weekly') {
-    return weekCountFor(checkIns, habit.id, day) >= habit.frequency.times
+    // 今日打卡即视为今日成功；本周配额满后，本周剩余日期继续显示完成
+    return (
+      dayCheckInsFor(checkIns, habit.id, day).length > 0 ||
+      weekCountFor(checkIns, habit.id, day) >= habit.frequency.times
+    )
   }
   return false
+}
+
+/**
+ * 今日卡片完成态：常规日期与 habitMetOnDay 同口径；
+ * 自定义休息日只有当天主动打卡才算完成，否则保持「今日免战」。
+ */
+export function habitDoneOnDay(habit: Habit, checkIns: CheckIn[], day: string): boolean {
+  if (habit.frequency.type === 'custom' && !isHabitDueOnDay(habit, day)) {
+    return dayCheckInsFor(checkIns, habit.id, day).length > 0
+  }
+  return habitMetOnDay(habit, checkIns, day)
 }
 export function canCheckInHabit(
   habit: Habit,

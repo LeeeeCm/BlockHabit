@@ -67,6 +67,8 @@ export interface TranslationSchema {
     freqWeekends: string
     freqCustom: (days: string[]) => string
     freqWeekly: (times: number) => string
+    freqWeeklyProgress: (done: number, times: number) => string
+    weekQuotaMet: string
     instantCheckIn: string
     targetMinutes: (min: number) => string
     focus: string

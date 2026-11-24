@@ -171,7 +171,7 @@ export function BuildingArchiveModal({ blueprintId, onClose }: Props) {
                     fontSize: 'var(--fs-caption)',
                     color: 'var(--ink-2)',
                     border: '1px solid var(--line)',
-                    borderRadius: 999,
+                    borderRadius: 'var(--r-xs)',
                     padding: '1px 8px',
                     flexShrink: 0
                   }}
@@ -326,7 +326,7 @@ export function BuildingArchiveModal({ blueprintId, onClose }: Props) {
                         style={{
                           fontSize: 'var(--fs-caption)',
                           padding: '2px 6px',
-                          borderRadius: 999,
+                          borderRadius: 'var(--r-xs)',
                           background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))',
                           color: 'var(--ink)',
                           fontWeight: 600,
@@ -383,7 +383,7 @@ export function BuildingArchiveModal({ blueprintId, onClose }: Props) {
                   style={{
                     padding: '2px 10px',
                     fontSize: 'var(--fs-caption)',
-                    borderRadius: 999,
+                    borderRadius: 'var(--r-xs)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 4,
@@ -435,14 +435,22 @@ export function BuildingArchiveModal({ blueprintId, onClose }: Props) {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
                   <button
                     className="btn ghost"
-                    style={{ padding: '4px 12px', fontSize: 'var(--fs-small)', borderRadius: 999 }}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: 'var(--fs-small)',
+                      borderRadius: 'var(--r-sm)'
+                    }}
                     onClick={() => setEditingNote(false)}
                   >
                     {t.common.cancel}
                   </button>
                   <button
                     className="btn primary"
-                    style={{ padding: '4px 12px', fontSize: 'var(--fs-small)', borderRadius: 999 }}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: 'var(--fs-small)',
+                      borderRadius: 'var(--r-sm)'
+                    }}
                     onClick={handleSaveNote}
                   >
                     {a.saveNote}

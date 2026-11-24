@@ -128,5 +128,9 @@
 | D-20261124-107 | 2026-11-24 | 桌宠蓝图在图鉴中默认置顶（取代按钮方案） | approved | gallery | LeeCM |
 | D-20261124-108 | 2026-11-24 | 习惯弹窗「更多设置」与首个选填字段的间距对齐 | approved | today | LeeCM |
 | D-20261124-109 | 2026-11-24 | 今日/统计页滚动容器铺满整行，修复两侧滚轮失效 | approved | today, stats | LeeCM |
+| D-20261125-110 | 2026-11-25 | 周频习惯今日打卡即显示完成，卡片频率改为本周完成数/目标 | proposed | today, stats | pending |
+| D-20261125-111 | 2026-11-25 | 退役全圆胶囊，按钮与徽章统一为倒角方块 | proposed | global, today, build, stats, settings, gallery | pending |
+| D-20261125-112 | 2026-11-25 | 桌宠眼睛改为纵向长椭圆，避免小尺寸缩成圆点 | superseded | mini-widget | pending |
+| D-20261125-113 | 2026-11-25 | 桌宠眼睛改为竖向胶囊，取代椭圆方案 | proposed | mini-widget | pending |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

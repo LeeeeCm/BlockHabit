@@ -14,7 +14,7 @@ import { HabitReflectionSection } from './habitrow/HabitReflectionSection'
 import { HabitFocusSection } from './habitrow/HabitFocusSection'
 import { HabitRowFooter } from './habitrow/HabitRowFooter'
 import { HabitRowDialogs } from './habitrow/HabitRowDialogs'
-import { weekMissed } from './habitrow/helpers'
+import { isQuotaOnlyDone, weekMissed } from './habitrow/helpers'
 
 interface Props {
   habit: Habit
@@ -104,13 +104,15 @@ export const HabitRow = memo(function HabitRow({
   }, [session])
 
   const missed = !done && weekMissed(habit, weekCount, day)
+  /** 周配额已满、今日未打卡：卡片显示完成，但今日没有可撤销的记录 */
+  const doneByQuotaOnly = done && isQuotaOnlyDone(habit, weekCount, todayCheckIns.length)
   const isFocus = habit.kind === 'focus' && Boolean(habit.targetMinutes)
   const targetMs = (habit.targetMinutes ?? 25) * 60_000
   // B2/B4：摆件可延长会话，今日页必须用「含延长的有效目标」，否则会在原目标提前显示「待确认」
   const sessionTargetMs = session ? effectiveTargetMs(session) : targetMs
   const elapsed = session ? now - session.startedAt : 0
-  const running = isFocus && !!session && !done && elapsed < sessionTargetMs
-  const ended = isFocus && !!session && !done && elapsed >= sessionTargetMs
+  const running = isFocus && !!session && elapsed < sessionTargetMs
+  const ended = isFocus && !!session && elapsed >= sessionTargetMs
   const progressRatio = sessionTargetMs > 0 ? elapsed / sessionTargetMs : 1
   const actualMinutes = Math.max(1, Math.round(elapsed / 60_000))
 
@@ -118,7 +120,11 @@ export const HabitRow = memo(function HabitRow({
   const isRestDay = !done && habit.frequency.type === 'custom' && !isDueToday
   const freqLabel = (() => {
     if (habit.frequency.type === 'daily') return t.today.freqDaily
-    if (habit.frequency.type === 'weekly') return t.today.freqWeekly(habit.frequency.times)
+    if (habit.frequency.type === 'weekly') {
+      return habit.kind === 'counter'
+        ? t.today.freqWeekly(habit.frequency.times)
+        : t.today.freqWeeklyProgress(weekCount, habit.frequency.times)
+    }
     const days = habit.frequency.days
     if (days.length === 5 && [1, 2, 3, 4, 5].every((d) => days.includes(d)))
       return t.today.freqWeekdays
@@ -179,6 +185,8 @@ export const HabitRow = memo(function HabitRow({
   }
   function handleStatusClick() {
     if (done) {
+      // 周配额已满但今日未打卡时没有可撤销的记录，点击不弹撤销确认
+      if (doneByQuotaOnly) return
       // 已完成状态点击：支持撤销打卡（有确认，防误触摧毁积木/连击）
       triggerHaptic('light')
       setShowUndoConfirm(true)
@@ -300,7 +308,7 @@ export const HabitRow = memo(function HabitRow({
     handleStartFocus()
   }
   function handleFooterPillClick(e: React.MouseEvent) {
-    if (done) {
+    if (done && !doneByQuotaOnly) {
       e.stopPropagation()
       setShowUndoConfirm(true)
     }
@@ -356,6 +364,7 @@ export const HabitRow = memo(function HabitRow({
         pulse={pulse}
         pinned={Boolean(habit.pinned)}
         statusColor={statusColor}
+        doneByQuotaOnly={doneByQuotaOnly}
         onStatusClick={handleStatusBtnClick}
         onTogglePin={handleTogglePin}
         onEditClick={handleEditClick}
@@ -407,7 +416,7 @@ export const HabitRow = memo(function HabitRow({
         />
       )}
 
-      {done && (
+      {done && todayCheckIn && (
         <HabitReflectionSection
           t={t}
           todayCheckIn={todayCheckIn}
@@ -428,6 +437,7 @@ export const HabitRow = memo(function HabitRow({
       <HabitFocusSection
         t={t}
         isMobile={isMobile}
+        done={done}
         running={running}
         ended={ended}
         showFocusStart={!session && !running && !ended && isFocus && !done}
@@ -450,6 +460,7 @@ export const HabitRow = memo(function HabitRow({
         <HabitRowFooter
           t={t}
           done={done}
+          doneByQuotaOnly={doneByQuotaOnly}
           isRestDay={isRestDay}
           streak={streak}
           onPillClick={handleFooterPillClick}
