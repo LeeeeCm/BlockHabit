@@ -1,4 +1,4 @@
-import { useEffect, useState, memo } from 'react'
+import { useEffect, useRef, useState, memo } from 'react'
 import { usePlatform, triggerHaptic } from '../platform'
 import type { CheckInResult, Habit, MicroMood } from '../types'
 import { useAppStore } from '../store/appStore'
@@ -79,6 +79,8 @@ export const HabitRow = memo(function HabitRow({
   const [moodVal, setMoodVal] = useState<MicroMood | undefined>(todayCheckIn?.mood)
   const [moodNoteVal, setMoodNoteVal] = useState<string | undefined>(todayCheckIn?.moodNote)
   const [starVal, setStarVal] = useState<boolean>(todayCheckIn?.starred ?? false)
+  /** 随笔编辑模块的 DOM 边界：只有点击它外面才取消编辑 */
+  const reflectionRef = useRef<HTMLDivElement>(null)
   /** 心境选择弹窗（D-20261126-118） */
   const [moodPickerOpen, setMoodPickerOpen] = useState(false)
   useEffect(() => {
@@ -95,6 +97,20 @@ export const HabitRow = memo(function HabitRow({
     setStarVal(todayCheckIn?.starred ?? false)
     setEditingNote(false)
   }
+
+  // D-20261128-132：随笔编辑只在「点击模块外」时取消。
+  // 键盘输入、鼠标移出卡片、焦点变化都不再取消；心境弹窗打开期间不把弹窗点击算作模块外。
+  useEffect(() => {
+    if (!editingNote) return
+    const onPointerDown = (event: PointerEvent) => {
+      if (moodPickerOpen) return
+      const node = reflectionRef.current
+      if (node && event.target instanceof Node && node.contains(event.target)) return
+      cancelNoteEdit()
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [editingNote, moodPickerOpen, todayCheckIn])
 
   function commitNote() {
     if (todayCheckIn) {
@@ -365,10 +381,6 @@ export const HabitRow = memo(function HabitRow({
         if ((e.target as HTMLElement).closest('button')) return
         handleCardClick()
       }}
-      // D-20261126-118：鼠标离开卡片即复原编辑态，不需要用户再点一下空白处
-      onMouseLeave={() => {
-        if (editingNote) cancelNoteEdit()
-      }}
     >
       <HabitRowHeader
         t={t}
@@ -455,23 +467,25 @@ export const HabitRow = memo(function HabitRow({
       )}
 
       {done && todayCheckIn && (
-        <HabitReflectionSection
-          t={t}
-          todayCheckIn={todayCheckIn}
-          editingNote={editingNote}
-          noteVal={noteVal}
-          moodVal={moodVal}
-          moodNoteVal={moodNoteVal}
-          starVal={starVal}
-          onStartEdit={handleStartEditNote}
-          onToggleMood={handleToggleMood}
-          onToggleStar={handleToggleStar}
-          onOpenMoodPicker={() => setMoodPickerOpen(true)}
-          onNoteChange={handleNoteChange}
-          onNoteKeyDown={handleNoteKeyDown}
-          onCommit={commitNote}
-          onStopCardClick={stopCardClick}
-        />
+        <div ref={reflectionRef}>
+          <HabitReflectionSection
+            t={t}
+            todayCheckIn={todayCheckIn}
+            editingNote={editingNote}
+            noteVal={noteVal}
+            moodVal={moodVal}
+            moodNoteVal={moodNoteVal}
+            starVal={starVal}
+            onStartEdit={handleStartEditNote}
+            onToggleMood={handleToggleMood}
+            onToggleStar={handleToggleStar}
+            onOpenMoodPicker={() => setMoodPickerOpen(true)}
+            onNoteChange={handleNoteChange}
+            onNoteKeyDown={handleNoteKeyDown}
+            onCommit={commitNote}
+            onStopCardClick={stopCardClick}
+          />
+        </div>
       )}
 
       <HabitFocusSection

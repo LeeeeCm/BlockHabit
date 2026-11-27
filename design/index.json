@@ -1180,6 +1180,15 @@
       "owner": "Claude Code",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261128-131-content-pack-v6.md"
+    },
+    {
+      "id": "D-20261128-132",
+      "date": "2026-11-28",
+      "title": "打卡随笔编辑只在点击模块外时取消，键盘输入与鼠标移出不再打断",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261128-132-habit-note-outside-click.md"
     }
   ]
 }

@@ -12,6 +12,7 @@
 - **复用**：`.habit-grid/.habit-card`（HabitRow）、`.pill-action`、`.card`、`.echo-capsule-bar`、`.reminder-banner`、`.archive-*`、`.toast`。
 - **尺寸**：卡片双列 `gap:12px`（ui.css:441–445）、卡片 `min-height:172px` / 内距 `15px`；时段小标题 `12px + letter-spacing .14em`（Today.tsx:459–466）；空态卡 `padding:52px 24px` + 56×56 图标块（r18）。
 - **必须**：完成态只能由 `habitMetOnDay` 判定（Today.tsx:472–474，A6）；卡片点击=打卡、按钮点击 `stopPropagation`；元信息只用 `--ink-2`；页面只保留一个"+"入口。
+- **随笔编辑（D-20261128-132）**：打卡成功卡的随笔模块点开后，`Enter` 提交、`Esc` 取消；键盘输入、鼠标移出卡片、焦点变化都不取消，只有 `pointerdown` 落在随笔模块外一次才取消并恢复摘要态；心境弹窗打开期间不触发。
 - **窄屏头部（D-20261124-087）**：`.today-header` 允许 `flex-wrap`，操作组 `.today-header-actions` 整组换行、`flex-shrink:0`；蓝图胶囊与完成计数 `white-space:nowrap`。移动布局下操作组占满一行、左对齐，「+」保持右端。
 - **专注入口（B4 / D-20261110-064）**：今日简报下方一条紧凑入口条（`data-testid="today-focus-entry"`，`1px --line` + `--surface` + `--r-md`），仅在「存在可开始的专注习惯（未完成、有目标时长）且当前没有任何专注会话」时出现；点击复用 `timerStore.start` 并在成功 toast「专注中」；`aria-label` 含习惯名与目标时长；移动端最小高度 ≥48px；不新增颜色。
 - **例外**：全勤卡用 `--accent@7%/45%` 底色（Today.tsx:294–295，A1③ 的既有例外）；空态图标底也用 accent 14%（415）——**属越界，见 TOKENS §7**。
