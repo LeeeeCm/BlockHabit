@@ -45,6 +45,16 @@ export function withAlpha(color: string, alpha: number): string {
   return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`
 }
 
+/** 两色线性混合（t=0 → a，t=1 → b），返回 rgb() 字符串（D-20261128-128 沙盘底色） */
+export function mixColor(a: string, b: string, t: number): string {
+  const ca = parseColor(a)
+  const cb = parseColor(b)
+  if (!ca || !cb) return a
+  const k = Math.min(1, Math.max(0, t))
+  const mix = (x: number, y: number) => Math.round(x + (y - x) * k)
+  return `rgb(${mix(ca[0], cb[0])},${mix(ca[1], cb[1])},${mix(ca[2], cb[2])})`
+}
+
 /** 亮度乘法调整（HSL 的 L 通道 ×mult，钳制在 [0,1]），返回 rgb() 字符串 */
 export function adjustLightness(color: string, mult: number): string {
   const rgb = parseColor(color)

@@ -7,6 +7,7 @@ import type {
   HabitExtra,
   Language,
   MicroMood,
+  SandboxDesign,
   Theme,
   UndoResult
 } from '../types'
@@ -76,16 +77,26 @@ interface AppActions {
   refreshRepairAllowance(): void
   useRepairBrick(habitId: string, date: string): { ok: boolean; reason?: string }
   /**
-   * 展台沙盘位置调整（带 AABB 碰撞检测）。
-   * rotations：可选的「本次会话 90° 象限」表（蓝图 id → 0/1/2/3），
-   * 只参与碰撞/边界校验、不写进存档——装饰模式拖拽时用它复用与渲染一致的占地。
+   * 展台当前沙盘的位置调整（带 AABB 碰撞检测）。
+   * D-20261127-127：旋转已随 placement.rotation 持久化，校验直接从沙盘 placements 派生。
    */
-  updateShowcasePlacement(
-    blueprintId: string,
-    gridX: number,
-    gridY: number,
-    rotations?: Record<string, number>
-  ): boolean
+  updateShowcasePlacement(blueprintId: string, gridX: number, gridY: number): boolean
+  /** 当前沙盘上某建筑顺时针旋转 90°（越界/重叠返回 false，不写入） */
+  rotateShowcasePlacement(blueprintId: string): boolean
+  /** 把当前沙盘上的建筑按扫描顺序重新排列（保留已有旋转）；放不下的回堆场，返回是否全部放下 */
+  autoArrangeShowcase(): boolean
+  /** 把建筑从当前沙盘收回堆场（不删建筑、不改完成态） */
+  tuckShowcaseBuilding(blueprintId: string): boolean
+  /** 把堆场建筑放上当前沙盘；若它在其他沙盘上则移动过来 */
+  placeShowcaseBuilding(blueprintId: string): boolean
+  /** 切换当前沙盘 */
+  switchShowcaseSandbox(id: string): boolean
+  /** 新建沙盘并切过去；达到上限返回 null */
+  addShowcaseSandbox(): string | null
+  /** 删除沙盘（建筑回堆场）；只剩一个时拒绝 */
+  removeShowcaseSandbox(id: string): boolean
+  /** 修改沙盘底座颜色方案 */
+  setShowcaseSandboxDesign(id: string, design: SandboxDesign): boolean
   chooseBlueprint(id: string): void
   updateSettings(patch: Partial<AppSettings>): void
   /** 跳过某习惯今天的到点提醒（持久化到 reminderLog，跨重启当天沉默） */

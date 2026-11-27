@@ -80,11 +80,24 @@ const CENTERS: Record<string, [number, number]> = {
   monument: [3, 3],
   pyramid: [4, 4],
   robot: [3, 1],
-  castle: [4, 4]
+  castle: [4, 4],
+  // 内容包 v6
+  station: [3, 1],
+  theater: [2, 1],
+  museum: [3, 2],
+  hospital: [2, 1],
+  school: [2, 1],
+  chapel: [2, 1],
+  temple: [2, 1],
+  carousel: [3, 3],
+  pier: [4, 1],
+  fountain: [3, 3],
+  market: [3, 2],
+  stadium: [3, 2]
 }
 
 describe('blueprint catalog', () => {
-  it('has base 12 + content pack v2 6 + v3 5 in unlock order', () => {
+  it('has base 12 + content pack v2 6 + v3 5 + v6 12 in unlock order', () => {
     expect(blueprintOrder).toEqual([
       'plant',
       'coffee',
@@ -110,7 +123,20 @@ describe('blueprint catalog', () => {
       'bookshop',
       'postoffice',
       'firestation',
-      'watertower'
+      'watertower',
+      // 内容包 v6（D-20261128-131，追加，不改既有顺序）
+      'station',
+      'theater',
+      'museum',
+      'hospital',
+      'school',
+      'chapel',
+      'temple',
+      'carousel',
+      'pier',
+      'fountain',
+      'market',
+      'stadium'
     ])
     expect(Object.keys(blueprints)).toEqual(blueprintOrder)
   })

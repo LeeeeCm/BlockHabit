@@ -5,19 +5,19 @@ import {
   canPlaceModel,
   getModelFootprint,
   getRotatedFootprint,
+  rotationsFromPlacements,
   SHOWCASE_GRID_SIZE
 } from '../logic/showcase'
 import type { ShowcasePlacement } from '../types'
 
 /**
- * D-20261111-068（approved）+ 2026-11-14 追加：updateShowcasePlacement 的会话旋转参数。
+ * D-20261127-127：旋转随 placement 持久化后，updateShowcasePlacement 的落位校验口径。
  *
- * 装饰模式把 90° 旋转做成「本次会话的视图态」，但拖拽落位原先仍按 0° 占地校验，
- * 于是出现「画面上不重叠却拖不过去」/「画面上重叠却能拖过去」两类假冲突（D-068 已知限制）。
- * 本文件锁住三件事：
- *   1) 传入 rotations 时，落位校验与渲染同口径（邻居 / 自己都按当前旋转算 AABB）；
- *   2) 不传 rotations 时行为与旧实现逐位一致（向后兼容）；
- *   3) 旋转绝不写进存档字段（不改持久化 schema）。
+ * 旧 D-068 的会话 rotations 参数已删除；现在：
+ *   1) 邻居的占用按各自 placement.rotation 计算；
+ *   2) 被移动目标自身的 rotation 保留并参与边界/碰撞；
+ *   3) store 判定与 canPlaceModel（显式传入同一旋转表）逐位一致；
+ *   4) 未知蓝图仍拒绝。
  */
 
 function resetStore(placements: ShowcasePlacement[]) {
@@ -31,7 +31,9 @@ function resetStore(placements: ShowcasePlacement[]) {
     settings: { theme: 'light', language: 'zh' },
     dayClaims: [],
     deletedDayClaims: [],
-    showcasePlacements: placements
+    showcasePlacements: placements,
+    showcaseSandboxes: undefined,
+    activeSandboxId: undefined
   })
 }
 
@@ -61,7 +63,7 @@ function findSmallTargetId(excludeId: string): string {
   return best.id
 }
 
-describe('updateShowcasePlacement 的会话旋转参数（收敛 D-068 已知限制）', () => {
+describe('updateShowcasePlacement 的持久化旋转口径', () => {
   let rectId = ''
   let targetId = ''
 
@@ -70,66 +72,60 @@ describe('updateShowcasePlacement 的会话旋转参数（收敛 D-068 已知限
     targetId = findSmallTargetId(rectId)
   })
 
-  it('邻居按当前会话旋转计算占地：0° 与 90° 的结论必须不同', () => {
-    const bp0 = getModelFootprint(getBlueprint(rectId)!.blocks)
-    const bp1 = getRotatedFootprint(getBlueprint(rectId)!.blocks, 1)
-    // 只有宽深互换过的城市：x 取两者较窄的宽度 → 一个口径「刚好不重叠」，另一个「重叠」
-    expect(bp1.width).toBe(bp0.depth)
-    const x = Math.min(bp0.width, bp1.width)
+  it('邻居按 placement.rotation 计算占地：0° 与 90° 的结论必须不同', () => {
+    const fp0 = getModelFootprint(getBlueprint(rectId)!.blocks)
+    const fp1 = getRotatedFootprint(getBlueprint(rectId)!.blocks, 1)
+    expect(fp1.width).toBe(fp0.depth)
+    const x = Math.min(fp0.width, fp1.width)
     const targetFp = getModelFootprint(getBlueprint(targetId)!.blocks)
     expect(x + targetFp.width).toBeLessThanOrEqual(SHOWCASE_GRID_SIZE)
 
     resetStore([{ blueprintId: rectId, gridX: 0, gridY: 0 }])
-    const at0 = useAppStore.getState().updateShowcasePlacement(targetId, x, 0, {})
+    const at0 = useAppStore.getState().updateShowcasePlacement(targetId, x, 0)
 
-    resetStore([{ blueprintId: rectId, gridX: 0, gridY: 0 }])
-    const at90 = useAppStore.getState().updateShowcasePlacement(targetId, x, 0, { [rectId]: 1 })
+    resetStore([{ blueprintId: rectId, gridX: 0, gridY: 0, rotation: 1 }])
+    const at90 = useAppStore.getState().updateShowcasePlacement(targetId, x, 0)
 
     expect(at0).not.toBe(at90)
     // 被拒绝的那一次不得改写存档
     const stored = useAppStore.getState().showcasePlacements
     if (!at90) {
-      expect(stored).toEqual([{ blueprintId: rectId, gridX: 0, gridY: 0 }])
+      expect(stored).toEqual([{ blueprintId: rectId, gridX: 0, gridY: 0, rotation: 1 }])
     }
   })
 
-  it('目标自身的旋转也参与占地：越界与否由旋转后的深度决定', () => {
+  it('被移动目标自身的旋转也参与占地：越界与否由旋转后的深度决定', () => {
     const fp0 = getModelFootprint(getBlueprint(rectId)!.blocks)
     const fp1 = getRotatedFootprint(getBlueprint(rectId)!.blocks, 1)
-    // 贴着下边界放：0° 刚好贴边，90° 深度变成原宽度后是否溢出由几何决定
     const y = SHOWCASE_GRID_SIZE - fp0.depth
-    const fits0 = y + fp0.depth <= SHOWCASE_GRID_SIZE
-    const fits1 = y + fp1.depth <= SHOWCASE_GRID_SIZE
-    expect(fits0).toBe(true)
-    expect(fits1).toBe(false) // 非正方形 ⇒ 深度必有一边更大
+    expect(y + fp0.depth <= SHOWCASE_GRID_SIZE).toBe(true)
+    expect(y + fp1.depth <= SHOWCASE_GRID_SIZE).toBe(false)
 
-    resetStore([])
-    expect(useAppStore.getState().updateShowcasePlacement(rectId, 0, y, {})).toBe(fits0)
+    resetStore([{ blueprintId: rectId, gridX: 0, gridY: y }])
+    expect(useAppStore.getState().updateShowcasePlacement(rectId, 0, y)).toBe(true)
 
-    resetStore([])
-    expect(useAppStore.getState().updateShowcasePlacement(rectId, 0, y, { [rectId]: 1 })).toBe(
-      fits1
-    )
+    resetStore([{ blueprintId: rectId, gridX: 0, gridY: y, rotation: 1 }])
+    expect(useAppStore.getState().updateShowcasePlacement(rectId, 0, y)).toBe(false)
   })
 
-  it('不传 rotations 时行为与旧实现一致（按 0° 占地校验）', () => {
-    const fp0 = getModelFootprint(getBlueprint(rectId)!.blocks)
-    resetStore([{ blueprintId: rectId, gridX: 0, gridY: 0 }])
-    const targetFp = getModelFootprint(getBlueprint(targetId)!.blocks)
-    expect(fp0.width + targetFp.width).toBeLessThanOrEqual(SHOWCASE_GRID_SIZE)
-    // 旧调用点（3 个参数）只看 0° 占地
-    expect(useAppStore.getState().updateShowcasePlacement(targetId, fp0.width, 0)).toBe(true)
-    resetStore([{ blueprintId: rectId, gridX: 0, gridY: 0 }])
-    expect(useAppStore.getState().updateShowcasePlacement(targetId, 0, 0)).toBe(false)
+  it('拖拽只改位置：已有 rotation 原样保留', () => {
+    resetStore([{ blueprintId: rectId, gridX: 0, gridY: 0, rotation: 2 }])
+    expect(useAppStore.getState().updateShowcasePlacement(rectId, 1, 1)).toBe(true)
+    expect(useAppStore.getState().showcasePlacements).toEqual([
+      { blueprintId: rectId, gridX: 1, gridY: 1, rotation: 2 }
+    ])
   })
 
   it('与 canPlaceModel 同口径：store 的落位判定不能比纯函数更宽松或更严格', () => {
     const fp0 = getModelFootprint(getBlueprint(rectId)!.blocks)
     const x = Math.min(fp0.width, fp0.depth)
-    const existing: ShowcasePlacement[] = [{ blueprintId: rectId, gridX: 0, gridY: 0 }]
-    for (const rotations of [{}, { [rectId]: 1 }, { [rectId]: 2 }, { [rectId]: 3 }]) {
+    for (const rotation of [0, 1, 2, 3]) {
+      const existing: ShowcasePlacement[] = [
+        { blueprintId: rectId, gridX: 0, gridY: 0, ...(rotation ? { rotation } : null) }
+      ]
+      const rotations = rotationsFromPlacements(existing)
       resetStore(existing)
-      const viaStore = useAppStore.getState().updateShowcasePlacement(targetId, x, 0, rotations)
+      const viaStore = useAppStore.getState().updateShowcasePlacement(targetId, x, 0)
       const viaPure = canPlaceModel(
         { blueprintId: targetId, gridX: x, gridY: 0 },
         existing,
@@ -141,17 +137,9 @@ describe('updateShowcasePlacement 的会话旋转参数（收敛 D-068 已知限
     }
   })
 
-  it('旋转不写入存档：placement 仍只有蓝图 id 与格点', () => {
-    resetStore([])
-    expect(useAppStore.getState().updateShowcasePlacement('plant', 0, 0, { plant: 2 })).toBe(true)
-    const stored = useAppStore.getState().showcasePlacements ?? []
-    expect(stored).toEqual([{ blueprintId: 'plant', gridX: 0, gridY: 0 }])
-    expect(Object.keys(stored[0] ?? {}).sort()).toEqual(['blueprintId', 'gridX', 'gridY'])
-  })
-
   it('未知蓝图仍拒绝（脏数据不写进存档）', () => {
     resetStore([])
-    expect(useAppStore.getState().updateShowcasePlacement('ghost', 0, 0, { ghost: 1 })).toBe(false)
+    expect(useAppStore.getState().updateShowcasePlacement('ghost', 0, 0)).toBe(false)
     expect(useAppStore.getState().showcasePlacements).toEqual([])
   })
 

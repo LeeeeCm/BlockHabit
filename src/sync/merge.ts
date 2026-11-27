@@ -1,7 +1,17 @@
-import type { AppState, CheckIn, DayClaim, Habit, ReminderLogEntry } from '../types'
+import type {
+  AppState,
+  CheckIn,
+  DayClaim,
+  Habit,
+  ReminderLogEntry,
+  ShowcasePlacement,
+  ShowcaseSandbox
+} from '../types'
 import { blueprints } from '../logic/blueprints'
 import { CONTENT_VERSION } from '../logic/blueprints/manifest'
 import { rebuildBuilds, liveCheckInsView, BLUEPRINT_CAPACITY } from '../logic/builds'
+import { SHOWCASE_SANDBOX_MAX } from '../logic/showcase'
+import { resolveShowcaseState } from '../logic/showcaseState'
 
 /** 安全获取蓝图总块数（未知/畸形 id 返回 null，不抛异常） */
 function blueprintBlockCount(id: string): number | null {
@@ -199,6 +209,77 @@ function mergeDayClaims(
  * Facts are merged; the block layer is rebuilt deterministically from merged facts,
  * guaranteeing identical projections (compact 0..N-1 indices) on every device.
  */
+/**
+ * 多沙盘合并（D-20261127-127）：
+ * - 两侧都先解析成沙盘（只有 legacy showcasePlacements 的一侧视为 sandbox-1）；
+ * - 按 id 合并，本地字段优先；placements 按 blueprintId 本地优先、远端独有追加；
+ * - 顺序 = 本地沙盘在前，远端独有沙盘追加；
+ * - 同一座建筑跨沙盘重复时只保留最先出现的一次（本地优先），保持「一座建筑只陈列在一个沙盘」；
+ * - activeSandboxId 本地有效则保留，否则远端 / 第一个。
+ * 已知限制：沙盘删除没有墓碑，远端旧数据可能把已删沙盘复活。
+ */
+function mergeShowcaseSandboxes(
+  local: AppState,
+  remote: AppState
+): { sandboxes: ShowcaseSandbox[]; activeSandboxId: string; placements: ShowcasePlacement[] } {
+  const localShowcase = resolveShowcaseState(local)
+  const remoteShowcase = resolveShowcaseState(remote)
+  const remoteById = new Map(remoteShowcase.sandboxes.map((s) => [s.id, s]))
+  const merged: ShowcaseSandbox[] = []
+  for (const sandbox of localShowcase.sandboxes) {
+    const counterpart = remoteById.get(sandbox.id)
+    if (!counterpart) {
+      merged.push(sandbox)
+      continue
+    }
+    const placementMap = new Map<string, ShowcasePlacement>()
+    for (const p of counterpart.placements) placementMap.set(p.blueprintId, p)
+    for (const p of sandbox.placements) placementMap.set(p.blueprintId, p)
+    merged.push({
+      ...counterpart,
+      ...sandbox,
+      // 可选字段缺省时不能被另一侧的 undefined 覆盖
+      design: sandbox.design ?? counterpart.design,
+      placements: [...placementMap.values()]
+    })
+  }
+  const localIds = new Set(localShowcase.sandboxes.map((s) => s.id))
+  for (const sandbox of remoteShowcase.sandboxes) {
+    if (!localIds.has(sandbox.id)) merged.push(sandbox)
+  }
+
+  // 跨沙盘去重：同一 blueprintId 只保留第一次出现（本地沙盘顺序优先）；未知蓝图直接丢弃
+  const placed = new Set<string>()
+  const sandboxes = merged.map((sandbox) => {
+    const placements = sandbox.placements.filter((p) => {
+      if (!blueprints[p.blueprintId] || placed.has(p.blueprintId)) return false
+      placed.add(p.blueprintId)
+      return true
+    })
+    return placements.length === sandbox.placements.length ? sandbox : { ...sandbox, placements }
+  })
+
+  // 上限 4：确定性截断（本地顺序优先），并保证 active 沙盘在保留集合内
+  const preferredActiveId =
+    [localShowcase.activeId, remoteShowcase.activeId].find((id) =>
+      sandboxes.some((s) => s.id === id)
+    ) ?? sandboxes[0]?.id
+  let capped = sandboxes
+  if (capped.length > SHOWCASE_SANDBOX_MAX) {
+    capped = capped.slice(0, SHOWCASE_SANDBOX_MAX)
+    if (preferredActiveId && !capped.some((s) => s.id === preferredActiveId)) {
+      const activeSandbox = sandboxes.find((s) => s.id === preferredActiveId)
+      if (activeSandbox) capped[capped.length - 1] = activeSandbox
+    }
+  }
+  const activeSandboxId =
+    (preferredActiveId && capped.some((s) => s.id === preferredActiveId)
+      ? preferredActiveId
+      : capped[0]?.id) ?? 'sandbox-1'
+  const active = capped.find((s) => s.id === activeSandboxId) ?? capped[0]
+  return { sandboxes: capped, activeSandboxId, placements: active.placements }
+}
+
 export function mergeAppState(local: AppState, remote: AppState): AppState {
   const habits = mergeHabits(local.habits, remote.habits)
   const checkIns = mergeCheckIns(local.checkIns, remote.checkIns, habits)
@@ -234,10 +315,7 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
     ...(local.foundationNotes || {})
   }
 
-  const placementMap = new Map<string, { blueprintId: string; gridX: number; gridY: number }>()
-  for (const p of remote.showcasePlacements || []) placementMap.set(p.blueprintId, { ...p })
-  for (const p of local.showcasePlacements || []) placementMap.set(p.blueprintId, { ...p })
-  const showcasePlacements = Array.from(placementMap.values())
+  const mergedShowcase = mergeShowcaseSandboxes(local, remote)
 
   // 提醒处置（跳过今天）：按 habit 保留日期更新的一方（记录本身按天覆盖，取新即最新决策）
   const reminderLog: Record<string, ReminderLogEntry> = {}
@@ -273,12 +351,19 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
       return total !== null && rebuildCountForBlueprint(builds, id) >= total
     })
     .sort()
-  const showcasePlacementsFiltered = showcasePlacements.filter((p) => {
-    if (!completedSet.has(p.blueprintId)) return true
+  const isIncompletePlacement = (p: ShowcasePlacement): boolean => {
+    if (!completedSet.has(p.blueprintId)) return false
     const total = blueprintBlockCount(p.blueprintId)
-    if (total === null) return true
-    return rebuildCountForBlueprint(builds, p.blueprintId) >= total
-  })
+    if (total === null) return false
+    return rebuildCountForBlueprint(builds, p.blueprintId) < total
+  }
+  const showcaseSandboxesFiltered = mergedShowcase.sandboxes.map((sandbox) => ({
+    ...sandbox,
+    placements: sandbox.placements.filter((p) => !isIncompletePlacement(p))
+  }))
+  const activeSandboxFiltered =
+    showcaseSandboxesFiltered.find((s) => s.id === mergedShowcase.activeSandboxId) ??
+    showcaseSandboxesFiltered[0]
 
   return {
     schemaVersion: 2,
@@ -299,7 +384,9 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
     deletedDayClaims: gcDeletedClaims,
     repairBricks,
     repairBrickMonth,
-    showcasePlacements: showcasePlacementsFiltered,
+    showcasePlacements: activeSandboxFiltered.placements,
+    showcaseSandboxes: showcaseSandboxesFiltered,
+    activeSandboxId: activeSandboxFiltered.id,
     foundationNotes,
     reminderLog
   }

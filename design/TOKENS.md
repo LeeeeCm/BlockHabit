@@ -118,9 +118,10 @@
 | Toast / 空态 / 装饰 | ui.css:391、Today.tsx:415–419、Showcase.tsx:61/74、Build.tsx:109/123/216/313 | ⛔ 越界 |
 | 统计 / 设置图标 | Stats.tsx:209、SettingsDialog.tsx:658–659 | ⛔ 越界 |
 | 画布导出（拍立得/画报） | PolaroidModal.tsx:284（含 #f5b301 兜底）、MonthlyPosterModal.tsx:89/106/211/254 | ⛔ 越界 + 硬编码兜底 |
-| 生境花砖 | iso.ts:899（top:'#f5b301'） | ⛔ 越界（且硬编码） |
+| 生境花砖 | `isoGround.ts` 的 `bloom` 调色板 | ✅ 已下线（D-20261128-130）：建造页微生态与调色板代码一并移除；相关取色仅保留在历史记录 |
+| 沙盘底色 | `showcase/canvas.ts` 的 `SANDBOX_TINTS` | ✅ 受控扩展（D-20261128-129）：只取 ART §10 材质色 苔绿 `#4f776a` / 石白 `#a89f91` / 暖沙 `#e9c46a`，只染沙盘底座，建筑与 UI 不染 |
 
-硬编码琥珀盘点：`#f5b301` 仅 3 处（theme.css:16 令牌本体、iso.ts:899、PolaroidModal.tsx:284 兜底）；`#f59e0b` 仅 3 处（generators.ts:279 黄铜拨盘、374 焰色 = 建筑专属配色；spriteCache.test.ts:16 夹具）。**UI 层 0 处** —— 2026-09-30 方案 §4.3 已落地。
+硬编码琥珀盘点：`#f5b301` 仅 2 处（theme.css:16 令牌本体、PolaroidModal.tsx:284 兜底；原 `iso.ts:899` 生境花砖已由 D-20261127-127 迁移）；`#f59e0b` 仅 3 处（generators.ts:279 黄铜拨盘、374 焰色 = 建筑专属配色；spriteCache.test.ts:16 夹具）。**UI 层 0 处** —— 2026-09-30 方案 §4.3 已落地。
 
 ## 8. 令牌使用红黑榜
 

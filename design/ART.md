@@ -25,7 +25,7 @@
 | 凸点顶面 `studTop` | `topA×1.08` | — | 纯色 + 左上高光弧 |
 
 - 明度关系**恒定**：顶面 > 左面 > 右面（四主题实测：纸白 #f4f4f4 / #c9c9c9 / #8a8a8a；墨黑 #424242 / #303030 / #1c1c1c）。换主题只换三面基色，**不得反转明暗**。
-- 自定义配色（蓝图 `color` 字段、生境植被）走另一端 `deriveShadingForColor`（iso.ts:201–216）：顶 1.00/0.88、左 0.78/0.62、右 0.52/0.36、凸点 1.08。⚠️ 与主题配色（1.00/0.90、1.00/0.769、1.00/0.629）**不是同一套阶梯**，同一屏混用会看出两种打光。
+- 自定义配色（蓝图 `color` 字段）走另一端 `deriveShadingForColor`（iso.ts:201–216）：顶 1.00/0.88、左 0.78/0.62、右 0.52/0.36、凸点 1.08。⚠️ 与主题配色（1.00/0.90、1.00/0.769、1.00/0.629）**不是同一套阶梯**，同一屏混用会看出两种打光。
 - 明暗叠加顺序（iso.ts:507–543）：左面 → 右面 → **AO 压痕** → 顶面 → **顶面高光** → 交界线。
 
 ## 3. 圆角、倒角、凸点、描边
@@ -56,7 +56,7 @@
 
 - **接触阴影**（iso.ts:827–872）：取已放置块脚印 bbox 内缩 `inset = 1.05`，四角投影求中心，用 `scale(1, halfH/halfW)` 压扁成等距椭圆（**不是旋转 ±30°**），径向渐变 `ink@0.12 → ink@0.05 (65%) → 0`，halfW ≥ 8、halfH ≥ 4。建造页只对**已放置块**求脚印（BuildScene.tsx:259–263），展台对每座模型整脚印（ShowcaseScene.tsx:303–312）。
 - **地基虚线**（iso.ts:795–824）：包围盒 `margin = 1.0 格`；透视圆角梯度 `bottom 0.95 > side 0.70 > top 0.50`（近大远小的严格等距弧）；填充 `rgba(128,128,128,0.05)`（**硬编码灰，未令牌化**）；虚线 `setLineDash([8,6])`，描边 `--block-ghost / 1.4px`，round cap/join；整体下移 `blockH`。
-- **展台沙盘**（ShowcaseScene.tsx:112–164、202–260）：26×26 网格、`slabH = 12` 厚度、顶角半径 1.7 / 侧 2.1 / 底 2.6；顶面 `palette.top`、裙边 `palette.left`、外轮廓 `ink / 1.5px`、内部网格 `ink@0.08 / 0.8px`、底影 `ink@0.06`（下移 6px）。底座整体离屏缓存，key 见 §8。
+- **展台沙盘**（ShowcaseScene.tsx:112–164、202–260）：26×26 网格、`slabH = 12` 厚度、顶角半径 1.7 / 侧 2.1 / 底 2.6；顶面 `palette.top`、裙边 `palette.left`、外轮廓 `ink / 1.5px`、内部网格 `ink@0.08 / 0.8px`、底影 `ink@0.06`（下移 6px）。底座整体离屏缓存，key 见 §8。**D-20261128-129：多沙盘共用同一底座几何，`design` 只给顶面/裙边染上颜色方案（苔绿/石白/暖沙/素盘），建筑积木不染色；展台不再生成植被。**
 - **幽灵块**：`globalAlpha 0.15` + `--block-ghost` 填充/1px 描边（iso.ts:594–605）。用于拖拽非法落位（ShowcaseScene.tsx:425）。
 - **X-Ray 透视考古**（BuildScene.tsx:298–308）：无随笔块 → 全幽灵化；有随笔块 → 用 `palette.accent` 作块色 + `highlight` 2.4px 描边发光。页内开关 + 默认态来自 `settings.enableXRayInspection`（Build.tsx:30–31）。
 
@@ -82,7 +82,8 @@
 - **bonus（连击奖励块）**：B1/B5 后分两级，共用同一枚 `--accent`——连击里程碑单环 1.5px，全勤（`fromHabitId === '__day__'`）双环 2.4px + 内缩 1.1px（`render/isoCube.ts:419–432`）。数据层见 `store/appStore.ts`（连击 7 天 / 全勤块），渲染链路已接通：BuildScene（`render/buildscene/sceneDraw.ts:97–104` 传 `bonus` / `bonusTier`）、ShowcaseScene（`bonusByBlueprint`）、PolaroidModal、MonthlyPosterModal、BuildingArchiveCanvas 均按蓝图序位传入；图鉴缩略图 `BlueprintThumb` 刻意不显示奖励环。
   > 2026-11-24 校准：此前本节写「所有调用点都没传 bonus」，该断线已在 B5 收尾时接回，旧结论作废。
 - 落成仪式（Build.tsx:250–299、311–344）：全屏 `color-mix(var(--bg) 82%)`；标题 26px / letter-spacing .04em；副标 14px ink-2；四按钮（奠基铭言 / 纪念相纸 / 下一个目标 / 关闭）；粒子 **36 片**，色板 `[--ink, --ink-2, --line, --accent]` 循环，尺寸 5–12px，时长 1.4–2.6s，随机 rotate + 下落 110vh / 340° 收尾。
-- 微生态植被（logic/eco.ts:9–15 + iso.ts:877–952）：阶段 **1 天萌芽 / 7 天小径 / 21 天树 / 100 天花园**；迷你积木 `{tileW:16, tileH:8, blockH:7}`；三套调色板 —— 绿 `#8fce8f/#57a457/#2f7d3a`（ink rgba(24,58,32,.55)）、石 `#d6d3d1/#a8a29e/#78716c`、花 `#f5b301/#d99e00/#b58500`；`back` 层画在积木前（两侧探出）、`front` 层画在积木后（站在建筑前）；要求 `blocks.length ≥ 2`，位置固定在 margin 环带（距积木中心 ≥1.4 格）。开关 `settings.enableEcoProps` 默认开（BuildScene.tsx:132）。
+- **微生态已下线（D-20261128-130）**：建造页与展台都不再生成任何迷你植被；原「逐建筑环带、绿/石/暖光花三套调色板、1/7/21/100 天阶段」只保留在历史记录与 git 历史中。建筑自身的材质色块、窗户、门、灯、接触阴影与虚线地基不受影响。
+  > 历史实现（已下线，D-20261128-130）：`logic/eco.ts` + `isoGround.drawEcoProps`；阶段 1/7/21/100 天；迷你积木 16×8×7；绿 `#8fce8f/#57a457/#2f7d3a`、石 `#d6d3d1/#a8a29e/#78716c`、暖光花 `#e9c46a/#f59e0b/#d97706`；back/front 两层；margin 环带距积木中心 ≥1.4 格；`settings.enableEcoProps` 默认开（D-20261127-127 删除）。代码已删除，参数在此保留供追溯。
 
 ## 8. 精灵缓存 spriteCache（iso.ts:395–451）
 

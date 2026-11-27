@@ -609,7 +609,7 @@
       "id": "D-20261111-068",
       "date": "2026-11-11",
       "title": "自由装饰模式：全落成后的展台补充玩法（最小方案，暂不实现）",
-      "status": "approved",
+      "status": "superseded",
       "owner": "lead",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261111-068-free-decoration-mode.md"
@@ -1126,6 +1126,60 @@
       "owner": "Claude Code",
       "reviewer": "pending",
       "file": "design/records/D-20261127-125-remove-pet-blueprints.md"
+    },
+    {
+      "id": "D-20261127-126",
+      "date": "2026-11-27",
+      "title": "设置分组与习惯弹窗「更多设置」的展开/收拢改为高度过渡动画",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261127-126-collapse-transition.md"
+    },
+    {
+      "id": "D-20261127-127",
+      "date": "2026-11-27",
+      "title": "展台多沙盘 + 堆场 + 右键旋转/收拢，退役装饰模式与实验室微生态开关",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261127-127-showcase-sandboxes-yard.md"
+    },
+    {
+      "id": "D-20261128-128",
+      "date": "2026-11-28",
+      "title": "沙盘级植被铺满整张沙盘，避开建筑占地，并给每个沙盘设计加底色",
+      "status": "superseded",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261128-128-sandbox-vegetation.md"
+    },
+    {
+      "id": "D-20261128-129",
+      "date": "2026-11-28",
+      "title": "沙盘设计收敛为颜色选择：移除展台植被，仅保留沙盘底色",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261128-129-sandbox-color-only.md"
+    },
+    {
+      "id": "D-20261128-130",
+      "date": "2026-11-28",
+      "title": "移除建造页绿色装饰：下线逐建筑微生态，建造与展台都不再生成植被",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261128-130-remove-build-eco.md"
+    },
+    {
+      "id": "D-20261128-131",
+      "date": "2026-11-28",
+      "title": "内容包 v6「城市与生活 III」：追加 12 座建筑蓝图",
+      "status": "approved",
+      "owner": "Claude Code",
+      "reviewer": "LeeCM",
+      "file": "design/records/D-20261128-131-content-pack-v6.md"
     }
   ]
 }

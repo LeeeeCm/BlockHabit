@@ -2,7 +2,7 @@
 id: D-20261111-068
 date: 2026-11-11
 title: 自由装饰模式：全落成后的展台补充玩法（最小方案，暂不实现）
-status: approved
+status: superseded
 owner: lead
 surface: [showcase]
 axioms: [A1, A5, A7]
@@ -64,3 +64,4 @@ D-20261110-063（approved）正文已写明「全落成后提供自由装饰模�
 - 测试：新增 `src/store/showcasePlacement.test.ts`（7 例）——邻居按当前旋转算 AABB、目标自身旋转参与边界、
   三参数旧行为不变、store 与 `canPlaceModel` 判定逐位一致、旋转绝不写进存档、未知蓝图拒绝。
 - 至此本记录「已知限制」只剩**真机四主题 × zh/en 截图**一项（需桌面窗口），逻辑侧限制已清零。
+- 2026-11-27 superseded（D-20261127-127）：装饰模式退役。全落成解锁的入口、会话旋转与「换一组植被」不再存在；旋转提升为右键/长按菜单并写入 `ShowcasePlacement.rotation` 持久化，植被重排变为每个沙盘自己的 `vegetationSeed`。本记录正文与旧履历全部保留，作为「为何一度不持久化」的历史依据。

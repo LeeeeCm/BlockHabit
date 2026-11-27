@@ -281,5 +281,138 @@ export const BLUEPRINT_COLOR_PLAN: Record<string, BlueprintColorPlan> = {
       lamp: '#f59e0b'
     },
     minAccentRatio: 0.08
+  },
+  // 内容包 v6（D-20261128-131）：城市与生活 III 12 座，全部复用既有批准材质色
+  station: {
+    roles: {
+      base: '#94a3b8',
+      wall: '#e2e8f0',
+      roof: '#b4533c',
+      door: '#78350f',
+      window: '#d97706',
+      clock: '#f59e0b'
+    }
+  },
+  theater: {
+    roles: {
+      base: '#94a3b8',
+      wall: '#f1f5f9',
+      roof: '#b4533c',
+      door: '#78350f',
+      window: '#d97706',
+      sign: '#f59e0b'
+    }
+  },
+  museum: {
+    roles: {
+      steps: '#cbd5e1',
+      wall: '#f8fafc',
+      roof: '#334155',
+      column: '#94a3b8',
+      pediment: '#b4533c',
+      door: '#78350f',
+      window: '#0284c7'
+    }
+  },
+  hospital: {
+    roles: {
+      base: '#94a3b8',
+      wall: '#f1f5f9',
+      roof: '#334155',
+      door: '#78350f',
+      window: '#0284c7',
+      cross: '#e11d48'
+    },
+    minAccentRatio: 0.09
+  },
+  school: {
+    roles: {
+      base: '#94a3b8',
+      wall: '#b4533c',
+      roof: '#334155',
+      tower: '#f1f5f9',
+      door: '#78350f',
+      window: '#d97706',
+      bell: '#f59e0b'
+    }
+  },
+  chapel: {
+    roles: {
+      base: '#94a3b8',
+      wall: '#f1f5f9',
+      roof: '#334155',
+      steeple: '#b4533c',
+      door: '#78350f',
+      window: '#0284c7',
+      cross: '#f59e0b'
+    }
+  },
+  temple: {
+    roles: {
+      base: '#94a3b8',
+      wall: '#b4533c',
+      roof: '#78350f',
+      upper: '#854d0e',
+      door: '#4a2c1d',
+      window: '#d97706'
+    }
+  },
+  carousel: {
+    roles: {
+      base: '#a89f91',
+      column: '#b4533c',
+      roofA: '#f59e0b',
+      roofB: '#f1f5f9',
+      trim: '#334155',
+      horse: '#e9c46a',
+      door: '#4a2c1d'
+    }
+  },
+  pier: {
+    roles: {
+      deck: '#854d0e',
+      post: '#78350f',
+      hut: '#a89f91',
+      roof: '#334155',
+      rail: '#4a2c1d',
+      lamp: '#f59e0b',
+      door: '#4a2c1d',
+      window: '#d97706'
+    }
+  },
+  fountain: {
+    roles: {
+      base: '#94a3b8',
+      basin: '#cbd5e1',
+      column: '#b4533c',
+      bowl: '#f1f5f9',
+      water: '#0284c7',
+      spout: '#f59e0b'
+    },
+    minAccentRatio: 0.1
+  },
+  market: {
+    roles: {
+      base: '#a89f91',
+      post: '#78350f',
+      awningA: '#f59e0b',
+      awningB: '#f1f5f9',
+      awningC: '#b4533c',
+      crate: '#c69c6d',
+      produce: '#e9c46a',
+      lamp: '#f59e0b',
+      door: '#4a2c1d'
+    }
+  },
+  stadium: {
+    roles: {
+      base: '#94a3b8',
+      field: '#4f776a',
+      tier: '#cbd5e1',
+      trim: '#b4533c',
+      lamp: '#f59e0b',
+      score: '#0284c7',
+      door: '#78350f'
+    }
   }
 }

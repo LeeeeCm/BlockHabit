@@ -8,6 +8,7 @@ import { triggerHaptic, usePlatform } from '../platform'
 import { BottomSheet } from './BottomSheet'
 import { useDialogA11y } from './useDialogA11y'
 import { ConfirmDialog } from './ConfirmDialog'
+import { Collapse } from './Collapse'
 import { TimeWheelPicker } from './TimeWheelPicker'
 interface Props {
   habit?: Habit
@@ -367,7 +368,7 @@ export function HabitDialog({ habit, onClose }: Props) {
         )}
       </div>
 
-      {/* F1 下半：选填项默认折叠，首屏只留「名称 / 频率 / 目标」 */}
+      {/* F1 下半：选填项默认折叠，首屏只留「名称 / 频率 / 目标」；D-20261127-126 加高度过渡 */}
       <button
         type="button"
         className="btn ghost"
@@ -398,7 +399,7 @@ export function HabitDialog({ habit, onClose }: Props) {
         </span>
       </button>
 
-      {moreOpen && (
+      <Collapse open={moreOpen}>
         <>
           <div className="field">
             <FieldLabel optionalText={t.common.optional}>{t.habitDialog.periodLabel}</FieldLabel>
@@ -524,7 +525,7 @@ export function HabitDialog({ habit, onClose }: Props) {
             )}
           </div>
         </>
-      )}
+      </Collapse>
 
       {kind === 'focus' && (
         <div className="field">
@@ -584,7 +585,7 @@ export function HabitDialog({ habit, onClose }: Props) {
         </div>
       )}
 
-      {moreOpen && (
+      <Collapse open={moreOpen}>
         <>
           <div className="field">
             <FieldLabel optionalText={t.common.optional}>{t.habitDialog.categoryLabel}</FieldLabel>
@@ -604,7 +605,7 @@ export function HabitDialog({ habit, onClose }: Props) {
             />
           </div>
         </>
-      )}
+      </Collapse>
     </>
   )
 

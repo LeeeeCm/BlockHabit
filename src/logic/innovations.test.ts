@@ -19,7 +19,6 @@ describe('全量创新特性单元与边界测试 (Innovations Test Suite)', () 
         language: 'zh',
         enableAmbientLighting: true,
         enableGentleDecay: true,
-        enableEcoProps: true,
         soundMaterial: 'classic',
         enableGyroscope: false,
         enableXRayInspection: false

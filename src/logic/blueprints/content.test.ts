@@ -8,6 +8,7 @@ import {
   CONTENT_PACKS,
   CONTENT_PACK_V2_IDS,
   CONTENT_PACK_V3_IDS,
+  CONTENT_PACK_V6_IDS,
   CONTENT_VERSION
 } from './manifest'
 import { APPROVED_BLUEPRINT_COLORS } from './palette'
@@ -18,9 +19,9 @@ import { APPROVED_BLUEPRINT_COLORS } from './palette'
  *
  * 锁定的事：
  * - manifest 三包与注册表并集、顺序、版本一致；
- * - 基础 12 座 1385 块、v2 6 座 600 块、v3 5 座 500 块，全量 23 座 / 2485 块；
+ * - 基础 12 座 1385 块、v2 6 座 600 块、v3 5 座 500 块、v6 12 座 1196 块，全量 35 座 / 3681 块；
  * - 既有 23 座逐块几何/顺序/块数/色值零改动，指纹锁定；
- * - 新 5 座结构契约（80–120 块、4–12 层、坐标唯一、无完全悬空、z 有序、装饰克制）；
+ * - v3/v6 结构契约（80–120 块、4–12 层、坐标唯一、无完全悬空、z 有序、装饰克制）；
  * - 全部块色值都在 D-067 批准的 24 色材质调色板内；
  * - 解锁顺序自动跟随注册表（v2 全部落成后才解锁 v3）。
  */
@@ -67,6 +68,21 @@ const BASE_ORDER = [
 
 const V2_ORDER = ['treehouse', 'greenhouse', 'clocktower', 'bridge', 'observatory', 'library']
 
+const V6_ORDER = [
+  'station',
+  'theater',
+  'museum',
+  'hospital',
+  'school',
+  'chapel',
+  'temple',
+  'carousel',
+  'pier',
+  'fountain',
+  'market',
+  'stadium'
+]
+
 /** 基础 12 座的权威块数（D-067 配色只改 color 字段，几何/块数必须逐座不变） */
 const BASE_BLOCK_COUNTS: Record<string, number> = {
   plant: 24,
@@ -100,6 +116,22 @@ const V3_BLOCK_COUNTS: Record<string, number> = {
   postoffice: 92,
   firestation: 112,
   watertower: 94
+}
+
+/** 内容包 v6 的权威块数（D-20261128-131） */
+const V6_BLOCK_COUNTS: Record<string, number> = {
+  station: 112,
+  theater: 95,
+  museum: 102,
+  hospital: 98,
+  school: 94,
+  chapel: 104,
+  temple: 100,
+  carousel: 92,
+  pier: 98,
+  fountain: 116,
+  market: 83,
+  stadium: 102
 }
 
 /**
@@ -141,10 +173,15 @@ const ZH = getTranslation('zh')
 const EN = getTranslation('en')
 
 describe('内容包 manifest（B1 / D-20261127-125）', () => {
-  it('CONTENT_VERSION = 5，只保留 v1/v2/v3 三个建筑内容包', () => {
-    expect(CONTENT_VERSION).toBe(5)
-    expect(CONTENT_PACKS.map((pack) => pack.id)).toEqual(['base', 'city-life', 'city-life-2'])
-    expect(CONTENT_PACKS.map((pack) => pack.version)).toEqual([1, 2, 3])
+  it('CONTENT_VERSION = 6，包含 v1/v2/v3/v6 四个建筑内容包', () => {
+    expect(CONTENT_VERSION).toBe(6)
+    expect(CONTENT_PACKS.map((pack) => pack.id)).toEqual([
+      'base',
+      'city-life',
+      'city-life-2',
+      'city-life-3'
+    ])
+    expect(CONTENT_PACKS.map((pack) => pack.version)).toEqual([1, 2, 3, 6])
   })
 
   it('内容包版本递增、发布日期合法、ids 唯一', () => {
@@ -163,16 +200,19 @@ describe('内容包 manifest（B1 / D-20261127-125）', () => {
     expect(CONTENT_PACKS.flatMap((pack) => pack.blueprintIds)).toEqual(blueprintOrder)
   })
 
-  it('三个内容包分别对应权威 id 列表（v3 严格追加在 v2 之后）', () => {
-    const [base, v2, v3] = CONTENT_PACKS
+  it('四个内容包分别对应权威 id 列表（v6 严格追加在 v3 之后）', () => {
+    const [base, v2, v3, v6] = CONTENT_PACKS
     expect(base.blueprintIds).toEqual(BASE_ORDER)
     expect(v2.blueprintIds).toEqual([...(CONTENT_PACK_V2_IDS as string[])])
     expect(v3.blueprintIds).toEqual([...(CONTENT_PACK_V3_IDS as string[])])
-    // v2/v3 不得被误算进基础包（BASE_PACK_IDS 推导必须同时排除两代扩展包）
+    expect(v6.blueprintIds).toEqual([...(CONTENT_PACK_V6_IDS as string[])])
+    // 扩展包不得被误算进基础包（BASE_PACK_IDS 推导必须排除全部扩展包）
     expect(base.blueprintIds).toHaveLength(12)
     expect(v2.version).toBe(2)
     expect(v3.version).toBe(3)
     expect(v3.releasedAt).toBe('2026-11-11')
+    expect(v6.version).toBe(6)
+    expect(v6.releasedAt).toBe('2026-11-28')
   })
 
   it('基础 12 座顺序/块数保持原样（D-067 只改颜色，几何不动）', () => {
@@ -213,7 +253,7 @@ describe('内容包 manifest（B1 / D-20261127-125）', () => {
     }
   })
 
-  it('全部 23 座使用的颜色都来自 D-067 批准材质调色板（v3 不新增色相）', () => {
+  it('全部 35 座使用的颜色都来自 D-067 批准材质调色板（v6 不新增色相）', () => {
     for (const id of blueprintOrder) {
       for (const block of blueprints[id].blocks) {
         if (!block.color) continue
@@ -227,25 +267,33 @@ describe('内容包 manifest（B1 / D-20261127-125）', () => {
 })
 
 describe('蓝图注册表完备性', () => {
-  it('order 内 id 唯一，全部注册且 id 与键一致（当前安装包 23 座）', () => {
+  it('order 内 id 唯一，全部注册且 id 与键一致（当前安装包 35 座）', () => {
     expect(new Set(blueprintOrder).size).toBe(blueprintOrder.length)
     expect(Object.keys(blueprints)).toEqual(blueprintOrder)
-    expect(blueprintOrder).toHaveLength(23)
+    expect(blueprintOrder).toHaveLength(35)
     for (const id of blueprintOrder) {
       expect(blueprints[id], `blueprint ${id} missing`).toBeDefined()
       expect(blueprints[id].id).toBe(id)
     }
   })
 
-  it('扩展包整体追加：v2 在基础 12 座之后、v3 在 v2 之后', () => {
+  it('扩展包整体追加：v2 在基础 12 座之后、v3 在 v2 之后、v6 在 v3 之后', () => {
     expect(CONTENT_PACK_V2_IDS).toHaveLength(6)
     expect(CONTENT_PACK_V3_IDS).toHaveLength(5)
+    expect(CONTENT_PACK_V6_IDS).toHaveLength(12)
+    expect(CONTENT_PACK_V6_IDS).toEqual(V6_ORDER)
     expect(blueprintOrder.slice(12, 18)).toEqual([...CONTENT_PACK_V2_IDS])
-    expect(blueprintOrder.slice(18)).toEqual([...CONTENT_PACK_V3_IDS])
+    expect(blueprintOrder.slice(18, 23)).toEqual([...CONTENT_PACK_V3_IDS])
+    expect(blueprintOrder.slice(23)).toEqual([...CONTENT_PACK_V6_IDS])
     for (const id of CONTENT_PACK_V2_IDS) expect(BASE_ORDER).not.toContain(id)
     for (const id of CONTENT_PACK_V3_IDS) {
       expect(BASE_ORDER).not.toContain(id)
       expect(V2_ORDER).not.toContain(id)
+    }
+    for (const id of CONTENT_PACK_V6_IDS) {
+      expect(BASE_ORDER).not.toContain(id)
+      expect(V2_ORDER).not.toContain(id)
+      expect(CONTENT_PACK_V3_IDS).not.toContain(id)
     }
   })
 
@@ -385,10 +433,79 @@ describe('内容包 v3 的 5 座结构（D-20261111-070）', () => {
     }
   })
 
-  it('主线 23 座 / 2485 块（基础 1385 + v2 600 + v3 500）', () => {
+  it('基础 23 座 / 2485 块（基础 1385 + v2 600 + v3 500）', () => {
+    const base23 = [...BASE_ORDER, ...V2_ORDER, ...CONTENT_PACK_V3_IDS]
+    const total = base23.reduce((sum, id) => sum + blueprints[id].blocks.length, 0)
+    expect(total).toBe(2485)
+    expect(total).toBe(1385 + 600 + 500)
+  })
+})
+
+describe('内容包 v6 的 12 座结构（D-20261128-131）', () => {
+  it('每座 80–120 块（与 v3 发布节奏一致）', () => {
+    for (const id of CONTENT_PACK_V6_IDS) {
+      const count = blueprints[id].blocks.length
+      expect(count, `${id} blocks`).toBeGreaterThanOrEqual(80)
+      expect(count, `${id} blocks`).toBeLessThanOrEqual(120)
+    }
+  })
+
+  it('v6 逐座块数为权威值（合计 1196）', () => {
+    for (const id of CONTENT_PACK_V6_IDS) {
+      expect(blueprints[id].blocks.length, `${id} 块数`).toBe(V6_BLOCK_COUNTS[id])
+    }
+    const total = CONTENT_PACK_V6_IDS.reduce((sum, id) => sum + blueprints[id].blocks.length, 0)
+    expect(total).toBe(1196)
+    expect(total).toBeGreaterThanOrEqual(960)
+    expect(total).toBeLessThanOrEqual(1440)
+  })
+
+  it('每座 4–12 层（避免过矮/过高）', () => {
+    for (const id of CONTENT_PACK_V6_IDS) {
+      const layers = Math.max(...blueprints[id].blocks.map((block) => block.z)) + 1
+      expect(layers, `${id} layers`).toBeGreaterThanOrEqual(4)
+      expect(layers, `${id} layers`).toBeLessThanOrEqual(12)
+    }
+  })
+
+  it('每座坐标唯一、只使用 basic/window/gate、无完全悬空块', () => {
+    for (const id of CONTENT_PACK_V6_IDS) {
+      const blocks = blueprints[id].blocks
+      const keys = blocks.map((block) => `${block.x},${block.y},${block.z}`)
+      expect(new Set(keys).size, `${id} duplicate coords`).toBe(keys.length)
+      const occupied = new Set(keys)
+      const floating = blocks.filter((block) => isCompletelyFloating(block, occupied))
+      expect(
+        floating,
+        `${id} floating: ${floating.map((b) => `${b.x},${b.y},${b.z}`).join(' ')}`
+      ).toEqual([])
+      for (const block of blocks) {
+        expect(['basic', 'window', 'gate'], `${id} bad type`).toContain(block.type)
+      }
+    }
+  })
+
+  it('每座自下而上排序（z 非递减），拼建顺序正确', () => {
+    for (const id of CONTENT_PACK_V6_IDS) {
+      const blocks = blueprints[id].blocks
+      for (let i = 1; i < blocks.length; i++) {
+        expect(blocks[i].z, `${id} z order`).toBeGreaterThanOrEqual(blocks[i - 1].z)
+      }
+    }
+  })
+
+  it('装饰克制：每座 3–10 处 window/gate', () => {
+    for (const id of CONTENT_PACK_V6_IDS) {
+      const decorated = blueprints[id].blocks.filter((block) => block.type !== 'basic').length
+      expect(decorated, `${id} decorated blocks`).toBeGreaterThanOrEqual(3)
+      expect(decorated, `${id} decorated blocks`).toBeLessThanOrEqual(10)
+    }
+  })
+
+  it('全部 35 座 / 3681 块（基础 1385 + v2 600 + v3 500 + v6 1196）', () => {
     const grandTotal = blueprintOrder.reduce((sum, id) => sum + blueprints[id].blocks.length, 0)
-    expect(grandTotal).toBe(2485)
-    expect(grandTotal).toBe(1385 + 600 + 500)
+    expect(grandTotal).toBe(3681)
+    expect(grandTotal).toBe(1385 + 600 + 500 + 1196)
   })
 })
 
@@ -413,7 +530,17 @@ describe('内容包解锁顺序（图鉴/建造动态化）', () => {
     expect(canSelectBlueprint(CONTENT_PACK_V3_IDS[0], BASE_ORDER)).toBe(false)
   })
 
-  it('全部 23 座落成后：没有下一座（firstIncompleteIndex 越界），已完成建筑仍可查看', () => {
+  it('v3 全部 23 座落成后：下一座 = v6 第一座，且 v6 建筑可选', () => {
+    const afterV3 = [...BASE_ORDER, ...V2_ORDER, ...CONTENT_PACK_V3_IDS]
+    const index = firstIncompleteIndex(afterV3)
+    expect(index).toBe(23)
+    expect(blueprintOrder[index]).toBe(CONTENT_PACK_V6_IDS[0])
+    expect(canSelectBlueprint(CONTENT_PACK_V6_IDS[0], afterV3)).toBe(true)
+    expect(canSelectBlueprint(CONTENT_PACK_V6_IDS[1], afterV3)).toBe(false)
+    expect(canSelectBlueprint(CONTENT_PACK_V6_IDS[0], [...BASE_ORDER, ...V2_ORDER])).toBe(false)
+  })
+
+  it('全部 35 座落成后：没有下一座（firstIncompleteIndex 越界），已完成建筑仍可查看', () => {
     const all = [...blueprintOrder]
     const nextIndex = firstIncompleteIndex(all)
     expect(nextIndex).toBe(blueprintOrder.length)

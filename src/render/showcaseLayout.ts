@@ -171,7 +171,7 @@ export function collectSortedCubes(
   return cubes
 }
 
-/** 已落位模型的偏移积木坐标（阴影/植被绘制与命中检测共用；rotations 为空时与旧实现一致） */
+/** 已落位模型的偏移积木坐标（阴影绘制与命中检测共用；rotations 为空时与旧实现一致） */
 export function buildOffsetBlocksMap(
   placements: ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,

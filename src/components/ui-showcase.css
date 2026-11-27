@@ -1,0 +1,426 @@
+/* 展台抽屉 / 堆场 / 右键菜单（D-20261127-127）：
+   左右标签常驻，面板用 grid 0fr→1fr 滑出；只复用 --ink/--line/--surface 与既有材质色，
+   不新增阴影档位（抽屉与菜单各一层极软分层阴影）。 */
+
+.sc-drawer {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: stretch;
+  z-index: 12;
+  /* 左右抽屉同高：以左侧展开后的高度为准，内容超出时面板内滚动 */
+  height: min(360px, calc(100% - 32px));
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+}
+
+.sc-drawer-left {
+  left: 0;
+  flex-direction: row-reverse;
+  /* 外侧（贴窗口）尖角，内侧（按钮侧）圆角；标签与面板共用同一层背景，无接缝 */
+  border-left: none;
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+}
+
+.sc-drawer-right {
+  right: 0;
+  border-right: none;
+  border-radius: var(--r-md) 0 0 var(--r-md);
+}
+
+.sc-drawer-fold {
+  display: grid;
+  grid-template-columns: 0fr;
+  height: 100%;
+  transition: grid-template-columns var(--dur-lg) var(--ease-standard);
+}
+
+.sc-drawer.is-open .sc-drawer-fold {
+  grid-template-columns: 1fr;
+}
+
+.sc-drawer-clip {
+  overflow: hidden;
+  min-width: 0;
+  height: 100%;
+}
+
+.sc-drawer-panel {
+  width: 252px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.sc-drawer-tab {
+  width: 44px;
+  flex-shrink: 0;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--ink);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.sc-drawer-tab:hover .sc-drawer-arrow,
+.sc-drawer-tab:hover .sc-drawer-label {
+  color: var(--ink);
+}
+
+.sc-drawer-arrow {
+  font-size: var(--fs-subhead);
+  line-height: 1;
+  color: var(--ink-2);
+  transition: color var(--dur-sm) var(--ease-out);
+}
+
+.sc-drawer-label {
+  writing-mode: vertical-rl;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.sc-drawer-count {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sc-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sc-section-title {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--ink-2);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sc-spaced-title {
+  margin-top: 6px;
+}
+
+.sc-hint {
+  font-size: var(--fs-caption);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.sc-empty {
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  line-height: 1.6;
+  padding: 8px 0;
+}
+
+.sc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sc-sandbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+}
+
+.sc-sandbox-row[data-active='true'] {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 6%, var(--bg));
+}
+
+.sc-sandbox-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: calc(var(--r-sm) - 2px);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sc-sandbox-index {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+}
+
+.sc-sandbox-row[data-active='true'] .sc-sandbox-index {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.sc-sandbox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sc-sandbox-name {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-sandbox-meta {
+  font-size: var(--fs-caption);
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-icon-btn {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.sc-icon-btn:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink);
+}
+
+.sc-wide-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-small);
+}
+
+.sc-wide-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sc-design-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sc-design-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+
+.sc-design-chip[data-active='true'] {
+  border-color: var(--ink);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.sc-design-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+/* 设计色点取 ART §10 已批准的材质色，同时也是沙盘底座的设计底色 */
+.sc-design-moss {
+  background: #4f776a;
+}
+
+.sc-design-stone {
+  background: #a89f91;
+}
+
+.sc-design-bloom {
+  background: #e9c46a;
+}
+
+.sc-design-bare {
+  background: var(--line);
+}
+
+.sc-yard-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-xs) var(--ease-default);
+}
+
+.sc-yard-row:hover {
+  border-color: var(--ink);
+}
+
+.sc-yard-thumb {
+  width: 84px;
+  height: 56px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 4%, var(--bg));
+}
+
+.sc-yard-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sc-yard-name {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-yard-meta {
+  font-size: var(--fs-caption);
+  color: var(--ink-2);
+}
+
+.sc-yard-action {
+  flex-shrink: 0;
+  font-size: var(--fs-caption);
+  color: var(--ink-2);
+}
+
+.sc-ctx {
+  position: fixed;
+  z-index: 80;
+  min-width: 184px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--ink) 14%, transparent);
+  animation: sc-ctx-in var(--dur-sm) var(--ease-out);
+}
+
+@keyframes sc-ctx-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sc-ctx-title {
+  padding: 4px 8px 6px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 0;
+  border-radius: calc(var(--r-sm) - 2px);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sc-ctx-item:hover,
+.sc-ctx-item:focus-visible {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  outline: none;
+}
+
+@media (max-width: 560px) {
+  .sc-drawer-panel {
+    width: min(252px, 72vw);
+  }
+}

@@ -32,13 +32,15 @@ function baseState(overrides: Partial<AppState> = {}): AppState {
   }
 }
 
-describe('内容版本 v5 与 manifest 一致性（D-20261127-125）', () => {
-  it('当前内容版本 = 5，保留 v1/v2/v3 三个建筑内容包', () => {
-    expect(CONTENT_VERSION).toBe(5)
-    expect(CONTENT_PACKS.map((pack) => pack.version)).toEqual([1, 2, 3])
+describe('内容版本 v6 与 manifest 一致性（D-20261128-131）', () => {
+  it('当前内容版本 = 6，保留 v1/v2/v3/v6 四个建筑内容包', () => {
+    expect(CONTENT_VERSION).toBe(6)
+    expect(CONTENT_PACKS.map((pack) => pack.version)).toEqual([1, 2, 3, 6])
     expect(CONTENT_PACKS[2].version).toBe(3)
     expect(CONTENT_PACKS[2].blueprintIds).toEqual([...(CONTENT_PACK_V3_IDS as string[])])
     expect(CONTENT_PACK_V3_IDS).toHaveLength(5)
+    expect(CONTENT_PACKS[3].id).toBe('city-life-3')
+    expect(CONTENT_PACKS[3].blueprintIds).toHaveLength(12)
   })
 
   it('missing/invalid versions normalize to current', () => {
@@ -49,35 +51,35 @@ describe('内容版本 v5 与 manifest 一致性（D-20261127-125）', () => {
     expect(normalizeContentVersion(3)).toBe(3)
     expect(normalizeContentVersion(4)).toBe(4)
     expect(isFutureContentVersion(CONTENT_VERSION + 1)).toBe(true)
-    expect(isFutureContentVersion(6)).toBe(true)
-    expect(isFutureContentVersion(5)).toBe(false)
+    expect(isFutureContentVersion(7)).toBe(true)
+    expect(isFutureContentVersion(6)).toBe(false)
     expect(isFutureContentVersion(4)).toBe(false)
     expect(isFutureContentVersion(3)).toBe(false)
     expect(isFutureContentVersion(CONTENT_VERSION)).toBe(false)
   })
 })
 
-describe('内容版本门（B1 兼容矩阵，v4 → v5）', () => {
-  it('旧存档无 contentVersion：按 1 加载，保存后补写当前版本 5', () => {
+describe('内容版本门（B1 兼容矩阵，v4 → v6）', () => {
+  it('旧存档无 contentVersion：按 1 加载，保存后补写当前版本 6', () => {
     const loaded = loadAndMigrate(baseState())
-    expect(loaded.state?.contentVersion).toBe(5)
+    expect(loaded.state?.contentVersion).toBe(6)
     const saved = serializeState(loaded.state!)
-    expect(saved.contentVersion).toBe(5)
+    expect(saved.contentVersion).toBe(6)
   })
 
-  it('旧 v3 档（显式 contentVersion=3）：正常读入并升到 5，保存写 5', () => {
+  it('旧 v3 档（显式 contentVersion=3）：正常读入并升到 6，保存写 6', () => {
     const loaded = loadAndMigrate({ ...baseState(), contentVersion: 3 })
     expect(loaded.state).not.toBeNull()
-    expect(loaded.state?.contentVersion).toBe(5)
-    expect(serializeState(loaded.state!).contentVersion).toBe(5)
-    expect(prepareImport({ ...baseState(), contentVersion: 3 })?.contentVersion).toBe(5)
-    expect(normalizeState(baseState({ contentVersion: 3 })).contentVersion).toBe(5)
+    expect(loaded.state?.contentVersion).toBe(6)
+    expect(serializeState(loaded.state!).contentVersion).toBe(6)
+    expect(prepareImport({ ...baseState(), contentVersion: 3 })?.contentVersion).toBe(6)
+    expect(normalizeState(baseState({ contentVersion: 3 })).contentVersion).toBe(6)
   })
 
-  it('旧客户端 × 新存档（v6）：needsUpgrade，sanitize 不执行、未知蓝图数据不被清洗落盘', () => {
+  it('旧客户端 × 新存档（v7）：needsUpgrade，sanitize 不执行、未知蓝图数据不被清洗落盘', () => {
     const future = {
       ...baseState(),
-      contentVersion: 6,
+      contentVersion: 7,
       builds: [
         {
           id: 'b1',
@@ -107,11 +109,11 @@ describe('内容版本门（B1 兼容矩阵，v4 → v5）', () => {
     expect(loaded.state === null && loaded.needsUpgrade).toBe(true)
   })
 
-  it('导入/同步前置：更高内容版本（v6）返回 null，不覆盖本地', () => {
-    const future = { ...baseState(), contentVersion: 6 }
+  it('导入/同步前置：更高内容版本（v7）返回 null，不覆盖本地', () => {
+    const future = { ...baseState(), contentVersion: 7 }
     expect(prepareImport(future)).toBeNull()
     expect(prepareImport(baseState())?.contentVersion).toBe(CONTENT_VERSION)
-    expect(prepareImport({ ...baseState(), contentVersion: 2 })?.contentVersion).toBe(5)
+    expect(prepareImport({ ...baseState(), contentVersion: 2 })?.contentVersion).toBe(6)
   })
 
   it('显式旧版本（contentVersion=1）读入后升为当前版本，保存写当前版本', () => {
@@ -132,8 +134,8 @@ describe('内容版本门（B1 兼容矩阵，v4 → v5）', () => {
   })
 
   it('双端合并：contentVersion 取较高值，不因旧端写低', () => {
-    const merged = mergeAppState(baseState({ contentVersion: 5 }), baseState({ contentVersion: 6 }))
-    expect(merged.contentVersion).toBe(6)
+    const merged = mergeAppState(baseState({ contentVersion: 6 }), baseState({ contentVersion: 7 }))
+    expect(merged.contentVersion).toBe(7)
     const mergedOld = mergeAppState(baseState({ contentVersion: CONTENT_VERSION }), baseState())
     expect(mergedOld.contentVersion).toBe(CONTENT_VERSION)
     // 双端都是显式旧版本时也不能把合并结果写低（真实路径已被 normalize，这里防御 API 误用）
@@ -146,11 +148,11 @@ describe('内容版本门（B1 兼容矩阵，v4 → v5）', () => {
       baseState({ contentVersion: 4 }),
       baseState({ contentVersion: 3 })
     )
-    expect(v4WithV3.contentVersion).toBe(5)
+    expect(v4WithV3.contentVersion).toBe(6)
   })
 
-  it('本地存储未来内容版本（v6）：needsUpgrade 且原始存档字节不被改写', async () => {
-    const future = JSON.stringify({ ...baseState(), contentVersion: 6 })
+  it('本地存储未来内容版本（v7）：needsUpgrade 且原始存档字节不被改写', async () => {
+    const future = JSON.stringify({ ...baseState(), contentVersion: 7 })
     localStorage.setItem(STATE_KEY, future)
     const res = await createLocalStorageAdapter().load()
     expect(res.state).toBeNull()

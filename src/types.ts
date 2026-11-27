@@ -134,6 +134,18 @@ export interface ShowcasePlacement {
   blueprintId: string
   gridX: number
   gridY: number
+  /** 已落位建筑的 90° 象限（0–3）；右键旋转后持久化，0/缺省 = 原朝向 */
+  rotation?: number
+}
+
+/** 沙盘颜色方案（D-20261128-129）：只决定底座颜色，展台不再生成植被 */
+export type SandboxDesign = 'moss' | 'stone' | 'bloom' | 'bare'
+
+export interface ShowcaseSandbox {
+  id: string
+  placements: ShowcasePlacement[]
+  /** 底座颜色方案；缺省 moss（苔绿） */
+  design?: SandboxDesign
 }
 
 export type Theme = 'light' | 'dark' | 'oat' | 'fog'
@@ -147,8 +159,6 @@ export interface AppSettings {
   enableAmbientLighting?: boolean
   /** 抗断卡温和风化机制 (Gentle Decay: 晨雾休整期 vs 经典断卡清零) */
   enableGentleDecay?: boolean
-  /** 建筑微生态彩蛋 (连胜达到 7/21/100 天孕育植被小径等低多边形彩蛋) */
-  enableEcoProps?: boolean
   /** 物理合成 ASMR 敲击音色 (经典/原木/晶体/合金/静音) */
   soundMaterial?: SoundMaterial
   /** 全局静音开关（重启保持） */
@@ -192,8 +202,12 @@ export interface AppState {
   repairBricks?: number
   /** 最近一次发放月度额度的月份键（'YYYY-MM'），用于补签时结算月额度（F8） */
   repairBrickMonth?: string
-  /** 展台沙盘模型摆放位置 */
+  /** 展台沙盘模型摆放位置（当前沙盘的镜像；新代码以 showcaseSandboxes 为准） */
   showcasePlacements?: ShowcasePlacement[]
+  /** 展台多沙盘（D-20261127-127）；缺省时由 showcasePlacements 迁移为单沙盘 */
+  showcaseSandboxes?: ShowcaseSandbox[]
+  /** 当前展台沙盘 id */
+  activeSandboxId?: string
   /** 蓝图落成奠基石铭言：blueprintId -> noteText */
   foundationNotes?: Record<string, string>
   /** 提醒当日处置记录：habitId -> { date, action }，用于「跳过今天」跨重启静默 */

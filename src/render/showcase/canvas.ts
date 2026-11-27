@@ -1,13 +1,13 @@
 /**
  * 展台沙盘的 canvas 绘制（纯拆分自 ShowcaseScene.tsx）：
- * 底座静态层、地面阴影、微生态植被、拖拽脚印与积木绘制。
+ * 底座静态层（含沙盘颜色方案）、地面阴影、拖拽脚印与积木绘制。
  * 每个函数只接收明确的绘制参数，不读取组件状态。
  */
-import type { ShowcasePlacement } from '../../types'
+import type { SandboxDesign, ShowcasePlacement } from '../../types'
 import type { ModelFootprint } from '../../logic/showcase'
+import { mixColor, relativeLuminance } from '../isoColor'
 import {
   drawCube,
-  drawEcoProps,
   drawGroundShadow,
   traceIsoGroundPath,
   withAlpha,
@@ -85,7 +85,7 @@ export function renderShowcaseBase(
   bctx.restore()
 }
 
-/** 2.4 每个落位模型的地面接触阴影（积木与植被之前绘制） */
+/** 2.4 每个落位模型的地面接触阴影（积木之前绘制） */
 export function drawShowcaseShadows(
   ctx: CanvasRenderingContext2D,
   placements: ShowcasePlacement[],
@@ -100,22 +100,38 @@ export function drawShowcaseShadows(
   }
 }
 
-/** 2.5 微生态植被：每个落位模型的 margin 环带内（积木之前绘制，正确深度） */
-export function drawShowcaseEco(
-  ctx: CanvasRenderingContext2D,
-  placements: ShowcasePlacement[],
-  offsetBlocksMap: Map<string, Array<{ x: number; y: number }>>,
-  cfg: IsoConfig,
-  palette: IsoPalette,
-  stage: number,
-  seed: number
-): void {
-  if (stage < 1) return
-  for (const p of placements) {
-    const offsetBlocks = offsetBlocksMap.get(p.blueprintId)
-    if (!offsetBlocks) continue
-    drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, stage, 'back', seed)
-    drawEcoProps(ctx, offsetBlocks, cfg, palette, 0, 0, 0, stage, 'front', seed)
+/** 沙盘设计底色（D-20261128-128）：只从 ART §10 既有材质色取色，不新增色相 */
+export const SANDBOX_TINTS: Record<SandboxDesign, string | null> = {
+  moss: '#4f776a',
+  stone: '#a89f91',
+  bloom: '#e9c46a',
+  bare: null
+}
+
+/** 设计色的混入强度：石白更克制，苔绿/暖沙更明显 */
+const DESIGN_TINT_STRENGTH: Record<SandboxDesign, number> = {
+  moss: 0.52,
+  stone: 0.4,
+  bloom: 0.5,
+  bare: 0
+}
+
+/**
+ * 给沙盘底座加上设计色：先把设计色与白色混合成柔化色，再按顶/左/右不同比例混进主题块面，
+ * 保持「顶面最亮、左面中、右面最暗」的明暗阶梯；建筑积木本身不染色。
+ * 暗色主题降低混入强度，避免沙盘变成一块发亮的彩色板。
+ */
+export function buildSandboxBasePalette(palette: IsoPalette, design: SandboxDesign): IsoPalette {
+  const tint = SANDBOX_TINTS[design]
+  const baseStrength = DESIGN_TINT_STRENGTH[design]
+  if (!tint || baseStrength <= 0) return palette
+  const strength = baseStrength * (relativeLuminance(palette.top) < 0.2 ? 0.7 : 1)
+  const soft = mixColor(tint, '#ffffff', 0.2)
+  return {
+    ...palette,
+    top: mixColor(palette.top, soft, strength),
+    left: mixColor(palette.left, soft, strength * 0.78),
+    right: mixColor(palette.right, soft, strength * 0.62)
   }
 }
 
@@ -160,20 +176,19 @@ export function drawDragFootprint(
   ctx.restore()
 }
 
-/** 4. 绘制所有积木（含悬停/选中高亮、拖拽虚影、连击奖励标记） */
+/** 4. 绘制所有积木（含悬停高亮、拖拽虚影、连击奖励标记） */
 export function drawShowcaseCubes(
   ctx: CanvasRenderingContext2D,
   drawList: RenderCube[],
   cfg: IsoConfig,
   palette: IsoPalette,
   hoveredId: string | null,
-  selectedId: string | null,
   drag: DragState | null,
   bonusByBlueprint: Map<string, Array<'streak' | 'attendance' | undefined>>
 ): void {
   for (const { worldX, worldY, worldZ, block, blueprintId, isDragging, index } of drawList) {
     const { sx: px, sy: py } = worldToScreen(worldX, worldY, worldZ, cfg)
-    const isHovered = (hoveredId === blueprintId || selectedId === blueprintId) && !drag
+    const isHovered = hoveredId === blueprintId && !drag
     const bonusTier = index !== undefined ? bonusByBlueprint.get(blueprintId)?.[index] : undefined
     const isBonus = bonusTier !== undefined
     drawCube(ctx, px, py + cfg.tileH / 2, cfg, palette, {

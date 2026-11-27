@@ -27,6 +27,10 @@
 | 全勤 | 全勤大满贯 | All-Clear | zh.ts:82 / en.ts:98 |
 | 修复砖 | 修复积木 | Repair Block | zh.ts:145 / en.ts:161 |
 | 展台 | 展台沙盘 | Showcase Island | zh.ts:133 / en.ts:149 |
+| 沙盘 | 沙盘 · 沙盘 N | Island · Island N | D-20261127-127（`showcase.sandboxName`） |
+| 堆场 | 堆场 | Block Yard | D-20261127-127（`showcase.yardTitle`） |
+| 收拢 | 收拢回堆场 | Return to yard | D-20261127-127（右键 / 长按菜单） |
+| 沙盘颜色 | 苔绿 / 石白 / 暖沙 / 素盘 | Sage / Stone / Sand / Bare | D-20261128-129（`showcase.designs`） |
 | 透视考古 | 透视考古 | X-Ray | zh.ts:127 / en.ts:143 |
 | 奠基铭言 | 奠基铭言 · 奠基石 | Dedication / Foundation Inscription | zh.ts:118 / en.ts:134 |
 | 镌刻 | 镌刻成砖 | Engrave | zh.ts:417 / en.ts:433 |
@@ -36,7 +40,7 @@
 | 拍立得 | 落成纪念相纸 | Polaroid | zh.ts:239 / en.ts:255 |
 | 摆件 | 桌面灵动摆件 | Mini Desk Toy | zh.ts:35 / en.ts:50 |
 | 温和风化 | 抗断卡韧性 · 温和风化 | Gentle Decay / Weathering | zh.ts:331–334 / en.ts:348–351 |
-| 微生态彩蛋 | 建筑微生态彩蛋 | Micro-Ecosystem | zh.ts:335 / en.ts:352 |
+| 微生态彩蛋（已下线，D-20261128-130） | 建筑微生态彩蛋 | Micro-Ecosystem | 文案已删除；仅保留为历史术语 |
 
 ## 3. 标点与数字格式
 

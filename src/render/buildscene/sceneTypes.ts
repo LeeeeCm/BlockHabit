@@ -51,7 +51,6 @@ export interface SceneState {
   rotation: number
   enableAmbient: boolean
   enableGyroscope: boolean
-  ecoStage: number
   xrayMode: boolean
 }
 

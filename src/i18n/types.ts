@@ -164,15 +164,37 @@ export interface TranslationSchema {
     dragHint: string
     emptyHint: string
     fullHint: string
-    /** D-068 自由装饰模式（全落成后解锁；旋转/植被重排仅本次会话有效） */
-    decoration: string
-    decorationHint: string
-    exitDecoration: string
-    rotateLeft: string
-    rotateRight: string
+    /** 左抽屉：沙盘列表（D-20261127-127） */
+    sandboxTab: string
+    sandboxName: (index: number) => string
+    buildingCount: (count: number) => string
+    addSandbox: string
+    addSandboxFull: string
+    removeSandbox: string
+    removeSandboxConfirmTitle: string
+    removeSandboxConfirmMsg: (name: string) => string
+    /** 右抽屉：堆场（未陈列建筑） */
+    yardTab: string
+    yardEmpty: string
+    yardElsewhere: string
+    yardPlace: string
+    yardFull: string
+    yardPlaced: (name: string) => string
+    /** 沙盘设计（只选底座颜色） */
+    designLabel: string
+    designs: {
+      moss: string
+      stone: string
+      bloom: string
+      bare: string
+    }
+    /** 右键 / 长按菜单 */
+    contextRotate: string
+    contextTuck: string
+    tucked: string
     rotateBlocked: string
-    ecoReshuffle: string
-    ecoReshuffled: string
+    expandPanel: (name: string) => string
+    collapsePanel: (name: string) => string
   }
   stats: {
     title: string
@@ -495,10 +517,6 @@ export interface TranslationSchema {
     gentleDecayOn: string
     gentleDecayOff: string
     gentleDecayHint: string
-    ecoPropsLabel: string
-    ecoPropsOn: string
-    ecoPropsOff: string
-    ecoPropsHint: string
     soundMaterialLabel: string
     soundMatClassic: string
     soundMatWalnut: string

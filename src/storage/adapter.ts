@@ -1,7 +1,21 @@
 import { REPAIR_MAX } from '../logic/repairBricks'
-import type { AppState, DayClaim, DeletedDayClaim, ReminderLogEntry } from '../types'
+import type {
+  AppState,
+  DayClaim,
+  DeletedDayClaim,
+  ReminderLogEntry,
+  ShowcasePlacement,
+  ShowcaseSandbox
+} from '../types'
 import { blueprintOrder } from '../logic/blueprints'
 import { CONTENT_VERSION, normalizeContentVersion } from '../logic/blueprints/manifest'
+import {
+  DEFAULT_SANDBOX_ID,
+  SHOWCASE_GRID_SIZE,
+  SHOWCASE_SANDBOX_MAX,
+  createShowcaseSandbox,
+  normalizeSandboxDesign
+} from '../logic/showcase'
 import { normalizePetColor } from '../pet/types'
 import { LEGACY_PET_BLUEPRINT_IDS, migrateLegacyPetBlueprints } from './petBlueprintMigration'
 
@@ -372,6 +386,125 @@ export function prepareImport(v: unknown): AppState | null {
   return null
 }
 
+/** 清洗单个沙盘的落位：未知蓝图、越界坐标、重复蓝图与非法旋转逐条丢弃（D-20261127-127） */
+function sanitizeShowcasePlacements(raw: unknown): ShowcasePlacement[] {
+  if (!Array.isArray(raw)) return []
+  const seen = new Set<string>()
+  const out: ShowcasePlacement[] = []
+  // 损坏/恶意存档可能有极长数组：只扫描前 512 条（远高于 23 座建筑的合法上限）
+  for (const item of raw.slice(0, 512)) {
+    if (!isRecord(item)) continue
+    const blueprintId = item.blueprintId
+    if (typeof blueprintId !== 'string' || !isKnownBlueprintId(blueprintId)) continue
+    if (seen.has(blueprintId)) continue
+    const gridX = item.gridX
+    const gridY = item.gridY
+    if (
+      typeof gridX !== 'number' ||
+      !Number.isFinite(gridX) ||
+      typeof gridY !== 'number' ||
+      !Number.isFinite(gridY)
+    ) {
+      continue
+    }
+    const x = Math.trunc(gridX)
+    const y = Math.trunc(gridY)
+    if (x < 0 || y < 0 || x >= SHOWCASE_GRID_SIZE || y >= SHOWCASE_GRID_SIZE) continue
+    const rawRotation = item.rotation
+    const rotation =
+      typeof rawRotation === 'number' && Number.isFinite(rawRotation)
+        ? ((Math.trunc(rawRotation) % 4) + 4) % 4
+        : 0
+    seen.add(blueprintId)
+    out.push({ blueprintId, gridX: x, gridY: y, ...(rotation ? { rotation } : null) })
+  }
+  return out
+}
+
+/**
+ * 沙盘清洗 / 旧档迁移：
+ * - 有合法 sandboxes 时以它为准；同一座建筑跨沙盘重复只保留第一次出现；
+ * - 只有 legacy showcasePlacements 时迁移成 sandbox-1（moss / seed 0）；
+ * - activeSandboxId 失效时回落到第一个；
+ * - 返回当前沙盘镜像，保证 legacy 字段始终可读。
+ */
+function normalizeShowcaseState(
+  rawSandboxes: unknown,
+  legacyPlacements: unknown,
+  rawActiveId: unknown,
+  legacyDesign: ShowcaseSandbox['design'] = 'moss'
+): Pick<AppState, 'showcaseSandboxes' | 'activeSandboxId' | 'showcasePlacements'> {
+  const sandboxes: ShowcaseSandbox[] = []
+  const placedAnywhere = new Set<string>()
+  const rawList = Array.isArray(rawSandboxes) ? rawSandboxes.slice(0, 32) : []
+  // active 若排在 4 个上限之后，先提到队首，避免截断把当前沙盘丢掉
+  if (typeof rawActiveId === 'string') {
+    const activeIndex = rawList.findIndex((item) => isRecord(item) && item.id === rawActiveId)
+    if (activeIndex >= SHOWCASE_SANDBOX_MAX) {
+      const [activeItem] = rawList.splice(activeIndex, 1)
+      rawList.unshift(activeItem)
+    }
+  }
+  for (const item of rawList) {
+    if (sandboxes.length >= SHOWCASE_SANDBOX_MAX) break
+    if (!isRecord(item)) continue
+    const id = item.id
+    if (typeof id !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(id)) continue
+    if (sandboxes.some((s) => s.id === id)) continue
+    const placements = sanitizeShowcasePlacements(item.placements).filter((p) => {
+      if (placedAnywhere.has(p.blueprintId)) return false
+      placedAnywhere.add(p.blueprintId)
+      return true
+    })
+    sandboxes.push({
+      id,
+      placements,
+      design: normalizeSandboxDesign(item.design)
+    })
+  }
+  if (sandboxes.length === 0) {
+    const fallback = createShowcaseSandbox(
+      DEFAULT_SANDBOX_ID,
+      0,
+      sanitizeShowcasePlacements(legacyPlacements)
+    )
+    sandboxes.push({ ...fallback, design: legacyDesign })
+  }
+  const activeSandboxId =
+    typeof rawActiveId === 'string' && sandboxes.some((s) => s.id === rawActiveId)
+      ? rawActiveId
+      : sandboxes[0].id
+  const active = sandboxes.find((s) => s.id === activeSandboxId) ?? sandboxes[0]
+  // 混合写入恢复：新客户端写过 sandboxes，旧客户端随后只写了 legacy 镜像并清空 active。
+  // 仅当 active 为空且镜像非空时把镜像并回 active；已在其他沙盘的建筑不重复恢复。
+  if (active.placements.length === 0) {
+    const legacy = sanitizeShowcasePlacements(legacyPlacements)
+    if (legacy.length > 0) {
+      const taken = new Set<string>()
+      for (const sandbox of sandboxes) {
+        if (sandbox.id === active.id) continue
+        for (const p of sandbox.placements) taken.add(p.blueprintId)
+      }
+      const recovered = legacy.filter((p) => !taken.has(p.blueprintId))
+      if (recovered.length > 0) {
+        const next = sandboxes.map((s) =>
+          s.id === active.id ? { ...s, placements: recovered } : s
+        )
+        return {
+          showcaseSandboxes: next,
+          activeSandboxId,
+          showcasePlacements: recovered
+        }
+      }
+    }
+  }
+  return {
+    showcaseSandboxes: sandboxes,
+    activeSandboxId,
+    showcasePlacements: active.placements
+  }
+}
+
 /** 旧存档缺字段时补默认值 */
 export function normalizeState(s: AppState): AppState {
   const initialLang =
@@ -380,6 +513,15 @@ export function normalizeState(s: AppState): AppState {
       : typeof navigator !== 'undefined' && navigator.language?.startsWith('zh')
         ? 'zh'
         : 'en'
+  const showcase = normalizeShowcaseState(
+    s.showcaseSandboxes,
+    s.showcasePlacements,
+    s.activeSandboxId,
+    // 旧全局开关 false（纯粹积木）→ 首个沙盘设计为素盘，尽量保留用户原偏好
+    (s.settings as unknown as Record<string, unknown> | undefined)?.enableEcoProps === false
+      ? 'bare'
+      : 'moss'
+  )
   const normalized: AppState = {
     ...s,
     // 门禁已按原始版本拦截未来内容；低于当前版本的旧档读入后即视为「本安装包可产出全部内容」，
@@ -393,7 +535,6 @@ export function normalizeState(s: AppState): AppState {
       language: initialLang,
       enableAmbientLighting: s.settings?.enableAmbientLighting !== false,
       enableGentleDecay: s.settings?.enableGentleDecay !== false,
-      enableEcoProps: s.settings?.enableEcoProps !== false,
       soundMaterial:
         s.settings?.soundMaterial === 'walnut' ||
         s.settings?.soundMaterial === 'crystal' ||
@@ -451,7 +592,9 @@ export function normalizeState(s: AppState): AppState {
       typeof s.repairBrickMonth === 'string' && /^\d{4}-\d{2}$/.test(s.repairBrickMonth)
         ? s.repairBrickMonth
         : undefined,
-    showcasePlacements: Array.isArray(s.showcasePlacements) ? s.showcasePlacements : [],
+    showcasePlacements: showcase.showcasePlacements,
+    showcaseSandboxes: showcase.showcaseSandboxes,
+    activeSandboxId: showcase.activeSandboxId,
     foundationNotes:
       typeof s.foundationNotes === 'object' && s.foundationNotes !== null ? s.foundationNotes : {},
     reminderLog:

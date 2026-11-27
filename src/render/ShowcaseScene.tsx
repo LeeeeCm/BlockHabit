@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useMemo } from 'react'
-import type { Blueprint, ShowcasePlacement } from '../types'
+import type { Blueprint, SandboxDesign, ShowcasePlacement } from '../types'
 import { DEFAULT_ISO_CONFIG, paletteFromDocument, type IsoPalette } from './iso'
-import { canPlaceModel, screenToGroundIso, SHOWCASE_GRID_SIZE } from '../logic/showcase'
+import {
+  canPlaceModel,
+  rotationsFromPlacements,
+  screenToGroundIso,
+  SHOWCASE_GRID_SIZE
+} from '../logic/showcase'
 import {
   buildBaseGeometry,
   buildFootprintMap,
@@ -21,13 +26,13 @@ import { triggerHaptic } from '../platform'
 import { useAppStore } from '../store/appStore'
 import { applyPinchZoom, applyWheelZoom, fitShowcaseView } from './showcase/camera'
 import {
+  buildSandboxBasePalette,
   drawDragFootprint,
   drawShowcaseCubes,
-  drawShowcaseEco,
   drawShowcaseShadows,
   renderShowcaseBase
 } from './showcase/canvas'
-import { buildBonusByBlueprint, computeEcoStage } from './showcase/derived'
+import { buildBonusByBlueprint } from './showcase/derived'
 import { buildDragCubes, mergeDragCubes, snapDragTarget, type DragState } from './showcase/drag'
 import { clientToWorldPoint, findModelAtWorldPoint, resolveFootprint } from './showcase/hitTest'
 import {
@@ -42,30 +47,29 @@ interface Props {
   blueprintsMap: Record<string, Blueprint>
   onUpdatePlacement: (blueprintId: string, gridX: number, gridY: number) => boolean
   onSelectModel?: (blueprintId: string) => void
-  /** 装饰模式（D-20261111-068）：蓝图 → 本次会话 90° 象限（0/1/2/3），不落盘；默认空 = 现状 */
-  rotations?: Record<string, number>
-  /** 装饰模式：微生态植被重排种子（确定性伪随机）；默认 0 = 现状逐像素一致 */
-  ecoSeed?: number
-  /** 装饰模式：当前选中模型（高亮）；默认 null = 现状 */
-  selectedId?: string | null
+  /** 右键 / 长按模型：把菜单交给页面（D-20261127-127） */
+  onModelContextMenu?: (blueprintId: string, clientX: number, clientY: number) => void
+  /** 当前沙盘设计：只决定底座颜色（D-20261128-129，展示台不再生成植被） */
+  design?: SandboxDesign
+  /** 切换沙盘时重新取景（值变化即 fit） */
+  viewFitKey?: string
 }
-
-/** 稳定空表：默认旋转不开时保持引用不变，静态派生 memo 不会因每次渲染新建对象而失效 */
-const EMPTY_ROTATIONS: Record<string, number> = {}
 
 /**
  * 展台沙盘（Showcase Island）：
  * SHOWCASE_GRID_SIZE×SHOWCASE_GRID_SIZE（当前 26×26）等距实体展台底座、
  * 多模型全局遮挡排序渲染、AABB 碰撞磁吸检测与无碰撞自由拖拽。
+ * D-20261127-127：旋转随 placement 持久化；右键/长按回调交给页面弹菜单。
+ * D-20261128-129：沙盘设计只决定底座颜色，展台不生成植被。
  */
 export function ShowcaseScene({
   placements,
   blueprintsMap,
   onUpdatePlacement,
   onSelectModel,
-  rotations = EMPTY_ROTATIONS,
-  ecoSeed = 0,
-  selectedId = null
+  onModelContextMenu,
+  design = 'moss',
+  viewFitKey = ''
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const viewRef = useRef({ scale: 0.9, panX: 0, panY: 0, fitted: false })
@@ -73,22 +77,13 @@ export function ShowcaseScene({
   const hoveredIdRef = useRef<string | null>(null)
   const enableAmbient = useAppStore((s) => s.settings.enableAmbientLighting !== false)
   const enableGyroscope = useAppStore((s) => Boolean(s.settings.enableGyroscope))
-  const habits = useAppStore((s) => s.habits)
-  const checkIns = useAppStore((s) => s.checkIns)
-  const enableEcoProps = useAppStore((s) => s.settings.enableEcoProps !== false)
+  const theme = useAppStore((s) => s.settings.theme)
   const builds = useAppStore((s) => s.builds)
 
   // B1/B5：蓝图 → 序位 → 奖励等级（streak / attendance）。用 ref 承载，避免进入 draw 的依赖数组导致重绑监听
   const bonusByBlueprint = useMemo(() => buildBonusByBlueprint(builds), [builds])
   const bonusRef = useRef(bonusByBlueprint)
   bonusRef.current = bonusByBlueprint
-  // 微生态彩蛋阶段：所有在册习惯的最大连胜（与建造页同一口径）
-  const ecoStage = useMemo(
-    () => computeEcoStage(habits, checkIns, enableEcoProps),
-    [habits, checkIns, enableEcoProps]
-  )
-  const ecoStageRef = useRef(ecoStage)
-  ecoStageRef.current = ecoStage
   const gyroOffsetRef = useRef({ x: 0, y: 0 })
   const settingsRef = useRef({ enableAmbient, enableGyroscope })
   settingsRef.current = { enableAmbient, enableGyroscope }
@@ -98,21 +93,20 @@ export function ShowcaseScene({
 
   const placementsRef = useRef(placements)
   placementsRef.current = placements
-  // 装饰模式的会话态（旋转/植被种子/选中）：用 ref 供事件与绘制闭包读取，避免重绑监听
+  // 旋转表从 placements 派生（持久化语义）：绘制/命中/拖拽校验共用同一口径
+  const rotations = useMemo(() => rotationsFromPlacements(placements), [placements])
   const rotationsRef = useRef(rotations)
   rotationsRef.current = rotations
-  const ecoSeedRef = useRef(ecoSeed)
-  ecoSeedRef.current = ecoSeed
-  const selectedIdRef = useRef<string | null>(selectedId)
-  selectedIdRef.current = selectedId
+  const designRef = useRef(design)
+  designRef.current = design
 
   // 1. 静态实木沙盘底托曲线采样点（E5：纯几何搬到 showcaseLayout，按 cfg/G 记忆）
   const baseGeometry = useMemo(() => buildBaseGeometry(cfg, G), [cfg, G])
 
   // 2. 蓝图模型包围盒尺寸缓存
   const footprintMap = useMemo(() => buildFootprintMap(blueprintsMap), [blueprintsMap])
-  // 2.5 装饰模式（D-20261111-068）：本次会话旋转下的蓝图足迹表（阴影/植被/命中/拖拽共用）。
-  //     rotations 为空时与 footprintMap 完全一致，静态路径行为不变。
+  // 2.5 持久化旋转（D-20261127-127）：按 placement.rotation 派生的蓝图足迹表
+  //     （阴影/命中/拖拽共用）。rotations 为空时与 footprintMap 完全一致。
   const rotatedFootprintMap = useMemo(
     () => buildRotatedFootprintMap(blueprintsMap, rotations),
     [blueprintsMap, rotations]
@@ -131,7 +125,7 @@ export function ShowcaseScene({
   // D-20261111-068：命中/拖拽校验用「带会话旋转」的足迹表（默认空表 = 原 footprint）。
   const footprintRef = useRef(rotatedFootprintMap)
   footprintRef.current = rotatedFootprintMap
-  // 已落位模型的偏移积木坐标（阴影与植被绘制、命中检测共用；placements/rotations 不变时引用不变）
+  // 已落位模型的偏移积木坐标（阴影绘制与命中检测共用；placements/rotations 不变时引用不变）
   const offsetBlocksMap = useMemo(
     () => buildOffsetBlocksMap(placements, blueprintsMap, footprintMap, rotations),
     [placements, blueprintsMap, footprintMap, rotations]
@@ -163,11 +157,13 @@ export function ShowcaseScene({
 
     const { enableAmbient: ambient, enableGyroscope: gyroEnabled } = settingsRef.current
     const palette = paletteFromDocument(undefined, ambient)
+    // 沙盘设计底色：只给底座染色，建筑积木仍用主题 palette（D-20261128-128）
+    const basePalette = buildSandboxBasePalette(palette, designRef.current)
     const view = viewRef.current
     const gyro = gyroEnabled ? gyroOffsetRef.current : { x: 0, y: 0 }
 
     // 1. 静态底座离屏层：拖拽/悬停/陀螺仪静止期间恒命中，仅视口、dpr、主题变化时重绘
-    const baseKey = `${w}x${h}|${dpr}|${view.scale}|${view.panX}|${view.panY}|${gyro.x}|${gyro.y}|${ambient}|${palette.ink}|${palette.top}|${palette.left}`
+    const baseKey = `${w}x${h}|${dpr}|${view.scale}|${view.panX}|${view.panY}|${gyro.x}|${gyro.y}|${ambient}|${basePalette.ink}|${basePalette.top}|${basePalette.left}|${basePalette.right}`
     let base = baseCacheRef.current
     if (!base || base.key !== baseKey) {
       // 复用同一块离屏 canvas：平移/缩放时 baseKey 每帧都变，若每帧新建 canvas + 取上下文
@@ -186,7 +182,7 @@ export function ShowcaseScene({
         octx.setTransform(dpr, 0, 0, dpr, 0, 0)
         octx.translate(view.panX + gyro.x, view.panY + gyro.y)
         octx.scale(view.scale, view.scale)
-        renderBase(octx, palette)
+        renderBase(octx, basePalette)
         base = { canvas: off, key: baseKey }
         baseCacheRef.current = base
       }
@@ -197,19 +193,8 @@ export function ShowcaseScene({
     ctx.translate(view.panX + gyro.x, view.panY + gyro.y)
     ctx.scale(view.scale, view.scale)
 
-    // 2.4 每个落位模型的地面接触阴影（积木与植被之前绘制）
+    // 2.4 每个落位模型的地面接触阴影（积木之前绘制）
     drawShowcaseShadows(ctx, placementsRef.current, offsetBlocksRef.current, cfg, palette)
-
-    // 2.5 微生态植被：每个落位模型的 margin 环带内（积木之前绘制，正确深度）
-    drawShowcaseEco(
-      ctx,
-      placementsRef.current,
-      offsetBlocksRef.current,
-      cfg,
-      palette,
-      ecoStageRef.current,
-      ecoSeedRef.current
-    )
 
     // 3. 拖拽时地基磁吸 / 碰撞警告脚印
     const drag = dragRef.current
@@ -226,7 +211,7 @@ export function ShowcaseScene({
       }
     }
 
-    // 4. 模型绘制：无拖拽直接复用静态排序列表（零重建）；拖拽时剔除被拖模型后
+    // 建筑绘制：无拖拽直接复用静态排序列表（零重建）；拖拽时剔除被拖模型后
     //    与被拖模型的有序列表做线性归并（O(n) 替代每帧 O(n log n) 重建+排序）
     const staticCubes = sortedStaticCubesRef.current
     let drawList: RenderCube[]
@@ -242,27 +227,33 @@ export function ShowcaseScene({
       drawList = mergeDragCubes(staticCubes, dragCubes, drag.blueprintId)
     }
 
-    // 绘制所有积木
-    drawShowcaseCubes(
-      ctx,
-      drawList,
-      cfg,
-      palette,
-      hoveredIdRef.current,
-      selectedIdRef.current,
-      drag,
-      bonusRef.current
-    )
+    drawShowcaseCubes(ctx, drawList, cfg, palette, hoveredIdRef.current, drag, bonusRef.current)
   }, [blueprintsMap, cfg, G, footprintMap, renderBase])
 
-  // 当外部 placements 数据变更时（例如自动排列或 store 同步），触发即时画布重绘
+  // 当外部 placements 数据变更时（例如自动排列、右侧堆场陈列或 store 同步），触发即时画布重绘
   useEffect(() => {
     draw()
   }, [placements, draw])
-  // 装饰模式会话态（旋转/植被种子/选中）变化时重绘
+  // 沙盘颜色变化时重绘（旋转已包含在 placements 的引用变化里）
   useEffect(() => {
     draw()
-  }, [rotations, ecoSeed, selectedId, draw])
+  }, [design, draw])
+  // 主题切换：App 的 data-theme 副作用与子组件 effect 的执行顺序不保证，
+  // 延后一帧再重绘，确保 paletteFromDocument 读到新主题，画布不会停留在旧调色板。
+  useEffect(() => {
+    const id = requestAnimationFrame(() => draw())
+    return () => cancelAnimationFrame(id)
+  }, [theme, draw])
+  // 切换沙盘：重新取景，避免上一个沙盘的缩放/平移把新布局推出视口
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const w = canvas.clientWidth
+    const h = canvas.clientHeight
+    if (w === 0 || h === 0) return
+    viewRef.current = fitShowcaseView(w, h, cfg, G)
+    draw()
+  }, [viewFitKey, cfg, G, draw])
   // 初始化与自适应窗口大小
   useEffect(() => {
     const canvas = canvasRef.current
@@ -325,14 +316,56 @@ export function ShowcaseScene({
   )
 
   const touchStateRef = useRef<TouchGestureState | null>(null)
+  const longPressTimerRef = useRef<number | null>(null)
+  const longPressFiredRef = useRef(false)
 
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (e.touches.length === 1) {
-      touchStateRef.current = beginSingleTouch(e.touches[0])
-    } else if (e.touches.length >= 2) {
-      touchStateRef.current = beginMultiTouch(touchStateRef.current, e.touches[0], e.touches[1])
+  const clearLongPress = useCallback(() => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
     }
   }, [])
+
+  // 切换沙盘或卸载：清掉旧沙盘残留的拖拽/悬停/长按交互态
+  useEffect(() => {
+    const canvas = canvasRef.current
+    dragRef.current = null
+    hoveredIdRef.current = null
+    touchStateRef.current = null
+    longPressFiredRef.current = false
+    clearLongPress()
+    if (canvas) canvas.style.cursor = 'default'
+    return clearLongPress
+  }, [viewFitKey, clearLongPress])
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      clearLongPress()
+      longPressFiredRef.current = false
+      if (e.touches.length === 1) {
+        const touch = e.touches[0]
+        touchStateRef.current = beginSingleTouch(touch)
+        // 移动端长按 = 右键菜单（旋转 / 收拢）；移动超过 8px 视为平移，取消长按
+        if (onModelContextMenu) {
+          longPressTimerRef.current = window.setTimeout(() => {
+            longPressTimerRef.current = null
+            const state = touchStateRef.current
+            if (!state || state.isMultiTouch || state.maxDisplacement > 8) return
+            const hitId = findModelAtScreenPoint(state.startX, state.startY)
+            if (!hitId) return
+            longPressFiredRef.current = true
+            touchStateRef.current = null
+            triggerHaptic('medium')
+            onModelContextMenu(hitId, state.startX, state.startY)
+          }, 520)
+        }
+      } else if (e.touches.length >= 2) {
+        clearLongPress()
+        touchStateRef.current = beginMultiTouch(touchStateRef.current, e.touches[0], e.touches[1])
+      }
+    },
+    [clearLongPress, findModelAtScreenPoint, onModelContextMenu]
+  )
 
   const handleTouchMove = useCallback(
     (e: React.TouchEvent<HTMLCanvasElement>) => {
@@ -342,6 +375,7 @@ export function ShowcaseScene({
 
       if (e.touches.length === 1 && !state.isMultiTouch) {
         const { dx, dy } = trackSingleTouchPan(state, e.touches[0])
+        if (state.maxDisplacement > 10) clearLongPress()
 
         const view = viewRef.current
         view.panX += dx
@@ -370,11 +404,17 @@ export function ShowcaseScene({
         state.lastPinchCenter = center
       }
     },
-    [draw]
+    [draw, clearLongPress]
   )
 
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent<HTMLCanvasElement>) => {
+      clearLongPress()
+      if (longPressFiredRef.current) {
+        longPressFiredRef.current = false
+        touchStateRef.current = null
+        return
+      }
       const state = touchStateRef.current
       if (!state) return
 
@@ -389,12 +429,14 @@ export function ShowcaseScene({
       }
       touchStateRef.current = null
     },
-    [findModelAtScreenPoint, onSelectModel]
+    [clearLongPress, findModelAtScreenPoint, onSelectModel]
   )
 
   const handleTouchCancel = useCallback(() => {
+    clearLongPress()
+    longPressFiredRef.current = false
     touchStateRef.current = null
-  }, [])
+  }, [clearLongPress])
 
   // 鼠标交互：拖拽移动、碰撞反馈与点击选中
   useEffect(() => {
@@ -432,6 +474,8 @@ export function ShowcaseScene({
 
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType === 'touch') return
+      // 右键交给 contextmenu（旋转/收拢菜单），不进入拖拽或平移
+      if (e.button !== 0) return
       canvas.setPointerCapture(e.pointerId)
       const { mx, my, worldPx, worldPy } = getScreenPoint(e)
       const hitId = findModelUnderPointer(worldPx, worldPy)
@@ -541,17 +585,28 @@ export function ShowcaseScene({
       draw()
     }
 
+    const onContextMenu = (e: MouseEvent) => {
+      e.preventDefault()
+      const { worldPx, worldPy } = getScreenPoint(e as unknown as PointerEvent)
+      const hitId = findModelUnderPointer(worldPx, worldPy)
+      if (hitId && onModelContextMenu) {
+        onModelContextMenu(hitId, e.clientX, e.clientY)
+      }
+    }
+
     canvas.addEventListener('pointerdown', onPointerDown)
     canvas.addEventListener('pointermove', onPointerMove)
     canvas.addEventListener('pointerup', onPointerUp)
     canvas.addEventListener('wheel', onWheel, { passive: false })
+    canvas.addEventListener('contextmenu', onContextMenu)
     return () => {
       canvas.removeEventListener('pointerdown', onPointerDown)
       canvas.removeEventListener('pointermove', onPointerMove)
       canvas.removeEventListener('pointerup', onPointerUp)
       canvas.removeEventListener('wheel', onWheel)
+      canvas.removeEventListener('contextmenu', onContextMenu)
     }
-  }, [blueprintsMap, onUpdatePlacement, onSelectModel, draw, cfg, G])
+  }, [blueprintsMap, onUpdatePlacement, onSelectModel, onModelContextMenu, draw, cfg, G])
   // 环境光照与重力视差偏好切换时触发重绘
   useEffect(() => {
     draw()

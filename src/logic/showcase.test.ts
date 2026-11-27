@@ -5,12 +5,16 @@ import {
   isAABBOverlapping,
   canPlaceModel,
   canRotatePlacement,
-  isDecorationUnlocked,
   normalizeRotation,
   rotateBlockCoords,
   findNextAvailablePlacement,
   screenToGroundIso,
-  SHOWCASE_GRID_SIZE
+  createShowcaseSandbox,
+  defaultSandboxDesign,
+  normalizeSandboxDesign,
+  rotationsFromPlacements,
+  SHOWCASE_GRID_SIZE,
+  SHOWCASE_SANDBOX_MAX
 } from './showcase'
 import { blueprints } from './blueprints'
 import type { BlockDef, Blueprint, ShowcasePlacement } from '../types'
@@ -128,32 +132,67 @@ const wide = synth('wide', [block(0, 0), block(1, 0), block(2, 0)])
 const tall = synth('tall', [block(0, 0), block(0, 1), block(0, 2)])
 const synthMap = { wide, tall }
 
-describe('isDecorationUnlocked（解锁边界）', () => {
-  const order = ['a', 'b', 'c']
-
-  it('未全落成不解锁（空 / 部分）', () => {
-    expect(isDecorationUnlocked([], order)).toBe(false)
-    expect(isDecorationUnlocked(['a', 'b'], order)).toBe(false)
-    expect(isDecorationUnlocked(['a'], order)).toBe(false)
+describe('沙盘设计 / 旋转表派生（D-20261127-127）', () => {
+  it('normalizeSandboxDesign 只接受四种设计，未知值回落 moss', () => {
+    expect(normalizeSandboxDesign('moss')).toBe('moss')
+    expect(normalizeSandboxDesign('stone')).toBe('stone')
+    expect(normalizeSandboxDesign('bloom')).toBe('bloom')
+    expect(normalizeSandboxDesign('bare')).toBe('bare')
+    expect(normalizeSandboxDesign('unknown')).toBe('moss')
+    expect(normalizeSandboxDesign(undefined)).toBe('moss')
   })
 
-  it('completed 覆盖 blueprintOrder 全部才解锁（顺序无关、允许额外 id）', () => {
-    expect(isDecorationUnlocked(['c', 'a', 'b'], order)).toBe(true)
-    expect(isDecorationUnlocked(['a', 'b', 'c', 'retired-blueprint'], order)).toBe(true)
-    // 重复项不影响判定
-    expect(isDecorationUnlocked(['a', 'a', 'b', 'c'], order)).toBe(true)
+  it('defaultSandboxDesign 按序号轮换颜色方案', () => {
+    expect(defaultSandboxDesign(0)).toBe('moss')
+    expect(defaultSandboxDesign(1)).toBe('stone')
+    expect(defaultSandboxDesign(2)).toBe('bloom')
+    expect(defaultSandboxDesign(3)).toBe('bare')
+    expect(defaultSandboxDesign(4)).toBe('moss')
   })
 
-  it('解锁长度动态跟随内容包（无硬编码 18，扩到 23 也成立）', () => {
-    const order23 = Array.from({ length: 23 }, (_, i) => `bp-${i}`)
-    expect(isDecorationUnlocked(order23.slice(0, 22), order23)).toBe(false)
-    expect(isDecorationUnlocked(order23, order23)).toBe(true)
-    const order5 = ['p', 'q', 'r', 's', 't']
-    expect(isDecorationUnlocked(['p', 'q', 'r', 's', 't'], order5)).toBe(true)
+  it('createShowcaseSandbox 生成完整默认字段', () => {
+    const sandbox = createShowcaseSandbox('sandbox-2', 1)
+    expect(sandbox).toEqual({
+      id: 'sandbox-2',
+      placements: [],
+      design: 'stone'
+    })
+    expect(SHOWCASE_SANDBOX_MAX).toBe(4)
   })
 
-  it('空顺序表不解锁（无内容时不制造空入口）', () => {
-    expect(isDecorationUnlocked([], [])).toBe(false)
+  it('rotationsFromPlacements 只收非 0 旋转并归一化', () => {
+    expect(
+      rotationsFromPlacements([
+        { blueprintId: 'plant', gridX: 0, gridY: 0 },
+        { blueprintId: 'coffee', gridX: 0, gridY: 0, rotation: 3 },
+        { blueprintId: 'castle', gridX: 0, gridY: 0, rotation: 4 }
+      ])
+    ).toEqual({ coffee: 3 })
+  })
+
+  it('canPlaceModel 未显式传旋转表时，从 placements 的 rotation 派生', () => {
+    // wide = 3×1；tall 转 90° 后变 3×1，会与 wide 重叠
+    const existing: ShowcasePlacement[] = [{ blueprintId: 'tall', gridX: 0, gridY: 0, rotation: 1 }]
+    expect(canPlaceModel({ blueprintId: 'wide', gridX: 1, gridY: 0 }, existing, synthMap, 26)).toBe(
+      false
+    )
+    expect(
+      canPlaceModel(
+        { blueprintId: 'wide', gridX: 1, gridY: 0 },
+        [{ blueprintId: 'tall', gridX: 0, gridY: 0 }],
+        synthMap,
+        26
+      )
+    ).toBe(true)
+  })
+
+  it('findNextAvailablePlacement 会把目标旋转写进返回的 placement', () => {
+    const placement = findNextAvailablePlacement('wide', [], synthMap, 26, { wide: 1 })
+    expect(placement).not.toBeNull()
+    expect(placement?.rotation).toBe(1)
+    // 旋转后 1×3，与 3×1 的首个空位不同
+    const unrotated = findNextAvailablePlacement('wide', [], synthMap, 26)
+    expect(unrotated?.rotation).toBeUndefined()
   })
 })
 

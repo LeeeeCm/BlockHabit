@@ -489,3 +489,32 @@
     scroll-behavior: auto;
   }
 }
+
+/* 展开 / 收拢过渡（D-20261127-126）：高度用 0fr→1fr 补间，内容随之淡入淡出。
+   子内容在收起动画结束后才卸载（组件负责），这里只负责视觉过渡。 */
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--dur-md) var(--ease-standard),
+    opacity var(--dur-md) var(--ease-standard);
+}
+
+.collapse[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.collapse-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 设置分组原有 .apple-group 的 10px 间距由直接子元素承担；
+   折叠后子元素进了内容层，用同一组 flex 间距保持排印不变。 */
+.collapse-inner.collapse-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

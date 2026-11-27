@@ -32,18 +32,38 @@ export const showcase: TranslationSchema['showcase'] = {
   title: 'Showcase Island',
   countDisplay: (c) => `${c} Buildings Displayed`,
   autoArrange: 'Auto Arrange',
-  dragHint: 'Drag buildings to place freely · Click to view Polaroid memorial card',
+  dragHint: 'Drag to arrange · Right-click a building to rotate or tuck it away',
   emptyHint:
     'No completed buildings yet. Complete daily habits to finish models, and they will be exhibited here.',
   fullHint: 'Showcase is full — some buildings could not be rearranged',
-  decoration: 'Decorate',
-  decorationHint: 'Drag to arrange, rotate models; this session only — resets on reopen',
-  exitDecoration: 'Exit decor',
-  rotateLeft: 'Rotate left 90°',
-  rotateRight: 'Rotate right 90°',
+  sandboxTab: 'Islands',
+  sandboxName: (n) => `Island ${n}`,
+  buildingCount: (n) => `${n} placed`,
+  addSandbox: 'New Island',
+  addSandboxFull: 'Up to 4 islands',
+  removeSandbox: 'Delete island',
+  removeSandboxConfirmTitle: 'Delete this island?',
+  removeSandboxConfirmMsg: (name) =>
+    `Buildings on "${name}" will return to the block yard. The buildings themselves are kept.`,
+  yardTab: 'Block Yard',
+  yardEmpty: 'Every completed building is already on this island.',
+  yardElsewhere: 'On another island',
+  yardPlace: 'Place',
+  yardFull: 'This island is full — tuck one building first.',
+  yardPlaced: (name) => `"${name}" placed`,
+  designLabel: 'Island color',
+  designs: {
+    moss: 'Sage',
+    stone: 'Stone',
+    bloom: 'Sand',
+    bare: 'Bare'
+  },
+  contextRotate: 'Rotate 90°',
+  contextTuck: 'Tuck into the block yard',
+  tucked: 'Tucked into the block yard',
   rotateBlocked: 'Rotation would overlap another model — reverted',
-  ecoReshuffle: 'Reshuffle greenery',
-  ecoReshuffled: 'Greenery reshuffled (this session only)'
+  expandPanel: (name) => `Expand ${name}`,
+  collapsePanel: (name) => `Collapse ${name}`
 }
 
 export const gallery: TranslationSchema['gallery'] = {
@@ -96,5 +116,17 @@ export const blueprints: TranslationSchema['blueprints'] = {
   bookshop: 'Old Bookshop',
   postoffice: 'Post Office',
   firestation: 'Fire Station',
-  watertower: 'Water Tower'
+  watertower: 'Water Tower',
+  station: 'Train Station',
+  theater: 'Theater',
+  museum: 'Museum',
+  hospital: 'Hospital',
+  school: 'School',
+  chapel: 'Chapel',
+  temple: 'Temple',
+  carousel: 'Carousel',
+  pier: 'Pier',
+  fountain: 'Fountain',
+  market: 'Market',
+  stadium: 'Stadium'
 }

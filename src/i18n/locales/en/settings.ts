@@ -137,10 +137,6 @@ export const settings: TranslationSchema['settings'] = {
   gentleDecayOff: 'Hardcore',
   gentleDecayHint:
     'Missed days frost blocks with mist without streak-shaming; clear by checking in',
-  ecoPropsLabel: 'Voxel Micro-Ecosystem',
-  ecoPropsOn: 'Living Flora',
-  ecoPropsOff: 'Pure Blocks',
-  ecoPropsHint: 'Habit streaks spawn stone paths, greenery, and warm window lights',
   xrayDefaultLabel: 'X-Ray Default',
   xrayDefaultOn: 'On by default',
   xrayDefaultOff: 'Off by default',

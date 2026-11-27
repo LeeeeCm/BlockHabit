@@ -1,6 +1,12 @@
 import type { AppState, CheckIn, DayClaim, PlacedBlock } from '../types'
 import { blueprints, blueprintOrder } from '../logic/blueprints'
 import { findNextAvailablePlacement } from '../logic/showcase'
+import {
+  removePlacementsEverywhere,
+  resolveShowcaseState,
+  setSandboxPlacements,
+  showcaseFields
+} from '../logic/showcaseState'
 
 /**
  * D-20261127-125：桌宠蓝图（pet-cat / pet-bot）下线后的存档迁移。
@@ -46,8 +52,15 @@ function hasLegacyPetReferences(state: AppState): boolean {
     )
   )
     return true
-  return (state.showcasePlacements ?? []).some(
-    (placement) => placement != null && isLegacyPetBlueprintId(placement.blueprintId)
+  return (
+    (state.showcasePlacements ?? []).some(
+      (placement) => placement != null && isLegacyPetBlueprintId(placement.blueprintId)
+    ) ||
+    (state.showcaseSandboxes ?? []).some((sandbox) =>
+      (sandbox.placements ?? []).some(
+        (placement) => placement != null && isLegacyPetBlueprintId(placement.blueprintId)
+      )
+    )
   )
 }
 
@@ -270,14 +283,20 @@ export function migrateLegacyPetBlueprints(state: AppState): AppState {
       newlyCompleted.push(id)
     }
   }
-  const showcasePlacements = (state.showcasePlacements ?? []).filter(
+  const showcase = resolveShowcaseState(state)
+  const nextPlacements = showcase.active.placements.filter(
     (placement) => placement != null && !isLegacyPetBlueprintId(placement.blueprintId)
   )
   for (const id of newlyCompleted) {
-    if (showcasePlacements.some((placement) => placement.blueprintId === id)) continue
-    const placement = findNextAvailablePlacement(id, showcasePlacements, blueprints)
-    if (placement) showcasePlacements.push(placement)
+    if (nextPlacements.some((placement) => placement.blueprintId === id)) continue
+    const placement = findNextAvailablePlacement(id, nextPlacements, blueprints)
+    if (placement) nextPlacements.push(placement)
   }
+  const nextSandboxes = setSandboxPlacements(
+    removePlacementsEverywhere(showcase.sandboxes, new Set<string>(LEGACY_PET_BLUEPRINT_IDS)),
+    showcase.activeId,
+    nextPlacements
+  )
 
   // 原 active 是宠物时，迁到「迁移后仍未完成」的第一座目标建筑；
   // 若目标刚好被宠物积木填满，不要留在一座已完成建筑上让后续打卡不掉块。
@@ -298,7 +317,7 @@ export function migrateLegacyPetBlueprints(state: AppState): AppState {
     checkIns,
     dayClaims,
     completedBlueprintIds,
-    showcasePlacements,
+    ...showcaseFields(nextSandboxes, showcase.activeId),
     activeBlueprintId
   }
 }

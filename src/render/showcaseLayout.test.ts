@@ -221,7 +221,7 @@ describe('collectSortedCubes / buildOffsetBlocksMap 的 rotations 参数', () =>
     expect(coffeeFirst.worldY).toBe(placements[1].gridY + (coffeeBlock.y - coffeeFp.minY))
   })
 
-  it('带旋转的偏移块表与 collect 同源（阴影/植被/命中检测共用）', () => {
+  it('带旋转的偏移块表与 collect 同源（阴影/命中检测共用）', () => {
     const offsets = buildOffsetBlocksMap(placements, map, footprintMap, { plant: 1 })
     const rotated = rotateBlocksForRender(map.plant.blocks, 1)
     expect(offsets.get('plant')).toEqual(

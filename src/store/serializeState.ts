@@ -7,6 +7,7 @@
  */
 import type { AppState } from '../types'
 import { CONTENT_VERSION } from '../logic/blueprints/manifest'
+import { resolveShowcaseState } from '../logic/showcaseState'
 
 export function serializeState(state: AppState): AppState {
   const {
@@ -22,9 +23,18 @@ export function serializeState(state: AppState): AppState {
     repairBricks,
     repairBrickMonth,
     showcasePlacements,
+    showcaseSandboxes,
+    activeSandboxId,
     foundationNotes,
     reminderLog
   } = state
+  // D-20261127-127：mirror 在写盘边界从 active 沙盘重新派生，任何漏调 showcaseFields 的路径
+  // 都不会把过期镜像写进存档（旧客户端仍能读当前沙盘）。
+  const showcase = resolveShowcaseState({
+    showcaseSandboxes,
+    activeSandboxId,
+    showcasePlacements
+  })
   return {
     schemaVersion,
     // 统一写当前内容版本：应用可能已产出更高版本内容，不能沿用来源版本
@@ -39,7 +49,9 @@ export function serializeState(state: AppState): AppState {
     deletedDayClaims,
     repairBricks,
     repairBrickMonth,
-    showcasePlacements,
+    showcasePlacements: showcase.active.placements,
+    showcaseSandboxes: showcase.sandboxes,
+    activeSandboxId: showcase.activeId,
     foundationNotes,
     reminderLog
   }

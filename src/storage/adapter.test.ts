@@ -97,6 +97,54 @@ describe('localStorage adapter', () => {
     expect('petSkin' in loaded!.settings).toBe(false)
   })
 
+  it('旧 enableEcoProps=false 迁移为首个沙盘素盘（D-20261127-127）', async () => {
+    const legacy = {
+      ...validState(),
+      settings: { theme: 'light', language: 'zh', enableEcoProps: false },
+      showcasePlacements: [{ blueprintId: 'castle', gridX: 1, gridY: 2 }]
+    }
+    localStorage.setItem(STATE_KEY, JSON.stringify(legacy))
+    const loaded = (await createLocalStorageAdapter().load()).state
+    expect(loaded).not.toBeNull()
+    expect(loaded!.activeSandboxId).toBe('sandbox-1')
+    expect(loaded!.showcaseSandboxes?.length).toBe(1)
+    expect(loaded!.showcaseSandboxes?.[0].design).toBe('bare')
+    expect(loaded!.showcaseSandboxes?.[0].placements).toEqual([
+      { blueprintId: 'castle', gridX: 1, gridY: 2 }
+    ])
+    expect(loaded!.showcasePlacements).toEqual([{ blueprintId: 'castle', gridX: 1, gridY: 2 }])
+  })
+
+  it('沙盘落位清洗：未知蓝图、越界、重复与非法旋转逐条丢弃', async () => {
+    const raw = {
+      ...validState(),
+      showcasePlacements: [],
+      activeSandboxId: 'sandbox-2',
+      showcaseSandboxes: [
+        {
+          id: 'sandbox-1',
+          design: 'bloom',
+          placements: [
+            { blueprintId: 'castle', gridX: 1, gridY: 2, rotation: 5 },
+            { blueprintId: 'castle', gridX: 3, gridY: 3 },
+            { blueprintId: 'ghost', gridX: 0, gridY: 0 },
+            { blueprintId: 'plant', gridX: 99, gridY: 0 }
+          ]
+        },
+        { id: 'sandbox-2', design: 'unknown', placements: [] }
+      ]
+    }
+    localStorage.setItem(STATE_KEY, JSON.stringify(raw))
+    const loaded = (await createLocalStorageAdapter().load()).state
+    expect(loaded!.activeSandboxId).toBe('sandbox-2')
+    expect(loaded!.showcaseSandboxes?.[0].design).toBe('bloom')
+    expect(loaded!.showcaseSandboxes?.[0].placements).toEqual([
+      { blueprintId: 'castle', gridX: 1, gridY: 2, rotation: 1 }
+    ])
+    expect(loaded!.showcaseSandboxes?.[1].design).toBe('moss')
+    expect(loaded!.showcasePlacements).toEqual([])
+  })
+
   it('returns null on corrupt json and backs up raw content', async () => {
     localStorage.setItem(STATE_KEY, '{oops')
     const a = createLocalStorageAdapter()

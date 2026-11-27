@@ -1,7 +1,6 @@
 import {
   DEFAULT_ISO_CONFIG,
   drawCube,
-  drawEcoProps,
   drawGroundBase,
   drawGroundShadow,
   paletteFromDocument,
@@ -12,7 +11,7 @@ import type { SceneRuntime } from './sceneTypes'
 
 /**
  * 绘制单帧建造场景（拆分自 BuildScene.tsx 的 draw 闭包，逐语句搬运）：
- * 地基 → 接触阴影 → back 植被 → 积木（级联 / 新块慢落 / 静态）→ front 植被，
+ * 地基 → 接触阴影 → 积木（级联 / 新块慢落 / 静态），
  * 末尾按动画状态决定续帧或触发 onAnimated。
  *
  * 所有可变状态都经 runtime 的 ref 实时读取，同步续帧（redraw）能立刻看到最新的
@@ -49,8 +48,6 @@ export function drawScene(rt: SceneRuntime) {
   // 接触阴影跟随已放置积木的脚印（开荒期不应出现比建筑大几圈的阴影）
   const placedBlocks = cubes.filter((c) => c.i < pc).map((c) => ({ x: c.b.x, y: c.b.y }))
   drawGroundShadow(ctx, placedBlocks, cfg, palette, rot, cx, cy)
-  // 植被 back 层：左/右侧灌木（积木之前绘制，被建筑自然遮挡、只在侧面探出）
-  drawEcoProps(ctx, bp.blocks, cfg, palette, rot, cx, cy, rt.stateRef.current.ecoStage, 'back')
 
   const now = performance.now()
   const anim = rt.animRef.current
@@ -140,9 +137,6 @@ export function drawScene(rt: SceneRuntime) {
       drawCube(ctx, px, restSy - zOff * cfg.blockH, cfg, palette, faceOpts)
     }
   }
-
-  // 植被 front 层：前部灌木/树（积木之后绘制，站在建筑前面完全可见）
-  drawEcoProps(ctx, bp.blocks, cfg, palette, rot, cx, cy, rt.stateRef.current.ecoStage, 'front')
 
   if (cascade) {
     cascadeRunning = cascadeRunning || now - cascade.start < cascade.total

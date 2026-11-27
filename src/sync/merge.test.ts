@@ -470,6 +470,120 @@ describe('mergeAppState facts merge (schema v2)', () => {
     expect(castleP?.gridX).toBe(2)
   })
 
+  it('多沙盘按 id 合并：本地优先、远端独有沙盘追加、active 本地优先（D-20261127-127）', () => {
+    const local = createMockState({
+      showcasePlacements: [{ blueprintId: 'plant', gridX: 0, gridY: 0 }],
+      showcaseSandboxes: [
+        {
+          id: 'sandbox-1',
+          design: 'bloom',
+          placements: [{ blueprintId: 'plant', gridX: 0, gridY: 0 }]
+        },
+        {
+          id: 'sandbox-2',
+          design: 'stone',
+          placements: [{ blueprintId: 'castle', gridX: 2, gridY: 2 }]
+        }
+      ],
+      activeSandboxId: 'sandbox-1'
+    })
+    const remote = createMockState({
+      showcasePlacements: [],
+      showcaseSandboxes: [
+        {
+          id: 'sandbox-1',
+          design: 'moss',
+          placements: [
+            { blueprintId: 'plant', gridX: 5, gridY: 5 },
+            { blueprintId: 'coffee', gridX: 6, gridY: 6 }
+          ]
+        },
+        { id: 'sandbox-3', design: 'bare', placements: [] }
+      ],
+      activeSandboxId: 'sandbox-3'
+    })
+
+    const merged = mergeAppState(local, remote)
+    expect(merged.showcaseSandboxes?.map((s) => s.id)).toEqual([
+      'sandbox-1',
+      'sandbox-2',
+      'sandbox-3'
+    ])
+    const first = merged.showcaseSandboxes![0]
+    expect(first.design).toBe('bloom') // 本地字段优先
+    expect(first.placements.find((p) => p.blueprintId === 'plant')).toMatchObject({
+      gridX: 0,
+      gridY: 0
+    })
+    expect(first.placements.find((p) => p.blueprintId === 'coffee')).toMatchObject({
+      gridX: 6,
+      gridY: 6
+    })
+    expect(merged.activeSandboxId).toBe('sandbox-1')
+    expect(merged.showcasePlacements).toEqual(first.placements)
+  })
+
+  it('合并后同一建筑只保留在一个沙盘（先出现者优先）', () => {
+    const local = createMockState({
+      showcaseSandboxes: [
+        { id: 'sandbox-1', placements: [{ blueprintId: 'plant', gridX: 1, gridY: 1 }] },
+        { id: 'sandbox-2', placements: [{ blueprintId: 'plant', gridX: 2, gridY: 2 }] }
+      ],
+      activeSandboxId: 'sandbox-1'
+    })
+    const remote = createMockState({ showcasePlacements: [] })
+    const merged = mergeAppState(local, remote)
+    expect(merged.showcaseSandboxes?.[0].placements.length).toBe(1)
+    expect(merged.showcaseSandboxes?.[1].placements.length).toBe(0)
+  })
+
+  it('只有 legacy showcasePlacements 的一侧迁移成 sandbox-1 后参与合并', () => {
+    const local = createMockState({
+      showcasePlacements: [{ blueprintId: 'plant', gridX: 0, gridY: 0 }]
+    })
+    const remote = createMockState({
+      showcaseSandboxes: [
+        {
+          id: 'sandbox-1',
+          design: 'moss',
+          placements: [{ blueprintId: 'plant', gridX: 4, gridY: 4 }]
+        }
+      ],
+      activeSandboxId: 'sandbox-1'
+    })
+    const merged = mergeAppState(local, remote)
+    expect(merged.showcaseSandboxes?.length).toBe(1)
+    expect(merged.showcaseSandboxes?.[0].placements[0]).toMatchObject({ gridX: 0, gridY: 0 })
+  })
+
+  it('合并后超过 4 个沙盘时截断并保留 active；未知蓝图落位被丢弃', () => {
+    const empty = (id: string) => ({ id, placements: [] })
+    const local = createMockState({
+      showcaseSandboxes: [empty('a'), empty('b'), empty('c'), empty('d')],
+      activeSandboxId: 'd'
+    })
+    const remote = createMockState({
+      showcaseSandboxes: [empty('e'), empty('f')],
+      activeSandboxId: 'e'
+    })
+    const merged = mergeAppState(local, remote)
+    expect(merged.showcaseSandboxes?.length).toBe(4)
+    expect(merged.showcaseSandboxes?.some((s) => s.id === 'd')).toBe(true)
+    expect(merged.activeSandboxId).toBe('d')
+
+    const withGhost = createMockState({
+      showcaseSandboxes: [
+        {
+          id: 'sandbox-1',
+          placements: [{ blueprintId: 'ghost', gridX: 0, gridY: 0 }]
+        }
+      ],
+      activeSandboxId: 'sandbox-1'
+    })
+    const mergedGhost = mergeAppState(withGhost, createMockState({ showcasePlacements: [] }))
+    expect(mergedGhost.showcaseSandboxes?.[0].placements).toEqual([])
+  })
+
   it('drops completed blueprint when undo reduces rebuilt count below full (real blueprint)', () => {
     const bp = getBlueprint('plant')
     const N = bp.blocks.length

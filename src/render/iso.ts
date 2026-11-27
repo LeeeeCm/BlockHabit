@@ -5,7 +5,7 @@
 - ./isoGeometry —— 投影数学与几何原语
 - ./isoColor —— 调色板、颜色派生、对比度、时段环境光
 - ./isoCube —— 积木绘制、精灵缓存、命中检测
-- ./isoGround —— 地基、接触阴影、植被
+- ./isoGround —— 地基、接触阴影
  */
 export * from './isoGeometry'
 export * from './isoColor'

@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { Collapse } from '../Collapse'
 
 /**
  * D4：设置分组容器。
  * 设置项从 19 个控件 / 3.6 屏收敛为「首屏三组 + 折叠的进阶组」：
  * collapsible 时标题行可点击（并支持 Enter / Space），展开态记在本地 state，不影响任何已保存设置。
+ * D-20261127-126：内容用 Collapse 做高度 + 透明度过渡；收起动画结束后才卸载，保持惰性挂载。
  */
 export function Group({
   title,
@@ -63,7 +65,13 @@ export function Group({
           </span>
         )}
       </div>
-      {open && children}
+      {collapsible ? (
+        <Collapse open={open} contentClassName="collapse-group">
+          {children}
+        </Collapse>
+      ) : (
+        children
+      )}
     </div>
   )
 }

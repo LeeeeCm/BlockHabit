@@ -85,7 +85,7 @@
 | D-20261110-065 | 2026-11-10 | 建筑即编年史：图鉴里的建筑档案卡 | approved | build, gallery | LeeCM |
 | D-20261110-066 | 2026-11-10 | 创新路线图与优先级：三波次（每天看见 / 陪伴与带走 / 长期故事） | approved | — | LeeCM |
 | D-20261111-067 | 2026-11-11 | 蓝图色彩系统：18 座模型逐座配色与材质母题 | approved | build, gallery, showcase, archive | LeeCM |
-| D-20261111-068 | 2026-11-11 | 自由装饰模式：全落成后的展台补充玩法（最小方案） | approved | showcase | LeeCM |
+| D-20261111-068 | 2026-11-11 | 自由装饰模式：全落成后的展台补充玩法（最小方案） | superseded | showcase | LeeCM |
 | D-20261111-069 | 2026-11-11 | 手动检查更新入口（关于页） | approved | settings | LeeCM |
 | D-20261111-070 | 2026-11-11 | 内容包 v3：城市与生活续章 5 座（约 500 块）与 CONTENT_VERSION=3 | approved | build, gallery, stats, settings | LeeCM |
 | D-20261112-071 | 2026-11-12 | P3 收尾：移动端触控目标 44px、图鉴未开始容量口径、装饰会话态说明 | approved | showcase, gallery, settings | LeeCM |
@@ -143,5 +143,11 @@
 | D-20261127-123 | 2026-11-27 | 桌宠改用独立的正面正交投影，正脸面对用户 | superseded | mini-widget | pending |
 | D-20261127-124 | 2026-11-27 | 桌宠回到积木桌宠画风（单块积木 + 一枚凸点），正脸、缩小，不再逐块复刻蓝图 | superseded | mini-widget | pending |
 | D-20261127-125 | 2026-11-27 | 下线桌宠蓝图与形象切换，图鉴只留建筑，桌宠积木并入在建未完成建筑 | proposed | gallery, settings, mini-widget, build | pending |
+| D-20261127-126 | 2026-11-27 | 设置分组与习惯弹窗「更多设置」的展开/收拢改为高度过渡动画 | approved | settings, habit-dialog | LeeCM |
+| D-20261127-127 | 2026-11-27 | 展台多沙盘 + 堆场 + 右键旋转/收拢，退役装饰模式与实验室微生态开关 | approved | showcase, settings | LeeCM |
+| D-20261128-128 | 2026-11-28 | 沙盘级植被铺满整张沙盘，避开建筑占地，并给每个沙盘设计加底色 | superseded | showcase | pending |
+| D-20261128-129 | 2026-11-28 | 沙盘设计收敛为颜色选择：移除展台植被，仅保留沙盘底色 | approved | showcase | LeeCM |
+| D-20261128-130 | 2026-11-28 | 移除建造页绿色装饰：下线逐建筑微生态，建造与展台都不再生成植被 | approved | build, showcase | LeeCM |
+| D-20261128-131 | 2026-11-28 | 内容包 v6「城市与生活 III」：追加 12 座建筑蓝图 | approved | build, gallery, showcase, archive | LeeCM |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

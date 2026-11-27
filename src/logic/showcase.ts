@@ -1,18 +1,50 @@
-import type { BlockDef, Blueprint, ShowcasePlacement } from '../types'
+import type {
+  BlockDef,
+  Blueprint,
+  SandboxDesign,
+  ShowcasePlacement,
+  ShowcaseSandbox
+} from '../types'
 
 export const SHOWCASE_GRID_SIZE = 26
+/** 沙盘数量上限（D-20261127-127）：左抽屉最多列 4 个，避免列表压过画布 */
+export const SHOWCASE_SANDBOX_MAX = 4
+export const DEFAULT_SANDBOX_ID = 'sandbox-1'
+export const SANDBOX_DESIGNS: readonly SandboxDesign[] = ['moss', 'stone', 'bloom', 'bare']
 
-/**
- * 装饰模式解锁（D-20261111-068）：completedBlueprintIds 覆盖 blueprintOrder 全部才解锁。
- * 蓝图总数动态取自传入的顺序表（内容包扩容后自动跟随），禁止硬编码数量。
- */
-export function isDecorationUnlocked(
-  completedIds: readonly string[],
-  blueprintOrder: readonly string[]
-): boolean {
-  if (blueprintOrder.length === 0) return false
-  const completed = new Set(completedIds)
-  return blueprintOrder.every((id) => completed.has(id))
+/** 设计值兜底：未知值一律回到 moss（旧单沙盘行为） */
+export function normalizeSandboxDesign(value: unknown): SandboxDesign {
+  return value === 'stone' || value === 'bloom' || value === 'bare' ? value : 'moss'
+}
+
+/** 按沙盘序号轮换默认颜色方案：第 1 个永远是苔绿，新沙盘自动有区分度 */
+export function defaultSandboxDesign(index: number): SandboxDesign {
+  const i = Math.abs(Math.trunc(index)) % SANDBOX_DESIGNS.length
+  return SANDBOX_DESIGNS[i]
+}
+
+export function createShowcaseSandbox(
+  id: string,
+  index: number,
+  placements: ShowcasePlacement[] = []
+): ShowcaseSandbox {
+  return {
+    id,
+    placements,
+    design: defaultSandboxDesign(index)
+  }
+}
+
+/** 从 placements 提取旋转表（只收非 0），渲染 / 碰撞派生共用同一口径 */
+export function rotationsFromPlacements(
+  placements: readonly ShowcasePlacement[]
+): Record<string, number> {
+  const map: Record<string, number> = {}
+  for (const p of placements) {
+    const rotation = normalizeRotation(p.rotation ?? 0)
+    if (rotation !== 0) map[p.blueprintId] = rotation
+  }
+  return map
 }
 
 export interface ModelFootprint {
@@ -121,20 +153,23 @@ export function isAABBOverlapping(a: BoundingBox, b: BoundingBox): boolean {
 
 /**
  * 校验模型是否可以在指定网格位置放置（无重叠且不超出展台边界）。
- * rotations 为装饰模式的「本次会话 90° 象限」表（蓝图 id → 0/1/2/3，默认空 = 现状），
- * 目标与其它模型的占地均按各自当前旋转计算。
+ * rotations 为可选的显式旋转表（蓝图 id → 0/1/2/3）；缺省时从 existing 的
+ * placement.rotation 派生。目标与其它模型的占地均按各自当前旋转计算。
  */
 export function canPlaceModel(
   target: { blueprintId: string; gridX: number; gridY: number },
   existing: ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,
   gridSize: number = SHOWCASE_GRID_SIZE,
-  rotations: Record<string, number> = {}
+  rotations?: Record<string, number>
 ): boolean {
   const bp = blueprintsMap[target.blueprintId]
   if (!bp) return false
 
-  const targetFp = getRotatedFootprint(bp.blocks, rotations[target.blueprintId] ?? 0)
+  // D-20261127-127：旋转已随 placement 持久化；未显式传入旋转表时直接从 placements 派生，
+  // 保证拖拽/落位校验与画布渲染天然同口径。显式传入（自动排列 / 测试）时仍以传入为准。
+  const rot = rotations ?? rotationsFromPlacements(existing)
+  const targetFp = getRotatedFootprint(bp.blocks, rot[target.blueprintId] ?? 0)
   const targetBox: BoundingBox = {
     x: target.gridX,
     y: target.gridY,
@@ -157,7 +192,7 @@ export function canPlaceModel(
     if (p.blueprintId === target.blueprintId) continue
     const otherBp = blueprintsMap[p.blueprintId]
     if (!otherBp) continue
-    const otherFp = getRotatedFootprint(otherBp.blocks, rotations[p.blueprintId] ?? 0)
+    const otherFp = getRotatedFootprint(otherBp.blocks, rot[p.blueprintId] ?? 0)
     const otherBox: BoundingBox = {
       x: p.gridX,
       y: p.gridY,
@@ -173,9 +208,9 @@ export function canPlaceModel(
 }
 
 /**
- * 装饰模式旋转前置校验（D-20261111-068，纯函数）：
+ * 旋转前置校验（D-20261127-127，纯函数）：
  * 旋转后的占地（宽深互换）不超出 SHOWCASE_GRID_SIZE，且不与其它模型 AABB 重叠。
- * 其它模型按其当前会话旋转计算；非法则调用方不应用旋转并提示 rotateBlocked。
+ * 其它模型按其 placement.rotation 计算；非法则调用方不应用旋转并提示 rotateBlocked。
  * 落位格点（gridX/gridY）保持不变——归一化到 minX/minY=0 后仍以该格点为左上角。
  */
 export function canRotatePlacement(
@@ -185,12 +220,13 @@ export function canRotatePlacement(
   nextRotation: number,
   existing: readonly ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,
-  rotations: Record<string, number> = {},
+  rotations?: Record<string, number>,
   gridSize: number = SHOWCASE_GRID_SIZE
 ): boolean {
   const bp = blueprintsMap[blueprintId]
   if (!bp) return false
 
+  const rot = rotations ?? rotationsFromPlacements(existing)
   const fp = getRotatedFootprint(bp.blocks, nextRotation)
   const box: BoundingBox = { x: gridX, y: gridY, width: fp.width, depth: fp.depth }
 
@@ -204,7 +240,7 @@ export function canRotatePlacement(
     if (p.blueprintId === blueprintId) continue
     const otherBp = blueprintsMap[p.blueprintId]
     if (!otherBp) continue
-    const otherFp = getRotatedFootprint(otherBp.blocks, rotations[p.blueprintId] ?? 0)
+    const otherFp = getRotatedFootprint(otherBp.blocks, rot[p.blueprintId] ?? 0)
     const otherBox: BoundingBox = {
       x: p.gridX,
       y: p.gridY,
@@ -222,18 +258,28 @@ export function findNextAvailablePlacement(
   blueprintId: string,
   existing: ShowcasePlacement[],
   blueprintsMap: Record<string, Blueprint>,
-  gridSize: number = SHOWCASE_GRID_SIZE
+  gridSize: number = SHOWCASE_GRID_SIZE,
+  rotations?: Record<string, number>
 ): ShowcasePlacement | null {
   const bp = blueprintsMap[blueprintId]
   if (!bp) return null
 
-  const fp = getModelFootprint(bp.blocks)
+  const rotation = rotations?.[blueprintId] ?? 0
+  const fp = getRotatedFootprint(bp.blocks, rotation)
 
   // 预留边缘 1 格边距，由内至外寻找空位
   for (let y = 1; y <= gridSize - fp.depth - 1; y += 2) {
     for (let x = 1; x <= gridSize - fp.width - 1; x += 2) {
-      if (canPlaceModel({ blueprintId, gridX: x, gridY: y }, existing, blueprintsMap, gridSize)) {
-        return { blueprintId, gridX: x, gridY: y }
+      if (
+        canPlaceModel(
+          { blueprintId, gridX: x, gridY: y },
+          existing,
+          blueprintsMap,
+          gridSize,
+          rotations
+        )
+      ) {
+        return { blueprintId, gridX: x, gridY: y, ...(rotation ? { rotation } : null) }
       }
     }
   }
@@ -241,8 +287,16 @@ export function findNextAvailablePlacement(
   // 若带间隔位置已满，紧凑搜索每一个网格单元
   for (let y = 0; y <= gridSize - fp.depth; y++) {
     for (let x = 0; x <= gridSize - fp.width; x++) {
-      if (canPlaceModel({ blueprintId, gridX: x, gridY: y }, existing, blueprintsMap, gridSize)) {
-        return { blueprintId, gridX: x, gridY: y }
+      if (
+        canPlaceModel(
+          { blueprintId, gridX: x, gridY: y },
+          existing,
+          blueprintsMap,
+          gridSize,
+          rotations
+        )
+      ) {
+        return { blueprintId, gridX: x, gridY: y, ...(rotation ? { rotation } : null) }
       }
     }
   }

@@ -39,18 +39,23 @@
 
 ## 4. 展台 Showcase.tsx + render/ShowcaseScene.tsx
 
-- **用途**：已落成建筑的沙盘陈列，可拖拽自由摆位；全部蓝图落成后解锁「装饰模式」（D-20261111-068）。
-- **结构**：顶栏（标题 **16px** + 拖拽提示 12px + [装饰模式/退出装饰]（仅全落成解锁）+ [自动排列] + 陈列计数胶囊）→ 画布（flex 1，`background: var(--bg)`）→ 空态提示卡（绝对 `left:24; bottom:24`）→ 点选建筑 → `PolaroidModal`。
-- **装饰模式**：点击模型改为**选中**而非开拍立得；选中后出现旋转控件（↺/↻ 90°）与「换一组植被」；旋转按 90° 象限整数格点变换（宽深互换，先校验不出界/不与其它模型重叠，失败 toast `rotateBlocked` 并还原）；旋转与植被重排**只存在本次会话 React state，不写存档/settings**，退出装饰或重开即复原；移动端旋转按钮 44×44。
-- **复用**：`ShowcaseScene`（26×26 网格、slabH 12）、`.btn.ghost`、`.toast`。
-- **尺寸**：顶栏 `14px 22px` + 1px 底边；计数胶囊 `3px 12px` + 999 圆角；自动排列按钮 `4px 12px; font-size:12`；装饰工具按钮移动端 ≥44px。
-- **必须**：落位必须过 `canPlaceModel`（AABB 无重叠 + 不出界，装饰模式下按会话旋转计算）；非法落位画红虚线脚印 + `haptic('warning')`；满位要 toast（`fullHint`）而不是静默覆盖；装饰模式入口不得在未全落成时出现。
-- **窄屏（D-20261124-087）**：顶栏 `flex-wrap`，标题 `white-space:nowrap`，hint 可整段换行；画布容器 `min-height:0 + overflow:hidden`，不得溢出到 tab bar 之后。
-- **例外**：拖拽提示图标、自动排列图标用 accent（Showcase.tsx:61、74）——越界。
+- **用途（D-20261127-127 / D-20261128-129）**：已落成建筑的多沙盘陈列；左抽屉切沙盘、右抽屉「堆场」收放未陈列建筑；右键 / 长按建筑旋转 90° 或收拢回堆场。展台**不生成任何植被**，沙盘颜色只作用于底座。
+- **结构**：顶栏（标题 **16px** + 当前沙盘名 + 拖拽/右键提示 12px + [自动排列] + 陈列计数胶囊）→ 画布（flex 1，`background: var(--bg)`）→ 左抽屉（沙盘列表 / 新建 / 颜色）与右抽屉（堆场）→ 右键菜单（portal 到 body）→ 点选建筑 → `PolaroidModal`。
+- **多沙盘**：`showcaseSandboxes`（id / placements / design）+ `activeSandboxId`；上限 **4**，至少保留 1 个；新建立即切换，按序号自动轮换颜色（苔绿 → 石白 → 暖沙 → 素盘）。一座建筑**同一时间只陈列在一个沙盘**；删除沙盘只回收摆放，建筑回堆场，不删完成态。
+- **沙盘颜色**：`design` 的四种取值只改变底座顶面/裙边颜色（苔绿 `#4f776a`、石白 `#a89f91`、暖沙 `#e9c46a`、素盘不染色）；颜色与主题块面按比例混合，保持顶 > 左 > 右的明暗阶梯，建筑积木不染色。
+- **堆场**：`completedBlueprintIds` 减去所有沙盘 placements 的派生视图，分「待陈列」与「在其他沙盘」两段；点击即放上当前沙盘（自动找第一个空位），在其他沙盘的建筑点击即移动过来。每行 `BlueprintThumb` **84×56**，在其他沙盘的条目用单色剪影；沙盘满时 toast `yardFull`。
+- **旋转 / 收拢**：右键菜单「旋转 90°」「收拢回堆场」；旋转写入 `ShowcasePlacement.rotation`（0–3，缺省 0）并持久化；先过 `canRotatePlacement`（不出界 / 不与邻居 AABB 重叠），失败 toast `rotateBlocked` 并保持原状。收拢 = 从当前沙盘移除 placement。移动端长按 **520ms** 打开同一菜单；左键点击仍打开拍立得。
+- **抽屉**：左右各一枚 **44px** 宽竖向标签（`‹/›` + 竖排「沙盘 / 堆场」+ 数量徽章），与 **252px** 面板是同一块表面：统一 **360px** 高、同一 `--surface` 背景与 1px `--line` 边框，标签侧圆角、贴窗口的外侧为尖角（左抽屉去左圆角，右抽屉去右圆角），标签与面板之间无分割线。展开用 `grid-template-columns: 0fr → 1fr` 平滑延伸（`--dur-lg` / `--ease-standard`，不做透明度淡入），默认收起，关闭时 `inert` + `aria-hidden`；覆在画布两侧，不改变画布尺寸；切沙盘用 `viewFitKey` 重新取景。DOM 顺序固定为「标签 → 面板」，左侧用 `flex-direction: row-reverse` 反转视觉，保证 Tab 能直接进入面板内容；移动端面板宽 `min(252px, 72vw)`。
+- **复用**：`ShowcaseScene`（26×26 网格、slabH 12）、`BlueprintThumb`（堆场）、`.btn.ghost`、`.toast`、`.sc-*`（`ui-showcase.css`）。
+- **尺寸**：顶栏 `14px 20px` + 1px 底边；抽屉 360px 高（左右一致），标签 44×360；颜色 chip 两列等分；右键菜单最小 184px。
+- **必须**：落位必须过 `canPlaceModel`（AABB 无重叠 + 不出界，按各 placement 的持久化旋转计算）；非法落位画红虚线脚印 + `haptic('warning')`；满位要 toast（`fullHint` / `yardFull`）而不是静默覆盖；沙盘颜色只影响底座，不上 UI、建筑或抽屉背景。
+- **窄屏（D-20261124-087）**：顶栏 `flex-wrap`，标题 `white-space:nowrap`，hint 可整段换行；画布容器 `min-height:0 + overflow:hidden`，不得溢出到 tab bar 之后；抽屉标签保持 ≥44px 触控目标。
+- **历史（D-20261111-068，已退役）**：全落成解锁的「装饰模式」、会话旋转与「换一组植被」已由本方案取代；D-20261128-129 进一步移除展台植被与植被种子，只保留底座颜色。旧入口、会话旋转、植被与相关文案不再存在。原文保留在本记录与 SURFACES 历史版本中。
+- **例外**：拖拽提示图标、自动排列图标用 accent——越界。
 
 ## 5. 图鉴弹窗 GalleryDialog.tsx
 
-- **用途**：全部蓝图（当前 23 座，随内容包动态；`blueprintOrder` 为唯一来源）的解锁顺序与切换当前目标。
+- **用途**：全部蓝图（当前 35 座，随内容包动态；`blueprintOrder` 为唯一来源）的解锁顺序与切换当前目标。
 - **结构**：`.overlay > .dialog`（宽 **500**）→ `.dialog-header`（标题 + 总数 + 关闭）→ `.dialog-body > .gallery-grid`（**3 列**）→ 每卡：`BlueprintThumb` 缩略图 + 名称 14px/600 + 状态 11.5px → `.dialog-footer`（关闭）。
 - **尺寸**：`gap:10px`、卡片 `padding:14px 12px`（ui.css:570–586）；锁定态 `opacity:.5` 且 hover 不动。
 - **必须**：解锁顺序 = `blueprintOrder`（logic/blueprints/index.ts:30–43），前一座未落成才锁；锁定态不加锁图标（用状态行表达）。
@@ -73,6 +78,8 @@
 - **积木上限**：设置尾部「修复积木库存」与统计页同读 `REPAIR_MAX`（4），不得写死数字。
 - **桌宠颜色**：`.settings-swatch-grid` 6 列等分，材质色 11 + 跟随主题 = 12 格两行；色值限定 D-067 批准材质色板。
 - **晚间收尾时间（D-20261126-117，取代 D-20261126-115）**：「开启 / 免打扰」+ 时间控件同占一行（分段吃剩余宽度）。时间控件**常态只有一行**（`.tw` 36px，靠不可见的 `.tw-sizer` 撑出布局尺寸）；点击后 `.tw-panel` 以当前行为锚点**浮层**上下各展开一行（36 → 86px，`position: absolute`），因此行高、下方元素位置与弹窗 `scrollHeight` 都不变，页面也不会被带着滚。展开态显示墨色边框 + 2px 墨色外环 + 一层极软分层阴影作为聚焦点。左 0–23 / 右 00–59 双列首尾循环，行高 `--tw-row: 26px`，中心 `1px --line` 选中带；滚轮一格 = 一行且按指针所在列分派，展开期间临时锁住最近的可滚动祖先，收起（点外部 / Esc / 失焦）即恢复；键盘 ↑↓/PgUp/PgDn/Home/End 可用；关闭开关时整组 0.45 透明度且不可交互。不用原生滚动与 `scroll-snap`（WebView2 下一格两行并回跳）。
+- **分组展开 / 收拢（D-20261127-126）**：所有可折叠分组统一用 `Collapse`（`grid-template-rows 0fr → 1fr` + 透明度，`--dur-md` / `--ease-standard`）；收起动画结束后才卸载子面板（保持惰性挂载，WebDAV/备份不会在弹窗打开时提前发 IPC）；关闭期间 `aria-hidden` + `inert`，焦点不进入隐藏内容；`prefers-reduced-motion` 下立即切换。
+- **实验室（D-20261127-127 / D-20261128-129 / D-20261128-130）**：不再包含「建筑微生态彩蛋」开关。建造页微生态已整体下线，展台也不再生成植被；沙盘由每个沙盘自己的底座颜色决定（苔绿 / 石白 / 暖沙 / 素盘）。
 - **例外**：无（WebDAV 已并入「数据与同步」组）。
 
 ## 7. 习惯弹窗 HabitDialog.tsx
@@ -82,6 +89,7 @@
 - **复用**：`.field`、`.seg`、`TimeStepper`（`.ts-btn/.ts-num`，22px 方块、等宽数字）。
 - **尺寸**：输入 `padding:9px 12px` + `1.5px` 描边、聚焦变 `--ink`（ui.css:279–292）；星期格 `height:34px; border-radius:8px`（HabitDialog.tsx:279–290）。
 - **必须**：校验错误就地显示在字段下方（`--danger` 11.5px）；未选星期必须拦住保存；关闭前不丢已填内容（仅 Esc/取消丢弃）。
+- **「更多设置」（D-20261127-126）**：选填项容器用 `Collapse` 做高度 + 透明度过渡（`--dur-md` / `--ease-standard`），收起动画结束后卸载；按钮 `aria-expanded` 与箭头旋转保持；与上方首个字段的 16px 间距沿用 D-20261124-108，不被折叠容器吃掉。
 - **例外**：星期格与频率滑块用 8px 圆角与 `accentColor: var(--progress-green)`（HabitDialog.tsx:313），偏离 `--r-sm` 体系。
 
 ## 8. 积木掉落弹窗 BlockDropModal.tsx

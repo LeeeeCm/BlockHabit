@@ -13,9 +13,10 @@ import { blueprintOrder } from './index'
  * 1 = 基础 12 座；2 = 追加「城市与生活」6 座（treehouse/greenhouse/clocktower/bridge/observatory/library）；
  * 3 = 追加「城市与生活」续章 5 座（bakery/bookshop/postoffice/firestation/watertower）；
  * 4 = 独立桌宠支线（pet-cat/pet-bot，已于 D-20261127-125 下线，旧存档迁移后并入主线建筑）；
- * 5 = 桌宠蓝图下线后的内容版本（只保留 23 座建筑）。
+ * 5 = 桌宠蓝图下线后的内容版本（只保留 23 座建筑）；
+ * 6 = 追加「城市与生活 III」12 座（D-20261128-131）。
  */
-export const CONTENT_VERSION = 5
+export const CONTENT_VERSION = 6
 
 export interface ContentPack {
   id: string
@@ -43,11 +44,31 @@ export const CONTENT_PACK_V3_IDS: readonly string[] = [
   'watertower'
 ] as const
 
+/** 内容包 v6 追加的 12 座（D-20261128-131，城市与生活 III） */
+export const CONTENT_PACK_V6_IDS: readonly string[] = [
+  'station',
+  'theater',
+  'museum',
+  'hospital',
+  'school',
+  'chapel',
+  'temple',
+  'carousel',
+  'pier',
+  'fountain',
+  'market',
+  'stadium'
+] as const
+
 /**
- * 基础包 = order 中除去全部扩展包（v2 + v3）追加的其余蓝图（不硬编码 12）。
- * 注意必须同时排除 v2 与 v3，否则 v3 会被误算进基础包，manifest 语义错误。
+ * 基础包 = order 中除去全部扩展包（v2 + v3 + v6）追加的其余蓝图（不硬编码 12）。
+ * 注意必须排除所有扩展包，否则新包会被误算进基础包，manifest 语义错误。
  */
-const EXTENSION_IDS: readonly string[] = [...CONTENT_PACK_V2_IDS, ...CONTENT_PACK_V3_IDS]
+const EXTENSION_IDS: readonly string[] = [
+  ...CONTENT_PACK_V2_IDS,
+  ...CONTENT_PACK_V3_IDS,
+  ...CONTENT_PACK_V6_IDS
+]
 const BASE_PACK_IDS = blueprintOrder.filter((id) => !EXTENSION_IDS.includes(id))
 
 /** 内容包 manifest 是构建期元数据，不联网下载、不校验签名（内容随安装包内置） */
@@ -69,6 +90,12 @@ export const CONTENT_PACKS: ContentPack[] = [
     version: 3,
     releasedAt: '2026-11-11',
     blueprintIds: [...CONTENT_PACK_V3_IDS]
+  },
+  {
+    id: 'city-life-3',
+    version: 6,
+    releasedAt: '2026-11-28',
+    blueprintIds: [...CONTENT_PACK_V6_IDS]
   }
 ]
 

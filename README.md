@@ -74,20 +74,21 @@ BlockHabit is a **local-first, account-free, telemetry-free** desktop habit app 
 ### 2. Bricks, blueprints & buildings
 
 - **Valid check-in, one brick**: Every valid check-in drops a brick. Every 7 days of streak, the next brick carries a theme-accent outline.
-- **23 isometric models**
+- **35 isometric models**
 
   | Content pack | Count | Blocks |
   |---|---|---:|---:|
   | Base buildings (v1) | 12 | 1385 |
   | City & Life (v2) | 6 | 600 |
   | City & Life, continued (v3) | 5 | 500 |
-  | **Total** | **23** | **2485** |
+  | City & Life III (v6) | 12 | 1196 |
+  | **Total** | **35** | **3681** |
 
-- **Main-line unlock order**: 23 buildings progress in order.
+- **Main-line unlock order**: 35 buildings progress in order.
 - **Build view**: Canvas 2D rounded bricks, top studs, three-face shading, contact shadows, and a dashed foundation. Zoom, pan, and reset the camera.
 - **Drop animation**: Slow fall → squash on impact → rebound. A one-shot ceremony plays when a building is completed.
 - **Gallery**: One building grid with real-time isometric thumbnails. Locked entries use silhouettes, while in-progress entries show only the currently placed bricks, centered, without an overlaid ghost or a white backing plate.
-- **Showcase**: Place completed buildings on a 26×26 sandbox with drag, rotation, and micro-ecosystem greenery. Completing every blueprint unlocks free decoration mode.
+- **Showcase**: Place completed buildings on a 26×26 sandbox with drag, rotation, multiple sandboxes, a yard, and base color themes.
 - **Long-term records**: Completion ceremonies, foundation inscriptions, building archives (key brick timeline / notes / moods), polaroids, monthly posters, and completion yearbooks.
 - **Data honesty**: Deleting data cascades to bricks, streaks, and all-clear rewards. Undo never leaves a "visual completion" behind.
 
@@ -110,7 +111,7 @@ All four pages share the same top-bar spec: 64px tall, 14×20 padding, 16px titl
 
 - **Today**: Date and weekday, current blueprint progress, today's completion count; greeting brief, focus entry, reminder banner, habit groups, category filters, check-in notes, and archive.
 - **Build**: Model canvas, progress, gallery, X-ray archaeology, camera reset, foundation inscription, polaroid, and completion ceremony.
-- **Showcase**: Completed-model sandbox, drag arrangement, rotation, greenery reshuffling, and display count; auto-arrange and decoration mode.
+- **Showcase**: Multi-sandbox display with drag arrangement, rotation, a yard, base color themes, and display count; auto-arrange.
 - **Stats**: Current / best streak, total check-ins, 13-week heatmap, check-in note journal, memorabilia center, repair bricks, monthly posters, and completion yearbook.
 
 ### 5. Reminders, focus & evening wrap-up
@@ -128,8 +129,8 @@ All four pages share the same top-bar spec: 64px tall, 14×20 padding, 16px titl
 - **Backups**: Automatic backup before overwriting imports (5 kept); manual snapshots kept separately (5 kept); the settings page can inspect, restore, and open the data folder.
 - **WebDAV sync**: Optional, never the main path. Supports automatic and manual sync. Check-in tombstones prevent an old device from resurrecting undone check-ins.
 - **Password security**: On desktop, "remember password" uses the OS credential manager (Windows Credential Manager); no plaintext is stored in settings or the save. Turning it off deletes the existing entry.
-- **Content version gate**: `contentVersion = 5`. Older clients refuse to read newer data and suspend saving instead of silently cleaning unknown data.
-- **Upgrade safety**: This build keeps `schemaVersion = 2` and `contentVersion = 5`, and keeps the `com.blockhabit.app` identifier. Installing the update preserves the local save in `appDataDir`; older saves (including 0.2.3 and pet-blueprint saves) load and migrate.
+- **Content version gate**: `contentVersion = 6`. Older clients refuse to read newer data and suspend saving instead of silently cleaning unknown data.
+- **Upgrade safety**: This build keeps `schemaVersion = 2` and `contentVersion = 6`, and keeps the `com.blockhabit.app` identifier. Installing the update preserves the local save in `appDataDir`; older saves (including 0.2.3 and pet-blueprint saves) load and migrate.
 
 ### 7. Settings, themes & accessibility
 
@@ -139,7 +140,7 @@ Settings use 5 collapsible groups to reduce noise:
 2. **Pet**: show/hide, size, material color, free roaming.
 3. **Data & sync**: export/import, full archive package, backups, WebDAV.
 4. **Content roadmap** (About): built-in content counts, version check, and update notes.
-5. **Lab**: time-of-day lighting, gentle decay, micro-ecosystem, X-ray archaeology, sound material, gyroscope, and other experimental switches.
+5. **Lab**: time-of-day lighting, gentle decay, X-ray archaeology, sound material, gyroscope, and other experimental switches.
 
 - **Four themes**: Paper White, Ink Black, Oat Terracotta, Nordic Fog. Themes only change the neutral scale and the single theme accent.
 - **Bilingual**: Full Chinese / English coverage; every user-visible string goes through `src/i18n/`.
@@ -163,7 +164,7 @@ Settings use 5 collapsible groups to reduce noise:
 ```text
 src/
 ├─ logic/            Pure logic: check-in rules, streaks, blueprints, repair bricks, focus state machine, import
-│  └─ blueprints/    Procedural geometry and content-version manifest for 23 models
+│  └─ blueprints/    Procedural geometry and content-version manifest for 35 models
 ├─ render/           Isometric projection, three-face brick shading, build/showcase scenes, export canvases
 ├─ pet/              Separate transparent pet window and right-click panel
 ├─ platform/         Windows, notifications, shortcuts, storage adapters, pet positioning
@@ -279,8 +280,8 @@ The release pipeline uses GitHub Releases + minisign signatures. Update checks a
 - **Backups**: automatic backups / manual snapshots in the same directory; the settings page can open the data folder
 - **Archive package**: README + manifest + data JSON + checksums + transparent images of completed buildings; WebDAV credentials are never included
 - **Sync conflicts**: check-in tombstones, completion recalculation, and field-level merge are authoritative; do not overwrite newer content from an old device
-- **Upgrades keep your data**: this build keeps `schemaVersion = 2` and `contentVersion = 5`; installing over an existing app does not remove the local save in `appDataDir`, and older saves load and migrate
-- **Content version**: `contentVersion = 5`. An older client refuses to load a newer version and suspends saving, preventing silent cleanup of unknown blueprints
+- **Upgrades keep your data**: this build keeps `schemaVersion = 2` and `contentVersion = 6`; installing over an existing app does not remove the local save in `appDataDir`, and older saves load and migrate
+- **Content version**: `contentVersion = 6`. An older client refuses to load a newer version and suspends saving, preventing silent cleanup of unknown blueprints
 
 ## Keyboard shortcuts
 
@@ -338,7 +339,7 @@ Pet blueprints were removed so the gallery only contains buildings. Any bricks y
 - **Windows shutdown / sign-out does not guarantee the last debounced settings write**: Critical actions (check-in / undo / claim / import) flush immediately; non-critical settings may lose the debounce window.
 - **Reminders depend on a running process**: No reminders after the app exits.
 - **No automatic updates**: Update checks are manual and require user confirmation.
-- **Content limit**: 23 blueprints, 2485 blocks total; once everything is built, no new bricks drop. The app says so explicitly instead of failing silently.
+- **Content limit**: 35 blueprints, 3681 blocks total; once everything is built, no new bricks drop. The app says so explicitly instead of failing silently.
 - **Limited browser preview**: WebDAV, native notifications, the tray, the transparent pet window, and window dragging are fully available only on desktop.
 
 ## License

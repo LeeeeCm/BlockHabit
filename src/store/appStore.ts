@@ -1,5 +1,12 @@
 import { create } from 'zustand'
-import type { CheckIn, CheckInResult, ClaimDayResult, DayClaim, Habit } from '../types'
+import type {
+  CheckIn,
+  CheckInResult,
+  ClaimDayResult,
+  DayClaim,
+  Habit,
+  ShowcasePlacement
+} from '../types'
 import { canCheckIn, canClaimDay, habitMetOnDay } from '../logic/checkin'
 import { REPAIR_MAX, refreshMonthlyAllowance, repairBricksForStreak } from '../logic/repairBricks'
 import { currentStreak, dayClaimStreak } from '../logic/streak'
@@ -12,7 +19,16 @@ import {
   BLUEPRINT_CAPACITY
 } from '../logic/builds'
 import { blueprints, getBlueprint } from '../logic/blueprints'
-import { canPlaceModel, findNextAvailablePlacement } from '../logic/showcase'
+import {
+  SHOWCASE_SANDBOX_MAX,
+  canPlaceModel,
+  canRotatePlacement,
+  createShowcaseSandbox,
+  findNextAvailablePlacement,
+  normalizeRotation,
+  normalizeSandboxDesign,
+  rotationsFromPlacements
+} from '../logic/showcase'
 import { todayKey } from '../logic/dates'
 import type { StorageAdapter } from '../storage/adapter'
 import { prepareImport } from '../storage/adapter'
@@ -20,6 +36,12 @@ import { clearHabitSliceCache } from './habitSelectors'
 import { serializeState } from './serializeState'
 import type { AppStore } from './appStoreTypes'
 import { defaultState, reconcileCompletion, uid } from './appStoreHelpers'
+import {
+  removePlacementsEverywhere,
+  resolveShowcaseState,
+  setSandboxPlacements,
+  showcaseFields
+} from '../logic/showcaseState'
 import {
   applyDemoCastleState as applyDemoCastleStateToStore,
   initPersistence as initPersistenceWithStore,
@@ -84,12 +106,14 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       dayClaims,
       BLUEPRINT_CAPACITY
     )
-    const { completed: nextCompleted, showcase: nextShowcase } = reconcileCompletion(
+    const { completed: nextCompleted, removed } = reconcileCompletion(
       affectedBpIds,
       nextBuilds,
-      completedBlueprintIds,
-      get().showcasePlacements ?? []
+      completedBlueprintIds
     )
+    // 完成态回退的蓝图要从所有沙盘上撤下（D-20261127-127）
+    const showcase = resolveShowcaseState(get())
+    const nextSandboxes = removePlacementsEverywhere(showcase.sandboxes, removed)
     // 清理该习惯的提醒处置记录，避免 reminderLog 随习惯删除无限增长
     const reminderLog = { ...(get().reminderLog ?? {}) }
     delete reminderLog[id]
@@ -100,7 +124,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       checkIns: remainingCheckIns,
       builds: nextBuilds,
       completedBlueprintIds: nextCompleted,
-      showcasePlacements: nextShowcase,
+      ...showcaseFields(nextSandboxes, showcase.activeId),
       reminderLog
     })
     requestFlushNow()
@@ -146,15 +170,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     }))
   },
   checkIn(habitId, actualMinutes, note, counterDelta, mood, starred): CheckInResult {
-    const {
-      habits,
-      checkIns,
-      builds,
-      activeBlueprintId,
-      completedBlueprintIds,
-      repairBricks,
-      showcasePlacements
-    } = get()
+    const { habits, checkIns, builds, activeBlueprintId, completedBlueprintIds, repairBricks } =
+      get()
+    const showcase = resolveShowcaseState(get())
+    let nextSandboxes = showcase.sandboxes
+    let nextPlacements = showcase.active.placements
     const day = todayKey()
     const verdict = canCheckIn(habits, checkIns, habitId, day)
     if (!verdict.ok) return { bonus: false, complete: false, reason: verdict.reason }
@@ -181,7 +201,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     let complete = false
     let nextCompleted = completedBlueprintIds
     let nextRepair = repairBricks ?? 0
-    let nextPlacements = showcasePlacements ?? []
     const blockId = uid()
 
     // 连击里程碑奖励（B1）：本次打卡后该习惯的连续天数每满 7 天，掉落的这块积木变为点缀色 bonus 块。
@@ -222,7 +241,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
             blueprints
           )
           // 展台已满：跳过自动上展台（不阻塞落成）
-          if (placement) nextPlacements = [...nextPlacements, placement]
+          if (placement) {
+            nextPlacements = [...nextPlacements, placement]
+            nextSandboxes = setSandboxPlacements(nextSandboxes, showcase.activeId, nextPlacements)
+          }
         }
       }
     } else {
@@ -249,7 +271,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       builds: nextBuilds,
       completedBlueprintIds: nextCompleted,
       repairBricks: nextRepair,
-      showcasePlacements: nextPlacements
+      ...showcaseFields(nextSandboxes, showcase.activeId)
     })
     requestFlushNow()
     return { placed: slot ?? undefined, bonus: isBonus, complete, checkInId: entry.id }
@@ -257,6 +279,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
   uncheckIn(habitId, day) {
     const { habits, checkIns, builds, dayClaims, completedBlueprintIds } = get()
+    const showcase = resolveShowcaseState(get())
     const targetDay = day ?? todayKey()
     const targetCheckIns = checkIns.filter(
       (c) => !c.deletedAt && c.habitId === habitId && c.date === targetDay
@@ -312,13 +335,13 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       ? rebuildBuilds(liveAfterUncheck, nextClaims)
       : removeBlocksAndCompact(builds, removalIds)
 
-    // 校验受影响蓝图的完成状态，退回未完成时同步移出展台
-    const { completed: nextCompleted, showcase: nextShowcase } = reconcileCompletion(
+    // 校验受影响蓝图的完成状态，退回未完成时从所有沙盘撤下
+    const { completed: nextCompleted, removed } = reconcileCompletion(
       affectedBpIds,
       nextBuilds,
-      completedBlueprintIds,
-      get().showcasePlacements ?? []
+      completedBlueprintIds
     )
+    const nextSandboxes = removePlacementsEverywhere(showcase.sandboxes, removed)
 
     set({
       checkIns: nextCheckIns,
@@ -326,7 +349,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       completedBlueprintIds: nextCompleted,
       dayClaims: nextClaims,
       deletedDayClaims: nextDeletedClaims,
-      showcasePlacements: nextShowcase
+      ...showcaseFields(nextSandboxes, showcase.activeId)
     })
     requestFlushNow()
 
@@ -375,21 +398,138 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     return { ok: true }
   },
 
-  updateShowcasePlacement(blueprintId, gridX, gridY, rotations) {
-    const { showcasePlacements } = get()
-    const placements = showcasePlacements ?? []
-    const ok = canPlaceModel(
-      { blueprintId, gridX, gridY },
-      placements,
-      blueprints,
-      undefined,
-      rotations
+  updateShowcasePlacement(blueprintId, gridX, gridY) {
+    const showcase = resolveShowcaseState(get())
+    const placements = showcase.active.placements
+    const ok = canPlaceModel({ blueprintId, gridX, gridY }, placements, blueprints)
+    if (!ok) return false
+    // 保留已有 rotation（拖拽只改位置，不改朝向）
+    const next = placements.some((p) => p.blueprintId === blueprintId)
+      ? placements.map((p) => (p.blueprintId === blueprintId ? { ...p, gridX, gridY } : p))
+      : [...placements, { blueprintId, gridX, gridY }]
+    const nextSandboxes = setSandboxPlacements(showcase.sandboxes, showcase.activeId, next)
+    set(showcaseFields(nextSandboxes, showcase.activeId))
+    return true
+  },
+
+  rotateShowcasePlacement(blueprintId) {
+    const showcase = resolveShowcaseState(get())
+    const placement = showcase.active.placements.find((p) => p.blueprintId === blueprintId)
+    if (!placement) return false
+    const nextRotation = (normalizeRotation(placement.rotation ?? 0) + 1) % 4
+    const ok = canRotatePlacement(
+      blueprintId,
+      placement.gridX,
+      placement.gridY,
+      nextRotation,
+      showcase.active.placements,
+      blueprints
     )
     if (!ok) return false
-    const next = placements.some((p) => p.blueprintId === blueprintId)
-      ? placements.map((p) => (p.blueprintId === blueprintId ? { blueprintId, gridX, gridY } : p))
-      : [...placements, { blueprintId, gridX, gridY }]
-    set({ showcasePlacements: next })
+    const next = showcase.active.placements.map((p) =>
+      p.blueprintId === blueprintId
+        ? { ...p, rotation: nextRotation === 0 ? undefined : nextRotation }
+        : p
+    )
+    const nextSandboxes = setSandboxPlacements(showcase.sandboxes, showcase.activeId, next)
+    set(showcaseFields(nextSandboxes, showcase.activeId))
+    return true
+  },
+
+  autoArrangeShowcase() {
+    const state = get()
+    const showcase = resolveShowcaseState(state)
+    // 只重排当前沙盘已有的陈列，不把其他沙盘 / 堆场里的建筑拉进来（保持全局唯一陈列）
+    const source = showcase.active.placements.map((p) => p.blueprintId)
+    const rotations = rotationsFromPlacements(showcase.active.placements)
+    const next: ShowcasePlacement[] = []
+    let overflow = false
+    for (const blueprintId of source) {
+      const placement = findNextAvailablePlacement(
+        blueprintId,
+        next,
+        blueprints,
+        undefined,
+        rotations
+      )
+      if (!placement) {
+        overflow = true
+        break
+      }
+      next.push(placement)
+    }
+    // 放不下时保持原布局不动，交由页面提示，避免自动排列把建筑挤回堆场
+    if (overflow) return false
+    const nextSandboxes = setSandboxPlacements(showcase.sandboxes, showcase.activeId, next)
+    set(showcaseFields(nextSandboxes, showcase.activeId))
+    return true
+  },
+
+  tuckShowcaseBuilding(blueprintId) {
+    const showcase = resolveShowcaseState(get())
+    if (!showcase.active.placements.some((p) => p.blueprintId === blueprintId)) return false
+    const next = showcase.active.placements.filter((p) => p.blueprintId !== blueprintId)
+    const nextSandboxes = setSandboxPlacements(showcase.sandboxes, showcase.activeId, next)
+    set(showcaseFields(nextSandboxes, showcase.activeId))
+    return true
+  },
+
+  placeShowcaseBuilding(blueprintId) {
+    const state = get()
+    if (!state.completedBlueprintIds.includes(blueprintId)) return false
+    const showcase = resolveShowcaseState(state)
+    if (showcase.active.placements.some((p) => p.blueprintId === blueprintId)) return false
+    const placement = findNextAvailablePlacement(
+      blueprintId,
+      showcase.active.placements,
+      blueprints
+    )
+    if (!placement) return false
+    // 全局唯一陈列：若它在别的沙盘上，先从那里移除再放到当前沙盘
+    const cleared = removePlacementsEverywhere(showcase.sandboxes, new Set([blueprintId]))
+    const activeAfterMove = cleared.find((s) => s.id === showcase.activeId) ?? cleared[0]
+    const nextSandboxes = setSandboxPlacements(cleared, activeAfterMove.id, [
+      ...activeAfterMove.placements,
+      placement
+    ])
+    set(showcaseFields(nextSandboxes, activeAfterMove.id))
+    return true
+  },
+
+  switchShowcaseSandbox(id) {
+    const showcase = resolveShowcaseState(get())
+    if (!showcase.sandboxes.some((s) => s.id === id)) return false
+    set(showcaseFields(showcase.sandboxes, id))
+    return true
+  },
+
+  addShowcaseSandbox() {
+    const showcase = resolveShowcaseState(get())
+    if (showcase.sandboxes.length >= SHOWCASE_SANDBOX_MAX) return null
+    // 使用全局唯一 id（两台设备离线各建沙盘时不会撞号，避免同步合并成一桌）
+    const id = `sandbox-${uid()}`
+    const sandbox = createShowcaseSandbox(id, showcase.sandboxes.length)
+    const next = [...showcase.sandboxes, sandbox]
+    set(showcaseFields(next, id))
+    return id
+  },
+
+  removeShowcaseSandbox(id) {
+    const showcase = resolveShowcaseState(get())
+    if (showcase.sandboxes.length <= 1) return false
+    const next = showcase.sandboxes.filter((s) => s.id !== id)
+    if (next.length === showcase.sandboxes.length) return false
+    const activeId = showcase.activeId === id ? next[0].id : showcase.activeId
+    set(showcaseFields(next, activeId))
+    return true
+  },
+
+  setShowcaseSandboxDesign(id, design) {
+    const showcase = resolveShowcaseState(get())
+    if (!showcase.sandboxes.some((s) => s.id === id)) return false
+    const clean = normalizeSandboxDesign(design)
+    const next = showcase.sandboxes.map((s) => (s.id === id ? { ...s, design: clean } : s))
+    set(showcaseFields(next, showcase.activeId))
     return true
   },
 
@@ -401,9 +541,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       activeBlueprintId,
       completedBlueprintIds,
       dayClaims,
-      repairBricks,
-      showcasePlacements
+      repairBricks
     } = get()
+    const showcase = resolveShowcaseState(get())
+    let nextSandboxes = showcase.sandboxes
+    let nextPlacements = showcase.active.placements
     const day = todayKey()
     // 全勤判定基于有效打卡（排除墓碑），防止"打卡→领块→撤销→再领"刷块
     const verdict = canClaimDay(habits, liveCheckInsView(checkIns), dayClaims, day)
@@ -422,7 +564,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     let complete = false
     let nextCompleted = completedBlueprintIds
     let nextRepair = repairBricks ?? 0
-    let nextPlacements = showcasePlacements ?? []
     // 仅当真正掉块时才记录 blockId（蓝图已建完的领取无块可挂，重建时按空 blockId 跳过）
     const blockId = slot ? uid() : ''
 
@@ -450,7 +591,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
             blueprints
           )
           // 展台已满：跳过自动上展台（不阻塞落成）
-          if (placement) nextPlacements = [...nextPlacements, placement]
+          if (placement) {
+            nextPlacements = [...nextPlacements, placement]
+            nextSandboxes = setSandboxPlacements(nextSandboxes, showcase.activeId, nextPlacements)
+          }
         }
       }
     }
@@ -464,7 +608,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       builds: nextBuilds,
       completedBlueprintIds: nextCompleted,
       repairBricks: nextRepair,
-      showcasePlacements: nextPlacements
+      ...showcaseFields(nextSandboxes, showcase.activeId)
     })
     requestFlushNow()
     return { placed: slot ?? undefined, bonus: isStreakBonus, complete }

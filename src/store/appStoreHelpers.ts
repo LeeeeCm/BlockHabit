@@ -1,6 +1,7 @@
-import type { AppState, Language, PlacedBlock, ShowcasePlacement } from '../types'
+import type { AppState, Language, PlacedBlock } from '../types'
 import { getBlueprint } from '../logic/blueprints'
 import { CONTENT_VERSION } from '../logic/blueprints/manifest'
+import { DEFAULT_SANDBOX_ID, createShowcaseSandbox } from '../logic/showcase'
 
 /**
  * appStore 的纯 helper（不依赖 store 实例）：id 生成、蓝图完成态对账、默认状态。
@@ -10,25 +11,27 @@ export const uid = (): string =>
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`
 
-/** 对账受影响蓝图的完成状态：重建后块数不足者退回未完成，并同步移出展台 */
+/**
+ * 对账受影响蓝图的完成状态：重建后块数不足者退回未完成。
+ * 返回被移除的蓝图 id 集合，调用方据此清理所有沙盘上的落位（D-20261127-127）。
+ */
 export function reconcileCompletion(
   affectedBpIds: Set<string>,
   nextBuilds: PlacedBlock[],
-  completedBlueprintIds: string[],
-  showcase: ShowcasePlacement[]
-): { completed: string[]; showcase: ShowcasePlacement[] } {
+  completedBlueprintIds: string[]
+): { completed: string[]; removed: Set<string> } {
   let completed = completedBlueprintIds
-  let nextShowcase = showcase
+  const removed = new Set<string>()
   for (const bpId of affectedBpIds) {
     if (!completed.includes(bpId)) continue
     const bp = getBlueprint(bpId)
     const count = nextBuilds.filter((b) => b.blueprintId === bpId).length
     if (count < bp.blocks.length) {
       completed = completed.filter((x) => x !== bpId)
-      nextShowcase = nextShowcase.filter((p) => p.blueprintId !== bpId)
+      removed.add(bpId)
     }
   }
-  return { completed, showcase: nextShowcase }
+  return { completed, removed }
 }
 
 export function defaultState(): AppState {
@@ -47,7 +50,6 @@ export function defaultState(): AppState {
       language: initialLang,
       enableAmbientLighting: true,
       enableGentleDecay: true,
-      enableEcoProps: true,
       soundMaterial: 'classic',
       soundMuted: false,
       remindersEnabled: true,
@@ -65,6 +67,8 @@ export function defaultState(): AppState {
     deletedDayClaims: [],
     repairBricks: 0,
     showcasePlacements: [],
+    showcaseSandboxes: [createShowcaseSandbox(DEFAULT_SANDBOX_ID, 0)],
+    activeSandboxId: DEFAULT_SANDBOX_ID,
     foundationNotes: {},
     reminderLog: {}
   }

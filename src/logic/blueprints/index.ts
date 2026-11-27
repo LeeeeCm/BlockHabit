@@ -27,6 +27,20 @@ import {
   makePostofficeBlueprint,
   makeWatertowerBlueprint
 } from './generatorsV3'
+import {
+  makeCarouselBlueprint,
+  makeChapelBlueprint,
+  makeFountainBlueprint,
+  makeHospitalBlueprint,
+  makeMarketBlueprint,
+  makeMuseumBlueprint,
+  makePierBlueprint,
+  makeSchoolBlueprint,
+  makeStadiumBlueprint,
+  makeStationBlueprint,
+  makeTempleBlueprint,
+  makeTheaterBlueprint
+} from './generatorsV6'
 
 export const plantBlueprint = makePlantBlueprint()
 export const coffeeBlueprint = makeCoffeeBlueprint()
@@ -53,6 +67,19 @@ export const bookshopBlueprint = makeBookshopBlueprint()
 export const postofficeBlueprint = makePostofficeBlueprint()
 export const firestationBlueprint = makeFirestationBlueprint()
 export const watertowerBlueprint = makeWatertowerBlueprint()
+// 内容包 v6（D-20261128-131）：城市与生活 III 12 座
+export const stationBlueprint = makeStationBlueprint()
+export const theaterBlueprint = makeTheaterBlueprint()
+export const museumBlueprint = makeMuseumBlueprint()
+export const hospitalBlueprint = makeHospitalBlueprint()
+export const schoolBlueprint = makeSchoolBlueprint()
+export const chapelBlueprint = makeChapelBlueprint()
+export const templeBlueprint = makeTempleBlueprint()
+export const carouselBlueprint = makeCarouselBlueprint()
+export const pierBlueprint = makePierBlueprint()
+export const fountainBlueprint = makeFountainBlueprint()
+export const marketBlueprint = makeMarketBlueprint()
+export const stadiumBlueprint = makeStadiumBlueprint()
 /** 主线解锁顺序（后者必须等前者落成）。 */
 export const blueprintOrder: string[] = [
   'plant',
@@ -79,7 +106,20 @@ export const blueprintOrder: string[] = [
   'bookshop',
   'postoffice',
   'firestation',
-  'watertower'
+  'watertower',
+  // 内容包 v6
+  'station',
+  'theater',
+  'museum',
+  'hospital',
+  'school',
+  'chapel',
+  'temple',
+  'carousel',
+  'pier',
+  'fountain',
+  'market',
+  'stadium'
 ]
 
 export const blueprints: Record<string, Blueprint> = {
@@ -105,7 +145,19 @@ export const blueprints: Record<string, Blueprint> = {
   bookshop: bookshopBlueprint,
   postoffice: postofficeBlueprint,
   firestation: firestationBlueprint,
-  watertower: watertowerBlueprint
+  watertower: watertowerBlueprint,
+  station: stationBlueprint,
+  theater: theaterBlueprint,
+  museum: museumBlueprint,
+  hospital: hospitalBlueprint,
+  school: schoolBlueprint,
+  chapel: chapelBlueprint,
+  temple: templeBlueprint,
+  carousel: carouselBlueprint,
+  pier: pierBlueprint,
+  fountain: fountainBlueprint,
+  market: marketBlueprint,
+  stadium: stadiumBlueprint
 }
 
 /** 已知蓝图的精确查询，不将未知 ID（含原型属性）误认作某一座。 */

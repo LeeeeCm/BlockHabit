@@ -79,35 +79,7 @@ export function LabGroup({ settings, isMobile, t, onUpdateSettings, onToast }: P
         </div>
       </div>
 
-      {/* 建筑微生态彩蛋 */}
-      <div className="field" style={{ marginBottom: 12 }}>
-        <label>{t.settings.ecoPropsLabel}</label>
-        <div className="seg">
-          <button
-            type="button"
-            className={settings.enableEcoProps !== false ? 'active' : ''}
-            onClick={() => {
-              triggerHaptic('selection')
-              onUpdateSettings({ enableEcoProps: true })
-            }}
-          >
-            {t.settings.ecoPropsOn}
-          </button>
-          <button
-            type="button"
-            className={settings.enableEcoProps === false ? 'active' : ''}
-            onClick={() => {
-              triggerHaptic('selection')
-              onUpdateSettings({ enableEcoProps: false })
-            }}
-          >
-            {t.settings.ecoPropsOff}
-          </button>
-        </div>
-        <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
-          {t.settings.ecoPropsHint}
-        </div>
-      </div>
+      {/* 建筑微生态彩蛋已下线（D-20261128-130）；实验室不再提供植被开关 */}
 
       {/* 透视考古默认态：接线 Build 页会话内开关的初始值 */}
       <div className="field" style={{ marginBottom: 12 }}>

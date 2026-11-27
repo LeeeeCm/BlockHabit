@@ -10,10 +10,10 @@ import { zh } from '../i18n/locales/zh'
 
 /**
  * B1 / D-20261111-070：图鉴总数、解锁顺序、锁定剪影全部跟随真实注册表。
- * D-20261127-125：桌宠蓝图已下线，图鉴只保留 23 座建筑且不再有二级标题。
+ * 图鉴只保留主线建筑（v6 后 35 座），且不再有二级标题。
  */
 
-const INSTALLED_TOTAL = 23
+const INSTALLED_TOTAL = 35
 const g = globalThis as unknown as {
   __galleryThumbProps?: Array<{ blueprintId: string; silhouette?: boolean }>
 }
@@ -78,7 +78,7 @@ afterEach(() => {
 })
 
 describe('图鉴动态总数（B1 / D-20261111-070）', () => {
-  it('标题与卡片数跟随完整蓝图目录（当前安装包 23 座）', () => {
+  it('标题与卡片数跟随完整蓝图目录（当前安装包 35 座）', () => {
     expect(blueprintOrder).toHaveLength(INSTALLED_TOTAL)
     const view = renderGallery(() => {})
     expect(view.title()).toContain(String(blueprintOrder.length))
@@ -150,7 +150,7 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
     view.unmount()
   })
 
-  it('动态 total 的 endgame 判定：全部 23 座落成 → all-blueprints-complete，不依赖字面量', () => {
+  it('动态 total 的 endgame 判定：全部 35 座落成 → all-blueprints-complete，不依赖字面量', () => {
     const total = blueprintOrder.length
     expect(
       noBlockReason({

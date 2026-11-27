@@ -21,7 +21,6 @@ import {
   retargetSingleTouch,
   scenePointFromClient
 } from './buildscene/cameraGesture'
-import { computeEcoStage } from './buildscene/ecoStage'
 import { drawScene } from './buildscene/sceneDraw'
 import { SceneStage } from './buildscene/SceneStage'
 import type {
@@ -67,12 +66,6 @@ export function BuildScene({
   const builds = useAppStore((s) => s.builds)
   const checkIns = useAppStore((s) => s.checkIns)
   const habits = useAppStore((s) => s.habits)
-  const enableEcoProps = useAppStore((s) => s.settings.enableEcoProps !== false)
-  // 微生态彩蛋阶段：所有在册习惯的最大连胜（含韧性接续），映射 0-4 阶段
-  const ecoStage = useMemo(
-    () => computeEcoStage(habits, checkIns, enableEcoProps),
-    [habits, checkIns, enableEcoProps]
-  )
 
   // 1. 蓝图几何包围盒与中心点（纯蓝图静态，不随帧刷新）
   const { cx, cy } = useMemo(() => {
@@ -155,6 +148,7 @@ export function BuildScene({
   const rafRef = useRef<number | null>(null)
   const enableAmbient = useAppStore((s) => s.settings.enableAmbientLighting !== false)
   const enableGyroscope = useAppStore((s) => Boolean(s.settings.enableGyroscope))
+  const theme = useAppStore((s) => s.settings.theme)
   const gyroOffsetRef = useRef({ x: 0, y: 0 })
   const stateRef = useRef<SceneState>({
     blueprint,
@@ -163,7 +157,6 @@ export function BuildScene({
     rotation,
     enableAmbient,
     enableGyroscope,
-    ecoStage,
     xrayMode
   })
   stateRef.current = {
@@ -173,7 +166,6 @@ export function BuildScene({
     rotation,
     enableAmbient,
     enableGyroscope,
-    ecoStage,
     xrayMode
   }
   // onAnimated 同样经 ref 承载，保持 draw 引用稳定（监听器不随弹窗渲染重绑）
@@ -349,11 +341,15 @@ export function BuildScene({
   useEffect(() => {
     drawRef.current()
   }, [rotation])
-  // 环境光照与重力视差偏好切换时触发重绘
-  // 环境光照、重力视差与微生态彩蛋偏好切换时触发重绘
+  // 环境光照、重力视差与透视考古偏好切换时触发重绘
   useEffect(() => {
     drawRef.current()
-  }, [enableAmbient, enableGyroscope, ecoStage, xrayMode])
+  }, [enableAmbient, enableGyroscope, xrayMode])
+  // 主题切换：延后一帧，等 App 把 data-theme 写到 <html> 后再取调色板
+  useEffect(() => {
+    const id = requestAnimationFrame(() => drawRef.current())
+    return () => cancelAnimationFrame(id)
+  }, [theme])
 
   // 交互：拖拽平移 / 滚轮缩放
   useEffect(() => {
