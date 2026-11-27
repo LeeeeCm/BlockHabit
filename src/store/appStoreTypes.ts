@@ -43,12 +43,18 @@ interface AppActions {
   restoreHabit(id: string): void
   /** 置顶/取消置顶习惯 */
   togglePinHabit(id: string): void
-  /** 记录或修改某次打卡的笔记/随笔反思及微状态、星标（mood 为 null 时清除微状态） */
+  /**
+   * 记录或修改某次打卡的笔记/随笔反思及心境、星标。
+   * - `mood: null` 清除预设心境；`moodNote` 非空时清除预设心境（两者互斥）
+   * - `moodNote: ''` 清除自定义心境
+   * D-20261126-118：新增 moodNote 以支持用户自定义心境文本。
+   */
   recordCheckInNote(
     checkInId: string,
     note: string,
     mood?: MicroMood | null,
-    starred?: boolean
+    starred?: boolean,
+    moodNote?: string | null
   ): void
   toggleCheckInStar(checkInId: string): void
   /** 记录蓝图落成奠基石铭言 */

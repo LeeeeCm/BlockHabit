@@ -74,20 +74,19 @@ BlockHabit is a **local-first, account-free, telemetry-free** desktop habit app 
 ### 2. Bricks, blueprints & buildings
 
 - **Valid check-in, one brick**: Every valid check-in drops a brick. Every 7 days of streak, the next brick carries a theme-accent outline.
-- **25 isometric models**
+- **23 isometric models**
 
   | Content pack | Count | Blocks |
   |---|---|---:|---:|
   | Base buildings (v1) | 12 | 1385 |
   | City & Life (v2) | 6 | 600 |
   | City & Life, continued (v3) | 5 | 500 |
-  | Pet side builds (v4: pet-cat / pet-bot) | 2 | 28 |
-  | **Total** | **25** | **2513** |
+  | **Total** | **23** | **2485** |
 
-- **Main-line unlock order**: 23 main-line buildings progress in order. Pet blueprints are a separate side line and can be started directly without blocking the main line.
+- **Main-line unlock order**: 23 buildings progress in order.
 - **Build view**: Canvas 2D rounded bricks, top studs, three-face shading, contact shadows, and a dashed foundation. Zoom, pan, and reset the camera.
 - **Drop animation**: Slow fall → squash on impact → rebound. A one-shot ceremony plays when a building is completed.
-- **Gallery**: Two second-level groups, "Pet blueprints" and "Building blueprints"; the pet group is pinned to the top. Real-time isometric thumbnails; locked entries use silhouettes, while in-progress entries show only the currently placed bricks, centered, without an overlaid ghost or a white backing plate.
+- **Gallery**: One building grid with real-time isometric thumbnails. Locked entries use silhouettes, while in-progress entries show only the currently placed bricks, centered, without an overlaid ghost or a white backing plate.
 - **Showcase**: Place completed buildings on a 26×26 sandbox with drag, rotation, and micro-ecosystem greenery. Completing every blueprint unlocks free decoration mode.
 - **Long-term records**: Completion ceremonies, foundation inscriptions, building archives (key brick timeline / notes / moods), polaroids, monthly posters, and completion yearbooks.
 - **Data honesty**: Deleting data cascades to bricks, streaks, and all-clear rewards. Undo never leaves a "visual completion" behind.
@@ -96,11 +95,11 @@ BlockHabit is a **local-first, account-free, telemetry-free** desktop habit app 
 
 The pet is a separate transparent, always-on-top window (**96×128**) tightened to the character's silhouette, with room for hops and bubbles, so it does not cover the apps below with a large transparent area:
 
-- **Brick characters**: Block by default. `pet-cat` (block cat) and `pet-bot` (little robot) unlock in pet settings and the right-click panel only after their pet blueprints are completed.
-- **DIY colors**: Follow the theme, or choose from six approved material colors (stone, light, terracotta, warm yellow, sky blue, moss green). Arbitrary hex values are not accepted, preserving theme discipline.
+- **Brick character**: A single rounded brick with one top stud and a simple face. Pet blueprints and the cat / robot forms were removed; old pet-blueprint bricks migrate into your current unfinished building.
+- **DIY colors**: Follow the theme, or choose from 11 approved material colors drawn from the D-067 palette. Arbitrary hex values are not accepted, preserving theme discipline.
 - **Free movement**: Mostly idle, with occasional looks around, stretches, and small hops. When roaming, it hops in its facing direction and turns at screen edges. The cadence is intentionally slow, so it does not pace back and forth constantly.
 - **Size switching**: Small / medium / large scale only the character; the **feet stay anchored**.
-- **Independent right-click panel**: Opens a separate transparent `pet-menu` window (236×360) beside the pet, preferring the right side and flipping to the left when out of bounds. The pet pauses while the panel is open and resumes when it closes. The panel and the settings page share the same size / character / roaming state.
+- **Independent right-click panel**: Opens a separate transparent `pet-menu` window (236×252) beside the pet, preferring the right side and flipping to the left when out of bounds. The pet pauses while the panel is open and resumes when it closes. The panel and the settings page share the same size / roaming state.
 - **Interaction**: Drag to move; double-click to open the main window; right-click for the panel. Clicks do not make it jump, avoiding accidental triggers.
 - **Check-in sync**: The main window syncs today's completion count via `pet-config`. When the count increases, the pet hops once and shows a brief bubble; it never writes a check-in automatically.
 - **Position**: Stored only on the local device and clamped to the current monitor's work area; never enters the synced save.
@@ -129,15 +128,15 @@ All four pages share the same top-bar spec: 64px tall, 14×20 padding, 16px titl
 - **Backups**: Automatic backup before overwriting imports (5 kept); manual snapshots kept separately (5 kept); the settings page can inspect, restore, and open the data folder.
 - **WebDAV sync**: Optional, never the main path. Supports automatic and manual sync. Check-in tombstones prevent an old device from resurrecting undone check-ins.
 - **Password security**: On desktop, "remember password" uses the OS credential manager (Windows Credential Manager); no plaintext is stored in settings or the save. Turning it off deletes the existing entry.
-- **Content version gate**: `contentVersion = 4`. Older clients refuse to read newer data and suspend saving instead of silently cleaning unknown data.
-- **Upgrade safety**: 0.2.4 keeps `schemaVersion = 2`, `contentVersion = 4`, and the `com.blockhabit.app` identifier unchanged. Installing the update preserves the local save in `appDataDir`, and 0.2.3 saves load as-is.
+- **Content version gate**: `contentVersion = 5`. Older clients refuse to read newer data and suspend saving instead of silently cleaning unknown data.
+- **Upgrade safety**: This build keeps `schemaVersion = 2` and `contentVersion = 5`, and keeps the `com.blockhabit.app` identifier. Installing the update preserves the local save in `appDataDir`; older saves (including 0.2.3 and pet-blueprint saves) load and migrate.
 
 ### 7. Settings, themes & accessibility
 
 Settings use 5 collapsible groups to reduce noise:
 
 1. **General**: theme, language, sound, reminders, system integration, shortcuts.
-2. **Pet**: show/hide, size, blueprint-unlocked characters, material color, free roaming.
+2. **Pet**: show/hide, size, material color, free roaming.
 3. **Data & sync**: export/import, full archive package, backups, WebDAV.
 4. **Content roadmap** (About): built-in content counts, version check, and update notes.
 5. **Lab**: time-of-day lighting, gentle decay, micro-ecosystem, X-ray archaeology, sound material, gyroscope, and other experimental switches.
@@ -164,7 +163,7 @@ Settings use 5 collapsible groups to reduce noise:
 ```text
 src/
 ├─ logic/            Pure logic: check-in rules, streaks, blueprints, repair bricks, focus state machine, import
-│  └─ blueprints/    Procedural geometry and content-version manifest for 25 models
+│  └─ blueprints/    Procedural geometry and content-version manifest for 23 models
 ├─ render/           Isometric projection, three-face brick shading, build/showcase scenes, export canvases
 ├─ pet/              Separate transparent pet window and right-click panel
 ├─ platform/         Windows, notifications, shortcuts, storage adapters, pet positioning
@@ -280,8 +279,8 @@ The release pipeline uses GitHub Releases + minisign signatures. Update checks a
 - **Backups**: automatic backups / manual snapshots in the same directory; the settings page can open the data folder
 - **Archive package**: README + manifest + data JSON + checksums + transparent images of completed buildings; WebDAV credentials are never included
 - **Sync conflicts**: check-in tombstones, completion recalculation, and field-level merge are authoritative; do not overwrite newer content from an old device
-- **Upgrades keep your data**: 0.2.4 keeps `schemaVersion`, `contentVersion`, and the app identifier unchanged; installing over an existing app does not remove the local save in `appDataDir`, and 0.2.3 saves load as-is
-- **Content version**: `contentVersion = 4`. An older client refuses to load a newer version and suspends saving, preventing silent cleanup of unknown blueprints
+- **Upgrades keep your data**: this build keeps `schemaVersion = 2` and `contentVersion = 5`; installing over an existing app does not remove the local save in `appDataDir`, and older saves load and migrate
+- **Content version**: `contentVersion = 5`. An older client refuses to load a newer version and suspends saving, preventing silent cleanup of unknown blueprints
 
 ## Keyboard shortcuts
 
@@ -328,9 +327,9 @@ The content limit may be reached, the current blueprint may already be complete,
 
 The pet is enabled by default. If it was hidden, re-enable it in Settings → Pet. On first launch, if the window is not ready yet, the app automatically retries showing it.
 
-### Where are the pet blueprints?
+### Where did the pet blueprints go?
 
-There is a separate "Pet blueprints" section at the bottom of the gallery. After completing `pet-cat` / `pet-bot`, the corresponding character becomes selectable in pet settings and the right-click panel.
+Pet blueprints were removed so the gallery only contains buildings. Any bricks you had already placed in a pet blueprint are migrated into the building you were working on when the save is opened; the completion list and showcase no longer contain pet entries.
 
 ## Known limitations
 
@@ -339,7 +338,7 @@ There is a separate "Pet blueprints" section at the bottom of the gallery. After
 - **Windows shutdown / sign-out does not guarantee the last debounced settings write**: Critical actions (check-in / undo / claim / import) flush immediately; non-critical settings may lose the debounce window.
 - **Reminders depend on a running process**: No reminders after the app exits.
 - **No automatic updates**: Update checks are manual and require user confirmation.
-- **Content limit**: 25 blueprints, 2513 blocks total; once everything is built, no new bricks drop. The app says so explicitly instead of failing silently.
+- **Content limit**: 23 blueprints, 2485 blocks total; once everything is built, no new bricks drop. The app says so explicitly instead of failing silently.
 - **Limited browser preview**: WebDAV, native notifications, the tray, the transparent pet window, and window dragging are fully available only on desktop.
 
 ## License

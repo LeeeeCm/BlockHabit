@@ -8,7 +8,7 @@ import {
 } from './isoColor'
 import { DEFAULT_ISO_CONFIG, STUD_H, roundedPoly, type Pt } from './isoGeometry'
 import { drawGroundShadow } from './isoGround'
-import { projectPet, type PetModel, type PetPart } from './petGeometry'
+import { projectPet, type PetPart } from './petGeometry'
 import { PEAK_HOP_LIFT, type PetPose } from './petMotion'
 
 export type PetMood = 'idle' | 'focus' | 'ready' | 'happy'
@@ -16,7 +16,6 @@ export type PetMood = 'idle' | 'focus' | 'ready' | 'happy'
 interface PetFrame {
   width: number
   height: number
-  model: PetModel
   mood: PetMood
   palette: IsoPalette
   pose: Readonly<PetPose>
@@ -36,6 +35,8 @@ interface PetLighting {
 
 const { tileW, tileH, blockH } = DEFAULT_ISO_CONFIG
 const MAX_STAGE_SCALE = 3
+/** 桌宠正脸为主：手写几何的转身幅度上限（等距建筑是 ±45 度，桌宠只需轻微侧倾） */
+export const FRONT_TURN_LIMIT = 0.265
 const CORNER_RADIUS = Math.min(3, tileW * 0.0625)
 const PAD = 2
 const TURNED_BODY_HEIGHT = blockH + tileH + STUD_H
@@ -43,7 +44,7 @@ const TURNED_BODY_HEIGHT = blockH + tileH + STUD_H
 const BOTTOM_ROOM = 10
 /** 三档尺寸共用同一窗口：按最大档 1.05 倍预留，避免切到大号时裁切。 */
 const MAX_SIZE_SCALE = 1.05
-/** 侧向转体时立方体的最大横向占位；猫尾/机器人手臂都不超过 tileW。 */
+/** 侧向转体时立方体的最大横向占位；单块积木不超过 tileW。 */
 const ART_MAX_WIDTH = tileW
 /** 脚底到跳跃最高点（含凸点）的最大占位。 */
 const ART_MAX_HEIGHT = TURNED_BODY_HEIGHT + PEAK_HOP_LIFT
@@ -272,12 +273,14 @@ export function petLayout(width: number, height: number): PetLayout {
 }
 
 export function paintPet(ctx: CanvasRenderingContext2D, frame: PetFrame): void {
-  const { width, height, pose, palette, model } = frame
+  const { width, height, pose, palette } = frame
   const { floor, scale } = petLayout(width, height)
   if (scale <= 0) return
   const liftRoom = Math.min(PEAK_HOP_LIFT, (floor - PAD) / scale - TURNED_BODY_HEIGHT)
-  const geometry = projectPet(model, pose.turn)
-  const lighting = petLighting(palette, pose.turn, frame.shading)
+  // 正脸为主（D-20261127-123）：转身幅度收敛到 FRONT_TURN_LIMIT，不做左右各 45 度的甩头
+  const turn = Math.max(-1, Math.min(1, pose.turn)) * FRONT_TURN_LIMIT
+  const geometry = projectPet(turn)
+  const lighting = petLighting(palette, turn, frame.shading)
   ctx.save()
   ctx.translate(width / 2 + pose.x * scale, floor)
   ctx.scale(scale, scale)
@@ -287,7 +290,9 @@ export function paintPet(ctx: CanvasRenderingContext2D, frame: PetFrame): void {
   ctx.restore()
 
   ctx.translate(0, (-pose.lift / PEAK_HOP_LIFT) * liftRoom)
-  ctx.scale(pose.scaleX, pose.scaleY)
+  // 侧身/压扁时描边会贴到画布边缘，被裁成一条 1px 细线（向左移动时最明显）。
+  // 给描边留半像素余量，并按压扁比例轻微内收，避免裁切露出断线。
+  ctx.scale(pose.scaleX * 0.985, pose.scaleY * 0.985)
   ctx.translate(0, -geometry.ground) // 先贴齐底部再压扁，落点不陷入桌面
   for (const part of geometry.parts) paintPart(ctx, part, lighting, frame)
   ctx.restore()

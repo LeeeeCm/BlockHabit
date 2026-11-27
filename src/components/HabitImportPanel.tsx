@@ -66,22 +66,12 @@ export function HabitImportPanel({ onToast }: Props) {
   return (
     <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
       <label>{t.settings.habitImportLabel}</label>
-      <div
-        style={{
-          fontSize: 'var(--fs-caption)',
-          color: 'var(--ink-2)',
-          marginTop: 3,
-          marginBottom: 8
-        }}
-      >
+      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>
         {t.settings.habitImportHint}
       </div>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        <button
-          className="btn ghost"
-          style={{ padding: '7px 16px' }}
-          onClick={() => fileRef.current?.click()}
-        >
+      {/* D-20261126-114：单个按钮也填满行宽（与「导出备份 / 导入备份」两列同一基准） */}
+      <div className="settings-actions">
+        <button className="btn ghost" onClick={() => fileRef.current?.click()}>
           {t.settings.habitImportChoose}
         </button>
         <input
@@ -95,12 +85,12 @@ export function HabitImportPanel({ onToast }: Props) {
             e.target.value = ''
           }}
         />
-        {preview && (
-          <span style={{ fontSize: 'var(--fs-small)', color: 'var(--ink-2)' }}>
-            {preview.fileName}
-          </span>
-        )}
       </div>
+      {preview && (
+        <div className="settings-hint" style={{ color: 'var(--ink-2)' }}>
+          {preview.fileName}
+        </div>
+      )}
 
       {preview && (
         <div

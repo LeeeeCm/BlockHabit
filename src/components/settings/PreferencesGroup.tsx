@@ -4,6 +4,7 @@ import type { TranslationSchema } from '../../i18n'
 import { triggerHaptic } from '../../platform'
 import { ensureNotifyPermission } from '../../platform/notify'
 import { Group } from './Group'
+import { TimeWheelPicker } from '../TimeWheelPicker'
 
 interface Props {
   settings: AppSettings
@@ -92,8 +93,10 @@ export function PreferencesGroup({
       {/* D-20261110-055 晚间收尾提醒：默认关，首次打卡后由用户显式开启 */}
       <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
         <label>{t.eveningNudge.settingsTitle}</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <div className="seg" style={{ flex: '0 0 auto', minWidth: 192 }}>
+        {/* D-20261126-115：开关与时间共同占满整行 —— 分段开关吃掉剩余宽度，
+            右侧是 Apple 闹钟式双列循环滚轮（小时 0–23 / 分钟 00–59，首尾相接）。 */}
+        <div className="settings-actions" style={{ alignItems: 'center', flexWrap: 'nowrap' }}>
+          <div className="seg" style={{ flex: '1 1 auto', minWidth: 0 }}>
             <button
               type="button"
               style={{ whiteSpace: 'nowrap' }}
@@ -118,22 +121,13 @@ export function PreferencesGroup({
               {t.settings.reminderToggleOff}
             </button>
           </div>
-          <input
-            type="time"
+          <TimeWheelPicker
             value={settings.eveningNudgeTime ?? '21:00'}
             disabled={settings.eveningNudgeEnabled !== true}
-            aria-label={t.eveningNudge.settingsTime}
-            onChange={(e) => onUpdateSettings({ eveningNudgeTime: e.target.value })}
-            style={{
-              padding: '5px 9px',
-              borderRadius: 'var(--r-sm)',
-              border: '1px solid var(--line)',
-              background: 'var(--surface)',
-              color: 'var(--ink)',
-              fontSize: 'var(--fs-small)',
-              fontFamily: 'inherit',
-              opacity: settings.eveningNudgeEnabled === true ? 1 : 0.45
-            }}
+            ariaLabel={t.eveningNudge.settingsTime}
+            hourLabel={t.eveningNudge.pickerHour}
+            minuteLabel={t.eveningNudge.pickerMinute}
+            onChange={(next) => onUpdateSettings({ eveningNudgeTime: next })}
           />
         </div>
         <div

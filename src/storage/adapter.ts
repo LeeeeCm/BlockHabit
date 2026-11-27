@@ -1,8 +1,9 @@
 import { REPAIR_MAX } from '../logic/repairBricks'
 import type { AppState, DayClaim, DeletedDayClaim, ReminderLogEntry } from '../types'
-import { blueprintCatalogIds, blueprintOrder } from '../logic/blueprints'
+import { blueprintOrder } from '../logic/blueprints'
 import { CONTENT_VERSION, normalizeContentVersion } from '../logic/blueprints/manifest'
 import { normalizePetColor } from '../pet/types'
+import { LEGACY_PET_BLUEPRINT_IDS, migrateLegacyPetBlueprints } from './petBlueprintMigration'
 
 export const STATE_KEY = 'blockhabit-state'
 /** localStorage 路径的损坏档备份 key（Tauri 端为 .corrupt-backup 文件） */
@@ -11,20 +12,21 @@ export const BACKUP_KEY = 'blockhabit-backup-latest'
 export const SCHEMA_VERSION = 2
 
 /**
- * v4 只追加过独立桌宠蓝图。若存档没有引用任何当前未知蓝图，数据语义与 v3 相同，
- * 可以安全降级读取，避免旧安装包写过的 contentVersion=4 把整份本地数据挡在门外。
+ * D-20261127-125：v4 的桌宠蓝图已下线，contentVersion 升到 5。
+ * 旧 v4 存档允许读取（宠物外键由 normalizeState 末尾迁移），更高版本仍拒绝。
+ * v4 里如果还引用了真正的未知蓝图（既不是当前 23 座，也不是旧 pet-cat/pet-bot），
+ * 仍按「更高内容版本」拦截，避免在 sanitize 阶段被静默清洗后落盘。
  */
-function blocksContentVersion(v: Record<string, unknown>): boolean {
+function isFutureContentVersionState(v: Record<string, unknown>): boolean {
   const version = normalizeContentVersion(v.contentVersion)
-  if (version <= CONTENT_VERSION) return false
-  if (version !== 4) return true
+  if (version > CONTENT_VERSION) return true
+  if (version !== 4) return false
   const ids: unknown[] = [v.activeBlueprintId]
   for (const key of ['builds', 'completedBlueprintIds', 'showcasePlacements'] as const) {
     const items = v[key]
     if (!Array.isArray(items)) continue
     for (const item of items) {
-      if (isRecord(item)) ids.push(item.blueprintId ?? item.id)
-      else ids.push(item)
+      ids.push(isRecord(item) ? (item.blueprintId ?? item.id) : item)
     }
   }
   return ids.some((id) => typeof id === 'string' && !isKnownBlueprintId(id))
@@ -58,11 +60,16 @@ export interface StorageAdapter {
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
 /**
- * 已知蓝图 id 白名单。
+ * 已知蓝图 id 白名单（含已下线的旧桌宠蓝图）。
  * 存档里的 activeBlueprintId / builds[].blueprintId / completedBlueprintIds 都是外键，
  * 非法外键会让 getBlueprint 在渲染层抛错（整树卸载 → 白屏），且坏档会被立即落盘形成 crash loop。
+ * D-20261127-125：旧 pet-cat / pet-bot 必须先通过白名单进入 normalizeState，
+ * 才能被 migrateLegacyPetBlueprints 迁进主线建筑，而不是在清洗阶段被静默丢弃。
  */
-const KNOWN_BLUEPRINT_IDS: ReadonlySet<string> = new Set(blueprintCatalogIds)
+const KNOWN_BLUEPRINT_IDS: ReadonlySet<string> = new Set([
+  ...blueprintOrder,
+  ...LEGACY_PET_BLUEPRINT_IDS
+])
 
 export function isKnownBlueprintId(id: unknown): id is string {
   return typeof id === 'string' && KNOWN_BLUEPRINT_IDS.has(id)
@@ -105,6 +112,11 @@ function isValidCheckInElement(c: unknown): boolean {
   if (c.value !== undefined && typeof c.value !== 'number') return false
   if (c.bonus !== undefined && typeof c.bonus !== 'boolean') return false
   if (c.actualMinutes !== undefined && typeof c.actualMinutes !== 'number') return false
+  // D-20261126-118：自定义心境文本；长度上限与卡片胶囊一致，超长视为损坏而不是静默截断
+  if (c.moodNote !== undefined) {
+    if (typeof c.moodNote !== 'string') return false
+    if (c.moodNote.trim().length > 12) return false
+  }
   return true
 }
 
@@ -169,7 +181,7 @@ export function validateState(v: unknown): ValidateResult {
     return { ok: false, error: 'schema-version' }
   }
   if (v.schemaVersion > SCHEMA_VERSION) return { ok: false, error: 'schema-version' }
-  if (blocksContentVersion(v)) return { ok: false, error: 'content-version' }
+  if (isFutureContentVersionState(v)) return { ok: false, error: 'content-version' }
   if (!Array.isArray(v.habits) || !v.habits.every(isValidHabitElement))
     return { ok: false, error: 'habits' }
   if (!Array.isArray(v.checkIns) || !v.checkIns.every(isValidCheckInElement))
@@ -324,7 +336,7 @@ export function loadAndMigrate(
 ): { state: AppState } | { state: null; needsUpgrade?: boolean } {
   if (!isRecord(v)) return { state: null }
   // B1 内容版本门：必须在 sanitize 之前拦截，否则未知 blueprint 会被静默清洗并落盘
-  if (blocksContentVersion(v)) return { state: null, needsUpgrade: true }
+  if (isFutureContentVersionState(v)) return { state: null, needsUpgrade: true }
   let version =
     typeof v.schemaVersion === 'number' && Number.isInteger(v.schemaVersion) && v.schemaVersion >= 1
       ? v.schemaVersion
@@ -349,7 +361,7 @@ export function loadAndMigrate(
  */
 export function prepareImport(v: unknown): AppState | null {
   // B1：更高内容版本无法渲染，导入/同步都必须拒绝，不能清洗后落盘
-  if (isRecord(v) && blocksContentVersion(v)) return null
+  if (isRecord(v) && isFutureContentVersionState(v)) return null
   if (isRecord(v) && v.schemaVersion === 1) {
     const check = validateState(migrateV1toV2(v))
     if (check.ok) return normalizeState(check.state)
@@ -368,7 +380,7 @@ export function normalizeState(s: AppState): AppState {
       : typeof navigator !== 'undefined' && navigator.language?.startsWith('zh')
         ? 'zh'
         : 'en'
-  return {
+  const normalized: AppState = {
     ...s,
     // 门禁已按原始版本拦截未来内容；低于当前版本的旧档读入后即视为「本安装包可产出全部内容」，
     // 保存时统写当前版本，否则新客户端建了 v2 建筑却保留 contentVersion=1，旧客户端会误判可读并清洗数据。
@@ -409,12 +421,6 @@ export function normalizeState(s: AppState): AppState {
         s.settings?.petSize === 'small' || s.settings?.petSize === 'large'
           ? s.settings.petSize
           : 'medium',
-      petSkin:
-        (s.settings?.petSkin ?? s.settings?.petModel) === 'cat'
-          ? 'cat'
-          : (s.settings?.petSkin ?? s.settings?.petModel) === 'bot'
-            ? 'bot'
-            : 'block',
       petRoam: s.settings?.petRoam !== false,
       petColor: normalizePetColor(s.settings?.petColor)
     },
@@ -461,6 +467,8 @@ export function normalizeState(s: AppState): AppState {
           )
         : {}
   }
+  // D-20261127-125：旧桌宠蓝图已下线，把宠物积木与事实迁进当前未完成建筑。
+  return migrateLegacyPetBlueprints(normalized)
 }
 
 function backupCorruptRaw(raw: string): void {

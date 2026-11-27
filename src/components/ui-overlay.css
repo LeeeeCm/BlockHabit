@@ -142,6 +142,44 @@
   min-height: 64px;
 }
 
+/* 设置页动作行（D-20261126-114）：单个或多个按钮一律填满行宽，
+   与「导出备份 / 导入备份」两列等宽同一基准；说明文字另起一行放在按钮下方。 */
+.settings-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.settings-actions > .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+
+/* 设置页按钮下方说明：独立一行，不与按钮抢同一行宽度 */
+.settings-hint {
+  font-size: var(--fs-caption);
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* 桌宠材质色（D-20261126-114）：等分网格铺满行宽，圆形/方块随单元格自适应 */
+.settings-swatch-grid {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+.settings-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  padding: 0;
+  border-radius: 8px;
+}
+
 .seg {
   display: flex;
   gap: 4px;

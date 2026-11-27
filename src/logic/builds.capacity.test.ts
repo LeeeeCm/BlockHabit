@@ -5,7 +5,7 @@ import {
   removeBlocksAndCompact,
   BLUEPRINT_CAPACITY
 } from './builds'
-import { blueprintCatalogIds, getBlueprint } from './blueprints'
+import { blueprintOrder, getBlueprint } from './blueprints'
 import type { CheckIn, DayClaim, PlacedBlock } from '../types'
 
 /**
@@ -47,9 +47,9 @@ describe('rebuildBuilds 容量钳制', () => {
     expect(builds.map((b) => b.index)).toEqual(Array.from({ length: capacity }, (_, i) => i))
   })
 
-  it('容量表覆盖完整蓝图目录（含桌宠支线，自动派生）', () => {
-    expect(Object.keys(BLUEPRINT_CAPACITY)).toHaveLength(blueprintCatalogIds.length)
-    expect(blueprintCatalogIds.length).toBeGreaterThanOrEqual(25)
+  it('容量表覆盖完整蓝图目录（自动派生）', () => {
+    expect(Object.keys(BLUEPRINT_CAPACITY)).toHaveLength(blueprintOrder.length)
+    expect(blueprintOrder.length).toBeGreaterThanOrEqual(23)
   })
 })
 

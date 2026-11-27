@@ -151,6 +151,38 @@
   background: var(--surface);
 }
 
+/* 镌刻栏的心境工具条（D-20261126-119）：
+ * ★ 与 ＋ 各自占一列，中间 8 个预设排成 4 列 × 2 行，等宽铺满 440px 弹窗；
+ * 上一版把 4 个胶囊挤在左、★ 甩到最右，右侧空出一大块，且 ＋ 缩到第二行。 */
+.drop-mood-toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.drop-mood-grid {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  /* 一行 6 个：★ 与 ＋ 分列两端，中间六个胶囊等宽铺满（D-20261126-119） */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+.drop-mood-grid .micro-mood-chip {
+  width: 100%;
+  justify-content: center;
+  padding: 3px 4px;
+  gap: 3px;
+}
+/* 六列下中文两字 + 图标正好放下；不需要换行，也不允许折行把行高顶高 */
+.drop-mood-grid .micro-mood-chip > span {
+  white-space: nowrap;
+}
+.drop-mood-toolbar > .star-toggle-btn {
+  flex: 0 0 auto;
+  height: 25px;
+  box-sizing: border-box;
+}
+
 /* 积木即刻镌刻栏：平滑抽屉展开，避免弹窗突兀跳动 */
 .drop-engrave-section {
   background: var(--surface);
@@ -167,14 +199,17 @@
 
 .micro-mood-group {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
   flex-wrap: wrap;
 }
 
+/* 卡片里的心境胶囊比弹窗里更紧凑：一行要放得下 ★ + 4 个胶囊 + ＋（D-20261126-118）。
+   330px 宽卡片内实测：★29 + 胶囊组 223 + ＋29 + 间距 12 = 293 < 298 可用宽度，正好一行。 */
 .micro-mood-chip {
-  padding: 3px 10px;
-  font-size: var(--fs-small);
+  padding: 3px 6px;
+  font-size: var(--fs-caption);
+  line-height: 1.4;
   font-weight: 500;
   border-radius: var(--r-xs);
   border: 1px solid var(--line);
@@ -227,7 +262,10 @@
   border: 1px solid var(--line);
   background: transparent;
   border-radius: var(--r-sm);
-  padding: 6px 9px;
+  /* 与 .micro-mood-chip 同一量级的倒角方块：卡片里两个入口（★ / ＋）都用它 */
+  padding: 3px 6px;
+  min-height: 25px;
+  box-sizing: border-box;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -245,4 +283,60 @@
 .star-toggle-btn:hover:not(.starred) {
   border-color: var(--ink-2);
   color: var(--ink);
+}
+
+/* ===== 心境选择（D-20261126-118） =====
+ * 与设置页动作按钮同一套倒角方块语言：`--r-sm` 圆角、1px 线、选中用墨色底白字。
+ * 不新增颜色：选中态沿用 .seg 的「墨色填充」表达。 */
+.mood-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--ink-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color var(--dur-xs) var(--ease-default),
+    color var(--dur-xs) var(--ease-default),
+    background var(--dur-xs) var(--ease-default),
+    transform var(--dur-2xs) var(--ease-default);
+}
+.mood-option:hover {
+  border-color: var(--ink-2);
+  color: var(--ink);
+}
+.mood-option:active {
+  transform: scale(0.97);
+}
+.mood-option.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+  font-weight: 600;
+}
+/* 心情胶囊「+」入口：与「平静」同尺寸，方形，仅放一个图标 */
+.mood-option-icon {
+  padding: 0;
+}
+
+/* 下拉菜单与触发器连成一块（D-20261126-120）：
+ * 只做「向下生长」的位移 + 淡入，不做缩放，避免接缝处露出一道边。
+ * 尊重减少动态效果（全局把 --dur-* 归零即可）。 */
+@keyframes select-menu-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

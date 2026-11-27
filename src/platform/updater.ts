@@ -57,12 +57,23 @@ function isTauriRuntime(): boolean {
 }
 
 /**
- * 更新通道是否启用：编译期开关 + 运行时双重判定。
- * 默认构建（未设置 VITE_UPDATER_ENABLED）恒为 false，因此 UI 显示诚实禁用态。
+ * 更新通道是否启用。
+ *
+ * D-20261126-120：判据从「构建期环境变量」改为「配置是否真的就绪」。
+ * 原因：`tauri.conf.json` 里的签名公钥与 latest.json 端点早已配好，
+ * 但本机构建从不设 `VITE_UPDATER_ENABLED=1`，于是设置页长期显示「更新未启用」，
+ * 与事实不符 —— 这就是用户看到的「发布链路未启用」。
+ *
+ * 现在的三重判定：
+ * 1. `VITE_UPDATER_ENABLED=1`（CI 的显式开关，保留）；
+ * 2. 或构建期读到的 `plugins.updater` 已同时具备公钥与端点（`__BH_UPDATER_CONFIGURED__`）；
+ * 3. 且必须运行在 Tauri 内（浏览器预览永远禁用，不发任何请求）。
  */
 export function isUpdaterEnabled(): boolean {
+  if (!isTauriRuntime()) return false
   const buildFlag = import.meta.env.VITE_UPDATER_ENABLED
-  return buildFlag === '1' && isTauriRuntime()
+  if (buildFlag === '1') return true
+  return typeof __BH_UPDATER_CONFIGURED__ !== 'undefined' && __BH_UPDATER_CONFIGURED__
 }
 
 /** 已发现但尚未安装的更新句柄（插件侧持有资源，需要时释放） */

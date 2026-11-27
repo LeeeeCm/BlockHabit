@@ -30,4 +30,4 @@
 
 | id | 类型 | 目标 | 状态 | 申请人 | 审核人 |
 |---|---|---|---|---|---|
-| — | — | 暂无 | — | — | — |
+| AP-20261127-001 | delete-asset | `src/logic/blueprints/generatorsV4.ts`（pet-cat / pet-bot 建筑数据） | pending | Claude Code | pending |

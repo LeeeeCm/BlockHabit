@@ -1,0 +1,46 @@
+你接手 BlockHabit（F:\PROJECT001\BlockHabit）的一个未完成视觉任务：把桌宠改成「凹字形积木猫 + 机器人」的正视图。
+
+第一步：完整读 F:\PROJECT001\BlockHabit\docs\handoff\pet-front-handoff.md，那是现状说明、用户需求、已知遗留问题、截图方法、硬规则。读完再动手。
+
+当前状态（我交接时实测）：
+- npx tsc --noEmit → 0 错误
+- npm test → 130 文件 / 1264 用例全绿
+- npm run design:check → 124 条记录通过
+- 主文件 src/render/petBlueprint.ts，测试 src/render/petBlueprint.test.ts（14 例全绿）
+- 仓库有 67 个未提交改动，都是用户多轮劳动的成果，绝对不要清理
+
+核心要求（用户已强调两次，是验收硬条件）：
+1. 猫的正面是【一个连续的「凹」字形平面】：底边平、顶边中间凹下去、两侧各立起一个方块耳朵
+2. 耳朵和脸【在同一个平面】上，整只猫是一块积木，不是几块拼的
+3. 凸点共【4 枚】：左耳顶、凹口正中、右耳顶、尾巴顶上（最后一枚最容易漏）
+4. 【不能有任何三角形】，耳朵和尾巴都是有宽有高的方块
+5. 尺寸要和原来的手写积木桌宠（petCanvas.ts 的 cat/bot）一样大
+6. 积木的视觉效果（三面明暗/描边/圆角/凸点画法）要和手写版一致
+7. 机器人也要优化得可爱，不要诡异的深色屏幕脸
+8. 动作表情两只都要有：跳跃、落地压扁、走动侧倾、眨眼、happy/focus/ready
+
+我已实现的部分（在 petBlueprint.ts 里，是对的，不要推翻）：
+- CAT_OUTLINE：凹字形 8 点轮廓
+- traceCatOutline()：一条连续圆角路径，整面只描一次边
+- paintCat()：整面填充 + 三条顶边窄檐 + 分界线 + 外轮廓 + 凸点
+- paintStudAt()：凸点画法，参数抄 petCanvas.paintStud
+- paintCatFace()：竖胶囊眼 + 三角鼻 + ω嘴 + 胡须
+- CAT_TAIL_SLAB 带 stud:true，尾巴顶上那枚凸点已经画了
+
+你要做的（按优先级）：
+A. 先截图看当前效果。用 Edge 无头（Chrome 在这台机器上偶发失败），命令在交接文档第 4 节。
+   ?pet-preview=1&skin=cat 是手写版基准，&blueprint=pet-cat 是新凹字形猫。
+   注意：无头截图经常第一次失败，务必写 5 次重试循环；截图前先 curl 确认 1420 返回 200。
+B. 对准尺寸：现在 PET_FRONT_WINDOW_FIT = 0.78，我最后一次调整没来得及看效果，你截图后自己判断。
+   基准是 petCanvas.petLayout()：ART_MAX_WIDTH = tileW = 48、MAX_SIZE_SCALE = 1.05、PAD = 2。
+   目标：两种桌宠在同一个 96×128 窗里目测一样大。
+C. 把新桌宠和手写版并排逐项比对：三面明暗、描边粗细、圆角、凸点扁度，调成一致。
+D. 机器人按同一套语言再打磨，先截图给用户看再定稿。
+E. npm run tauri build -- --no-bundle，启动 src-tauri/target/release/blockhabit.exe
+   实机确认 96×128 窗口，连拍 20 帧确认走动时左右边缘像素为 0（无 1px 细线）。
+F. 在设计记录 design/records/D-20261127-124-pet-block-style-front.md 追加「变更履历」
+   （只追加，不改正文），然后 npm run design:check / npx tsc --noEmit / npm test / npm run format:check 全绿。
+
+注意：视觉改动必须先有设计记录（现有 124 号记录接着用，不要新建重复的）。
+不要改 package.json 版本号（0.2.4）。不要删 design/ 下任何文件。
+不要删 vite.config.ts 里 vitest exclude 的 **/.claude/**（那是故意的，删了会有 60 个测试假失败）。

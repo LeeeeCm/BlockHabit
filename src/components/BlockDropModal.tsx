@@ -4,7 +4,11 @@ import { BuildScene } from '../render/BuildScene'
 import { playJellySound, playSnapSound } from '../audio/sound'
 import { getBlueprintName, useI18n } from '../i18n'
 import { useAppStore } from '../store/appStore'
-import { IconCheck, IconClose, IconMood, IconStar } from './Icons'
+import { IconCheck, IconClose, IconMood, IconMoodCustom, IconPlus, IconStar } from './Icons'
+import { MoodPickerDialog } from './MoodPickerDialog'
+
+/** 掉落弹窗内联展示的 6 个心境（★ 与 ＋ 分列两端，正好铺满一行） */
+const QUICK_MOODS: MicroMood[] = ['energetic', 'hard', 'spark', 'calm', 'grateful', 'focused']
 import { triggerHaptic } from '../platform'
 import { useDialogA11y } from './useDialogA11y'
 
@@ -18,8 +22,6 @@ interface Props {
   /** 镌刻保存成功后的回调（宿主页用于弹 toast） */
   onEngraved?: () => void
 }
-
-const MOODS: MicroMood[] = ['energetic', 'hard', 'spark', 'calm']
 
 /**
  * 习惯打卡成功后的积木掉落动效与即刻镌刻弹窗：
@@ -41,6 +43,9 @@ export function BlockDropModal({
   const [animated, setAnimated] = useState(false)
   const [note, setNote] = useState('')
   const [selectedMood, setSelectedMood] = useState<MicroMood | undefined>(undefined)
+  /** 自定义心境（D-20261126-118）：与预设互斥 */
+  const [moodNote, setMoodNote] = useState<string | undefined>(undefined)
+  const [moodPickerOpen, setMoodPickerOpen] = useState(false)
   const [starred, setStarred] = useState(false)
   const [engraved, setEngraved] = useState(false)
   const timerRef = useRef<number | undefined>(undefined)
@@ -82,7 +87,7 @@ export function BlockDropModal({
     cancelAutoClose()
     if (checkInId) {
       triggerHaptic('medium')
-      recordCheckInNote(checkInId, note, selectedMood, starred)
+      recordCheckInNote(checkInId, note, moodNote ? null : selectedMood, starred, moodNote ?? null)
       playSnapSound()
       onEngraved?.()
       setEngraved(true)
@@ -207,7 +212,7 @@ export function BlockDropModal({
           <div
             className="drop-engrave-section"
             style={{
-              maxHeight: animated ? 150 : 0,
+              maxHeight: animated ? 176 : 0,
               opacity: animated ? 1 : 0,
               paddingTop: animated ? 12 : 0,
               paddingBottom: animated ? 14 : 0,
@@ -217,21 +222,13 @@ export function BlockDropModal({
               pointerEvents: animated ? 'auto' : 'none'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div className="micro-mood-group">
-                {MOODS.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className={`micro-mood-chip${selectedMood === m ? ' active' : ''}`}
-                    onClick={() => handleMoodToggle(m)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                  >
-                    <IconMood mood={m} size={12} style={{ flexShrink: 0 }} />
-                    <span>{t.microMood[m]}</span>
-                  </button>
-                ))}
-              </div>
+            {/*
+              心境与收藏共用一整行（D-20261126-119）：★ 在最左、与胶囊同尺寸，
+              8 个预设撑满 440px 弹窗的宽度，行尾是「+ 自定义」入口。
+              上一版只放 4 个预设 + 行尾 ★，右侧留出一大块空白，且自定义入口与
+              收藏挤在一起，看不出谁是干什么的。
+            */}
+            <div className="drop-engrave-mood-row drop-mood-toolbar">
               <button
                 type="button"
                 className={`star-toggle-btn${starred ? ' starred' : ''}`}
@@ -240,8 +237,55 @@ export function BlockDropModal({
                   setStarred((prev) => !prev)
                 }}
                 title={starred ? t.reflections.unstarTooltip : t.reflections.starTooltip}
+                aria-pressed={starred}
               >
-                <IconStar size={14} filled={starred} />
+                <IconStar size={13} filled={starred} />
+              </button>
+              {/* 两行 4 列网格：★ 占首列、＋ 占末列，中间八个胶囊等宽铺满（D-20261126-119） */}
+              <div className="drop-mood-grid">
+                {QUICK_MOODS.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    className={`micro-mood-chip${selectedMood === m && !moodNote ? ' active' : ''}`}
+                    onClick={() => {
+                      cancelAutoClose()
+                      setMoodNote(undefined)
+                      handleMoodToggle(m)
+                    }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <IconMood mood={m} size={12} style={{ flexShrink: 0 }} />
+                    <span>{t.microMood[m]}</span>
+                  </button>
+                ))}
+                {moodNote && (
+                  <button
+                    type="button"
+                    className="micro-mood-chip active"
+                    onClick={() => {
+                      cancelAutoClose()
+                      setMoodNote(undefined)
+                    }}
+                    style={{ gridColumn: '2 / -2' }}
+                  >
+                    <IconMoodCustom size={12} style={{ flexShrink: 0 }} />
+                    <span>{moodNote}</span>
+                  </button>
+                )}
+              </div>
+              {/* ＋ 自定义心境：与卡片里同一个入口 */}
+              <button
+                type="button"
+                className={`star-toggle-btn${moodNote ? ' starred' : ''}`}
+                onClick={() => {
+                  cancelAutoClose()
+                  setMoodPickerOpen(true)
+                }}
+                title={t.moodDialog.title}
+                aria-label={t.moodDialog.title}
+              >
+                <IconPlus size={13} />
               </button>
             </div>
 
@@ -330,6 +374,29 @@ export function BlockDropModal({
           </div>
         </div>
       </div>
+
+      {moodPickerOpen && (
+        <MoodPickerDialog
+          layer={110}
+          mood={selectedMood}
+          moodNote={moodNote}
+          onClose={() => setMoodPickerOpen(false)}
+          onPickMood={(next) => {
+            cancelAutoClose()
+            setMoodNote(undefined)
+            setSelectedMood(next ?? undefined)
+          }}
+          onPickNote={(text) => {
+            cancelAutoClose()
+            if (!text.trim()) {
+              setMoodNote(undefined)
+              return
+            }
+            setSelectedMood(undefined)
+            setMoodNote(text.trim())
+          }}
+        />
+      )}
     </div>
   )
 }

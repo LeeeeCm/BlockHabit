@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import type { MicroMood } from '../types'
 
 /** 统一积木风图标：24 网格、圆头描边、圆润造型 */
 
@@ -358,15 +359,71 @@ export function IconMoodCalm(props: IconProps) {
   )
 }
 
+/** 感恩心境：双手托起的小屋/爱心轮廓（极简线条，与其余心境同语言） */
+export function IconMoodGrateful(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 20.5s-7.5-4.4-7.5-9.3a4.2 4.2 0 017.5-2.6 4.2 4.2 0 017.5 2.6c0 4.9-7.5 9.3-7.5 9.3z" />
+    </Svg>
+  )
+}
+
+/** 专注心境：同心准星，强调「只盯一件事」 */
+export function IconMoodFocused(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="7.5" />
+      <circle cx="12" cy="12" r="2.6" />
+      <path d="M12 1.8v3.2M12 19v3.2M1.8 12h3.2M19 12h3.2" />
+    </Svg>
+  )
+}
+
+/** 疲惫心境：半满的电量条，如实表达「今天已经用掉大半」 */
+export function IconMoodTired(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="2.6" y="8" width="16.5" height="8" rx="2.6" />
+      <path d="M21.4 10.6v2.8" />
+      <path d="M5.6 10.6v2.8M9 10.6v2.8" />
+    </Svg>
+  )
+}
+
+/** 自豪心境：带流苏的小勋章，与「落成」的奖励语义同源 */
+export function IconMoodProud(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="9.2" r="5.4" />
+      <path d="M12 6.6l1 2 2.2.3-1.6 1.6.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.6 2.2-.3z" />
+      <path d="M8.6 13.6L7.2 20.4l4.8-2.2 4.8 2.2-1.4-6.8" />
+    </Svg>
+  )
+}
+
+/** 自定义心境：四角星，用于「+ 自定义」入口与自定义心境的展示 */
+export function IconMoodCustom(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3.2c.4 3.4 1.5 5.6 4.4 6.2-2.9.6-4 2.8-4.4 6.2-.4-3.4-1.5-5.6-4.4-6.2 2.9-.6 4-2.8 4.4-6.2z" />
+      <path d="M18.4 14.6c.2 1.7.8 2.8 2.2 3.1-1.4.3-2 1.4-2.2 3.1-.2-1.7-.8-2.8-2.2-3.1 1.4-.3 2-1.4 2.2-3.1z" />
+    </Svg>
+  )
+}
+
 /** 心境图标分发器：统一渲染无 Emoji 矢量图标 */
-export function IconMood({
-  mood,
-  size = 14,
-  style
-}: IconProps & { mood: 'energetic' | 'hard' | 'spark' | 'calm' }) {
+export function IconMood({ mood, size = 14, style }: IconProps & { mood: MicroMood }) {
   switch (mood) {
     case 'energetic':
       return <IconMoodEnergetic size={size} style={style} />
+    case 'grateful':
+      return <IconMoodGrateful size={size} style={style} />
+    case 'focused':
+      return <IconMoodFocused size={size} style={style} />
+    case 'tired':
+      return <IconMoodTired size={size} style={style} />
+    case 'proud':
+      return <IconMoodProud size={size} style={style} />
     case 'hard':
       return <IconMoodHard size={size} style={style} />
     case 'spark':

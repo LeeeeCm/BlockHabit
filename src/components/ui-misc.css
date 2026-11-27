@@ -308,3 +308,184 @@
     box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 30%, transparent);
   }
 }
+
+/* ===== 时间滚轮（D-20261126-117，取代 D-20261126-116） =====
+ * 常态一行高；点击后以「当前行」为锚点上下各展开一行，且整块是**浮层**：
+ * 面板绝对定位、不参与布局，因此设置页既不会被推高，也不需要重新滚动。
+ * 位移由 TimeWheelPicker.tsx 用 translate3d 自己驱动，这里只管尺寸与静态外观。 */
+.tw {
+  --tw-row: 26px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: calc(var(--tw-row) + 10px);
+  /* 只占常态一行的宽度，展开时向外长（左右各留 2px 给聚焦环） */
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* 尺寸占位：与浮层同一套字号 / 内距，但不可见也不接收事件，
+   作用是让 .tw 在布局里永远只有「一行」大小（浮层本身是绝对定位） */
+.tw-sizer {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: calc(var(--tw-row) + 10px);
+  padding: 4px 8px;
+  border: 1.5px solid transparent;
+  visibility: hidden;
+  pointer-events: none;
+}
+.tw-sizer > span {
+  width: 2.5em;
+  text-align: center;
+  font-size: var(--fs-subhead);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* 浮层：常态只画一行高，展开时向上向下各长一行 —— 用 top:50% 锚定中线，
+   所以两种状态下「当前行」的视觉位置完全一致，页面也不发生任何位移。 */
+.tw-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  height: calc(var(--tw-row) + 10px);
+  padding: 4px 8px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  transition:
+    height var(--dur-md) var(--ease-bounce),
+    top var(--dur-md) var(--ease-bounce),
+    border-color var(--dur-xs) var(--ease-default),
+    box-shadow var(--dur-sm) var(--ease-default);
+}
+/* 展开：向上扩出一行高度（top 变负），高度加到三行 + 内距 */
+.tw.is-open .tw-panel {
+  top: calc((var(--tw-row) + 10px - (var(--tw-row) * 3 + 8px)) / 2);
+  height: calc(var(--tw-row) * 3 + 8px);
+  border-color: var(--ink);
+  /* 唯一的「浮起」来自这一圈墨色细环 + 极软分层阴影，不叠多层（A4） */
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--ink) 16%, transparent),
+    0 8px 22px color-mix(in srgb, var(--ink) 12%, transparent);
+  z-index: 3;
+}
+.tw.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* 选中带：上下两条 1px 细线夹住中心行，与全应用的 1px 语言一致（A4） */
+.tw-band {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 50%;
+  height: var(--tw-row);
+  transform: translateY(-50%);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+  pointer-events: none;
+  transition: background var(--dur-md) var(--ease-default);
+}
+.tw.is-open .tw-band {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+/* 收起：一行窗口（无遮罩）；展开：三行窗口 + 上下淡出 */
+.tw-view {
+  position: relative;
+  height: var(--tw-row);
+  width: 2.5em;
+  overflow: hidden;
+  transition: height var(--dur-md) var(--ease-bounce);
+}
+.tw-view.is-expanded {
+  height: calc(var(--tw-row) * 3);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 22%,
+    #000 78%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 78%, transparent 100%);
+}
+/* 收起时把列整体上移一行：让「中间那行」正好落在单行视口里，位移数值不变 */
+.tw-view:not(.is-expanded) .tw-col {
+  margin-top: calc(var(--tw-row) * -1);
+}
+
+.tw-col {
+  position: relative;
+  height: calc(var(--tw-row) * 3);
+  width: 100%;
+  overflow: hidden;
+  outline: none;
+  overscroll-behavior: contain;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+.tw-view.is-expanded .tw-col {
+  cursor: grab;
+}
+.tw-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  will-change: transform;
+}
+.tw-col:active {
+  cursor: grabbing;
+}
+
+.tw-item {
+  height: var(--tw-row);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-subhead);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  cursor: pointer;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+.tw-colon {
+  font-size: var(--fs-subhead);
+  font-weight: 700;
+  color: var(--ink-2);
+  /* 冒号与选中带同一中线，随滚动不动 */
+  transform: translateY(-1px);
+  pointer-events: none;
+  user-select: none;
+  transition: color var(--dur-xs) var(--ease-default);
+}
+
+/* 减少动态效果：不做圆柱投影与淡出，滚动瞬到位（A5 强制要求） */
+@media (prefers-reduced-motion: reduce) {
+  .tw-item {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none;
+  }
+  .tw-col {
+    scroll-behavior: auto;
+  }
+}

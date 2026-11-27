@@ -203,10 +203,9 @@ export function LabGroup({ settings, isMobile, t, onUpdateSettings, onToast }: P
       {/* D-20261110-054 页面提示：清空已读，三页首访提示重新出现一次 */}
       <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
         <label>{t.guide.replayTitle}</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div className="settings-actions">
           <button
             className="btn ghost"
-            style={{ padding: '7px 16px' }}
             onClick={() => {
               triggerHaptic('selection')
               resetGuideTips()

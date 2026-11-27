@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '../i18n'
-import {
-  PROVIDER_ORDER,
-  PROVIDER_PRESETS,
-  buildEndpoint,
-  normalizeServerBase,
-  type ProviderId
-} from '../sync/providers'
+import type { ProviderId } from '../sync/providers'
 import {
   createFetchTransport,
   runWebDavDiagnosis,
@@ -47,22 +41,15 @@ export function isJianguoyunEndpoint(endpoint: string): boolean {
   return host === 'jianguoyun.com' || host.endsWith('.jianguoyun.com')
 }
 
-/** 从已有 endpoint 推断服务商（仅用于设置页首次展开时的预设高亮） */
+/**
+ * 从已有 endpoint 推断服务商（D-20261126-114 起设置页不再提供服务商选择，函数保留
+ * 供旧配置识别与回归测试使用，不参与 UI）。
+ */
 export function detectProvider(endpoint: string): ProviderId {
   if (isJianguoyunEndpoint(endpoint)) return 'jianguoyun'
   if (endpoint.includes('/remote.php/dav/')) return 'nextcloud'
   if (endpoint.includes('/home/BlockHabit')) return 'synology'
   return 'generic'
-}
-
-/** 预设切换时从 endpoint 反推 base，避免把 /remote.php/dav/... 再拼一次 */
-function baseFromEndpoint(endpoint: string): string {
-  let value = endpoint.trim()
-  for (const marker of ['/remote.php/dav/', '/home/BlockHabit', '/dav/BlockHabit']) {
-    const index = value.indexOf(marker)
-    if (index > 0) value = value.slice(0, index)
-  }
-  return normalizeServerBase(value)
 }
 
 interface Props {
@@ -99,9 +86,6 @@ export function WebdavPanel({ sync, onToast }: Props) {
   const storedPassword = syncConfig.password
   /** 本次会话开始时的已保存密码：用户清空输入框时回退到它，而不是把密码改成空串 */
   const baselinePasswordRef = useRef(storedPassword)
-  const [providerId, setProviderId] = useState<ProviderId>(() =>
-    detectProvider(syncConfig.endpoint)
-  )
   const [diagnosis, setDiagnosis] = useState<DiagnoseResult | null>(null)
   const [diagnosing, setDiagnosing] = useState(false)
   const diagnoseAbortRef = useRef<AbortController | null>(null)
@@ -141,30 +125,6 @@ export function WebdavPanel({ sync, onToast }: Props) {
     } else {
       onToast(syncErrorText(getLastError()) ?? t.settings.webdav.syncFailed, 3000)
     }
-  }
-
-  /** D-20261110-061：切换服务商预设，按当前 base/username 重建 endpoint */
-  function applyProvider(next: ProviderId) {
-    setProviderId(next)
-    setDiagnosis(null)
-    const preset = PROVIDER_PRESETS[next]
-    if (!preset.requiresServer) {
-      const nextEndpoint = buildEndpoint(next, '', username)
-      setEndpoint(nextEndpoint)
-      updateSyncConfig({ endpoint: nextEndpoint })
-      return
-    }
-    // 固定端点（如坚果云）切回需要自填服务器的预设：先清空，避免把旧 host 带过去
-    if (isJianguoyunEndpoint(endpoint)) {
-      setEndpoint('')
-      updateSyncConfig({ endpoint: '' })
-      return
-    }
-    const base = next === 'generic' ? normalizeServerBase(endpoint) : baseFromEndpoint(endpoint)
-    if (!base) return
-    const nextEndpoint = buildEndpoint(next, base, username)
-    setEndpoint(nextEndpoint)
-    updateSyncConfig({ endpoint: nextEndpoint })
   }
 
   /** 分步连接自检：不触发同步合并，只做只读 + 临时文件读写删；可随时取消（B1） */
@@ -267,52 +227,14 @@ export function WebdavPanel({ sync, onToast }: Props) {
   }
   return (
     <>
-      {/* D-20261110-061：服务商预设 */}
-      <div className="field" style={{ marginBottom: 10 }}>
-        <label>{t.settings.webdav.providerLabel}</label>
-        <div className="seg">
-          {PROVIDER_ORDER.map((id) => {
-            const label =
-              id === 'nextcloud'
-                ? t.settings.webdav.providerNextcloud
-                : id === 'jianguoyun'
-                  ? t.settings.webdav.providerJianguoyun
-                  : id === 'synology'
-                    ? t.settings.webdav.providerSynology
-                    : t.settings.webdav.providerGeneric
-            return (
-              <button
-                key={id}
-                type="button"
-                className={providerId === id ? 'active' : ''}
-                onClick={() => applyProvider(id)}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
-        {PROVIDER_PRESETS[providerId].requiresAppPassword && (
-          <div
-            style={{
-              fontSize: 'var(--fs-caption)',
-              color: 'var(--ink-2)',
-              marginTop: 4,
-              lineHeight: 1.5
-            }}
-          >
-            {t.settings.webdav.appPasswordHint}
-          </div>
-        )}
-      </div>
-
+      {/* D-20261126-114：只保留「通用」服务商，不再让用户在预设之间选择 ——
+          四个预设的差异只是 URL 拼接规则，直接填完整 WebDAV 地址即可覆盖全部服务商。 */}
       <div className="field" style={{ marginBottom: 10 }}>
         <label>{t.settings.webdav.serverUrl}</label>
         <input
           type="text"
           placeholder="https://dav.example.com/sync/"
           value={endpoint}
-          readOnly={!PROVIDER_PRESETS[providerId].requiresServer}
           onChange={(e) => {
             setEndpoint(e.target.value)
             updateSyncConfig({ endpoint: e.target.value })
@@ -414,10 +336,9 @@ export function WebdavPanel({ sync, onToast }: Props) {
         </div>
       </div>
       {/* D-20261110-061：独立测试连接 + 分步结果（不触发同步合并） */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+      <div className="settings-actions" style={{ marginBottom: 10 }}>
         <button
           className="btn ghost"
-          style={{ flex: 1, padding: '7px 0' }}
           disabled={isSyncing || (!diagnosing && !endpoint.trim())}
           onClick={() => (diagnosing ? cancelDiagnosis() : void runConnectionTest())}
         >
@@ -425,7 +346,6 @@ export function WebdavPanel({ sync, onToast }: Props) {
         </button>
         <button
           className="btn ghost"
-          style={{ flex: 1, padding: '7px 0' }}
           disabled={isSyncing || diagnosing || !(passwordInput || storedPassword)}
           onClick={clearCredentials}
         >

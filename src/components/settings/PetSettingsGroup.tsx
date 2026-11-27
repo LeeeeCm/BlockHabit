@@ -1,9 +1,6 @@
 import type { AppSettings } from '../../types'
 import type { TranslationSchema } from '../../i18n'
-import { blueprintProgress } from '../../logic/blueprint'
-import { PET_MODELS, petBlueprintId } from '../../logic/petModels'
 import { PET_COLORS } from '../../pet/types'
-import { useAppStore } from '../../store/appStore'
 import { Group } from './Group'
 
 interface Props {
@@ -12,10 +9,8 @@ interface Props {
   onUpdateSettings: (patch: Partial<AppSettings>) => void
 }
 
-/** 桌宠设置分组（D-20261124-091/094/098）：开关 / 大小 / 蓝图形象 / 材质色 / 自主走动。 */
+/** 桌宠设置分组（D-20261124-091/094/098；D-20261127-125 只保留积木桌宠）。 */
 export function PetSettingsGroup({ settings, t, onUpdateSettings }: Props) {
-  const builds = useAppStore((s) => s.builds)
-  const currentSkin = settings.petSkin ?? settings.petModel ?? 'block'
   return (
     <div id="pet-settings">
       <Group title={t.settings.petGroupTitle} collapsible defaultOpen>
@@ -60,44 +55,21 @@ export function PetSettingsGroup({ settings, t, onUpdateSettings }: Props) {
         </div>
 
         <div className="field" style={{ marginBottom: 12 }}>
-          <label>{t.settings.petSkinLabel}</label>
-          <div className="seg">
-            {PET_MODELS.map((model) => {
-              const blueprintId = petBlueprintId(model)
-              const progress = blueprintId ? blueprintProgress(builds, blueprintId) : null
-              const unlocked = !progress || progress.complete
-              return (
-                <button
-                  key={model}
-                  className={currentSkin === model ? 'active' : ''}
-                  disabled={!unlocked}
-                  title={unlocked ? undefined : t.settings.petSkinHint}
-                  onClick={() => onUpdateSettings({ petSkin: model })}
-                >
-                  {model === 'cat'
-                    ? t.settings.petSkinCat
-                    : model === 'bot'
-                      ? t.settings.petSkinBot
-                      : t.settings.petSkinBlock}
-                </button>
-              )
-            })}
-          </div>
-          <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', marginTop: 3 }}>
-            {t.settings.petSkinHint}
-          </div>
-        </div>
-
-        <div className="field" style={{ marginBottom: 12 }}>
           <label>{t.settings.petColorLabel}</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+          {/* D-20261126-114：色板改为等分网格铺满行宽；材质色扩到 11 个，
+              与「跟随主题」凑成两行六列，不再让右侧空出一条不齐的尾巴。 */}
+          <div
+            className="settings-swatch-grid"
+            style={{ gridTemplateColumns: 'repeat(6, minmax(0, 1fr))' }}
+          >
             <button
               type="button"
               className={`btn ghost${!settings.petColor ? ' active' : ''}`}
               aria-pressed={!settings.petColor}
               style={{
-                minHeight: 30,
-                padding: '4px 12px',
+                minWidth: 0,
+                padding: 0,
+                fontSize: 'var(--fs-caption)',
                 borderColor: !settings.petColor ? 'var(--ink)' : undefined
               }}
               onClick={() => onUpdateSettings({ petColor: undefined })}
@@ -108,15 +80,12 @@ export function PetSettingsGroup({ settings, t, onUpdateSettings }: Props) {
               <button
                 key={color}
                 type="button"
+                className="settings-swatch"
                 aria-label={color}
                 aria-pressed={settings.petColor === color}
                 title={color}
                 onClick={() => onUpdateSettings({ petColor: color })}
                 style={{
-                  width: 28,
-                  height: 28,
-                  padding: 0,
-                  borderRadius: 8,
                   background: color,
                   border:
                     settings.petColor === color ? '2px solid var(--ink)' : '1px solid var(--line)'

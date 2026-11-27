@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { emitTo, listen } from '@tauri-apps/api/event'
 import { useI18n } from '../i18n'
-import { DEFAULT_PET_CONFIG, PET_MODELS, type PetConfig } from './types'
+import { DEFAULT_PET_CONFIG, type PetConfig } from './types'
 import { petOpenSettings, setPetMenuVisible } from '../platform/petWindow'
 import './petWindow.css'
 
@@ -67,27 +67,6 @@ export function PetMenuWindow() {
                   : t.settings.petSizeMedium}
             </button>
           ))}
-        </div>
-        <div className="pet-menu-label">{t.settings.petSkinLabel}</div>
-        <div className="seg">
-          {PET_MODELS.map((model) => {
-            const unlocked = config.unlocked?.includes(model) ?? model === 'block'
-            return (
-              <button
-                key={model}
-                className={config.skin === model ? 'active' : ''}
-                disabled={!unlocked}
-                title={unlocked ? undefined : t.settings.petSkinHint}
-                onClick={() => changePref({ skin: model })}
-              >
-                {model === 'cat'
-                  ? t.settings.petSkinCat
-                  : model === 'bot'
-                    ? t.settings.petSkinBot
-                    : t.settings.petSkinBlock}
-              </button>
-            )
-          })}
         </div>
         <div className="pet-menu-label">{t.settings.petRoamLabel}</div>
         <div className="seg">

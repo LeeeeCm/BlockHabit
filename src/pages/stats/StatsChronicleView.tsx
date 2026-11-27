@@ -1,10 +1,9 @@
 import type { CheckIn, Habit, MicroMood } from '../../types'
 import type { TranslationSchema } from '../../i18n/types'
-import { IconExport, IconMood, IconStar } from '../../components/Icons'
+import { IconExport, IconMood, IconMoodCustom, IconStar } from '../../components/Icons'
 import { SelectMenu } from '../../components/SelectMenu'
+import { MOOD_PRESETS } from '../../components/MoodPickerDialog'
 import { triggerHaptic } from '../../platform'
-
-const MOODS: MicroMood[] = ['energetic', 'hard', 'spark', 'calm']
 
 interface Props {
   t: TranslationSchema
@@ -115,7 +114,7 @@ export function StatsChronicleView({
             >
               {t.stats.allMoods}
             </button>
-            {MOODS.map((m) => (
+            {MOOD_PRESETS.map((m) => (
               <button
                 key={m}
                 type="button"
@@ -201,7 +200,7 @@ export function StatsChronicleView({
                       )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {item.mood && (
+                      {(item.moodNote?.trim() || item.mood) && (
                         <span
                           style={{
                             fontSize: 'var(--fs-caption)',
@@ -215,8 +214,18 @@ export function StatsChronicleView({
                             gap: 4
                           }}
                         >
-                          <IconMood mood={item.mood} size={11} style={{ flexShrink: 0 }} />
-                          <span>{t.microMood[item.mood]}</span>
+                          {item.moodNote?.trim() ? (
+                            <IconMoodCustom size={11} style={{ flexShrink: 0 }} />
+                          ) : (
+                            <IconMood
+                              mood={item.mood as MicroMood}
+                              size={11}
+                              style={{ flexShrink: 0 }}
+                            />
+                          )}
+                          <span>
+                            {item.moodNote?.trim() || t.microMood[item.mood as MicroMood]}
+                          </span>
                         </span>
                       )}
                       <button

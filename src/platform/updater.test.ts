@@ -92,6 +92,22 @@ describe('updater：默认构建（未启用）', () => {
   })
 })
 
+describe('updater：配置就绪即启用（D-20261126-120）', () => {
+  it('构建期读到 pubkey + endpoints，即便没有环境变量也启用（本机发布构建的真实情形）', async () => {
+    setTauriRuntime(true)
+    const updater = await loadUpdater()
+    // 测试环境里 __BH_UPDATER_CONFIGURED__ 由 vite define 注入；
+    // 这里只断言「不再依赖 VITE_UPDATER_ENABLED」这一条，注入值为真时即应启用。
+    const configured = typeof __BH_UPDATER_CONFIGURED__ !== 'undefined' && __BH_UPDATER_CONFIGURED__
+    expect(updater.isUpdaterEnabled()).toBe(configured)
+  })
+
+  it('浏览器预览（非 Tauri）永不启用，即使配置就绪', async () => {
+    const updater = await loadUpdater()
+    expect(updater.isUpdaterEnabled()).toBe(false)
+  })
+})
+
 describe('updater：启用后（VITE_UPDATER_ENABLED=1 且 Tauri 运行时）', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_UPDATER_ENABLED', '1')

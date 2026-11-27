@@ -132,5 +132,16 @@
 | D-20261125-111 | 2026-11-25 | 退役全圆胶囊，按钮与徽章统一为倒角方块 | approved | global, today, build, stats, settings, gallery | LeeCM |
 | D-20261125-112 | 2026-11-25 | 桌宠眼睛改为纵向长椭圆，避免小尺寸缩成圆点 | superseded | mini-widget | pending |
 | D-20261125-113 | 2026-11-25 | 桌宠眼睛改为竖向胶囊，取代椭圆方案 | approved | mini-widget | LeeCM |
+| D-20261126-114 | 2026-11-26 | 建造页顶栏齐高、设置页按钮填满行宽、WebDAV 只留通用与积木上限统一 | proposed | build, settings | pending |
+| D-20261126-115 | 2026-11-26 | 晚间收尾提醒改为整行布局，时间选择改为 Apple 闹钟式双列循环滚轮 | superseded | settings | pending |
+| D-20261126-117 | 2026-11-26 | 时间滚轮常态一行、点击后浮层上下展开，不推动设置页 | proposed | settings | pending |
+| D-20261126-118 | 2026-11-26 | 心境可选可自定义：新增心境弹窗、8 个预设、卡片编辑行重排 | proposed | today, settings, stats | pending |
+| D-20261126-119 | 2026-11-26 | 打卡弹窗心境行铺满（★ 左 / ＋ 右 / 6 个预设），自定义面板叠在弹窗之上 | proposed | today | pending |
+| D-20261126-120 | 2026-11-26 | 更新通道按配置就绪启用、下拉菜单拼成一体、时间滚轮改为点击后才接管 | proposed | settings, stats, gallery | pending |
+| D-20261126-121 | 2026-11-26 | 习惯弹窗复用时间滚轮、指定星期只在该星期出现、全勤积木每天只领一次 | proposed | today, habit-dialog | pending |
+| D-20261126-122 | 2026-11-26 | 桌宠建好蓝图后直接用蓝图积木拼成外形，并修掉移动时的 1px 细线 | superseded | mini-widget, build, gallery | pending |
+| D-20261127-123 | 2026-11-27 | 桌宠改用独立的正面正交投影，正脸面对用户 | superseded | mini-widget | pending |
+| D-20261127-124 | 2026-11-27 | 桌宠回到积木桌宠画风（单块积木 + 一枚凸点），正脸、缩小，不再逐块复刻蓝图 | superseded | mini-widget | pending |
+| D-20261127-125 | 2026-11-27 | 下线桌宠蓝图与形象切换，图鉴只留建筑，桌宠积木并入在建未完成建筑 | proposed | gallery, settings, mini-widget, build | pending |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

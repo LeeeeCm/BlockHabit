@@ -1,5 +1,14 @@
 import type { TranslationSchema } from '../types'
-import { a11y, common, errorBoundary, microMood, nav, titlebar, tray } from './en/common'
+import {
+  a11y,
+  common,
+  errorBoundary,
+  microMood,
+  moodDialog,
+  nav,
+  titlebar,
+  tray
+} from './en/common'
 import { blockDrop, guide, templates, today, todayBrief } from './en/today'
 import { blueprints, build, gallery, polaroid, showcase } from './en/build'
 import { poster, reflections, stats } from './en/stats'
@@ -28,6 +37,7 @@ export const en: TranslationSchema = {
   tray,
   errorBoundary,
   microMood,
+  moodDialog,
   reflections,
   poster,
   todayBrief,
@@ -39,7 +49,6 @@ export const en: TranslationSchema = {
   buildingArchive,
   focusCompanion,
   pet: {
-    hint: 'Pet: double-click to open the app, right-click for pet settings, drag to move',
-    blueprints: 'Pet blueprints'
+    hint: 'Pet: double-click to open the app, right-click for pet settings, drag to move'
   }
 }

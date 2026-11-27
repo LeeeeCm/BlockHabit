@@ -1027,6 +1027,105 @@
       "owner": "Claude Code",
       "reviewer": "LeeCM",
       "file": "design/records/D-20261125-113-pet-capsule-eyes.md"
+    },
+    {
+      "id": "D-20261126-114",
+      "date": "2026-11-26",
+      "title": "建造页顶栏齐高、设置页按钮填满行宽、WebDAV 只留通用与积木上限统一",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261126-114-settings-layout-unify.md"
+    },
+    {
+      "id": "D-20261126-115",
+      "date": "2026-11-26",
+      "title": "晚间收尾提醒改为整行布局，时间选择改为 Apple 闹钟式双列循环滚轮",
+      "status": "superseded",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261126-115-evening-nudge-time-wheel.md"
+    },
+    {
+      "id": "D-20261126-117",
+      "date": "2026-11-26",
+      "title": "时间滚轮常态收成一行、点击后以浮层上下展开，且不推动设置页",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261126-117-time-wheel-floating-collapsed.md"
+    },
+    {
+      "id": "D-20261126-118",
+      "date": "2026-11-26",
+      "title": "心境可选可自定义：新增心境弹窗、8 个预设、卡片编辑行重排",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261126-118-mood-picker-custom.md"
+    },
+    {
+      "id": "D-20261126-119",
+      "date": "2026-11-26",
+      "title": "打卡弹窗心境行铺满（★ 左 / ＋ 右 / 6 个预设），自定义面板叠在弹窗之上",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261126-119-drop-modal-mood-row.md"
+    },
+    {
+      "id": "D-20261126-120",
+      "date": "2026-11-26",
+      "title": "更新通道按配置就绪启用、下拉菜单拼成一体、时间滚轮改为点击后才接管",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261126-120-updater-config-and-picker-gestures.md"
+    },
+    {
+      "id": "D-20261126-121",
+      "date": "2026-11-26",
+      "title": "习惯弹窗复用时间滚轮、指定星期只在该星期出现、全勤积木每天只领一次",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261126-121-dialog-time-due-days-claim.md"
+    },
+    {
+      "id": "D-20261126-122",
+      "date": "2026-11-26",
+      "title": "桌宠建好蓝图后直接用蓝图积木拼成外形，并修掉移动时的 1px 细线",
+      "status": "superseded",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261126-122-pet-blueprint-shape.md"
+    },
+    {
+      "id": "D-20261127-123",
+      "date": "2026-11-27",
+      "title": "桌宠改用独立的正面正交投影，正脸面对用户",
+      "status": "superseded",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261127-123-pet-front-orthographic.md"
+    },
+    {
+      "id": "D-20261127-124",
+      "date": "2026-11-27",
+      "title": "桌宠回到积木桌宠的可爱画风（方块耳/方块尾、简单五官），按蓝图取形、正脸、缩小",
+      "status": "superseded",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261127-124-pet-block-style-front.md"
+    },
+    {
+      "id": "D-20261127-125",
+      "date": "2026-11-27",
+      "title": "下线桌宠蓝图与形象切换，图鉴只留建筑，桌宠积木并入在建未完成建筑",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261127-125-remove-pet-blueprints.md"
     }
   ]
 }

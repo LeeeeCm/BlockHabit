@@ -97,13 +97,9 @@ export function ArchiveExportPanel() {
   return (
     <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
       <label>{t.archive.title}</label>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <button
-          className="btn ghost"
-          style={{ padding: '7px 16px' }}
-          disabled={running}
-          onClick={() => void startExport()}
-        >
+      {/* D-20261126-114：按钮与「导出备份 / 导入备份」两列同一填满基准；说明文字另起一行 */}
+      <div className="settings-actions">
+        <button className="btn ghost" disabled={running} onClick={() => void startExport()}>
           {running
             ? t.archive.preparing
             : result?.kind === 'failed'
@@ -111,29 +107,21 @@ export function ArchiveExportPanel() {
               : t.archive.exportBtn}
         </button>
         {running && (
-          <>
-            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)' }}>
-              {progress ? t.archive.progress(progress.done, progress.total) : t.archive.preparing}
-            </span>
-            <button
-              className="btn ghost"
-              style={{ padding: '4px 12px', fontSize: 'var(--fs-small)' }}
-              onClick={() => abortRef.current?.abort()}
-            >
-              {t.archive.cancel}
-            </button>
-          </>
+          <button className="btn ghost" onClick={() => abortRef.current?.abort()}>
+            {t.archive.cancel}
+          </button>
         )}
         {!running && result?.kind === 'desktop' && (
-          <button
-            className="btn ghost"
-            style={{ padding: '4px 12px', fontSize: 'var(--fs-small)' }}
-            onClick={() => void revealArchivePath(result.readmePath)}
-          >
+          <button className="btn ghost" onClick={() => void revealArchivePath(result.readmePath)}>
             {t.archive.openDir}
           </button>
         )}
       </div>
+      {running && (
+        <div className="settings-hint">
+          {progress ? t.archive.progress(progress.done, progress.total) : t.archive.preparing}
+        </div>
+      )}
       <div
         style={{
           fontSize: 'var(--fs-caption)',

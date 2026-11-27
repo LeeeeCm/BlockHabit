@@ -75,5 +75,21 @@ export const microMood: TranslationSchema['microMood'] = {
   energetic: 'Energy',
   hard: 'Grit',
   spark: 'Spark',
-  calm: 'Calm'
+  calm: 'Calm',
+  grateful: 'Grateful',
+  focused: 'Focused',
+  tired: 'Drained',
+  proud: 'Proud'
+}
+
+/** 心境选择弹窗（D-20261126-118） */
+export const moodDialog: TranslationSchema['moodDialog'] = {
+  title: 'How did it feel?',
+  subtitle: 'Pick the closest one, or write your own.',
+  customTitle: 'Your own mood',
+  customPlaceholder: 'e.g. tired but I still showed up',
+  customSave: 'Use this',
+  customEmpty: 'Write something first',
+  clear: 'Clear mood',
+  tooLong: '12 characters max'
 }

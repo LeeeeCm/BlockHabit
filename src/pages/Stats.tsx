@@ -98,7 +98,8 @@ export default function Stats() {
   }, [echoEntry, today])
   // 手账长廊项目过滤
   const chronicleItems = useMemo(() => {
-    let list = checkIns.filter((c) => c.note?.trim())
+    // D-20261126-118：写了自定义心境也算一条手账（不一定有随笔）
+    let list = checkIns.filter((c) => c.note?.trim() || c.moodNote?.trim())
     if (filterHabitId !== 'all') {
       list = list.filter((c) => c.habitId === filterHabitId)
     }
@@ -112,7 +113,11 @@ export default function Stats() {
       const q = searchQuery.trim().toLowerCase()
       list = list.filter((c) => {
         const h = habits.find((x) => x.id === c.habitId)
-        const moodText = c.mood ? t.microMood[c.mood].toLowerCase() : ''
+        const moodText = c.moodNote?.trim()
+          ? c.moodNote.toLowerCase()
+          : c.mood
+            ? t.microMood[c.mood].toLowerCase()
+            : ''
         return (
           c.note?.toLowerCase().includes(q) ||
           c.date.includes(q) ||
@@ -136,7 +141,11 @@ export default function Stats() {
     ]
     for (const item of chronicleItems) {
       const h = habits.find((x) => x.id === item.habitId)
-      const moodLabel = item.mood ? t.microMood[item.mood] : undefined
+      const moodLabel = item.moodNote?.trim()
+        ? item.moodNote.trim()
+        : item.mood
+          ? t.microMood[item.mood]
+          : undefined
       lines.push(`### ${item.date} · ${h?.name || '—'}`)
       if (item.actualMinutes) {
         lines.push(`- **${t.stats.exportFocus}**: ${t.stats.metric.minutes(item.actualMinutes)}`)

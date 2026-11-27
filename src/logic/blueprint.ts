@@ -1,5 +1,5 @@
 import type { BlockDef, PlacedBlock } from '../types'
-import { blueprintOrder, findBlueprint, isPetBlueprintId, PET_BLUEPRINT_IDS } from './blueprints'
+import { blueprintOrder, findBlueprint } from './blueprints'
 
 /** 蓝图第 placedCount 块（数组顺序即拼建顺序），越界返回 null */
 export function nextSlot(blocks: BlockDef[], placedCount: number): BlockDef | null {
@@ -15,14 +15,13 @@ export function awardBlock(streak: number): boolean {
   return streak > 0 && streak % 7 === 0
 }
 
-/** 主线第一个未完成蓝图；桌宠不参与顺序。 */
+/** 主线第一个未完成蓝图。 */
 export function firstIncompleteIndex(completed: readonly string[]): number {
   const index = blueprintOrder.findIndex((id) => !completed.includes(id))
   return index < 0 ? blueprintOrder.length : index
 }
 
 export function canSelectBlueprint(id: string, completed: readonly string[]): boolean {
-  if (isPetBlueprintId(id)) return true
   const idx = blueprintOrder.indexOf(id)
   return idx >= 0 && idx <= firstIncompleteIndex(completed)
 }
@@ -54,14 +53,4 @@ export function blueprintProgress(builds: readonly PlacedBlock[], id: string): B
   const total = findBlueprint(id)?.blocks.length ?? 0
   const placed = validPlacedBlocks(builds, id).length
   return { placed, total, complete: total > 0 && placed === total }
-}
-
-/** 「全部落成」看完整目录；不能用重复/额外 ID 或过期的支线完成缓存凑数量。 */
-export function completedCatalogCount(
-  completed: readonly string[],
-  builds: readonly PlacedBlock[]
-): number {
-  const mainCount = blueprintOrder.filter((id) => completed.includes(id)).length
-  const petCount = PET_BLUEPRINT_IDS.filter((id) => blueprintProgress(builds, id).complete).length
-  return mainCount + petCount
 }

@@ -24,6 +24,8 @@ export const eveningNudge: TranslationSchema['eveningNudge'] = {
   settingsDesc: 'One reminder a day when habits are still open.',
   settingsTime: 'Reminder time',
   settingsTimeNote: 'Works while the app is running',
+  pickerHour: 'Reminder time, hours',
+  pickerMinute: 'Reminder time, minutes',
   consentTitle: 'Want a daily wrap-up reminder?',
   consentBody: (time) =>
     `Defaults to ${time}. Only when habits are still open. You can turn it off anytime.`,

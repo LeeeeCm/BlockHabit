@@ -16,11 +16,15 @@ interface Props {
 }
 
 /**
- * 一体化下拉选择（D-20261124-089）。
+ * 一体化下拉选择（D-20261124-089；D-20261126-120 修掉拼接处的圆角）。
  *
  * 原生 <select> 在 Tauri/Windows 下由系统绘制展开层，和胶囊触发器完全脱节。
- * 这里用按钮 + 紧贴下方的列表：共用一条 1px 边框，上圆角 0、下圆角 r-sm，
- * 视觉上是一块向下延伸的积木。
+ * 这里用按钮 + 紧贴下方的列表，两者是**同一块积木**：
+ * - 展开时触发器变成「上半块」：只保留上圆角、下方边框与圆角全部去掉；
+ * - 列表是「下半块」：顶部无边框、无圆角、无缝隙，直接接着触发器的下沿；
+ * - 阴影只挂在列表上（向下投），触发器不加阴影，避免在接缝处画出第二层轮廓。
+ * 上一版触发器始终保持完整圆角，展开后列表又带自己的上边框与阴影，
+ * 于是接缝处出现「圆角 + 尖角」互相顶撞的错位感。
  */
 export function SelectMenu({
   value,
@@ -118,11 +122,15 @@ export function SelectMenu({
           gap: 8,
           padding: '5px 8px',
           fontSize: 'var(--fs-small)',
-          borderRadius: 'var(--r-sm)',
+          // 展开时把下圆角与下边框收掉，和列表拼成同一块
+          borderRadius: open ? 'var(--r-sm) var(--r-sm) 0 0' : 'var(--r-sm)',
           border: '1px solid var(--line)',
+          borderBottom: open ? 'none' : '1px solid var(--line)',
           background: 'var(--surface)',
           color: 'var(--ink)',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          transition:
+            'border-radius var(--dur-xs) var(--ease-default), border-color var(--dur-xs) var(--ease-default)'
         }}
       >
         <span
@@ -159,7 +167,8 @@ export function SelectMenu({
             left: 0,
             right: 0,
             top: '100%',
-            marginTop: -1,
+            // 与触发器下沿严丝合缝：不再有 1px 重叠造成的双线
+            marginTop: 0,
             zIndex: 30,
             maxHeight: 240,
             overflowY: 'auto',
@@ -168,7 +177,8 @@ export function SelectMenu({
             border: '1px solid var(--line)',
             borderTop: 'none',
             borderRadius: '0 0 var(--r-sm) var(--r-sm)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+            animation: 'select-menu-drop var(--dur-sm) var(--ease-out)'
           }}
         >
           {options.map((option, index) => {

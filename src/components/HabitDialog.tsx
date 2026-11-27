@@ -3,12 +3,12 @@ import type { Habit, HabitFrequency, HabitKind, HabitPeriod } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useI18n } from '../i18n'
 import { suggestedReminderStart } from '../logic/reminderScheduler'
-import { playSnapSound } from '../audio/sound'
 import { IconClose, IconOptional, IconRequired } from './Icons'
 import { triggerHaptic, usePlatform } from '../platform'
 import { BottomSheet } from './BottomSheet'
 import { useDialogA11y } from './useDialogA11y'
 import { ConfirmDialog } from './ConfirmDialog'
+import { TimeWheelPicker } from './TimeWheelPicker'
 interface Props {
   habit?: Habit
   onClose: () => void
@@ -47,79 +47,11 @@ function FieldLabel({
   )
 }
 
-/** "HH:mm" + 分钟步进 → 下一个合法 "HH:mm"（分钟按 15 分钟栅格回绕） */
-function shiftHHmm(value: string, dHour: number, dMinute: number): string {
-  const [h, m] = value.split(':').map(Number)
-  const nh = (((h + dHour) % 24) + 24) % 24
-  const nm = (((m + dMinute) % 60) + 60) % 60
-  return `${String(nh).padStart(2, '0')}:${String(nm).padStart(2, '0')}`
-}
-
 /** "HH:mm" + n 分钟 → "HH:mm"，封顶 23:59（跨午夜不支持） */
 export function plusMinutes(value: string, n: number): string {
   const [h, m] = value.split(':').map(Number)
   const total = Math.min(23 * 60 + 59, h * 60 + m + n)
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
-}
-
-/** 积木风时间步进器：小时 ±1 / 分钟 ±15，方块按钮带咬合音效 */
-function TimeStepper({
-  value,
-  onChange,
-  ariaLabel
-}: {
-  value: string
-  onChange: (v: string) => void
-  ariaLabel: string
-}) {
-  const [hh, mm] = value.split(':')
-  const step = (dHour: number, dMinute: number) => {
-    playSnapSound()
-    onChange(shiftHHmm(value, dHour, dMinute))
-  }
-  return (
-    <div className="time-stepper" role="group" aria-label={ariaLabel}>
-      <div className="ts-part">
-        <button
-          type="button"
-          className="ts-btn"
-          aria-label={`${ariaLabel} -1h`}
-          onClick={() => step(-1, 0)}
-        >
-          −
-        </button>
-        <span className="ts-num">{hh}</span>
-        <button
-          type="button"
-          className="ts-btn"
-          aria-label={`${ariaLabel} +1h`}
-          onClick={() => step(1, 0)}
-        >
-          +
-        </button>
-      </div>
-      <span className="ts-colon">:</span>
-      <div className="ts-part">
-        <button
-          type="button"
-          className="ts-btn"
-          aria-label={`${ariaLabel} -15m`}
-          onClick={() => step(0, -15)}
-        >
-          −
-        </button>
-        <span className="ts-num">{mm}</span>
-        <button
-          type="button"
-          className="ts-btn"
-          aria-label={`${ariaLabel} +15m`}
-          onClick={() => step(0, 15)}
-        >
-          +
-        </button>
-      </div>
-    </div>
-  )
 }
 
 export function HabitDialog({ habit, onClose }: Props) {
@@ -509,6 +441,7 @@ export function HabitDialog({ habit, onClose }: Props) {
             </div>
             {reminderOn && (
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {/* D-20261126-121：与设置页「晚间收尾提醒」复用同一个时间滚轮 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span
                     style={{
@@ -520,10 +453,12 @@ export function HabitDialog({ habit, onClose }: Props) {
                   >
                     {t.habitDialog.reminderStart}
                   </span>
-                  <TimeStepper
+                  <TimeWheelPicker
                     value={remStart}
                     onChange={setRemStart}
                     ariaLabel={t.habitDialog.reminderStart}
+                    hourLabel={t.eveningNudge.pickerHour}
+                    minuteLabel={t.eveningNudge.pickerMinute}
                   />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -539,10 +474,12 @@ export function HabitDialog({ habit, onClose }: Props) {
                   </span>
                   {remEnd ? (
                     <>
-                      <TimeStepper
+                      <TimeWheelPicker
                         value={remEnd}
                         onChange={setRemEnd}
                         ariaLabel={t.habitDialog.reminderEnd}
+                        hourLabel={t.eveningNudge.pickerHour}
+                        minuteLabel={t.eveningNudge.pickerMinute}
                       />
                       <button
                         type="button"

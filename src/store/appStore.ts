@@ -114,18 +114,22 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     }))
   },
 
-  recordCheckInNote(checkInId, note, mood, starred) {
+  recordCheckInNote(checkInId, note, mood, starred, moodNote) {
     set((s) => ({
-      checkIns: s.checkIns.map((c) =>
-        c.id === checkInId
-          ? {
-              ...c,
-              note: note.trim() || undefined,
-              mood: mood === null ? undefined : mood !== undefined ? mood : c.mood,
-              starred: starred !== undefined ? starred : c.starred
-            }
-          : c
-      )
+      checkIns: s.checkIns.map((c) => {
+        if (c.id !== checkInId) return c
+        // 预设心境与自定义心境互斥：写了自定义文本就清掉预设，反之亦然
+        const nextMoodNote = moodNote === null ? undefined : moodNote
+        const customText = typeof nextMoodNote === 'string' ? nextMoodNote.trim() : undefined
+        const explicitMood = mood === null ? undefined : mood !== undefined ? mood : c.mood
+        return {
+          ...c,
+          note: note.trim() || undefined,
+          mood: customText ? undefined : explicitMood,
+          moodNote: customText || undefined,
+          starred: starred !== undefined ? starred : c.starred
+        }
+      })
     }))
   },
   toggleCheckInStar(checkInId) {

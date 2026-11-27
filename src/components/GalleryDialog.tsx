@@ -1,20 +1,15 @@
 import { useState } from 'react'
 import { useTransient } from '../platform/useTransient'
 import { useAppStore } from '../store/appStore'
-import {
-  blueprintCatalogIds,
-  blueprintOrder,
-  getBlueprint,
-  PET_BLUEPRINT_IDS
-} from '../logic/blueprints'
-import { blueprintProgress, canSelectBlueprint } from '../logic/blueprint'
+import { blueprintOrder, getBlueprint } from '../logic/blueprints'
+import { canSelectBlueprint } from '../logic/blueprint'
 import { getBlueprintName, useI18n } from '../i18n'
 import { IconClose, IconNote } from './Icons'
 import { BlueprintThumb } from './BlueprintThumb'
 import { BuildingArchiveModal } from './BuildingArchiveModal'
 import { triggerHaptic } from '../platform'
 import { useDialogA11y } from './useDialogA11y'
-/** 模型图鉴：建筑蓝图按顺序解锁；桌宠蓝图作为独立支线默认置顶。 */
+/** 模型图鉴：只展示建筑蓝图，按顺序解锁（D-20261127-125）。 */
 export function GalleryDialog({ onClose }: { onClose: () => void }) {
   const { lang, t } = useI18n()
   const builds = useAppStore((s) => s.builds)
@@ -38,17 +33,9 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
   const buildingSection = (
     <section
       className="gallery-section"
-      aria-labelledby="gallery-buildings-title"
+      aria-label={t.gallery.title}
       data-gallery-section="buildings"
     >
-      <div className="gallery-section-head">
-        <div className="gallery-section-heading">
-          <h4 id="gallery-buildings-title" className="gallery-section-title">
-            {t.gallery.buildingsTitle}
-          </h4>
-          <span className="gallery-section-count">{blueprintOrder.length}</span>
-        </div>
-      </div>
       <div className="gallery-grid">
         {blueprintOrder.map((id) => {
           const bp = getBlueprint(id)
@@ -129,65 +116,6 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
     </section>
   )
 
-  const petSection = (
-    <section
-      className="gallery-section"
-      aria-labelledby="gallery-pet-blueprints-title"
-      data-gallery-section="pets"
-    >
-      <div className="gallery-section-head">
-        <div className="gallery-section-heading">
-          <h4 id="gallery-pet-blueprints-title" className="gallery-section-title">
-            {t.pet.blueprints}
-          </h4>
-          <span className="gallery-section-count">{PET_BLUEPRINT_IDS.length}</span>
-        </div>
-      </div>
-      <div className="gallery-grid">
-        {PET_BLUEPRINT_IDS.map((id) => {
-          const bp = getBlueprint(id)
-          const progress = blueprintProgress(builds, id)
-          const done = progress.complete
-          const building = !done && progress.placed > 0
-          const bpName = getBlueprintName(id, lang)
-          const status = done
-            ? `${t.gallery.completed} · ${t.build.blocksCount(progress.total, progress.total)}`
-            : building
-              ? `${t.gallery.inProgress} · ${progress.placed}/${progress.total}`
-              : `${t.build.startBuildBtn} · ${t.gallery.totalBlocks(progress.total)}`
-          return (
-            <div key={id} style={{ position: 'relative', minWidth: 0, display: 'flex' }}>
-              <button
-                className="gallery-card"
-                onClick={() => handleSelect(id)}
-                title={bpName}
-                style={{ width: '100%' }}
-              >
-                <BlueprintThumb
-                  blueprint={bp}
-                  placedCount={building ? progress.placed : undefined}
-                />
-                <div className="gallery-name">{bpName}</div>
-                <div
-                  className="gallery-status"
-                  style={{
-                    color: done
-                      ? 'var(--progress-green)'
-                      : building
-                        ? 'var(--progress-blue)'
-                        : 'var(--ink-2)'
-                  }}
-                >
-                  {status}
-                </div>
-              </button>
-            </div>
-          )
-        })}
-      </div>
-    </section>
-  )
-
   return (
     <>
       <div
@@ -206,7 +134,7 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
         >
           <div className="dialog-header">
             <h3 id="gallery-dialog-title">
-              {t.gallery.title} · {blueprintCatalogIds.length}
+              {t.gallery.title} · {blueprintOrder.length}
             </h3>
             <button
               className="icon-btn"
@@ -221,10 +149,7 @@ export function GalleryDialog({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="dialog-body">
-            <div className="gallery-sections">
-              {petSection}
-              {buildingSection}
-            </div>
+            <div className="gallery-sections">{buildingSection}</div>
           </div>
 
           <div className="dialog-footer">

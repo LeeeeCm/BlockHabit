@@ -57,7 +57,6 @@ export function defaultState(): AppState {
       quickCheckInEnabled: false,
       enablePet: true,
       petSize: 'medium',
-      petSkin: 'block',
       petRoam: true,
       enableGyroscope: false,
       enableXRayInspection: false

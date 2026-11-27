@@ -54,8 +54,9 @@ export interface HabitExtra {
   note?: string
 }
 
-export type PetModel = 'block' | 'cat' | 'bot'
-export type MicroMood = 'energetic' | 'hard' | 'spark' | 'calm'
+/** 打卡心境：4 个原始预设 + 4 个新增预设；自定义文本走 `CheckIn.moodNote` */
+export type MicroMood =
+  'energetic' | 'hard' | 'spark' | 'calm' | 'grateful' | 'focused' | 'tired' | 'proud'
 
 export interface CheckIn {
   id: string
@@ -75,8 +76,10 @@ export interface CheckIn {
   value?: number
   /** 打卡感悟/微日记笔记 */
   note?: string
-  /** 微状态心境胶囊 */
+  /** 微状态心境胶囊（预设） */
   mood?: MicroMood
+  /** 自定义心境文本（与 mood 互斥：填了它就忽略预设） */
+  moodNote?: string
   /** 精选星标铭文 */
   starred?: boolean
   /** 该次打卡掉落的积木是否为连击里程碑奖励块（点缀色描边）；投影重建时据此还原 PlacedBlock.bonus */
@@ -167,9 +170,6 @@ export interface AppSettings {
   /** 透明悬浮桌宠（D-20261124-091）；缺省视为开启 */
   enablePet?: boolean
   petSize?: 'small' | 'medium' | 'large'
-  petSkin?: PetModel
-  /** 旧版字段（与 petSkin 同义），用于读取旧存档 */
-  petModel?: PetModel
   petRoam?: boolean
   /** 桌宠材质色；空/缺省跟随主题（值域见 PET_COLORS） */
   petColor?: string

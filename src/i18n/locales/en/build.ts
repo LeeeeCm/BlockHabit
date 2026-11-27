@@ -48,7 +48,6 @@ export const showcase: TranslationSchema['showcase'] = {
 
 export const gallery: TranslationSchema['gallery'] = {
   title: 'Blueprint Gallery',
-  buildingsTitle: 'Building blueprints',
   completed: 'Completed',
   inProgress: 'In Progress',
   locked: 'Locked',
@@ -97,7 +96,5 @@ export const blueprints: TranslationSchema['blueprints'] = {
   bookshop: 'Old Bookshop',
   postoffice: 'Post Office',
   firestation: 'Fire Station',
-  watertower: 'Water Tower',
-  'pet-cat': 'Block cat',
-  'pet-bot': 'Little robot'
+  watertower: 'Water Tower'
 }

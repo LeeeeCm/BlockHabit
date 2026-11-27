@@ -9,7 +9,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { listen, emitTo } from '@tauri-apps/api/event'
 import { setPetVisible } from './platform/petWindow'
 import type { PetConfig } from './pet/types'
-import { normalizePetColor, PET_MODELS, resolvePetModel } from './pet/types'
+import { normalizePetColor } from './pet/types'
 import { initPersistence, useAppStore, forceFlush, isDemoMode } from './store/appStore'
 import { cacheAppearance } from './platform/appearance'
 import { pickAdapter } from './storage'
@@ -88,13 +88,8 @@ export default function App() {
   // D-20261124-091：桌宠可见性与配置由主窗驱动；pet 窗口只负责绘制与交互。
   const enablePet = useAppStore((s) => s.settings.enablePet !== false)
   const petSize = useAppStore((s) => s.settings.petSize ?? 'medium')
-  const petSkin = useAppStore((s) => s.settings.petSkin ?? s.settings.petModel ?? 'block')
-  const resolvedPetSkin = resolvePetModel(petSkin, builds)
-  const unlockedPetSkins = PET_MODELS.filter((model) => resolvePetModel(model, builds) === model)
-  const unlockedPetKey = unlockedPetSkins.join(',')
   const petRoam = useAppStore((s) => s.settings.petRoam !== false)
   const petColor = useAppStore((s) => s.settings.petColor)
-  const completedCount = useAppStore((s) => s.completedBlueprintIds.length)
   const petDone = activeHabits.filter((h) => habitMetOnDay(h, checkIns, day)).length
   useEffect(() => {
     if (!inTauri) return
@@ -107,13 +102,10 @@ export default function App() {
     if (!inTauri || !enablePet) return
     const config: PetConfig = {
       size: petSize,
-      skin: resolvedPetSkin,
       roam: petRoam,
       color: petColor,
-      unlocked: unlockedPetSkins,
       done: petDone,
-      total: activeHabits.length,
-      completed: completedCount
+      total: activeHabits.length
     }
     const send = () => {
       void emitTo('pet', 'pet-config', config).catch(() => {})
@@ -122,17 +114,7 @@ export default function App() {
     send()
     const late = window.setTimeout(send, 600)
     return () => window.clearTimeout(late)
-  }, [
-    enablePet,
-    petSize,
-    resolvedPetSkin,
-    unlockedPetKey,
-    petRoam,
-    petColor,
-    petDone,
-    activeHabits.length,
-    completedCount
-  ])
+  }, [enablePet, petSize, petRoam, petColor, petDone, activeHabits.length])
   useEffect(() => {
     if (!inTauri) return
     let disposed = false
@@ -159,8 +141,6 @@ export default function App() {
       const patch: Partial<AppSettings> = {}
       if (payload.size === 'small' || payload.size === 'medium' || payload.size === 'large')
         patch.petSize = payload.size
-      if (payload.skin === 'block' || payload.skin === 'cat' || payload.skin === 'bot')
-        patch.petSkin = payload.skin
       if (typeof payload.roam === 'boolean') patch.petRoam = payload.roam
       if (typeof payload.color === 'string') patch.petColor = normalizePetColor(payload.color)
       if (Object.keys(patch).length > 0) updateSettings(patch)

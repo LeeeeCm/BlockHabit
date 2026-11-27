@@ -269,7 +269,6 @@ export const zh: TranslationSchema = {
   },
   gallery: {
     title: '模型图鉴',
-    buildingsTitle: '建筑蓝图',
     completed: '已落成',
     inProgress: '建造中',
     locked: '待解锁',
@@ -465,14 +464,8 @@ export const zh: TranslationSchema = {
     petSizeSmall: '小',
     petSizeMedium: '中',
     petSizeLarge: '大',
-    petSkinLabel: '形象',
-    petSkinBlock: '积木',
-    petSkinCat: '猫',
-    petSkinBot: '机器人',
     petColorLabel: '颜色',
     petColorTheme: '跟随主题',
-    petSkinHint: '完成对应桌宠蓝图（方块猫 / 小机器人）后解锁该形象。',
-    petSkinLocked: (count) => `完成 ${count} 座建筑后解锁`,
     petRoamLabel: '自主走动',
     petRoamOn: '开启',
     petRoamOff: '关闭',
@@ -558,9 +551,7 @@ export const zh: TranslationSchema = {
     bookshop: '旧书店',
     postoffice: '邮政所',
     firestation: '消防站',
-    watertower: '水塔',
-    'pet-cat': '方块猫',
-    'pet-bot': '小机器人'
+    watertower: '水塔'
   },
   tray: {
     tooltipDone: '今日打卡已全部搞定',
@@ -578,7 +569,21 @@ export const zh: TranslationSchema = {
     energetic: '充实',
     hard: '硬啃',
     spark: '灵感',
-    calm: '平静'
+    calm: '平静',
+    grateful: '感恩',
+    focused: '专注',
+    tired: '疲惫',
+    proud: '自豪'
+  },
+  moodDialog: {
+    title: '今回心境',
+    subtitle: '挑一个最贴近此刻的，也可以写自己的。',
+    customTitle: '自定义心境',
+    customPlaceholder: '例如：有点困，但坚持下来了',
+    customSave: '用这个',
+    customEmpty: '先写点什么',
+    clear: '清除心境',
+    tooLong: '最多 12 个字'
   },
   reflections: {
     engravePlaceholder: '记下今日克服的阻碍或微小胜利...',
@@ -676,6 +681,8 @@ export const zh: TranslationSchema = {
     settingsDesc: '到点提醒你还没完成的事，每天最多一次。',
     settingsTime: '提醒时间',
     settingsTimeNote: '应用运行中生效',
+    pickerHour: '提醒时间 小时',
+    pickerMinute: '提醒时间 分钟',
     consentTitle: '要每天提醒你收尾吗？',
     consentBody: (time) => `默认 ${time}，只在你还有没完成的事时提醒，随时可在设置里关闭。`,
     consentEnable: '开启提醒',
@@ -787,5 +794,5 @@ export const zh: TranslationSchema = {
     notificationBody: (name) => `「${name}」专注时间到，确认后落块`,
     moreSessions: (n) => `另有 ${n} 个专注`
   },
-  pet: { hint: '桌宠：双击打开主窗，右键打开桌宠设置，拖动可移动', blueprints: '桌宠蓝图' }
+  pet: { hint: '桌宠：双击打开主窗，右键打开桌宠设置，拖动可移动' }
 }

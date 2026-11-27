@@ -114,16 +114,24 @@ export function isDayComplete(habits: Habit[], checkIns: CheckIn[], day: string)
 export type CanClaimDayResult =
   { ok: true } | { ok: false; reason: 'no-habits' | 'incomplete' | 'already' }
 
-/** 每日打卡领块：全部任务完成且今日未领过才能领 */
+/**
+ * 每日打卡领块：全部任务完成且今日未领过才能领。
+ *
+ * D-20261126-121：「今日已领过」必须先判 —— 只要这一天领过，无论之后新建/
+ * 完成多少习惯都不能再领一次（每天最多 1 块）。以前这条放在「未完成」之后，
+ * 顺序上没问题，但 Today 页把「是否显示全勤卡」写成了 `metCount === active.length`，
+ * 于是当天领完之后再建一个习惯并完成，卡片又会亮起来（点了才报「已经领过」）。
+ */
 export function canClaimDay(
   habits: Habit[],
   checkIns: CheckIn[],
   dayClaims: DayClaim[],
   day: string
 ): CanClaimDayResult {
+  // 先判「今天领过没有」：这是当天不可逆的事实，与后续新建习惯无关
+  if (dayClaims.some((c) => c.date === day)) return { ok: false, reason: 'already' }
   const active = habits.filter((h) => !h.archivedAt)
   if (active.length === 0) return { ok: false, reason: 'no-habits' }
-  if (dayClaims.some((c) => c.date === day)) return { ok: false, reason: 'already' }
   if (!active.every((h) => habitMetOnDay(h, checkIns, day)))
     return { ok: false, reason: 'incomplete' }
   return { ok: true }

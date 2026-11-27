@@ -5,7 +5,7 @@ import { useAppStore } from '../store/appStore'
 import { useReminderStore } from '../store/reminderStore'
 import { useTimerStore } from '../store/timerStore'
 import { useTodayKey } from '../logic/useTodayKey'
-import { canCheckInHabit, habitMetOnDay } from '../logic/checkin'
+import { canCheckInHabit, habitMetOnDay, isHabitDueOnDay } from '../logic/checkin'
 import { noBlockReason } from '../logic/blockHints'
 import { buildTodayBrief } from '../logic/todayBrief'
 import { templateFrequency, type HabitTemplate } from '../logic/habitTemplates'
@@ -110,22 +110,46 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
     if (!selectedCat) return active
     return active.filter((h) => h.category === selectedCat)
   }, [active, selectedCat])
-  const metCount = useMemo(
-    () => active.filter((h) => habitMetOnDay(h, checkIns, day)).length,
-    [active, checkIns, day]
+
+  /**
+   * 今天应当出现在列表里的习惯（D-20261126-121）。
+   *
+   * 指定了星期的习惯（`frequency.type === 'custom'` 且 `days` 不含今天）今天不出现 ——
+   * 用户预期「设了星期一，就别在周二到周日冒出来」。这与 `habitMetOnDay` 的
+   * 「休息日豁免达标」并不冲突：休息日不显示、也不计入今日完成度。
+   */
+  const dueActive = useMemo(
+    () => filteredActive.filter((h) => isHabitDueOnDay(h, day)),
+    [filteredActive, day]
   )
+  /** 今日完成数：只数「今天该做」的习惯，休息日不参与今日分母 */
+  const dueActiveAll = useMemo(() => active.filter((h) => isHabitDueOnDay(h, day)), [active, day])
+  const metCount = useMemo(
+    () => dueActiveAll.filter((h) => habitMetOnDay(h, checkIns, day)).length,
+    [dueActiveAll, checkIns, day]
+  )
+  /** 今天是否已领过全勤积木：领过之后即使再完成新习惯，也不该再出现「可领取」 */
+  const claimedToday = useMemo(() => dayClaims.some((c) => c.date === day), [dayClaims, day])
+  const allMetToday = metCount === dueActiveAll.length && dueActiveAll.length > 0
+  /**
+   * 全勤卡的显示条件（D-20261126-121）：
+   * - 今天还没领过 + 全部达标 → 可领取；
+   * - 今天已领过 → 只在「本次领取的那个时刻之后没有新增未完成习惯」时保留完成态，
+   *   但绝不再出现「领取」按钮（`claimed` 传给卡片，按钮自动变成「已领全勤」）。
+   */
+  const showFullDayCard = allMetToday
 
   const grouped = useMemo(() => {
     const g = new Map<HabitPeriod, Habit[]>()
     for (const p of PERIOD_ORDER) g.set(p, [])
-    const sorted = [...filteredActive].sort((a, b) => {
+    const sorted = [...dueActive].sort((a, b) => {
       if (a.pinned && !b.pinned) return -1
       if (!a.pinned && b.pinned) return 1
       return 0
     })
     for (const h of sorted) g.get(h.period ?? 'any')!.push(h)
     return g
-  }, [filteredActive])
+  }, [dueActive])
 
   const brief = useMemo(
     () =>
@@ -136,10 +160,10 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
         checkIns,
         builds,
         activeBlueprintId,
-        targetHabits: filteredActive,
+        targetHabits: dueActive,
         completedBlueprintIds
       }),
-    [now, day, habits, checkIns, builds, activeBlueprintId, filteredActive, completedBlueprintIds]
+    [now, day, habits, checkIns, builds, activeBlueprintId, dueActive, completedBlueprintIds]
   )
   const hasAnyCheckIn = useMemo(() => checkIns.some((c) => !c.deletedAt), [checkIns])
 
@@ -395,9 +419,9 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
           />
         )}
 
-        {metCount === active.length && active.length > 0 && (
+        {showFullDayCard && (
           <TodayFullDayCard
-            claimed={dayClaims.some((c) => c.date === day)}
+            claimed={claimedToday}
             onClaim={handleClaimDay}
             onCelebrate={onCelebrate}
           />
@@ -416,8 +440,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
 
         <div
           style={{
-            height:
-              categories.length > 0 || (metCount === active.length && active.length > 0) ? 6 : 18
+            height: categories.length > 0 || allMetToday ? 6 : 18
           }}
         />
         {active.length === 0 ? (

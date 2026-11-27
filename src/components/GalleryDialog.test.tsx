@@ -2,12 +2,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GalleryDialog } from './GalleryDialog'
-import {
-  blueprintCatalogIds,
-  blueprintOrder,
-  blueprints,
-  PET_BLUEPRINT_IDS
-} from '../logic/blueprints'
+import { blueprintOrder, blueprints } from '../logic/blueprints'
 import { canSelectBlueprint, firstIncompleteIndex } from '../logic/blueprint'
 import { noBlockReason } from '../logic/blockHints'
 import { useAppStore } from '../store/appStore'
@@ -15,11 +10,10 @@ import { zh } from '../i18n/locales/zh'
 
 /**
  * B1 / D-20261111-070：图鉴总数、解锁顺序、锁定剪影全部跟随真实注册表。
- * 当前安装包 = 基础 12 座 + 内容包 v2 6 座 + v3 5 座 = 23 座。
- * 断言一律从 blueprintOrder.length 派生，v3 之后再加内容包不会假红。
+ * D-20261127-125：桌宠蓝图已下线，图鉴只保留 23 座建筑且不再有二级标题。
  */
 
-const INSTALLED_TOTAL = 25
+const INSTALLED_TOTAL = 23
 const g = globalThis as unknown as {
   __galleryThumbProps?: Array<{ blueprintId: string; silhouette?: boolean }>
 }
@@ -84,12 +78,12 @@ afterEach(() => {
 })
 
 describe('图鉴动态总数（B1 / D-20261111-070）', () => {
-  it('标题与卡片数跟随完整蓝图目录（当前安装包 25 座）', () => {
-    expect(blueprintCatalogIds).toHaveLength(INSTALLED_TOTAL)
+  it('标题与卡片数跟随完整蓝图目录（当前安装包 23 座）', () => {
+    expect(blueprintOrder).toHaveLength(INSTALLED_TOTAL)
     const view = renderGallery(() => {})
-    expect(view.title()).toContain(String(blueprintCatalogIds.length))
-    expect(view.cards()).toHaveLength(blueprintCatalogIds.length)
-    // 只有第一座主线可建，其余主线按顺序锁定；桌宠支线独立可选
+    expect(view.title()).toContain(String(blueprintOrder.length))
+    expect(view.cards()).toHaveLength(blueprintOrder.length)
+    // 只有第一座主线可建，其余按顺序锁定
     expect(view.lockedCards()).toHaveLength(blueprintOrder.length - 1)
     view.unmount()
   })
@@ -105,21 +99,13 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
     view.unmount()
   })
 
-  it('桌宠蓝图默认置顶，建筑蓝图在后，两组各有二级标题', () => {
+  it('只有一个建筑分区，没有「桌宠蓝图 / 建筑蓝图」二级标题', () => {
     const view = renderGallery(() => {})
-    expect(view.container.querySelector('#gallery-buildings-title')?.textContent).toBe(
-      zh.gallery.buildingsTitle
-    )
-    expect(view.container.querySelector('#gallery-pet-blueprints-title')?.textContent).toBe(
-      zh.pet.blueprints
-    )
-    expect(view.sections()).toEqual(['pets', 'buildings'])
-    expect(view.container.querySelector('.gallery-pin')).toBeNull()
-    expect(view.cards()).toHaveLength(blueprintCatalogIds.length)
-
-    const sections = view.container.querySelectorAll<HTMLElement>('[data-gallery-section]')
-    expect(sections[0].querySelectorAll('.gallery-card')).toHaveLength(PET_BLUEPRINT_IDS.length)
-    expect(sections[1].querySelectorAll('.gallery-card')).toHaveLength(blueprintOrder.length)
+    expect(view.container.querySelector('.gallery-section-title')).toBeNull()
+    expect(view.container.querySelector('#gallery-pet-blueprints-title')).toBeNull()
+    expect(view.container.querySelector('#gallery-buildings-title')).toBeNull()
+    expect(view.sections()).toEqual(['buildings'])
+    expect(view.cards()).toHaveLength(blueprintOrder.length)
     view.unmount()
   })
 
@@ -134,7 +120,7 @@ describe('图鉴动态总数（B1 / D-20261111-070）', () => {
     // 缩略图：主线除第 1 座外全部以剪影渲染
     const props = g.__galleryThumbProps ?? []
     const byId = new Map(props.map((prop) => [prop.blueprintId, prop]))
-    expect(byId.size).toBe(blueprintCatalogIds.length)
+    expect(byId.size).toBe(blueprintOrder.length)
     expect([...byId.values()].filter((p) => p.silhouette === true)).toHaveLength(
       blueprintOrder.length - 1
     )

@@ -10,6 +10,12 @@ export interface DialogA11yOptions {
   initialFocusRef?: React.RefObject<HTMLElement | null>
   /** 嵌套场景：子弹窗打开时父弹窗传 false 抑制自己的 Esc/焦点管理 */
   enabled?: boolean
+  /**
+   * 层级：用于「弹窗里再开弹窗」的场景（如掉落弹窗内打开心境弹窗）。
+   * 父层 100（.drop-overlay）之上必须至少 101，否则会渲染在父弹窗背面。
+   * 缺省 0 = 沿用样式表里的 .overlay 层级（z-index 50），不影响既有弹窗。
+   */
+  layer?: number
 }
 
 /**
@@ -21,12 +27,14 @@ export interface DialogA11yOptions {
  */
 export function useDialogA11y(opts: DialogA11yOptions): {
   ref: React.RefObject<HTMLDivElement | null>
+  /** 直接铺在弹窗根节点的 style：需要叠层时把 z-index 抬到父弹窗之上 */
+  style: React.CSSProperties | undefined
 } {
   const ref = useRef<HTMLDivElement | null>(null)
   const prevFocusRef = useRef<HTMLElement | null>(null)
   const onCloseRef = useRef(opts.onClose)
   onCloseRef.current = opts.onClose
-  const { open, initialFocusRef, enabled = true } = opts
+  const { open, initialFocusRef, enabled = true, layer = 0 } = opts
 
   useEffect(() => {
     if (!open || !enabled) return
@@ -77,5 +85,5 @@ export function useDialogA11y(opts: DialogA11yOptions): {
     }
   }, [open, enabled, initialFocusRef])
 
-  return { ref }
+  return { ref, style: layer ? { zIndex: layer } : undefined }
 }

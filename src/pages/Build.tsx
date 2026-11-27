@@ -109,8 +109,7 @@ export default function Build() {
           {complete && (
             <>
               <button
-                className="btn ghost"
-                style={{ padding: '7px 12px', fontSize: 'var(--fs-body)' }}
+                className="btn ghost block-action"
                 onClick={() => setFoundationModalOpen(true)}
                 title={t.reflections.foundationModalTitle}
               >
@@ -120,8 +119,7 @@ export default function Build() {
                 </span>
               </button>
               <button
-                className="btn ghost"
-                style={{ padding: '7px 12px', fontSize: 'var(--fs-body)' }}
+                className="btn ghost block-action"
                 onClick={() => setPolaroidOpen(true)}
                 title={t.build.polaroidBtn}
               >

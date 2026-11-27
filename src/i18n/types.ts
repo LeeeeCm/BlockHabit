@@ -277,8 +277,6 @@ export interface TranslationSchema {
   }
   gallery: {
     title: string
-    /** 二级标题：建筑蓝图（主线 + 内容包） */
-    buildingsTitle: string
     completed: string
     inProgress: string
     locked: string
@@ -472,14 +470,8 @@ export interface TranslationSchema {
     petSizeSmall: string
     petSizeMedium: string
     petSizeLarge: string
-    petSkinLabel: string
-    petSkinBlock: string
-    petSkinCat: string
-    petSkinBot: string
     petColorLabel: string
     petColorTheme: string
-    petSkinHint: string
-    petSkinLocked: (count: number) => string
     petRoamLabel: string
     petRoamOn: string
     petRoamOff: string
@@ -569,6 +561,21 @@ export interface TranslationSchema {
     hard: string
     spark: string
     calm: string
+    grateful: string
+    focused: string
+    tired: string
+    proud: string
+  }
+  /** 心境选择弹窗（D-20261126-118） */
+  moodDialog: {
+    title: string
+    subtitle: string
+    customTitle: string
+    customPlaceholder: string
+    customSave: string
+    customEmpty: string
+    clear: string
+    tooLong: string
   }
   reflections: {
     engravePlaceholder: string
@@ -666,6 +673,9 @@ export interface TranslationSchema {
     settingsDesc: string
     settingsTime: string
     settingsTimeNote: string
+    /** 时间滚轮两列的无障碍名称（D-20261126-115） */
+    pickerHour: string
+    pickerMinute: string
     consentTitle: string
     consentBody: (time: string) => string
     consentEnable: string
@@ -780,5 +790,5 @@ export interface TranslationSchema {
     /** B4：多会话展示副行 */
     moreSessions: (n: number) => string
   }
-  pet: { hint: string; blueprints: string }
+  pet: { hint: string }
 }

@@ -103,6 +103,8 @@ function mergeCheckIns(
         ...base,
         note: base.note && base.note.trim() ? base.note : other.note,
         mood: base.mood || other.mood,
+        // D-20261126-118：自定义心境文本按「笔记」同口径合并（非空胜出）
+        moodNote: base.moodNote && base.moodNote.trim() ? base.moodNote : other.moodNote,
         starred: Boolean(base.starred || other.starred),
         placedBlockId: base.placedBlockId || other.placedBlockId,
         blueprintId: base.blueprintId || other.blueprintId,

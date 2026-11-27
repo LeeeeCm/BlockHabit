@@ -14,6 +14,7 @@ import { HabitReflectionSection } from './habitrow/HabitReflectionSection'
 import { HabitFocusSection } from './habitrow/HabitFocusSection'
 import { HabitRowFooter } from './habitrow/HabitRowFooter'
 import { HabitRowDialogs } from './habitrow/HabitRowDialogs'
+import { MoodPickerDialog } from './MoodPickerDialog'
 import { isQuotaOnlyDone, weekMissed } from './habitrow/helpers'
 
 interface Props {
@@ -76,23 +77,34 @@ export const HabitRow = memo(function HabitRow({
   const [editingNote, setEditingNote] = useState(false)
   const [noteVal, setNoteVal] = useState(todayCheckIn?.note ?? '')
   const [moodVal, setMoodVal] = useState<MicroMood | undefined>(todayCheckIn?.mood)
+  const [moodNoteVal, setMoodNoteVal] = useState<string | undefined>(todayCheckIn?.moodNote)
   const [starVal, setStarVal] = useState<boolean>(todayCheckIn?.starred ?? false)
+  /** 心境选择弹窗（D-20261126-118） */
+  const [moodPickerOpen, setMoodPickerOpen] = useState(false)
   useEffect(() => {
     setNoteVal(todayCheckIn?.note ?? '')
     setMoodVal(todayCheckIn?.mood)
+    setMoodNoteVal(todayCheckIn?.moodNote)
     setStarVal(todayCheckIn?.starred ?? false)
-  }, [todayCheckIn?.note, todayCheckIn?.mood, todayCheckIn?.starred])
+  }, [todayCheckIn?.note, todayCheckIn?.mood, todayCheckIn?.moodNote, todayCheckIn?.starred])
 
   function cancelNoteEdit() {
     setNoteVal(todayCheckIn?.note ?? '')
     setMoodVal(todayCheckIn?.mood)
+    setMoodNoteVal(todayCheckIn?.moodNote)
     setStarVal(todayCheckIn?.starred ?? false)
     setEditingNote(false)
   }
 
   function commitNote() {
     if (todayCheckIn) {
-      recordCheckInNote(todayCheckIn.id, noteVal, moodVal ?? null, starVal)
+      recordCheckInNote(
+        todayCheckIn.id,
+        noteVal,
+        moodNoteVal ? null : (moodVal ?? null),
+        starVal,
+        moodNoteVal ?? null
+      )
       onNoteSaved?.()
     }
     setEditingNote(false)
@@ -261,6 +273,8 @@ export const HabitRow = memo(function HabitRow({
   }
   function handleToggleMood(m: MicroMood) {
     triggerHaptic('selection')
+    // 选预设即放弃自定义文本（两者互斥，见 recordCheckInNote）
+    setMoodNoteVal(undefined)
     setMoodVal((prev) => (prev === m ? undefined : m))
   }
   function handleToggleStar() {
@@ -351,6 +365,10 @@ export const HabitRow = memo(function HabitRow({
         if ((e.target as HTMLElement).closest('button')) return
         handleCardClick()
       }}
+      // D-20261126-118：鼠标离开卡片即复原编辑态，不需要用户再点一下空白处
+      onMouseLeave={() => {
+        if (editingNote) cancelNoteEdit()
+      }}
     >
       <HabitRowHeader
         t={t}
@@ -401,6 +419,26 @@ export const HabitRow = memo(function HabitRow({
 
       {floatingPill && <div className="checkin-float-pill">{floatingPill}</div>}
 
+      {moodPickerOpen && (
+        <MoodPickerDialog
+          mood={moodVal}
+          moodNote={moodNoteVal}
+          onClose={() => setMoodPickerOpen(false)}
+          onPickMood={(next) => {
+            setMoodNoteVal(undefined)
+            setMoodVal(next ?? undefined)
+          }}
+          onPickNote={(note) => {
+            if (!note.trim()) {
+              setMoodNoteVal(undefined)
+              return
+            }
+            setMoodVal(undefined)
+            setMoodNoteVal(note.trim())
+          }}
+        />
+      )}
+
       {isCounter && (
         <HabitCounterSection
           counterVal={counterVal}
@@ -423,10 +461,12 @@ export const HabitRow = memo(function HabitRow({
           editingNote={editingNote}
           noteVal={noteVal}
           moodVal={moodVal}
+          moodNoteVal={moodNoteVal}
           starVal={starVal}
           onStartEdit={handleStartEditNote}
           onToggleMood={handleToggleMood}
           onToggleStar={handleToggleStar}
+          onOpenMoodPicker={() => setMoodPickerOpen(true)}
           onNoteChange={handleNoteChange}
           onNoteKeyDown={handleNoteKeyDown}
           onCommit={commitNote}

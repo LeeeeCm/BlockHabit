@@ -44,15 +44,11 @@ export function ArchiveDataPanel({ onImportFile }: DataPanelProps) {
     <>
       <div className="field" style={{ marginBottom: 0 }}>
         <label>{t.settings.dataLabel}</label>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn ghost" onClick={doExport} style={{ flex: 1, padding: '7px 0' }}>
+        <div className="settings-actions">
+          <button className="btn ghost" onClick={doExport}>
             {t.settings.exportJson}
           </button>
-          <button
-            className="btn ghost"
-            onClick={() => fileRef.current?.click()}
-            style={{ flex: 1, padding: '7px 0' }}
-          >
+          <button className="btn ghost" onClick={() => fileRef.current?.click()}>
             {t.settings.importJson}
           </button>
           <input
@@ -120,19 +116,11 @@ export function ArchiveBackupsPanel({ onToast, onRestoreCandidate }: BackupsPane
   return (
     <>
       <div className="field" style={{ marginBottom: 10 }}>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            className="btn ghost"
-            onClick={() => void doManualBackup()}
-            style={{ flex: 1, padding: '7px 0' }}
-          >
+        <div className="settings-actions">
+          <button className="btn ghost" onClick={() => void doManualBackup()}>
             {t.settings.backupNow}
           </button>
-          <button
-            className="btn ghost"
-            onClick={() => void doOpenDataDir()}
-            style={{ flex: 1, padding: '7px 0' }}
-          >
+          <button className="btn ghost" onClick={() => void doOpenDataDir()}>
             {t.settings.openDataDir}
           </button>
         </div>
@@ -233,18 +221,13 @@ export function DiagnosticsExportPanel({ onToast }: DiagnosticsProps) {
       {/* F9 本地诊断包：崩溃日志 + 数据体量 + 帧率采样，纯本地生成 */}
       <div className="field" style={{ marginBottom: 0 }}>
         <label>{t.settings.diagnosticsLabel}</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            className="btn ghost"
-            style={{ padding: '7px 16px' }}
-            onClick={() => void doExportDiagnostics()}
-          >
+        <div className="settings-actions">
+          <button className="btn ghost" onClick={() => void doExportDiagnostics()}>
             {t.settings.diagnosticsExport}
           </button>
-          <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-2)', lineHeight: 1.5 }}>
-            {t.settings.diagnosticsHint}
-          </span>
         </div>
+        {/* D-20261126-114：说明文字单独一行，放在按钮下方（不挤压按钮宽度） */}
+        <div className="settings-hint">{t.settings.diagnosticsHint}</div>
       </div>
     </>
   )

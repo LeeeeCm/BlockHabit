@@ -65,7 +65,7 @@ describe('localStorage adapter', () => {
     const legacy: AppState = {
       ...validState(),
       contentVersion: 4,
-      settings: { theme: 'dark', language: 'en', soundMuted: true, petSkin: 'cat' },
+      settings: { theme: 'dark', language: 'en', soundMuted: true },
       dayClaims: [
         {
           date: '2026-08-22',
@@ -94,7 +94,7 @@ describe('localStorage adapter', () => {
     expect(loaded!.foundationNotes).toEqual(legacy.foundationNotes)
     expect(loaded!.reminderLog).toEqual(legacy.reminderLog)
     expect(loaded!.settings.theme).toBe('dark')
-    expect(loaded!.settings.petSkin).toBe('cat')
+    expect('petSkin' in loaded!.settings).toBe(false)
   })
 
   it('returns null on corrupt json and backs up raw content', async () => {

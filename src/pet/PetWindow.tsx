@@ -59,12 +59,12 @@ const DRAW_FPS_MS = 16
 const HOP_MS = 400
 
 /**
- * 积木桌宠窗口（D-20261124-088）。
+ * 积木桌宠窗口（D-20261124-088 / D-20261127-125）。
  *
- * - 透明置顶小窗；block 是一块会跳的积木，robot 是积木机器人；
+ * - 透明置顶小窗；固定为圆角积木 + 一枚凸点的积木桌宠形象；
  * - idle 呼吸 + 眨眼，walk 左右移动并碰边反弹；
  * - 拖动改位置；单击跳一下；双击唤起主窗；右键打开桌宠设置。
- * - 主窗通过 `pet-config` 事件同步形象 / 大小 / 是否走动 / 今日打卡进度。
+ * - 主窗通过 `pet-config` 事件同步大小 / 是否走动 / 今日打卡进度。
  */
 export function PetWindow({ preview = false }: Props) {
   const { t } = useI18n()
@@ -207,7 +207,6 @@ export function PetWindow({ preview = false }: Props) {
       const blink = now < blinkUntil ? 0 : 1
       const config = configRef.current
       const roam = config.roam !== false
-      const skin = config.skin
 
       if (menuOpenRef.current) {
         if (mode === 'walk') {
@@ -298,6 +297,8 @@ export function PetWindow({ preview = false }: Props) {
 
       const paletteNow = palette
       const renderer = ctx as CanvasRenderingContext2D
+      // 每帧重置变换：走动时窗口与角色同时在动，残留的 dt 缩放会在边缘留下 1px 细线
+      renderer.setTransform(dpr, 0, 0, dpr, 0, 0)
       renderer.clearRect(0, 0, PET_SIZE.w, PET_SIZE.h)
       const pose = (walkHopStart > 0 && now - walkHopStart < HOP_MS
         ? petHopPose(now - walkHopStart, walkHopDirection)
@@ -318,7 +319,6 @@ export function PetWindow({ preview = false }: Props) {
       paintPet(renderer, {
         width: PET_SIZE.w,
         height: PET_SIZE.h,
-        model: skin,
         mood,
         palette: paletteNow,
         shading: config.color ? deriveShadingForColor(config.color) : undefined,
