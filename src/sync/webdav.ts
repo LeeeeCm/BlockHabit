@@ -45,6 +45,15 @@ export function getSyncUrl(endpoint: string): string {
   return encodeUrlPath(file)
 }
 
+/**
+ * D-20261128-133：显式 http:// 端点拒绝同步。
+ * WebDAV 认证用 Basic（base64 用户名:密码），http 会让密码明文过网；诊断路径已拒绝，
+ * 同步路径必须同口径。裸主机名仍自动补 https。
+ */
+export function isInsecureHttpEndpoint(endpoint: string): boolean {
+  return /^http:\/\//i.test(endpoint.trim())
+}
+
 /** 对路径段做编码；已编码过的段保持原样（避免双重编码）。导出供 diagnose 复用（行为不变） */
 export function encodeUrlPath(url: string): string {
   const schemeEnd = url.indexOf('://') + 3

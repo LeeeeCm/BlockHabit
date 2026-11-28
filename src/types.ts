@@ -130,6 +130,12 @@ export interface DeletedDayClaim {
   deletedAt: string
 }
 
+/** 删除习惯的墓碑：同步合并时删除胜出，防止远端旧存档把习惯及其打卡/积木复活 */
+export interface DeletedHabit {
+  id: string
+  deletedAt: string
+}
+
 export interface ShowcasePlacement {
   blueprintId: string
   gridX: number
@@ -198,6 +204,8 @@ export interface AppState {
   dayClaims: DayClaim[]
   /** 全勤领取墓碑 */
   deletedDayClaims?: DeletedDayClaim[]
+  /** 习惯删除墓碑（D-20261128-133）：远端旧存档不得复活已删习惯及其打卡 */
+  deletedHabits?: DeletedHabit[]
   /** 修复积木库存数量（月度额度 2 + 连击里程碑，最高 4 块） */
   repairBricks?: number
   /** 最近一次发放月度额度的月份键（'YYYY-MM'），用于补签时结算月额度（F8） */

@@ -91,6 +91,100 @@ describe('mergeAppState facts merge (schema v2)', () => {
     expect(merged.checkIns.some((c) => c.id === 'c3')).toBe(true)
   })
 
+  it('D-20261128-133: keeps a live re-check-in when it is newer than the tombstone', () => {
+    const habit: Habit = {
+      id: 'h-recheck',
+      name: '读书',
+      frequency: { type: 'daily' },
+      createdAt: '2026-01-01T00:00:00.000Z'
+    }
+    const tombstone: CheckIn = {
+      id: 'c-old',
+      habitId: habit.id,
+      date: '2026-11-28',
+      at: '2026-11-28T08:00:00.000Z',
+      deletedAt: '2026-11-28T10:00:00.000Z',
+      placedBlockId: 'b-old',
+      blueprintId: 'plant'
+    }
+    const reCheckIn: CheckIn = {
+      id: 'c-new',
+      habitId: habit.id,
+      date: '2026-11-28',
+      at: '2026-11-28T11:00:00.000Z',
+      placedBlockId: 'b-new',
+      blueprintId: 'plant'
+    }
+    const merged = mergeAppState(
+      createMockState({ habits: [habit], checkIns: [tombstone, reCheckIn] }),
+      createMockState({ habits: [habit] })
+    )
+    expect(merged.checkIns).toHaveLength(1)
+    expect(merged.checkIns[0]).toMatchObject({ id: 'c-new', placedBlockId: 'b-new' })
+    expect(merged.checkIns[0].deletedAt).toBeUndefined()
+    expect(merged.builds.some((b) => b.id === 'b-new')).toBe(true)
+    expect(merged.builds.some((b) => b.id === 'b-old')).toBe(false)
+  })
+
+  it('D-20261128-133: a newer tombstone still wins over an older live record', () => {
+    const habit: Habit = {
+      id: 'h-undo',
+      name: '跑步',
+      frequency: { type: 'daily' },
+      createdAt: '2026-01-01T00:00:00.000Z'
+    }
+    const live: CheckIn = {
+      id: 'c-live',
+      habitId: habit.id,
+      date: '2026-11-28',
+      at: '2026-11-28T08:00:00.000Z',
+      placedBlockId: 'b-live',
+      blueprintId: 'plant'
+    }
+    const undo: CheckIn = {
+      id: 'c-undo',
+      habitId: habit.id,
+      date: '2026-11-28',
+      at: '2026-11-28T08:00:00.000Z',
+      deletedAt: '2026-11-28T12:00:00.000Z',
+      placedBlockId: 'b-live',
+      blueprintId: 'plant'
+    }
+    const merged = mergeAppState(
+      createMockState({ habits: [habit], checkIns: [live, undo] }),
+      createMockState({ habits: [habit] })
+    )
+    expect(merged.checkIns).toHaveLength(1)
+    expect(merged.checkIns[0].deletedAt).toBe('2026-11-28T12:00:00.000Z')
+    expect(merged.builds).toHaveLength(0)
+  })
+
+  it('D-20261128-133: deleted habit tombstone filters remote resurrection', () => {
+    const habit: Habit = {
+      id: 'h-deleted',
+      name: '旧习惯',
+      frequency: { type: 'daily' },
+      createdAt: '2026-01-01T00:00:00.000Z'
+    }
+    const remoteCheckIn: CheckIn = {
+      id: 'c-remote',
+      habitId: habit.id,
+      date: '2026-11-20',
+      at: '2026-11-20T08:00:00.000Z',
+      placedBlockId: 'b-remote',
+      blueprintId: 'plant'
+    }
+    const deletedHabits = [{ id: habit.id, deletedAt: '2026-11-21T00:00:00.000Z' }]
+    const merged = mergeAppState(
+      createMockState({ deletedHabits }),
+      createMockState({ habits: [habit], checkIns: [remoteCheckIn] })
+    )
+    expect(merged.habits).toHaveLength(0)
+    expect(merged.checkIns).toHaveLength(0)
+    expect(merged.builds).toHaveLength(0)
+    expect(merged.deletedHabits).toEqual(deletedHabits)
+  })
+
   it('preserves multiple daily check-ins for counter habits without merging them away', () => {
     const waterHabit: Habit = {
       id: 'h_water',

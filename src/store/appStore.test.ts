@@ -444,6 +444,40 @@ describe('appStore checkIn & uncheckIn block economy', () => {
     expect(useAppStore.getState().repairBricks).toBe(1)
   })
 
+  it('D-20261128-133：全勤落成奖励遵守 REPAIR_MAX，不把库存压回 2', () => {
+    const store = useAppStore.getState()
+    const bp = getBlueprint('plant')
+    const habit = store.addHabit('全勤测试', { type: 'daily' })
+    const today = dateKey(new Date())
+    const dummyBuilds = bp.blocks.slice(0, bp.blocks.length - 1).map((_, i) => ({
+      id: `dummy-${i}`,
+      blueprintId: 'plant',
+      index: i,
+      placedAt: new Date().toISOString(),
+      fromHabitId: 'seed',
+      bonus: false
+    }))
+    useAppStore.setState({
+      checkIns: [
+        {
+          id: 'seed-check',
+          habitId: habit.id,
+          date: today,
+          at: new Date().toISOString()
+        }
+      ],
+      builds: dummyBuilds,
+      repairBricks: 3,
+      repairBrickMonth: monthKeyOf(),
+      completedBlueprintIds: [],
+      dayClaims: []
+    })
+
+    const res = store.checkInDay()
+    expect(res.complete).toBe(true)
+    expect(useAppStore.getState().repairBricks).toBe(REPAIR_MAX)
+  })
+
   it('F8：落成奖励不再被旧的 2 块上限卡住（上限为 4）', () => {
     expect(REPAIR_MAX).toBe(4)
   })

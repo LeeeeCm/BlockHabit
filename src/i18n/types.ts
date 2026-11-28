@@ -443,6 +443,8 @@ export interface TranslationSchema {
     corruptRecoveredToast: string
     syncErrors: {
       noEndpoint: string
+      /** 显式 http:// 端点：Basic 凭据会明文过网，同步直接拒绝 */
+      insecureHttp: string
       auth: string
       parse: string
       incompatible: string

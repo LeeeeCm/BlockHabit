@@ -87,6 +87,15 @@ describe('Stats 拆分后的两种视图', () => {
     expect(view.querySelector('input[type="text"]')).not.toBeNull()
   })
 
+  it('手账视图不显示已撤销的打卡', () => {
+    useAppStore.setState({
+      checkIns: [{ ...checkIn, deletedAt: '2026-11-21T09:00:00.000Z' }]
+    })
+    const view = renderStats()
+    clickByText(view, '手账')
+    expect(view.textContent).not.toContain('读完一章')
+  })
+
   it('页头纪念品入口打开纪念品中心', () => {
     const view = renderStats()
     clickByText(view, '纪念品')

@@ -2,6 +2,7 @@ import type {
   AppState,
   CheckIn,
   DayClaim,
+  DeletedHabit,
   Habit,
   ReminderLogEntry,
   ShowcasePlacement,
@@ -76,10 +77,28 @@ function mergeHabits(localHabits: Habit[], remoteHabits: Habit[]): Habit[] {
   return Array.from(habitMap.values())
 }
 
+/** 习惯删除墓碑合并：同一 id 保留最新删除时间；删除一旦发生即胜出，防止远端旧存档复活 */
+function mergeDeletedHabits(
+  local: DeletedHabit[] | undefined,
+  remote: DeletedHabit[] | undefined
+): DeletedHabit[] {
+  const byId = new Map<string, DeletedHabit>()
+  for (const entry of [...(remote ?? []), ...(local ?? [])]) {
+    if (!entry || typeof entry.id !== 'string' || !entry.id) continue
+    if (typeof entry.deletedAt !== 'string' || !entry.deletedAt) continue
+    const existing = byId.get(entry.id)
+    if (!existing || entry.deletedAt > existing.deletedAt) {
+      byId.set(entry.id, { id: entry.id, deletedAt: entry.deletedAt })
+    }
+  }
+  return [...byId.values()]
+}
+
 /**
  * Merges check-ins by id (counter habits) or habitId+date (others), with deletion tombstones:
- * any side carrying deletedAt wins — an undo on one device must not be resurrected by the other.
- * Enriches surviving check-ins by merging metadata (notes, mood, starred).
+ * the later of the live check-in's `at` and the tombstone's `deletedAt` wins, so an undo cannot
+ * be resurrected by an older archive, while a deliberate re-check-in after undo survives sync.
+ * Enriches surviving live check-ins by merging metadata (notes, mood, starred).
  */
 function mergeCheckIns(
   localCheckIns: CheckIn[],
@@ -105,27 +124,46 @@ function mergeCheckIns(
 
     if (existingIndex !== undefined) {
       const existing = merged[existingIndex]
-      const base = isRemote ? existing : c
-      const other = isRemote ? c : existing
+      const existingDeleted = Boolean(existing.deletedAt)
+      const incomingDeleted = Boolean(c.deletedAt)
+      let combined: CheckIn
 
-      const combined: CheckIn = {
-        ...other,
-        ...base,
-        note: base.note && base.note.trim() ? base.note : other.note,
-        mood: base.mood || other.mood,
-        // D-20261126-118：自定义心境文本按「笔记」同口径合并（非空胜出）
-        moodNote: base.moodNote && base.moodNote.trim() ? base.moodNote : other.moodNote,
-        starred: Boolean(base.starred || other.starred),
-        placedBlockId: base.placedBlockId || other.placedBlockId,
-        blueprintId: base.blueprintId || other.blueprintId,
-        actualMinutes: base.actualMinutes ?? other.actualMinutes,
-        value: base.value ?? other.value,
-        bonus: base.bonus ?? other.bonus,
-        // 墓碑一旦出现即生效（不可逆），任一侧携带即保留
-        deletedAt: base.deletedAt ?? other.deletedAt
+      if (existingDeleted !== incomingDeleted) {
+        // D-20261128-133：墓碑与重新打卡不能无条件让墓碑胜出。
+        // 比较“最后一次事件”的时间：打卡看 at，撤销看 deletedAt；更晚发生的一方胜出。
+        // 旧实现 deletedAt 任一非空即胜出，会把撤销后同日重新打卡的 live 记录吞掉。
+        const existingEvent = existing.deletedAt ?? existing.at
+        const incomingEvent = c.deletedAt ?? c.at
+        const winner = incomingEvent > existingEvent ? c : existing
+        combined = { ...winner, deletedAt: winner.deletedAt }
+      } else if (existingDeleted && incomingDeleted) {
+        // 两边都是墓碑：保留更晚的撤销时间
+        const winner = (c.deletedAt ?? '') > (existing.deletedAt ?? '') ? c : existing
+        combined = { ...winner }
+      } else {
+        // 两边都是 live：沿用原有的本地优先 + 元数据并集
+        const base = isRemote ? existing : c
+        const other = isRemote ? c : existing
+        combined = {
+          ...other,
+          ...base,
+          note: base.note && base.note.trim() ? base.note : other.note,
+          mood: base.mood || other.mood,
+          // D-20261126-118：自定义心境文本按「笔记」同口径合并（非空胜出）
+          moodNote: base.moodNote && base.moodNote.trim() ? base.moodNote : other.moodNote,
+          starred: Boolean(base.starred || other.starred),
+          placedBlockId: base.placedBlockId || other.placedBlockId,
+          blueprintId: base.blueprintId || other.blueprintId,
+          actualMinutes: base.actualMinutes ?? other.actualMinutes,
+          value: base.value ?? other.value,
+          bonus: base.bonus ?? other.bonus,
+          deletedAt: undefined
+        }
       }
       merged[existingIndex] = combined
       if (c.id) idMap.set(c.id, existingIndex)
+      if (combined.id) idMap.set(combined.id, existingIndex)
+      if (existing.id) idMap.set(existing.id, existingIndex)
     } else {
       const newIdx = merged.length
       merged.push({ ...c })
@@ -281,8 +319,15 @@ function mergeShowcaseSandboxes(
 }
 
 export function mergeAppState(local: AppState, remote: AppState): AppState {
-  const habits = mergeHabits(local.habits, remote.habits)
-  const checkIns = mergeCheckIns(local.checkIns, remote.checkIns, habits)
+  const deletedHabits = mergeDeletedHabits(local.deletedHabits, remote.deletedHabits)
+  const deletedHabitIds = new Set(deletedHabits.map((entry) => entry.id))
+  const mergedHabits = mergeHabits(local.habits, remote.habits)
+  // D-20261128-133：删除习惯的墓碑优先于远端旧存档；打卡按 habitId 一并过滤，
+  // 避免 rebuildBuilds 把已删习惯的积木重新投影出来。
+  const habits = mergedHabits.filter((habit) => !deletedHabitIds.has(habit.id))
+  const checkIns = mergeCheckIns(local.checkIns, remote.checkIns, mergedHabits).filter(
+    (checkIn) => !deletedHabitIds.has(checkIn.habitId)
+  )
   const { claims: dayClaims, deleted: deletedDayClaims } = mergeDayClaims(
     local.dayClaims || [],
     remote.dayClaims || [],
@@ -382,6 +427,7 @@ export function mergeAppState(local: AppState, remote: AppState): AppState {
     settings: settings as AppState['settings'],
     dayClaims,
     deletedDayClaims: gcDeletedClaims,
+    deletedHabits,
     repairBricks,
     repairBrickMonth,
     showcasePlacements: activeSandboxFiltered.placements,

@@ -96,16 +96,30 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
   deleteHabit(id) {
-    const { habits, checkIns, builds, completedBlueprintIds, dayClaims } = get()
+    const { habits, checkIns, builds, completedBlueprintIds, dayClaims, deletedHabits } = get()
+    const deletedAt = new Date().toISOString()
     const remainingCheckIns = checkIns.filter((c) => c.habitId !== id)
-    const affectedBpIds = new Set(
-      builds.filter((b) => b.fromHabitId === id).map((b) => b.blueprintId)
-    )
-    const nextBuilds = rebuildBuilds(
-      liveCheckInsView(remainingCheckIns),
-      dayClaims,
-      BLUEPRINT_CAPACITY
-    )
+    const liveAfter = liveCheckInsView(remainingCheckIns)
+    const removedBuildIds = new Set(builds.filter((b) => b.fromHabitId === id).map((b) => b.id))
+    // 与 uncheckIn 同口径：投影与事实一致才全量重建；旧档/外部导入的遗留块走保守移除，
+    // 否则删除任意习惯都会把无法由事实推导的积木一并抹掉（A5b/A7、D-20261128-133）。
+    const nextBuilds = buildsMatchFacts(builds, liveAfter, dayClaims)
+      ? rebuildBuilds(liveAfter, dayClaims, BLUEPRINT_CAPACITY)
+      : removeBlocksAndCompact(builds, removedBuildIds)
+
+    // 所有块数变化的蓝图都要对账，而不只是被删习惯自己的蓝图
+    const beforeCounts = new Map<string, number>()
+    for (const b of builds) {
+      beforeCounts.set(b.blueprintId, (beforeCounts.get(b.blueprintId) ?? 0) + 1)
+    }
+    const afterCounts = new Map<string, number>()
+    for (const b of nextBuilds) {
+      afterCounts.set(b.blueprintId, (afterCounts.get(b.blueprintId) ?? 0) + 1)
+    }
+    const affectedBpIds = new Set<string>()
+    for (const bpId of new Set([...beforeCounts.keys(), ...afterCounts.keys()])) {
+      if ((beforeCounts.get(bpId) ?? 0) !== (afterCounts.get(bpId) ?? 0)) affectedBpIds.add(bpId)
+    }
     const { completed: nextCompleted, removed } = reconcileCompletion(
       affectedBpIds,
       nextBuilds,
@@ -117,6 +131,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     // 清理该习惯的提醒处置记录，避免 reminderLog 随习惯删除无限增长
     const reminderLog = { ...(get().reminderLog ?? {}) }
     delete reminderLog[id]
+    // D-20261128-133：删除墓碑随存档/同步保留，远端旧存档不得把习惯及其打卡复活
+    const nextDeletedHabits = [
+      ...(deletedHabits ?? []).filter((entry) => entry.id !== id),
+      { id, deletedAt }
+    ]
     // 选择器按 habitId 缓存：习惯本体变化后必须失效，否则会读到过期切片
     clearHabitSliceCache()
     set({
@@ -124,6 +143,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       checkIns: remainingCheckIns,
       builds: nextBuilds,
       completedBlueprintIds: nextCompleted,
+      deletedHabits: nextDeletedHabits,
       ...showcaseFields(nextSandboxes, showcase.activeId),
       reminderLog
     })
@@ -583,7 +603,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       complete = !wasComplete && nowComplete
       if (nowComplete && !completedBlueprintIds.includes(activeBlueprintId)) {
         nextCompleted = [...completedBlueprintIds, activeBlueprintId]
-        nextRepair = Math.min(2, nextRepair + 1)
+        nextRepair = Math.min(REPAIR_MAX, nextRepair + 1)
         if (!nextPlacements.some((p) => p.blueprintId === activeBlueprintId)) {
           const placement = findNextAvailablePlacement(
             activeBlueprintId,

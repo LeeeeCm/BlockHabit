@@ -8,7 +8,7 @@ import {
   type SyncStatus,
   type WebDavConfig
 } from './types'
-import { fetchRemoteState, pushRemoteState, WebDavError } from './webdav'
+import { fetchRemoteState, isInsecureHttpEndpoint, pushRemoteState, WebDavError } from './webdav'
 import { mergeAppState } from './merge'
 import { serializeState } from '../store/serializeState'
 import {
@@ -257,6 +257,11 @@ export function useSync() {
       lastErrorRef.current = 'no-endpoint'
       setError('no-endpoint')
       setStatus('error')
+      return false
+    }
+    if (isInsecureHttpEndpoint(endpoint)) {
+      // D-20261128-133：Basic 认证 + 明文 http = 密码过网；与诊断路径保持同口径
+      applyError('insecure-http')
       return false
     }
 

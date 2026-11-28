@@ -70,6 +70,8 @@ export const webdav: TranslationSchema['settings']['webdav'] = {
 
 export const syncErrors: TranslationSchema['settings']['syncErrors'] = {
   noEndpoint: 'Please fill in the WebDAV server address first',
+  insecureHttp:
+    'Sync requires an https address. Plain http would send your password in cleartext, so sync was stopped. Please use https.',
   auth: 'Authentication failed. Check your username and password',
   parse: 'Remote archive is corrupted (invalid JSON)',
   incompatible: 'Remote archive structure is incompatible with this app version',

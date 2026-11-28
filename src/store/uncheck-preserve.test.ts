@@ -18,6 +18,7 @@ function reset() {
     settings: { theme: 'light', language: 'zh' },
     dayClaims: [],
     deletedDayClaims: [],
+    deletedHabits: [],
     reminderLog: {},
     repairBricks: 0
   })
@@ -122,5 +123,30 @@ describe('deleteHabit 清理（A9）', () => {
     const after = useAppStore.getState()
     expect(after.habits).toHaveLength(0)
     expect(after.reminderLog?.[habit.id]).toBeUndefined()
+  })
+
+  it('删除习惯写入墓碑，并保留无关的历史遗留块', () => {
+    const store = useAppStore.getState()
+    const habit = store.addHabit('待删习惯', { type: 'daily' })
+    useAppStore.setState({
+      // 与待删习惯无关、无法由事实推导的遗留块
+      builds: [
+        {
+          id: 'legacy-other',
+          blueprintId: 'plant',
+          index: 0,
+          placedAt: '2025-12-01T00:00:00.000Z',
+          fromHabitId: 'other-habit',
+          bonus: false
+        }
+      ]
+    })
+
+    useAppStore.getState().deleteHabit(habit.id)
+
+    const after = useAppStore.getState()
+    expect(after.habits).toHaveLength(0)
+    expect(after.deletedHabits).toEqual([{ id: habit.id, deletedAt: expect.any(String) }])
+    expect(after.builds.map((b) => b.id)).toEqual(['legacy-other'])
   })
 })

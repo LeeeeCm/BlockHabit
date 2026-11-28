@@ -78,6 +78,26 @@ describe('useSync hook', () => {
     unmount()
   })
 
+  it('syncNow rejects insecure http endpoint before any network request', async () => {
+    saveWebDavConfig({
+      endpoint: 'http://dav.test/dav/',
+      username: 'user',
+      password: 'pwd',
+      enabled: true
+    })
+    const { result, unmount } = renderHookHelper(() => useSync())
+
+    let ok = true
+    await act(async () => {
+      ok = await result.current.syncNow()
+    })
+
+    expect(ok).toBe(false)
+    expect(result.current.status).toBe('error')
+    expect(result.current.error).toBe('insecure-http')
+    unmount()
+  })
+
   it('syncNow refuses to run before store hydration', async () => {
     // 预设合法端点：确保失败原因是 hydrated 守卫而非端点校验
     saveWebDavConfig({

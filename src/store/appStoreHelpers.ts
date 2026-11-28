@@ -65,6 +65,7 @@ export function defaultState(): AppState {
     },
     dayClaims: [],
     deletedDayClaims: [],
+    deletedHabits: [],
     repairBricks: 0,
     showcasePlacements: [],
     showcaseSandboxes: [createShowcaseSandbox(DEFAULT_SANDBOX_ID, 0)],

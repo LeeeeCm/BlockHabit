@@ -3,6 +3,7 @@ import type {
   AppState,
   DayClaim,
   DeletedDayClaim,
+  DeletedHabit,
   ReminderLogEntry,
   ShowcasePlacement,
   ShowcaseSandbox
@@ -179,6 +180,25 @@ function isValidDeletedDayClaimElement(c: unknown): boolean {
   )
 }
 
+function isValidDeletedHabitElement(c: unknown): boolean {
+  return isRecord(c) && typeof c.id === 'string' && c.id.length > 0 && isParseableDate(c.deletedAt)
+}
+
+/** 习惯删除墓碑清洗：按 id 去重，保留最新的删除时间 */
+function sanitizeDeletedHabits(raw: unknown): DeletedHabit[] {
+  if (!Array.isArray(raw)) return []
+  const byId = new Map<string, DeletedHabit>()
+  for (const item of raw) {
+    if (!isValidDeletedHabitElement(item)) continue
+    const entry = item as DeletedHabit
+    const existing = byId.get(entry.id)
+    if (!existing || entry.deletedAt > existing.deletedAt) {
+      byId.set(entry.id, { id: entry.id, deletedAt: entry.deletedAt })
+    }
+  }
+  return [...byId.values()]
+}
+
 export type ValidateResult = { ok: true; state: AppState } | { ok: false; error: string }
 
 /**
@@ -218,6 +238,12 @@ export function validateState(v: unknown): ValidateResult {
     (!Array.isArray(v.deletedDayClaims) || !v.deletedDayClaims.every(isValidDeletedDayClaimElement))
   ) {
     return { ok: false, error: 'deletedDayClaims' }
+  }
+  if (
+    v.deletedHabits !== undefined &&
+    (!Array.isArray(v.deletedHabits) || !v.deletedHabits.every(isValidDeletedHabitElement))
+  ) {
+    return { ok: false, error: 'deletedHabits' }
   }
   if (!isKnownBlueprintId(v.activeBlueprintId)) return { ok: false, error: 'activeBlueprintId' }
   if (
@@ -586,6 +612,7 @@ export function normalizeState(s: AppState): AppState {
           .filter(isValidDeletedDayClaimElement)
           .map((c) => c as DeletedDayClaim)
       : [],
+    deletedHabits: sanitizeDeletedHabits(s.deletedHabits),
     repairBricks:
       typeof s.repairBricks === 'number' ? Math.max(0, Math.min(REPAIR_MAX, s.repairBricks)) : 0,
     repairBrickMonth:

@@ -59,7 +59,7 @@ export default function Stats() {
   const rows = useMemo<StatsRow[]>(
     () =>
       active.map((h) => {
-        const hCheckIns = checkIns.filter((c) => c.habitId === h.id)
+        const hCheckIns = checkIns.filter((c) => c.habitId === h.id && !c.deletedAt)
         const totalMinutes = hCheckIns.reduce(
           (sum, c) => sum + (c.actualMinutes ?? h.targetMinutes ?? 0),
           0
@@ -76,13 +76,13 @@ export default function Stats() {
   )
 
   const grandTotalMinutes = useMemo(
-    () => checkIns.reduce((sum, c) => sum + (c.actualMinutes ?? 0), 0),
+    () => checkIns.reduce((sum, c) => (c.deletedAt ? sum : sum + (c.actualMinutes ?? 0)), 0),
     [checkIns]
   )
 
   // 积木历史回响：提取过往（非今日）具有随笔的打卡记录
   const echoEntry = useMemo(() => {
-    const candidates = checkIns.filter((c) => c.date < today && c.note?.trim())
+    const candidates = checkIns.filter((c) => !c.deletedAt && c.date < today && c.note?.trim())
     if (candidates.length === 0) return null
     const dayOfYear = Math.floor(
       (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
@@ -99,7 +99,7 @@ export default function Stats() {
   // 手账长廊项目过滤
   const chronicleItems = useMemo(() => {
     // D-20261126-118：写了自定义心境也算一条手账（不一定有随笔）
-    let list = checkIns.filter((c) => c.note?.trim() || c.moodNote?.trim())
+    let list = checkIns.filter((c) => !c.deletedAt && (c.note?.trim() || c.moodNote?.trim()))
     if (filterHabitId !== 'all') {
       list = list.filter((c) => c.habitId === filterHabitId)
     }

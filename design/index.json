@@ -1189,6 +1189,15 @@
       "owner": "Claude Code",
       "reviewer": "pending",
       "file": "design/records/D-20261128-132-habit-note-outside-click.md"
+    },
+    {
+      "id": "D-20261128-133",
+      "date": "2026-11-28",
+      "title": "高优先级数据修复：同步墓碑、删除习惯、统计过滤、WebDAV HTTPS 与修复砖上限",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261128-133-high-priority-data-fixes.md"
     }
   ]
 }

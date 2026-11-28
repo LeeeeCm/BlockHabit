@@ -436,6 +436,8 @@ export const zh: TranslationSchema = {
       '原存档已损坏，已把原始内容备份到数据目录（*.corrupt-backup）；本次以空存档启动，可在设置中导入备份恢复。',
     syncErrors: {
       noEndpoint: '请先填写 WebDAV 服务器地址',
+      insecureHttp:
+        '同步地址必须使用 https。http 会让密码以明文经过网络，已拒绝同步；请改用 https 地址。',
       auth: '认证失败，请检查用户名与密码',
       parse: '云端存档损坏（JSON 解析失败）',
       incompatible: '云端存档结构与当前应用版本不兼容',

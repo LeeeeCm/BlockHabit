@@ -4,7 +4,8 @@ export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
 export type WebDavErrorCode = 'auth' | 'network' | 'conflict' | 'no-collection' | 'http' | 'cors'
 
 /** 同步流程可能暴露给 UI 的全部错误码（HTTP 层 + 本地流程） */
-export type SyncErrorCode = WebDavErrorCode | 'no-endpoint' | 'parse' | 'incompatible'
+export type SyncErrorCode =
+  WebDavErrorCode | 'no-endpoint' | 'insecure-http' | 'parse' | 'incompatible'
 
 export interface WebDavConfig {
   endpoint: string

@@ -13,6 +13,7 @@ function baseState(): AppState {
     settings: { theme: 'light', language: 'zh' },
     dayClaims: [],
     deletedDayClaims: [{ date: '2026-11-01', deletedAt: '2026-11-02T00:00:00.000Z' }],
+    deletedHabits: [{ id: 'h-deleted', deletedAt: '2026-11-03T00:00:00.000Z' }],
     repairBricks: 3,
     repairBrickMonth: '2026-11',
     showcasePlacements: [{ blueprintId: 'plant', gridX: 1, gridY: 1 }],
@@ -27,6 +28,7 @@ describe('serializeState', () => {
     expect(out.repairBrickMonth).toBe('2026-11')
     expect(out.repairBricks).toBe(3)
     expect(out.deletedDayClaims).toHaveLength(1)
+    expect(out.deletedHabits).toEqual([{ id: 'h-deleted', deletedAt: '2026-11-03T00:00:00.000Z' }])
     expect(out.foundationNotes).toEqual({ plant: 'hello' })
     expect(out.reminderLog).toEqual({ h1: { date: '2026-11-10', action: 'skipped' } })
   })

@@ -106,6 +106,7 @@ export function WebdavPanel({ sync, onToast }: Props) {
     if (!code) return null
     const map: Record<string, string> = {
       'no-endpoint': t.settings.syncErrors.noEndpoint,
+      'insecure-http': t.settings.syncErrors.insecureHttp,
       auth: t.settings.syncErrors.auth,
       parse: t.settings.syncErrors.parse,
       incompatible: t.settings.syncErrors.incompatible,

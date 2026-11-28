@@ -150,5 +150,6 @@
 | D-20261128-130 | 2026-11-28 | 移除建造页绿色装饰：下线逐建筑微生态，建造与展台都不再生成植被 | approved | build, showcase | LeeCM |
 | D-20261128-131 | 2026-11-28 | 内容包 v6「城市与生活 III」：追加 12 座建筑蓝图 | approved | build, gallery, showcase, archive | LeeCM |
 | D-20261128-132 | 2026-11-28 | 打卡随笔编辑只在点击模块外时取消，键盘输入与鼠标移出不再打断 | proposed | today | pending |
+| D-20261128-133 | 2026-11-28 | 高优先级数据修复：同步墓碑、删除习惯、统计过滤、WebDAV HTTPS 与修复砖上限 | proposed | today, stats, settings | pending |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。
