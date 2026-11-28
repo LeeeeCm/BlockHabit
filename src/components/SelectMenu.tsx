@@ -39,8 +39,19 @@ export function SelectMenu({
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [open, setOpen] = useState(false)
+  /** 展开补间：挂载后下一帧切到 1fr，让 grid-template-rows 产生高度过渡（D-20261128-134） */
+  const [expanded, setExpanded] = useState(false)
   const selectedIndex = options.findIndex((opt) => opt.value === value)
   const [activeIndex, setActiveIndex] = useState(selectedIndex >= 0 ? selectedIndex : 0)
+
+  useEffect(() => {
+    if (!open) {
+      setExpanded(false)
+      return
+    }
+    const frame = requestAnimationFrame(() => setExpanded(true))
+    return () => cancelAnimationFrame(frame)
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -159,76 +170,87 @@ export function SelectMenu({
 
       {open && (
         <div
-          id={`${id}-listbox`}
-          role="listbox"
-          aria-label={ariaLabel}
+          className={`select-menu-panel${expanded ? ' is-open' : ''}`}
           style={{
             position: 'absolute',
             left: 0,
             right: 0,
             top: '100%',
-            // 与触发器下沿严丝合缝：不再有 1px 重叠造成的双线
-            marginTop: 0,
-            zIndex: 30,
-            maxHeight: 240,
-            overflowY: 'auto',
-            padding: 4,
-            background: 'var(--surface)',
-            border: '1px solid var(--line)',
-            borderTop: 'none',
-            borderRadius: '0 0 var(--r-sm) var(--r-sm)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-            animation: 'select-menu-drop var(--dur-sm) var(--ease-out)'
+            zIndex: 30
           }}
         >
-          {options.map((option, index) => {
-            const isSelected = option.value === value
-            const isActive = index === activeIndex
-            return (
-              <button
-                key={option.value}
-                id={`${id}-option-${index}`}
-                type="button"
-                role="option"
-                tabIndex={-1}
-                aria-selected={isSelected}
-                onMouseEnter={() => setActiveIndex(index)}
-                onClick={() => choose(index)}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                  padding: '6px 8px',
-                  border: 'none',
-                  borderRadius: 6,
-                  textAlign: 'left',
-                  fontSize: 'var(--fs-small)',
-                  color: 'var(--ink)',
-                  background: isActive
-                    ? 'color-mix(in srgb, var(--ink) 6%, transparent)'
-                    : 'transparent',
-                  cursor: 'pointer'
-                }}
-              >
-                <span
-                  style={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {option.label}
-                </span>
-                {isSelected && (
-                  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16">
-                    <path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                  </svg>
-                )}
-              </button>
-            )
-          })}
+          <div className="select-menu-clip">
+            <div
+              id={`${id}-listbox`}
+              role="listbox"
+              aria-label={ariaLabel}
+              style={{
+                // 与触发器下沿严丝合缝：不再有 1px 重叠造成的双线
+                marginTop: 0,
+                maxHeight: 240,
+                overflowY: 'auto',
+                padding: 4,
+                background: 'var(--surface)',
+                border: '1px solid var(--line)',
+                borderTop: 'none',
+                borderRadius: '0 0 var(--r-sm) var(--r-sm)'
+              }}
+            >
+              {options.map((option, index) => {
+                const isSelected = option.value === value
+                const isActive = index === activeIndex
+                return (
+                  <button
+                    key={option.value}
+                    id={`${id}-option-${index}`}
+                    type="button"
+                    role="option"
+                    tabIndex={-1}
+                    aria-selected={isSelected}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    onClick={() => choose(index)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      padding: '6px 8px',
+                      border: 'none',
+                      borderRadius: 6,
+                      textAlign: 'left',
+                      fontSize: 'var(--fs-small)',
+                      color: 'var(--ink)',
+                      background: isActive
+                        ? 'color-mix(in srgb, var(--ink) 6%, transparent)'
+                        : 'transparent',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span
+                      style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {option.label}
+                    </span>
+                    {isSelected && (
+                      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16">
+                        <path
+                          d="M3 8.5l3 3 7-7"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>

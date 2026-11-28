@@ -47,6 +47,7 @@ export interface TranslationSchema {
     emptyHint: (blueprintName: string) => string
     newHabit: string
     archivedCount: (count: number) => string
+    archiveHabit: string
     collapse: string
     expand: string
     deleteConfirmTitle: string
@@ -295,7 +296,6 @@ export interface TranslationSchema {
     fewerSettings: string
     noteLabel: string
     notePlaceholder: string
-    archiveBtn: string
   }
   gallery: {
     title: string

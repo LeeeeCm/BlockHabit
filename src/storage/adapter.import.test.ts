@@ -54,6 +54,50 @@ function v1Archive() {
 }
 
 describe('旧档导入（A5）', () => {
+  function baseV2(): Record<string, unknown> {
+    return {
+      schemaVersion: 2,
+      habits: [
+        {
+          id: 'h1',
+          name: '读书',
+          frequency: { type: 'daily' },
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
+      ],
+      checkIns: [],
+      builds: [],
+      activeBlueprintId: 'plant',
+      completedBlueprintIds: [],
+      settings: { theme: 'light', language: 'zh' },
+      dayClaims: []
+    }
+  }
+
+  it('D-20261128-135：拒绝 checkIn 可选字段类型错误', () => {
+    const state = baseV2()
+    state.checkIns = [
+      {
+        id: 'c1',
+        habitId: 'h1',
+        date: '2026-01-02',
+        at: '2026-01-02T08:00:00.000Z',
+        note: 123 as unknown as string
+      }
+    ]
+    expect(prepareImport(state)).toBeNull()
+  })
+
+  it('D-20261128-135：拒绝 foundationNotes 非字符串值', () => {
+    const state = { ...baseV2(), foundationNotes: { plant: 123 } }
+    expect(prepareImport(state)).toBeNull()
+  })
+
+  it('D-20261128-135：合法 foundationNotes 保留', () => {
+    const state = { ...baseV2(), foundationNotes: { plant: 'hello' } }
+    expect(prepareImport(state)?.foundationNotes).toEqual({ plant: 'hello' })
+  })
+
   it('prepareImport 接受 v1 档并迁移为 v2', () => {
     const state = prepareImport(v1Archive())
     expect(state).not.toBeNull()

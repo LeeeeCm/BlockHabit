@@ -1,5 +1,6 @@
 import type { TranslationSchema } from '../../i18n'
 import {
+  IconArchive,
   IconDone,
   IconEdit,
   IconInProgress,
@@ -26,6 +27,7 @@ interface Props {
   onStatusClick: (e: React.MouseEvent) => void
   onTogglePin: (e: React.MouseEvent) => void
   onEditClick: (e: React.MouseEvent) => void
+  onArchiveClick: (e: React.MouseEvent) => void
   onDeleteClick: (e: React.MouseEvent) => void
 }
 
@@ -46,6 +48,7 @@ export function HabitRowHeader({
   onStatusClick,
   onTogglePin,
   onEditClick,
+  onArchiveClick,
   onDeleteClick
 }: Props) {
   return (
@@ -115,6 +118,15 @@ export function HabitRowHeader({
           onClick={onEditClick}
         >
           <IconEdit size={17} />
+        </button>
+        <button
+          className="card-action"
+          style={isMobile ? { minWidth: 44, minHeight: 44, width: 44, height: 44 } : undefined}
+          title={t.today.archiveHabit}
+          aria-label={t.today.archiveHabit}
+          onClick={onArchiveClick}
+        >
+          <IconArchive size={17} />
         </button>
         <button
           className="card-action danger"

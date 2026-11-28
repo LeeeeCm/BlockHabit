@@ -203,6 +203,17 @@ export function IconTrash(props: IconProps) {
   )
 }
 
+/** 归档：圆头收纳盒，与编辑、删除、置顶同一套 1.9px 描边 */
+export function IconArchive(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4.5 7.5h15v10a2 2 0 01-2 2h-11a2 2 0 01-2-2v-10z" />
+      <path d="M3.5 4.5h17v3h-17z" />
+      <path d="M9.5 11h5" />
+    </Svg>
+  )
+}
+
 /** 随笔笔记：与编辑、删除风格一致的圆头便签线条 */
 export function IconNote(props: IconProps) {
   return (

@@ -151,5 +151,7 @@
 | D-20261128-131 | 2026-11-28 | 内容包 v6「城市与生活 III」：追加 12 座建筑蓝图 | approved | build, gallery, showcase, archive | LeeCM |
 | D-20261128-132 | 2026-11-28 | 打卡随笔编辑只在点击模块外时取消，键盘输入与鼠标移出不再打断 | proposed | today | pending |
 | D-20261128-133 | 2026-11-28 | 高优先级数据修复：同步墓碑、删除习惯、统计过滤、WebDAV HTTPS 与修复砖上限 | proposed | today, stats, settings | pending |
+| D-20261128-134 | 2026-11-28 | 中优先级 UI 修复：下拉展开动画、习惯卡归档入口、归档统计保留与全勤块描边 | proposed | today, stats, gallery, habit-dialog | pending |
+| D-20261128-135 | 2026-11-28 | 中优先级数据与交互修复：counter 墓碑、嵌套弹窗、快捷键/输入法、统计口径与导入校验 | proposed | today, stats, settings | pending |
 
 > 后续设计请按 `README.md` §3 模板新增记录，并在此表追加一行。

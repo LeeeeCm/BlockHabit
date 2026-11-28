@@ -299,15 +299,23 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
-        e.preventDefault()
-        setEditing(null)
-        setDialogOpen(true)
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'n') return
+      const target = e.target as HTMLElement | null
+      const inField =
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          Boolean(target.closest('input, textarea, select, [contenteditable="true"]')))
+      // D-20261128-135：编辑/设置/提醒弹窗或文本输入中不抢 Ctrl+N，避免把旧表单切成新建
+      if (inField || dialogOpen || dropModal || document.querySelector('[role="dialog"]')) {
+        return
       }
+      e.preventDefault()
+      setEditing(null)
+      setDialogOpen(true)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [dialogOpen, dropModal])
 
   /** 打开「新建习惯」表单（头部与空态入口共用；Ctrl+N 走自己的快捷键监听） */
   function handleNewHabit() {
@@ -376,7 +384,7 @@ export default function Today({ onCelebrate, onGoBuild, focusHabitId, onFocusCon
           total={total}
           percent={percent}
           metCount={metCount}
-          activeCount={active.length}
+          activeCount={dueActiveAll.length}
           onCelebrate={onCelebrate}
           onNewHabit={handleNewHabit}
         />

@@ -82,11 +82,11 @@ function writeConfigStorage(config: WebDavConfig): void {
   }
 }
 
-export function saveWebDavConfig(config: WebDavConfig): void {
+export function saveWebDavConfig(config: WebDavConfig, persistSecret = true): void {
   if (typeof localStorage === 'undefined') return
   writeConfigStorage(config)
   // 密码的去处与配置分开：这里 async 收尾，绝不阻塞配置落盘
-  void persistWebDavSecret(config)
+  if (persistSecret) void persistWebDavSecret(config)
 }
 
 /** 把密码同步到「该去的地方」：关闭记住 → 删除；存储可用 → 写 OS；否则留在 localStorage（旧行为） */
@@ -101,7 +101,7 @@ async function persistWebDavSecret(config: WebDavConfig): Promise<void> {
     if (config.password) await setCredential(account, config.password)
     else await removeCredential(account)
   } catch {
-    // 写入失败不打断保存；下次启动的迁移会再试一次，密码仍以调用方内存为准
+    // 写入失败不打断保存；保留旧凭据，避免因一次临时失败把可用密码删掉
   }
 }
 
@@ -232,7 +232,8 @@ export function useSync() {
       lastSyncError: code
     }
     setConfigState(updatedConfig)
-    saveWebDavConfig(updatedConfig)
+    // D-20261128-135：错误状态只落配置，不碰 keyring；避免“读取失败→空密码→删凭据”
+    saveWebDavConfig(updatedConfig, false)
     lastErrorRef.current = code
     setError(code)
     setStatus('error')

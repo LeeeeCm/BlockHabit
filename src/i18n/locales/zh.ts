@@ -44,6 +44,7 @@ export const zh: TranslationSchema = {
       `还没有习惯。点右上角 + 创建第一个，\n每完成一个习惯即可为「${bp}」掉落一块积木。`,
     newHabit: '新建习惯',
     archivedCount: (c) => `已归档 · ${c}`,
+    archiveHabit: '归档习惯',
     collapse: '收起 ▴',
     expand: '展开 ▾',
     deleteConfirmTitle: '删除习惯',
@@ -189,7 +190,7 @@ export const zh: TranslationSchema = {
     title: '统计',
     subtitle: '近 13 周 · 每个习惯的完成记录',
     filterByHabit: '按习惯筛选',
-    focusHours: (h) => ` · 累计深度专注 ${h} 小时`,
+    focusHours: (h) => `累计深度专注 ${h} 小时`,
     repairBricksBadge: (c, max) => `修复积木: ${c} / ${max}`,
     repairBricksTooltip:
       '每月发放 2 块、落成建筑再加 1 块、连击每满 30 天再奖 1 块（最多存 4 块）。点击下方热图可补签过去 30 天内的遗漏打卡',
@@ -284,8 +285,7 @@ export const zh: TranslationSchema = {
     moreSettings: '更多设置（时段 / 提醒 / 分类 / 备注）',
     fewerSettings: '收起更多设置',
     noteLabel: '备注',
-    notePlaceholder: '为什么想做这件事？',
-    archiveBtn: '归档'
+    notePlaceholder: '为什么想做这件事？'
   },
   gallery: {
     title: '模型图鉴',

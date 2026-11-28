@@ -96,6 +96,20 @@ describe('Stats 拆分后的两种视图', () => {
     expect(view.textContent).not.toContain('读完一章')
   })
 
+  it('归档习惯后统计卡、手账与回声仍然保留', () => {
+    useAppStore.getState().archiveHabit(habit.id)
+    const view = renderStats()
+    expect(view.textContent).toContain('阅读')
+    clickByText(view, '手账')
+    expect(view.textContent).toContain('读完一章')
+  })
+
+  it('页头副标的累计专注前只有一个分隔点', () => {
+    useAppStore.setState({ checkIns: [{ ...checkIn, actualMinutes: 30 }] })
+    const view = renderStats()
+    expect(view.textContent).not.toMatch(/·\s*·/)
+  })
+
   it('页头纪念品入口打开纪念品中心', () => {
     const view = renderStats()
     clickByText(view, '纪念品')

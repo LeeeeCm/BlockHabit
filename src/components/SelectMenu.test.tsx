@@ -54,6 +54,17 @@ describe('SelectMenu（D-20261124-089）', () => {
     expect(el.querySelector('[role="listbox"]')).toBeNull()
   })
 
+  it('展开时给菜单面板加 is-open，触发高度补间', async () => {
+    const { container: el } = render()
+    act(() => trigger(el).click())
+    await act(async () => {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+    })
+    const panel = el.querySelector('.select-menu-panel')
+    expect(panel).not.toBeNull()
+    expect(panel?.classList.contains('is-open')).toBe(true)
+  })
+
   it('键盘 ↑↓ + Enter 可选择，Esc 关闭', () => {
     const { container: el, onChange } = render()
     const btn = trigger(el)

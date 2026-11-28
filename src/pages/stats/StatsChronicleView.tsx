@@ -8,7 +8,6 @@ import { triggerHaptic } from '../../platform'
 interface Props {
   t: TranslationSchema
   habits: Habit[]
-  active: Habit[]
   items: CheckIn[]
   searchQuery: string
   onSearchQueryChange: (value: string) => void
@@ -28,7 +27,6 @@ interface Props {
 export function StatsChronicleView({
   t,
   habits,
-  active,
   items,
   searchQuery,
   onSearchQueryChange,
@@ -101,7 +99,7 @@ export function StatsChronicleView({
             onChange={onFilterHabitIdChange}
             options={[
               { value: 'all', label: t.reflections.filterAll },
-              ...active.map((h) => ({ value: h.id, label: h.name }))
+              ...habits.map((h) => ({ value: h.id, label: h.name }))
             ]}
             style={{ minWidth: 132 }}
           />

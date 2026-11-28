@@ -327,16 +327,29 @@
   padding: 0;
 }
 
-/* 下拉菜单与触发器连成一块（D-20261126-120）：
- * 只做「向下生长」的位移 + 淡入，不做缩放，避免接缝处露出一道边。
- * 尊重减少动态效果（全局把 --dur-* 归零即可）。 */
-@keyframes select-menu-drop {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* 下拉菜单展开（D-20261128-134）：
+ * 外层用 grid-template-rows 0fr→1fr 做高度补间，内层裁切；只向下生长，
+ * 不做缩放，避免接缝处露出一道边。时长走 --dur-lg，尊重减少动态效果。 */
+.select-menu-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    grid-template-rows var(--dur-lg) var(--ease-standard),
+    opacity var(--dur-lg) var(--ease-standard),
+    transform var(--dur-lg) var(--ease-standard);
+}
+
+.select-menu-panel.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.select-menu-clip {
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }

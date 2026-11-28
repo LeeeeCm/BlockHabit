@@ -43,6 +43,23 @@ describe('counter habit block award (anti-exploit)', () => {
     expect(useAppStore.getState().builds).toHaveLength(1)
   })
 
+  it('撤销后的墓碑不参与 counter 达标累计（D-20261128-135）', () => {
+    const store = useAppStore.getState()
+    const habit = store.addHabit(
+      '喝水',
+      { type: 'daily' },
+      { kind: 'counter', targetValue: 3, step: 1 }
+    )
+    const id = habit.id
+    useAppStore.getState().checkIn(id) // 1 / 3
+    useAppStore.getState().uncheckIn(id) // 墓碑：live 归零
+    useAppStore.getState().checkIn(id) // 1 / 3
+    useAppStore.getState().checkIn(id) // 2 / 3
+    expect(useAppStore.getState().builds).toHaveLength(0)
+    useAppStore.getState().checkIn(id) // 3 / 3 才掉块
+    expect(useAppStore.getState().builds).toHaveLength(1)
+  })
+
   it('首次跨阈值后即使继续加量也不再掉块', () => {
     const store = useAppStore.getState()
     const habit = store.addHabit(

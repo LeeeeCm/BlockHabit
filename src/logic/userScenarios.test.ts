@@ -161,17 +161,14 @@ describe('真实用户极端使用场景模拟与系统健壮性测试 (Real Use
 
     useAppStore.setState({ habits, checkIns: bigCheckIns })
 
-    const startPerf = performance.now()
-    // 对 10 个习惯连续计算当前连胜与最佳连胜
-    for (const h of habits) {
-      currentStreak(h, bigCheckIns, new Date('2025-05-01'))
-      bestStreak(h, bigCheckIns)
-      habitMetOnDay(h, bigCheckIns, '2025-04-10')
-    }
-    const duration = performance.now() - startPerf
-
-    // 1200 条记录的全量分析计算应在 50ms 内极速完成，确保 UI 无卡顿
-    expect(duration).toBeLessThan(100)
+    // 1200 条记录的全量分析只做规模/结果回归；wall-clock 断言在 CI 负载下会误报（D-20261128-135）
+    const results = habits.map((h) => ({
+      current: currentStreak(h, bigCheckIns, new Date('2025-05-01')),
+      best: bestStreak(h, bigCheckIns),
+      met: habitMetOnDay(h, bigCheckIns, '2025-04-10')
+    }))
+    expect(results).toHaveLength(10)
+    expect(results.every((r) => r.current >= 0 && r.best >= 0 && r.met)).toBe(true)
   })
 
   it('场景 5: 异常损坏数据与降级容错 (Corrupted State Handling)', () => {

@@ -58,7 +58,7 @@ export default function Stats() {
 
   const rows = useMemo<StatsRow[]>(
     () =>
-      active.map((h) => {
+      habits.map((h) => {
         const hCheckIns = checkIns.filter((c) => c.habitId === h.id && !c.deletedAt)
         const totalMinutes = hCheckIns.reduce(
           (sum, c) => sum + (c.actualMinutes ?? h.targetMinutes ?? 0),
@@ -72,7 +72,7 @@ export default function Stats() {
           totalMinutes
         }
       }),
-    [active, checkIns, now]
+    [habits, checkIns, now]
   )
 
   const grandTotalMinutes = useMemo(
@@ -156,7 +156,9 @@ export default function Stats() {
       if (item.starred) {
         lines.push(`- **${t.stats.exportFeatured}**: ⭐`)
       }
-      lines.push(`- **${t.stats.exportReflection}**: ${item.note}`)
+      if (item.note?.trim()) {
+        lines.push(`- **${t.stats.exportReflection}**: ${item.note.trim()}`)
+      }
       lines.push('')
     }
 
@@ -258,7 +260,6 @@ export default function Stats() {
           <StatsChronicleView
             t={t}
             habits={habits}
-            active={active}
             items={chronicleItems}
             searchQuery={searchQuery}
             onSearchQueryChange={setSearchQuery}

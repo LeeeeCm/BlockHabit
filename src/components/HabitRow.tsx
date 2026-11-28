@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, memo } from 'react'
 import { usePlatform, triggerHaptic } from '../platform'
+import { isImeComposing } from '../platform/ime'
 import type { CheckInResult, Habit, MicroMood } from '../types'
 import { useAppStore } from '../store/appStore'
 import { useTimerStore } from '../store/timerStore'
@@ -54,6 +55,7 @@ export const HabitRow = memo(function HabitRow({
   const checkIn = useAppStore((s) => s.checkIn)
   const uncheckIn = useAppStore((s) => s.uncheckIn)
   const deleteHabit = useAppStore((s) => s.deleteHabit)
+  const archiveHabit = useAppStore((s) => s.archiveHabit)
   const togglePinHabit = useAppStore((s) => s.togglePinHabit)
   const recordCheckInNote = useAppStore((s) => s.recordCheckInNote)
   const { todayCheckIns, todayCheckIn, counterVal, weekCount } = useAppStore((s) =>
@@ -281,6 +283,11 @@ export const HabitRow = memo(function HabitRow({
     triggerHaptic('warning')
     setConfirmDelete(true)
   }
+  function handleArchiveClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    triggerHaptic('warning')
+    archiveHabit(habit.id)
+  }
   function handleStepDown(e: React.MouseEvent) {
     handleStepCounter(e, -stepVal)
   }
@@ -301,6 +308,7 @@ export const HabitRow = memo(function HabitRow({
     setNoteVal(e.target.value)
   }
   function handleNoteKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (isImeComposing(e)) return
     if (e.key === 'Enter') {
       commitNote()
     } else if (e.key === 'Escape') {
@@ -398,6 +406,7 @@ export const HabitRow = memo(function HabitRow({
         onStatusClick={handleStatusBtnClick}
         onTogglePin={handleTogglePin}
         onEditClick={handleEditClick}
+        onArchiveClick={handleArchiveClick}
         onDeleteClick={handleDeleteClick}
       />
 

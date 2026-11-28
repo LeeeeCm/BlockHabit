@@ -5,6 +5,7 @@ import { getBlueprint } from '../logic/blueprints'
 import { buildBuildingArchive, type BuildingArchiveState } from '../logic/buildingArchive'
 import { getBlueprintName, useI18n } from '../i18n'
 import { triggerHaptic, usePlatform } from '../platform'
+import { isImeComposing } from '../platform/ime'
 import { useDialogA11y } from './useDialogA11y'
 import { BottomSheet } from './BottomSheet'
 import { IconClose, IconEdit, IconMood, IconNote, IconStar } from './Icons'
@@ -426,6 +427,7 @@ export function BuildingArchiveModal({ blueprintId, onClose }: Props) {
                       setEditingNote(false)
                       return
                     }
+                    if (isImeComposing(e)) return
                     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                       e.preventDefault()
                       handleSaveNote()

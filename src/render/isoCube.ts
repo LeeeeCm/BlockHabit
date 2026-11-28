@@ -16,7 +16,7 @@ export interface DrawCubeOptions {
   type?: BlockType
   /** 建筑模型自定义专属配色 */
   color?: string
-  /** 奖励块标记（B5）：streak = 连击里程碑（单环），attendance = 全勤大满贯（双环，视觉更重一级） */
+  /** 奖励块标记（B5）：streak = 连击里程碑（单环）；attendance = 全勤大满贯（仅保留等级信息，不再画上方框，D-20261128-134） */
   bonusTier?: 'streak' | 'attendance'
   /** 兼容旧调用：等价于 bonusTier = 'streak' */
   bonus?: boolean
@@ -416,20 +416,12 @@ export function drawCube(
     ctx.lineWidth = 2.4
     ctx.stroke()
     ctx.restore()
-  } else if (bonusTier || bonus) {
-    // B5：奖励块分两个视觉等级，但**只用同一枚点缀色**——靠「环的层数/粗细」分级
-    const tier = bonusTier ?? 'streak'
+  } else if ((bonusTier ?? (bonus ? 'streak' : undefined)) === 'streak') {
+    // B5：连击里程碑奖励块保留单环；D-20261128-134 起全勤块不再画上方黄色方框。
     polyPath(top)
     ctx.strokeStyle = p.accent
-    ctx.lineWidth = tier === 'attendance' ? 2.4 : 1.5
+    ctx.lineWidth = 1.5
     ctx.stroke()
-    if (tier === 'attendance') {
-      // 内缩 22% 的第二道细环：同色相、更细，读作「证书双框」
-      const inner: Pt[] = top.map(([x, y]) => [sx + (x - sx) * 0.78, sy + (y - sy) * 0.78]) as Pt[]
-      polyPath(inner)
-      ctx.lineWidth = 1.1
-      ctx.stroke()
-    }
   }
   ctx.restore()
 }

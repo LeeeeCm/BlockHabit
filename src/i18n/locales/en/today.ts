@@ -5,6 +5,7 @@ export const today: TranslationSchema['today'] = {
     `No habits yet. Click + in top-right to create your first one.\nEach completion drops a block to build "${bp}".`,
   newHabit: 'New Habit',
   archivedCount: (c) => `Archived · ${c}`,
+  archiveHabit: 'Archive habit',
   collapse: 'Collapse ▴',
   expand: 'Expand ▾',
   deleteConfirmTitle: 'Delete Habit',

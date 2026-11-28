@@ -59,14 +59,15 @@ export function TodayArchiveSection({
               <button
                 className="archive-act"
                 title={t.common.restore}
+                aria-label={t.common.restore}
                 onClick={() => onRestore(h.id)}
               >
                 <IconRestore size={16} />
-                {t.common.restore}
               </button>
               <button
                 className="archive-act"
                 title={t.common.delete}
+                aria-label={t.common.delete}
                 onClick={() => onDeleteRequest(h)}
               >
                 <IconTrash size={16} />

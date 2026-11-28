@@ -58,7 +58,9 @@ export function StatsMetricsView({
                 const diffDays = Math.round(
                   (todayMs - new Date(day + 'T00:00:00').getTime()) / 86400000
                 )
-                const already = checkIns.some((c) => c.habitId === habit.id && c.date === day)
+                const already = checkIns.some(
+                  (c) => c.habitId === habit.id && c.date === day && !c.deletedAt
+                )
                 if (already) return
                 if (diffDays > REPAIR_WINDOW_DAYS || diffDays < 0) {
                   onToast(t.stats.repairLimitToast, 2200)

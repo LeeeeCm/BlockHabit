@@ -5,6 +5,7 @@ import { useI18n } from '../i18n'
 import { suggestedReminderStart } from '../logic/reminderScheduler'
 import { IconClose, IconOptional, IconRequired } from './Icons'
 import { triggerHaptic, usePlatform } from '../platform'
+import { isImeComposing } from '../platform/ime'
 import { BottomSheet } from './BottomSheet'
 import { useDialogA11y } from './useDialogA11y'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -60,7 +61,6 @@ export function HabitDialog({ habit, onClose }: Props) {
   const { isMobile } = usePlatform()
   const addHabit = useAppStore((s) => s.addHabit)
   const updateHabit = useAppStore((s) => s.updateHabit)
-  const archiveHabit = useAppStore((s) => s.archiveHabit)
   const [kind, setKind] = useState<HabitKind>(
     habit?.kind ?? (habit?.targetMinutes ? 'focus' : habit?.targetValue ? 'counter' : 'instant')
   )
@@ -182,19 +182,6 @@ export function HabitDialog({ habit, onClose }: Props) {
 
   const footerContent = (
     <div className="dialog-footer" style={{ borderTop: 'none', padding: 0 }}>
-      {editing && (
-        <button
-          className="btn ghost"
-          style={{ marginRight: 'auto' }}
-          onClick={() => {
-            triggerHaptic('warning')
-            archiveHabit(habit!.id)
-            onClose()
-          }}
-        >
-          {t.habitDialog.archiveBtn}
-        </button>
-      )}
       <button className="btn ghost" onClick={requestClose}>
         {t.common.cancel}
       </button>
@@ -239,7 +226,10 @@ export function HabitDialog({ habit, onClose }: Props) {
                 : t.habitDialog.placeholderCounter
           }
           onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && save()}
+          onKeyDown={(e) => {
+            if (isImeComposing(e)) return
+            if (e.key === 'Enter') save()
+          }}
         />
       </div>
       <div className="field">

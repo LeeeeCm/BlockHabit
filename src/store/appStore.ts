@@ -201,7 +201,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
     const habit = habits.find((h) => h.id === habitId)
     const isCounter = habit?.kind === 'counter'
-    const todayCheckIns = checkIns.filter((c) => c.habitId === habitId && c.date === day)
+    const todayCheckIns = checkIns.filter(
+      (c) => c.habitId === habitId && c.date === day && !c.deletedAt
+    )
     const prevValue = todayCheckIns.reduce((sum, c) => sum + (c.value ?? 0), 0)
     const stepDelta = counterDelta ?? habit?.step ?? 1
     const nextValue = prevValue + stepDelta

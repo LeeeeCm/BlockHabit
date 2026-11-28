@@ -93,6 +93,33 @@ describe('selectHabitCheckInSlice', () => {
     expect(slice2.todayCheckIn?.starred).toBe(true)
   })
 
+  it('returns new object reference when only moodNote changes', () => {
+    const checkInsInitial: CheckIn[] = [
+      {
+        id: 'c1',
+        habitId: 'h1',
+        date: day,
+        at: '2026-09-30T08:00:00.000Z',
+        moodNote: '专注'
+      }
+    ]
+    const slice1 = selectHabitCheckInSlice(checkInsInitial, habit1, day)
+
+    const checkInsUpdated: CheckIn[] = [
+      {
+        id: 'c1',
+        habitId: 'h1',
+        date: day,
+        at: '2026-09-30T08:00:00.000Z',
+        moodNote: '运动'
+      }
+    ]
+    const slice2 = selectHabitCheckInSlice(checkInsUpdated, habit1, day)
+
+    expect(slice2).not.toBe(slice1)
+    expect(slice2.todayCheckIn?.moodNote).toBe('运动')
+  })
+
   it('computes counterVal correctly for counter habits', () => {
     const checkIns: CheckIn[] = [
       { id: 'c2_1', habitId: 'h2', date: day, at: '2026-09-30T08:00:00.000Z', value: 250 },

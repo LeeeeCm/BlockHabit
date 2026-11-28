@@ -73,6 +73,16 @@ export interface StorageAdapter {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+const MICRO_MOODS: ReadonlySet<string> = new Set([
+  'energetic',
+  'hard',
+  'spark',
+  'calm',
+  'grateful',
+  'focused',
+  'tired',
+  'proud'
+])
 
 /**
  * 已知蓝图 id 白名单（含已下线的旧桌宠蓝图）。
@@ -124,15 +134,39 @@ function isValidCheckInElement(c: unknown): boolean {
   if (typeof c.habitId !== 'string' || !c.habitId) return false
   if (typeof c.date !== 'string' || !DATE_RE.test(c.date)) return false
   if (!isParseableDate(c.at)) return false
-  if (c.value !== undefined && typeof c.value !== 'number') return false
+  if (c.value !== undefined && (typeof c.value !== 'number' || !Number.isFinite(c.value)))
+    return false
   if (c.bonus !== undefined && typeof c.bonus !== 'boolean') return false
-  if (c.actualMinutes !== undefined && typeof c.actualMinutes !== 'number') return false
+  if (
+    c.actualMinutes !== undefined &&
+    (typeof c.actualMinutes !== 'number' || !Number.isFinite(c.actualMinutes))
+  )
+    return false
+  if (c.note !== undefined && typeof c.note !== 'string') return false
+  if (c.mood !== undefined && !MICRO_MOODS.has(c.mood as string)) return false
+  if (c.starred !== undefined && typeof c.starred !== 'boolean') return false
+  if (c.deletedAt !== undefined && !isParseableDate(c.deletedAt)) return false
+  if (c.placedBlockId !== undefined) {
+    if (typeof c.placedBlockId !== 'string' || !c.placedBlockId) return false
+  }
+  if (c.blueprintId !== undefined) {
+    if (typeof c.blueprintId !== 'string' || !isKnownBlueprintId(c.blueprintId)) return false
+  }
   // D-20261126-118：自定义心境文本；长度上限与卡片胶囊一致，超长视为损坏而不是静默截断
   if (c.moodNote !== undefined) {
     if (typeof c.moodNote !== 'string') return false
     if (c.moodNote.trim().length > 12) return false
   }
   return true
+}
+
+function isValidFoundationNotes(v: unknown): boolean {
+  return (
+    isRecord(v) &&
+    Object.entries(v).every(
+      ([blueprintId, note]) => isKnownBlueprintId(blueprintId) && typeof note === 'string'
+    )
+  )
 }
 
 function isValidBlockElement(b: unknown): boolean {
@@ -253,6 +287,9 @@ export function validateState(v: unknown): ValidateResult {
     return { ok: false, error: 'completedBlueprintIds' }
   }
   if (!isRecord(v.settings)) return { ok: false, error: 'settings' }
+  if (v.foundationNotes !== undefined && !isValidFoundationNotes(v.foundationNotes)) {
+    return { ok: false, error: 'foundationNotes' }
+  }
   return { ok: true, state: v as unknown as AppState }
 }
 
@@ -622,8 +659,14 @@ export function normalizeState(s: AppState): AppState {
     showcasePlacements: showcase.showcasePlacements,
     showcaseSandboxes: showcase.showcaseSandboxes,
     activeSandboxId: showcase.activeSandboxId,
-    foundationNotes:
-      typeof s.foundationNotes === 'object' && s.foundationNotes !== null ? s.foundationNotes : {},
+    foundationNotes: isRecord(s.foundationNotes)
+      ? Object.fromEntries(
+          Object.entries(s.foundationNotes).filter(
+            (entry): entry is [string, string] =>
+              isKnownBlueprintId(entry[0]) && typeof entry[1] === 'string'
+          )
+        )
+      : {},
     reminderLog:
       typeof s.reminderLog === 'object' && s.reminderLog !== null
         ? Object.fromEntries(

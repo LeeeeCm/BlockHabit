@@ -10,6 +10,7 @@ import { MoodPickerDialog } from './MoodPickerDialog'
 /** 掉落弹窗内联展示的 6 个心境（★ 与 ＋ 分列两端，正好铺满一行） */
 const QUICK_MOODS: MicroMood[] = ['energetic', 'hard', 'spark', 'calm', 'grateful', 'focused']
 import { triggerHaptic } from '../platform'
+import { isImeComposing } from '../platform/ime'
 import { useDialogA11y } from './useDialogA11y'
 
 interface Props {
@@ -99,7 +100,12 @@ export function BlockDropModal({
     }
   }
 
-  const { ref: dialogRef } = useDialogA11y({ open: true, onClose: triggerClose })
+  const { ref: dialogRef } = useDialogA11y({
+    open: true,
+    onClose: triggerClose,
+    // D-20261128-135：心境弹窗是第二层焦点圈；打开期间父层让出 Tab/Esc
+    enabled: !moodPickerOpen
+  })
 
   useEffect(() => {
     return () => {
@@ -302,6 +308,7 @@ export function BlockDropModal({
                   setNote(e.target.value)
                 }}
                 onKeyDown={(e) => {
+                  if (isImeComposing(e)) return
                   if (e.key === 'Enter') {
                     e.preventDefault()
                     handleEngraveSubmit()

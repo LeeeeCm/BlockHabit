@@ -4,6 +4,7 @@ import { getBlueprintName, useI18n } from '../i18n'
 import { playSnapSound } from '../audio/sound'
 import { IconClose, IconFoundation, IconStar } from './Icons'
 import { triggerHaptic } from '../platform'
+import { isImeComposing } from '../platform/ime'
 import { useDialogA11y } from './useDialogA11y'
 
 interface Props {
@@ -185,6 +186,7 @@ export function FoundationNoteDialog({ blueprintId, onClose }: Props) {
               lineHeight: 1.5
             }}
             onKeyDown={(e) => {
+              if (isImeComposing(e)) return
               if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault()
                 handleSave()

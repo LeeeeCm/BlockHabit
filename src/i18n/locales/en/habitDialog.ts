@@ -42,6 +42,5 @@ export const habitDialog: TranslationSchema['habitDialog'] = {
   moreSettings: 'More settings (time of day / reminder / category / note)',
   fewerSettings: 'Hide more settings',
   noteLabel: 'Note',
-  notePlaceholder: 'Why do you want to build this habit?',
-  archiveBtn: 'Archive'
+  notePlaceholder: 'Why do you want to build this habit?'
 }

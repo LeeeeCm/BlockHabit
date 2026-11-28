@@ -4,7 +4,7 @@ export const stats: TranslationSchema['stats'] = {
   title: 'Stats',
   subtitle: 'Past 13 weeks · Check-in history for each habit',
   filterByHabit: 'Filter by habit',
-  focusHours: (h) => ` · Total focus: ${h} hours`,
+  focusHours: (h) => `Total focus: ${h} hours`,
   repairBricksBadge: (c, max) => `Repair Blocks: ${c} / ${max}`,
   repairBricksTooltip:
     'Two blocks per month, plus one when a build completes and one every 30-day streak (up to 4). Click the heatmap to backfill a missed day from the past 30 days',

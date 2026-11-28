@@ -1198,6 +1198,24 @@
       "owner": "Claude Code",
       "reviewer": "pending",
       "file": "design/records/D-20261128-133-high-priority-data-fixes.md"
+    },
+    {
+      "id": "D-20261128-134",
+      "date": "2026-11-28",
+      "title": "中优先级 UI 修复：下拉展开动画、习惯卡归档入口、归档统计保留与全勤块描边",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261128-134-medium-ui-fixes.md"
+    },
+    {
+      "id": "D-20261128-135",
+      "date": "2026-11-28",
+      "title": "中优先级数据与交互修复：counter 墓碑、嵌套弹窗、快捷键/输入法、统计口径与导入校验",
+      "status": "proposed",
+      "owner": "Claude Code",
+      "reviewer": "pending",
+      "file": "design/records/D-20261128-135-medium-data-fixes.md"
     }
   ]
 }

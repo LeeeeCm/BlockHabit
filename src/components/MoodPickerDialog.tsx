@@ -4,6 +4,7 @@ import { useI18n } from '../i18n'
 import type { MicroMood } from '../types'
 import { IconClose, IconMood, IconMoodCustom } from './Icons'
 import { triggerHaptic, usePlatform } from '../platform'
+import { isImeComposing } from '../platform/ime'
 import { useDialogA11y } from './useDialogA11y'
 import { BottomSheet } from './BottomSheet'
 
@@ -155,6 +156,7 @@ export function MoodPickerDialog({
               setText(e.target.value)
             }}
             onKeyDown={(e) => {
+              if (isImeComposing(e)) return
               if (e.key === 'Enter') {
                 e.preventDefault()
                 commitCustom()

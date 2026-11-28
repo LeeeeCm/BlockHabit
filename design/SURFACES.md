@@ -11,7 +11,7 @@
 - **结构**：容器（`padding:24px 24px 80px; max-width:720`，Today.tsx:193）→ 页头（h1 **24px** 日期 + 建造进度胶囊 + `met/total` 计数 + 新建键）→ 分类 chip 行（仅当有分类）→ 全勤卡（全完成时）→ 回声胶囊 → 提醒横幅 → **按时段分组**（`any/morning/afternoon/evening`，栅格）→ 已归档区（虚线折叠）。
 - **复用**：`.habit-grid/.habit-card`（HabitRow）、`.pill-action`、`.card`、`.echo-capsule-bar`、`.reminder-banner`、`.archive-*`、`.toast`。
 - **尺寸**：卡片双列 `gap:12px`（ui.css:441–445）、卡片 `min-height:172px` / 内距 `15px`；时段小标题 `12px + letter-spacing .14em`（Today.tsx:459–466）；空态卡 `padding:52px 24px` + 56×56 图标块（r18）。
-- **必须**：完成态只能由 `habitMetOnDay` 判定（Today.tsx:472–474，A6）；卡片点击=打卡、按钮点击 `stopPropagation`；元信息只用 `--ink-2`；页面只保留一个"+"入口。
+- **必须**：完成态只能由 `habitMetOnDay` 判定（Today.tsx:472–474，A6）；卡片点击=打卡、按钮点击 `stopPropagation`；元信息只用 `--ink-2`；页面只保留一个"+"入口；卡片右上角动作组固定为置顶 / 编辑 / 归档 / 删除（D-20261128-134），归档后卡片从今日列表移除。
 - **随笔编辑（D-20261128-132）**：打卡成功卡的随笔模块点开后，`Enter` 提交、`Esc` 取消；键盘输入、鼠标移出卡片、焦点变化都不取消，只有 `pointerdown` 落在随笔模块外一次才取消并恢复摘要态；心境弹窗打开期间不触发。
 - **窄屏头部（D-20261124-087）**：`.today-header` 允许 `flex-wrap`，操作组 `.today-header-actions` 整组换行、`flex-shrink:0`；蓝图胶囊与完成计数 `white-space:nowrap`。移动布局下操作组占满一行、左对齐，「+」保持右端。
 - **专注入口（B4 / D-20261110-064）**：今日简报下方一条紧凑入口条（`data-testid="today-focus-entry"`，`1px --line` + `--surface` + `--r-md`），仅在「存在可开始的专注习惯（未完成、有目标时长）且当前没有任何专注会话」时出现；点击复用 `timerStore.start` 并在成功 toast「专注中」；`aria-label` 含习惯名与目标时长；移动端最小高度 ≥48px；不新增颜色。
@@ -33,8 +33,9 @@
 - **结构**：容器（`28px 24px 80px; max-width:680`，Stats.tsx:160）→ 页头（h1 **20px** + 13 周副标 + 专注累计）→ 右侧 [纪念品] + 修复砖徽章 → `.apple-segmented` 双视图 → 回声胶囊 → 指标视图（每习惯一张 card：热图 + 名称/频率 + 4 个数值 + 近期随笔）或手账视图（检索卡 + 习惯下拉 + 心境 chip + 卡片列表 + 加载更多）。
 - **复用**：`Heatmap`、`.apple-segmented`、`.card`、`.micro-mood-chip`、`.chronicle-card`、`ConfirmDialog/MonthlyPosterModal`。
 - **尺寸**：习惯卡 `padding:16px 18px; margin-bottom:14px`；热图 `cell:13 / weeks:13`，间距 `max(3, round(cell×0.22))`、圆角 `max(4, round(cell×0.28))`（Heatmap.tsx:29–31、89）。
-- **必须**：热图颜色只走完成绿（`--progress-green` 按完成度叠在 `--surface` 上，全完成日满亮；D-20261124-090 取代 D-035 的灰阶），蓝色不参与热图；格子必须是 `<button>` 且带 aria-label（补签可达性，Heatmap.tsx:79–85）；补签只允许过去 7 天且需二次确认。
+- **必须**：热图颜色只走完成绿（`--progress-green` 按完成度叠在 `--surface` 上，全完成日满亮；D-20261124-090 取代 D-035 的灰阶），蓝色不参与热图；格子必须是 `<button>` 且带 aria-label（补签可达性，Heatmap.tsx:79–85）；补签只允许过去 30 天且需二次确认；已撤销打卡不算已打卡，仍可补签（D-20261128-135）。
 - **导出入口（D-20261124-084）**：页头只保留一个「纪念品」胶囊，打开 `MemorabiliaDialog`；月度画报 / 年鉴 / 建筑档案 / 拍立得 / 完整档案包都从该弹层进入，不再在页头并排两个按钮。
+- **归档保留（D-20261128-134）**：指标卡、手账长廊与回声继续使用全部习惯（含已归档）；归档只改变今日页展示，删除习惯后统计才一并消失。手账筛选下拉也保留已归档习惯。
 - **窄屏页头（D-20261124-087）**：`.stats-header` 允许换行，操作组 `.stats-header-actions` 整组换行、`flex-shrink:0`；移动布局下操作组占满一行、左对齐，360px 下「纪念品 / 修复积木」不得溢出。
 - **例外**：修复砖徽章与回声胶囊用 accent（Stats.tsx:209、244–245）——越界。
 
@@ -239,4 +240,5 @@
 - **结构**：`.overlay > .dialog`（宽 **560**）→ `.dialog-header`（标题 + 关闭）→ `.dialog-body`：一行说明 → 2 列自适应卡片（画报 / 年鉴）→「建筑档案与相纸」：已落成建筑下拉 + [打开档案][拍立得] → `.field` 内嵌 `ArchiveExportPanel` → `.dialog-footer`（关闭）。
 - **嵌套**：月度画报 / 年鉴 / 建筑档案 / 拍立得直接复用既有弹层；任一下级打开时，纪念品中心让出 Esc / 焦点圈闭。层级：本弹层 `z-index:110`，档案卡 115，相纸与画报/年鉴 120。
 - **必须**：只列已落成建筑；空态如实显示「还没有落成的建筑」，不出现选择框、不生成假条目；不新增画布、不新增持久化字段、不新增颜色；移动端走 `BottomSheet`。
+- **下拉展开（D-20261128-134）**：`SelectMenu` 由 `grid-template-rows 0fr → 1fr` 在 `--dur-lg` / `--ease-standard` 内展开并淡入，保持与触发器拼成一块的接缝；`prefers-reduced-motion` 下由既有令牌归零。
 - **例外**：无。
